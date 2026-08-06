@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Minutes</title>
+<style>
+  :root {
+    --bg: #0f1226;
+    --card: #1a1e3a;
+    --card-2: #232848;
+    --accent: #7c5cff;
+    --accent-2: #34d399;
+    --text: #eef0ff;
+    --muted: #9aa0c8;
+    --danger: #ff5c7c;
+    --radius: 16px;
+    --nav-h: 68px;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html { color-scheme: dark; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: radial-gradient(1200px 600px at 50% -10%, #232a5c 0%, var(--bg) 55%);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  .wrap { max-width: 480px; margin: 0 auto; padding: 20px 16px 0; }
+
+  /* ---- Login ---- */
+  #login { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; }
+  .login-card { background: var(--card); border: 1px solid #262c52; border-radius: 20px; padding: 26px 22px; text-align: center; }
+  .login-card .logo { font-size: 40px; margin-bottom: 8px; }
+  .login-card h1 { font-size: 24px; margin: 0 0 4px; letter-spacing: -0.5px; }
+  .login-card p { color: var(--muted); font-size: 14px; margin: 0 0 20px; }
+  .login-card input {
+    width: 100%; padding: 15px; border-radius: 12px; border: 1px solid #2e3563;
+    background: var(--card-2); color: var(--text); font-size: 17px; outline: none; text-align: center; margin-bottom: 12px;
+  }
+  .login-card input:focus { border-color: var(--accent); }
+  .login-err { color: var(--danger); font-size: 13px; min-height: 18px; margin-bottom: 8px; }
+  .hint { color: var(--muted); font-size: 11px; margin-top: 16px; }
+
+  /* ---- App ---- */
+  #app { display: none; padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 12px); }
+  header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+  header h1 { font-size: 20px; margin: 0; letter-spacing: -0.5px; }
+  header .sub { font-size: 12px; color: var(--muted); }
+  .logout { background: var(--card-2); border: 1px solid #2e3563; color: var(--muted); font-size: 13px; font-weight: 600; padding: 8px 12px; border-radius: 10px; cursor: pointer; }
+
+  .card { background: var(--card); border: 1px solid #262c52; border-radius: var(--radius); padding: 18px; margin-bottom: 16px; }
+  .card h2 { font-size: 14px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); margin: 0 0 14px; font-weight: 700; }
+
+  /* Personal stats block */
+  .me-avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px; color: #fff; flex: 0 0 auto; }
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+  .tile { background: var(--card); border: 1px solid #262c52; border-radius: var(--radius); padding: 16px; position: relative; }
+  .tile .label { font-size: 11px; color: var(--muted); margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+  .tile .label .badge { background: rgba(124,92,255,0.22); color: #b7a6ff; font-weight: 800; font-size: 9px; letter-spacing: .6px; padding: 2px 6px; border-radius: 6px; text-transform: uppercase; }
+  .tile .value { font-size: 28px; font-weight: 800; letter-spacing: -1px; }
+  .tile .value small { font-size: 14px; font-weight: 600; color: var(--muted); }
+  .tile.accent { background: linear-gradient(135deg, #2a2170, #1a1e3a); border-color: #3a2f88; }
+
+  .field { margin-bottom: 12px; }
+  .field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  input[type=number], input[type=text], input[type=date] {
+    width: 100%; padding: 13px 14px; border-radius: 12px; border: 1px solid #2e3563;
+    background: var(--card-2); color: var(--text); font-size: 16px; outline: none;
+  }
+  input:focus { border-color: var(--accent); }
+
+  /* Custom date field */
+  .input-wrap { position: relative; }
+  .datepick { position: relative; }
+  .dp-trigger {
+    width: 100%; display: flex; align-items: center; justify-content: space-between;
+    padding: 13px 14px; border-radius: 12px; border: 1px solid #2e3563;
+    background: var(--card-2); color: var(--text); font-size: 16px; cursor: pointer; text-align: left;
+  }
+  .dp-trigger:focus { border-color: var(--accent); outline: none; }
+  .dp-trigger .dp-ic { color: var(--muted); display: flex; }
+  .dp-trigger .dp-ic svg { width: 18px; height: 18px; display: block; }
+  .cal-pop {
+    position: absolute; top: calc(100% + 8px); left: 0; z-index: 30;
+    width: 280px; max-width: 86vw; background: var(--card); border: 1px solid #2e3563;
+    border-radius: 14px; padding: 12px; box-shadow: 0 18px 44px -14px rgba(0,0,0,.7);
+    opacity: 0; transform: translateY(-6px); pointer-events: none; transition: opacity .15s ease, transform .15s ease;
+  }
+  .cal-pop.show { opacity: 1; transform: none; pointer-events: auto; }
+  .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .cal-title { font-size: 14px; font-weight: 700; }
+  .cal-nav { width: 32px; height: 32px; border-radius: 9px; border: 1px solid #2e3563; background: var(--card-2); color: var(--text); font-size: 18px; cursor: pointer; line-height: 1; }
+  .cal-nav:active { background: var(--accent); border-color: var(--accent); }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+  .cal-dow-cell { text-align: center; font-size: 10px; font-weight: 700; color: var(--muted); padding: 4px 0; text-transform: uppercase; }
+  .cal-cell { aspect-ratio: 1 / 1; border: none; background: none; color: var(--text); font-size: 13px; border-radius: 9px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .cal-cell:hover { background: var(--card-2); }
+  .cal-cell.blank { visibility: hidden; cursor: default; }
+  .cal-cell.future { color: #545b86; cursor: not-allowed; }
+  .cal-cell.future:hover { background: none; }
+  .cal-cell.today { box-shadow: inset 0 0 0 1px var(--accent); color: #c9bcff; }
+  .cal-cell.sel { background: var(--accent); color: #fff; font-weight: 700; }
+  .cal-cell.sel:hover { background: var(--accent); }
+  .cal-foot { margin-top: 10px; }
+  .cal-foot button { width: 100%; padding: 9px; border-radius: 9px; border: 1px solid #2e3563; background: var(--card-2); color: var(--text); font-weight: 600; font-size: 13px; cursor: pointer; }
+  .cal-foot button:active { background: var(--accent); border-color: var(--accent); }
+
+  /* Custom minutes stepper — native spinners removed */
+  input[type=number] { -webkit-appearance: textfield; -moz-appearance: textfield; appearance: textfield; }
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  .stepper { display: flex; gap: 8px; }
+  .stepper .step { flex: 0 0 46px; border: 1px solid #2e3563; background: var(--card-2); color: var(--text); border-radius: 12px; font-size: 22px; font-weight: 500; cursor: pointer; line-height: 1; display: flex; align-items: center; justify-content: center; }
+  .stepper .step:active { background: var(--accent); border-color: var(--accent); }
+  .stepper input { flex: 1; text-align: center; }
+  .row { display: flex; gap: 10px; }
+  .row .field { flex: 1; }
+  .quick { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+  .quick button { flex: 1; min-width: 56px; padding: 10px; border-radius: 10px; border: 1px solid #2e3563; background: var(--card-2); color: var(--text); font-weight: 600; cursor: pointer; font-size: 14px; }
+  .quick button:active { background: var(--accent); border-color: var(--accent); }
+  .btn { width: 100%; padding: 15px; border-radius: 12px; border: none; background: var(--accent); color: #fff; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 6px; }
+  .btn:active { transform: scale(.98); }
+
+  /* Chart */
+  .chart-wrap { width: 100%; }
+  svg { width: 100%; height: auto; display: block; }
+  .chart-legend { display: flex; flex-wrap: wrap; gap: 10px 14px; margin-top: 12px; }
+  .leg-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); cursor: pointer; user-select: none; }
+  .leg-item.off { opacity: .35; }
+  .leg-item.me { color: var(--text); font-weight: 700; }
+  .leg-swatch { width: 12px; height: 12px; border-radius: 4px; flex: 0 0 auto; }
+
+  /* Entries */
+  .entry { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #262c52; }
+  .entry:last-child { border-bottom: none; }
+  .entry .meta { display: flex; flex-direction: column; gap: 3px; }
+  .entry .who { font-weight: 700; font-size: 15px; }
+  .entry .det { font-size: 12px; color: var(--muted); }
+  .entry .mins { font-weight: 800; font-size: 16px; color: var(--accent-2); }
+  .entry .del { background: none; border: none; color: var(--danger); font-size: 18px; cursor: pointer; padding: 4px 8px; margin-left: 6px; }
+  .empty { color: var(--muted); font-size: 14px; text-align: center; padding: 18px 0; }
+
+  /* Leaderboard */
+  .lb-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; }
+  .lb-row .name { flex: 0 0 90px; font-size: 14px; font-weight: 600; }
+  .lb-bar { flex: 1; height: 10px; background: #262c52; border-radius: 999px; overflow: hidden; }
+  .lb-bar > span { display: block; height: 100%; border-radius: 999px; }
+  .lb-row .n { flex: 0 0 auto; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+  .seg { display: flex; background: var(--card-2); border-radius: 12px; padding: 4px; margin-bottom: 14px; }
+  .seg button { flex: 1; padding: 9px; border: none; background: none; color: var(--muted); font-weight: 700; font-size: 14px; border-radius: 9px; cursor: pointer; }
+  .seg button.active { background: var(--accent); color: #fff; }
+
+  .foot { text-align: center; color: var(--muted); font-size: 11px; padding: 6px 0 4px; }
+
+  /* Admin */
+  .member { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #262c52; }
+  .member:last-child { border-bottom: none; }
+  .member .dot { width: 22px; height: 22px; border-radius: 50%; flex: 0 0 auto; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; color: #fff; }
+  .member .mname { flex: 1; font-size: 15px; font-weight: 600; }
+  .member .tag { font-size: 10px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; color: var(--muted); border: 1px solid #2e3563; padding: 2px 7px; border-radius: 6px; }
+  .member .del { background: none; border: none; color: var(--danger); font-size: 18px; cursor: pointer; padding: 4px 8px; }
+  .mini { display: flex; gap: 8px; margin-top: 8px; }
+  .mini button { flex: 1; padding: 11px; border-radius: 10px; border: 1px solid #2e3563; background: var(--card-2); color: var(--text); font-weight: 600; font-size: 13px; cursor: pointer; }
+  .mini button:active { background: var(--accent); border-color: var(--accent); }
+
+  /* Undo toast */
+  .toast {
+    position: fixed; left: 50%; transform: translateX(-50%) translateY(18px);
+    bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 16px);
+    z-index: 40; background: #2a3057; border: 1px solid #3a4173;
+    display: flex; align-items: center; gap: 16px; padding: 13px 16px;
+    border-radius: 12px; box-shadow: 0 14px 34px -12px rgba(0,0,0,.65);
+    opacity: 0; pointer-events: none; transition: opacity .2s ease, transform .2s ease;
+    max-width: calc(100% - 32px); overflow: hidden;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
+  .toast .msg { font-size: 14px; color: var(--text); }
+  .toast .undo { background: none; border: none; color: var(--accent-2); font-weight: 800; font-size: 13px; cursor: pointer; text-transform: uppercase; letter-spacing: .6px; flex: 0 0 auto; }
+  .toast .bar { position: absolute; left: 0; bottom: 0; height: 3px; width: 100%; background: var(--accent); }
+
+  /* Confirm modal */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 50; background: rgba(6,8,20,0.62); backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center; padding: 24px;
+    opacity: 0; pointer-events: none; transition: opacity .18s ease;
+  }
+  .modal-overlay.show { opacity: 1; pointer-events: auto; }
+  .modal {
+    width: 100%; max-width: 340px; background: var(--card); border: 1px solid #2e3563;
+    border-radius: 18px; padding: 22px; box-shadow: 0 24px 60px -18px rgba(0,0,0,.7);
+    transform: translateY(12px) scale(.97); transition: transform .18s ease;
+  }
+  .modal-overlay.show .modal { transform: none; }
+  .modal .m-ico { width: 44px; height: 44px; border-radius: 12px; background: rgba(255,92,124,0.15); color: var(--danger); display: flex; align-items: center; justify-content: center; margin-bottom: 14px; }
+  .modal .m-ico svg { width: 24px; height: 24px; }
+  .modal-title { font-size: 18px; font-weight: 800; margin-bottom: 6px; letter-spacing: -.3px; }
+  .modal-msg { font-size: 14px; color: var(--muted); line-height: 1.5; margin-bottom: 20px; }
+  .modal-actions { display: flex; gap: 10px; }
+  .mbtn { flex: 1; padding: 13px; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; border: 1px solid #2e3563; }
+  .mbtn.ghost { background: var(--card-2); color: var(--text); }
+  .mbtn.danger { background: var(--danger); color: #fff; border-color: var(--danger); }
+  .mbtn:active { transform: scale(.98); }
+
+  /* Tabs */
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+  nav.tabs {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+    height: calc(var(--nav-h) + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
+    background: rgba(20,24,50,0.92); backdrop-filter: blur(12px);
+    border-top: 1px solid #262c52; display: flex;
+  }
+  nav.tabs button {
+    flex: 1; background: none; border: none; color: var(--muted); cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    font-size: 11px; font-weight: 600;
+  }
+  nav.tabs button .ico { line-height: 0; }
+  nav.tabs button .ico svg { width: 23px; height: 23px; display: block; }
+  nav.tabs button.active { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login">
+  <div class="wrap">
+    <div class="login-card">
+      <div class="logo">⏱️</div>
+      <h1>Minutes</h1>
+      <p>Enter your name to open your tracker</p>
+      <input type="text" id="loginName" placeholder="Your name" autocomplete="off" autocapitalize="words" />
+      <div class="login-err" id="loginErr"></div>
+      <button class="btn" id="loginBtn">Continue</button>
+      <div class="hint">Trusted group · your name is your key</div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="wrap">
+    <header>
+      <div style="display:flex;align-items:center;gap:11px">
+        <div class="me-avatar" id="headAvatar"></div>
+        <div>
+          <h1>Hi, <span id="meName">you</span> 👋</h1>
+          <div class="sub" id="tabSub">Stats</div>
+        </div>
+      </div>
+      <button class="logout" id="logoutBtn">Log out</button>
+    </header>
+
+    <!-- STATS TAB -->
+    <section class="tab-panel active" id="tab-stats">
+      <div class="statsblock"></div>
+
+      <div class="card">
+        <h2>Daily cumulative · <span id="monthLabel"></span></h2>
+        <div class="chart-wrap" id="chart"></div>
+        <div class="chart-legend" id="legend"></div>
+      </div>
+
+      <div class="card">
+        <h2>Leaderboard</h2>
+        <div class="seg" id="seg">
+          <button data-range="today" class="active">Today</button>
+          <button data-range="month">This month</button>
+        </div>
+        <div id="leaderboard"></div>
+      </div>
+    </section>
+
+    <!-- LOG TAB -->
+    <section class="tab-panel" id="tab-log">
+      <div class="statsblock"></div>
+
+      <div class="card">
+        <h2>Log your time</h2>
+        <div class="row">
+          <div class="field">
+            <label>Date</label>
+            <div class="datepick" id="datepick">
+              <button type="button" class="dp-trigger" id="dpTrigger">
+                <span id="dpLabel">Today</span>
+                <span class="dp-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg></span>
+              </button>
+              <div class="cal-pop" id="calPop">
+                <div class="cal-head">
+                  <button type="button" class="cal-nav" id="calPrev">‹</button>
+                  <div class="cal-title" id="calTitle"></div>
+                  <button type="button" class="cal-nav" id="calNext">›</button>
+                </div>
+                <div class="cal-grid cal-dow" id="calDow"></div>
+                <div class="cal-grid" id="calDays"></div>
+                <div class="cal-foot"><button type="button" id="calToday">Today</button></div>
+              </div>
+            </div>
+            <input type="hidden" id="date" />
+          </div>
+          <div class="field">
+            <label for="mins">Minutes</label>
+            <div class="stepper">
+              <button type="button" class="step" data-step="-5">−</button>
+              <input type="number" id="mins" inputmode="numeric" min="0" placeholder="0" />
+              <button type="button" class="step" data-step="5">+</button>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Quick add</label>
+          <div class="quick">
+            <button data-add="15">+15</button>
+            <button data-add="30">+30</button>
+            <button data-add="45">+45</button>
+            <button data-add="60">+60</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="note">Note (optional)</label>
+          <input type="text" id="note" placeholder="e.g. Morning run" />
+        </div>
+        <button class="btn" id="addBtn">Add entry</button>
+      </div>
+
+      <div class="card">
+        <h2>Your entries</h2>
+        <div id="entries"></div>
+      </div>
+    </section>
+
+    <!-- ADMIN TAB (admin only) -->
+    <section class="tab-panel" id="tab-admin">
+      <div class="card">
+        <h2>Members</h2>
+        <div id="memberList"></div>
+      </div>
+      <div class="card">
+        <h2>Add member</h2>
+        <div class="field">
+          <label for="newMember">Name (this is their username &amp; key)</label>
+          <input type="text" id="newMember" placeholder="e.g. Morgan" autocomplete="off" autocapitalize="words" />
+        </div>
+        <div class="login-err" id="memberErr" style="text-align:left"></div>
+        <button class="btn" id="addMemberBtn">Add member</button>
+      </div>
+      <div class="card">
+        <h2>Members file (temp DB)</h2>
+        <p style="color:var(--muted);font-size:12px;margin:0 0 4px;">Members live in this browser for now. Export/import a <code>members.txt</code> to move them between devices — this becomes a real DB table once we add the backend.</p>
+        <div class="mini">
+          <button id="exportBtn">Export members.txt</button>
+          <button id="importBtn">Import members.txt</button>
+        </div>
+        <input type="file" id="importFile" accept=".txt,text/plain" style="display:none" />
+      </div>
+    </section>
+
+    <div class="foot">Local mockup · data stored in this browser only · v1.0</div>
+  </div>
+
+  <nav class="tabs">
+    <button data-tab="stats" class="active">
+      <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 16 9 10 13 14 21 5"/></svg></span>Stats</button>
+    <button data-tab="log">
+      <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>Log</button>
+    <button data-tab="admin" id="adminTabBtn" style="display:none">
+      <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.2"/><path d="M5 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5"/></svg></span>Admin</button>
+  </nav>
+
+  <div class="toast" id="toast">
+    <span class="msg" id="toastMsg"></span>
+    <button class="undo" id="toastUndo">Undo</button>
+    <span class="bar" id="toastBar"></span>
+  </div>
+
+  <div class="modal-overlay" id="confirmModal">
+    <div class="modal">
+      <div class="m-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></div>
+      <div class="modal-title" id="confirmTitle">Delete?</div>
+      <div class="modal-msg" id="confirmMsg"></div>
+      <div class="modal-actions">
+        <button class="mbtn ghost" id="confirmCancel">Cancel</button>
+        <button class="mbtn danger" id="confirmOk">Delete</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var DEFAULT_MEMBERS = ["Rando", "Alex", "Sam", "Jordan", "Casey", "Taylor"];
+  var ADMIN = "Rando";
+  var PALETTE = ["#7c5cff", "#34d399", "#ffb454", "#ff5c7c", "#38bdf8", "#f472d0",
+                 "#a3e635", "#fb923c", "#22d3ee", "#c084fc", "#f87171", "#4ade80"];
+  var MEMBERS_KEY = "minutes_members_v1";
+  var STORE_KEY = "minutes_entries_v3";
+  var SESSION_KEY = "minutes_session_v3";
+
+  function members() {
+    try { var m = JSON.parse(localStorage.getItem(MEMBERS_KEY)); return (m && m.length) ? m : DEFAULT_MEMBERS.slice(); }
+    catch (e) { return DEFAULT_MEMBERS.slice(); }
+  }
+  function saveMembers(list) { localStorage.setItem(MEMBERS_KEY, JSON.stringify(list)); }
+  function colorFor(name) {
+    var idx = members().indexOf(name);
+    if (idx < 0) idx = 0;
+    return PALETTE[idx % PALETTE.length];
+  }
+
+  var state = { me: null, entries: load(), lbRange: "today", hidden: {} };
+
+  function load() {
+    try { return JSON.parse(localStorage.getItem(STORE_KEY)) || seed(); }
+    catch (e) { return seed(); }
+  }
+  function save() { localStorage.setItem(STORE_KEY, JSON.stringify(state.entries)); }
+
+  function seed() {
+    var demo = [];
+    // give everyone a bit of scattered month history for a rich multi-line chart
+    var bases = { Rando: 30, Alex: 22, Sam: 15, Jordan: 40, Casey: 18, Taylor: 26 };
+    DEFAULT_MEMBERS.forEach(function (name, idx) {
+      for (var i = 12; i >= 0; i -= 3) {
+        var dd = new Date(); dd.setDate(dd.getDate() - i);
+        demo.push({ id: uid(), who: name, date: iso(dd), mins: (bases[name] || 20) + ((i + idx) % 4) * 7, note: "" });
+      }
+    });
+    localStorage.setItem(STORE_KEY, JSON.stringify(demo));
+    return demo;
+  }
+
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+  function iso(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+  function pad(n) { return n < 10 ? "0" + n : "" + n; }
+  function todayStr() { return iso(new Date()); }
+  function monthPrefix() { var d = new Date(); return d.getFullYear() + "-" + pad(d.getMonth() + 1); }
+
+  // ---- Login ----
+  function resolveName(input) {
+    var q = (input || "").trim().toLowerCase();
+    var list = members();
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].toLowerCase() === q) return list[i];
+    }
+    return null;
+  }
+
+  function doLogin(name) {
+    state.me = name;
+    localStorage.setItem(SESSION_KEY, name);
+    document.getElementById("login").style.display = "none";
+    document.getElementById("app").style.display = "block";
+    document.getElementById("meName").textContent = name;
+    var av = document.getElementById("headAvatar");
+    av.textContent = name.charAt(0).toUpperCase();
+    av.style.background = colorFor(name);
+    setDate(todayStr());
+    document.getElementById("adminTabBtn").style.display = (name === ADMIN) ? "flex" : "none";
+    switchTab("stats");
+    renderAll();
+    window.scrollTo(0, 0);
+  }
+
+  function doLogout() {
+    state.me = null;
+    localStorage.removeItem(SESSION_KEY);
+    document.getElementById("app").style.display = "none";
+    document.getElementById("login").style.display = "block";
+    document.getElementById("loginName").value = "";
+    document.getElementById("loginErr").textContent = "";
+  }
+
+  document.getElementById("loginBtn").onclick = function () {
+    var name = resolveName(document.getElementById("loginName").value);
+    if (!name) { document.getElementById("loginErr").textContent = "Name not recognised. Ask the admin to add you."; return; }
+    doLogin(name);
+  };
+  document.getElementById("loginName").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") document.getElementById("loginBtn").click();
+  });
+  document.getElementById("logoutBtn").onclick = doLogout;
+
+  // ---- Tabs ----
+  function switchTab(tab) {
+    if (tab === "admin" && state.me !== ADMIN) tab = "stats";
+    document.querySelectorAll(".tab-panel").forEach(function (p) { p.classList.remove("active"); });
+    document.getElementById("tab-" + tab).classList.add("active");
+    document.querySelectorAll("nav.tabs button").forEach(function (b) {
+      b.classList.toggle("active", b.getAttribute("data-tab") === tab);
+    });
+    var label = { stats: "Stats", log: "Log time", admin: "Admin" }[tab] || "";
+    document.getElementById("tabSub").textContent = label;
+    if (tab === "admin") renderMembers();
+    window.scrollTo(0, 0);
+  }
+  document.querySelectorAll("nav.tabs button").forEach(function (b) {
+    b.onclick = function () { switchTab(b.getAttribute("data-tab")); };
+  });
+
+  // ---- Data helpers ----
+  function myEntries() { return state.entries.filter(function (e) { return e.who === state.me; }); }
+
+  function renderStats() {
+    var t = todayStr(), mp = monthPrefix(), today = 0, month = 0;
+    myEntries().forEach(function (e) {
+      if (e.date === t) today += e.mins;
+      if (e.date.indexOf(mp) === 0) month += e.mins;
+    });
+    var html =
+      '<div class="stats">' +
+        '<div class="tile accent">' +
+          '<div class="label"><span class="badge">You</span> Today</div>' +
+          '<div class="value">' + today + ' <small>min</small></div>' +
+        '</div>' +
+        '<div class="tile">' +
+          '<div class="label"><span class="badge">You</span> This month</div>' +
+          '<div class="value">' + month + ' <small>min</small></div>' +
+        '</div>' +
+      '</div>';
+    document.querySelectorAll(".statsblock").forEach(function (el) { el.innerHTML = html; });
+  }
+
+  // ---- Multi-line cumulative chart (all friends) ----
+  function renderChart() {
+    var now = new Date();
+    var today = now.getDate();
+    var mp = monthPrefix();
+    var maxDay = Math.max(today, 2);
+
+    // build cumulative series per member
+    var roster = members();
+    var series = {}; // name -> array of {day,val}
+    var globalMax = 10;
+    roster.forEach(function (name) {
+      var perDay = {};
+      state.entries.forEach(function (e) {
+        if (e.who === name && e.date.indexOf(mp) === 0) {
+          var day = parseInt(e.date.slice(8, 10), 10);
+          perDay[day] = (perDay[day] || 0) + e.mins;
+        }
+      });
+      var pts = [], cum = 0;
+      for (var d = 1; d <= today; d++) { cum += (perDay[d] || 0); pts.push({ day: d, val: cum }); }
+      series[name] = pts;
+      if (!state.hidden[name] && cum > globalMax) globalMax = cum;
+    });
+
+    var W = 448, H = 200, PL = 34, PR = 12, PT = 12, PB = 22;
+    var innerW = W - PL - PR, innerH = H - PT - PB;
+
+    function x(day) { return PL + (maxDay === 1 ? 0 : (day - 1) / (maxDay - 1) * innerW); }
+    function y(val) { return PT + innerH - (val / globalMax) * innerH; }
+
+    var yTicks = [0, Math.round(globalMax / 2), globalMax];
+    var grid = "";
+    yTicks.forEach(function (tv) {
+      var yy = y(tv);
+      grid += '<line x1="' + PL + '" y1="' + yy + '" x2="' + (W - PR) + '" y2="' + yy + '" stroke="#262c52" stroke-width="1"/>';
+      grid += '<text x="' + (PL - 6) + '" y="' + (yy + 3) + '" text-anchor="end" font-size="9" fill="#9aa0c8">' + tv + '</text>';
+    });
+
+    // x-axis calendar day labels — only as many as comfortably fit
+    var minSpacingPx = 26;
+    var maxLabels = Math.max(2, Math.floor(innerW / minSpacingPx));
+    var step = Math.max(1, Math.ceil(maxDay / maxLabels));
+    var xdays = [];
+    for (var dd = 1; dd <= today; dd += step) { xdays.push(dd); }
+    if (xdays[xdays.length - 1] !== today) xdays.push(today);
+    xdays.forEach(function (dnum) {
+      var xx = x(dnum);
+      grid += '<line x1="' + xx.toFixed(1) + '" y1="' + PT + '" x2="' + xx.toFixed(1) + '" y2="' + (PT + innerH) + '" stroke="#20264a" stroke-width="1"/>';
+      grid += '<text x="' + xx.toFixed(1) + '" y="' + (H - 6) + '" text-anchor="middle" font-size="9" fill="#9aa0c8">' + dnum + '</text>';
+    });
+
+    var lines = "";
+    // draw others first, me last (on top)
+    var order = roster.filter(function (n) { return n !== state.me; }).concat(state.me ? [state.me] : []);
+    order.forEach(function (name) {
+      if (state.hidden[name]) return;
+      var pts = series[name]; if (!pts || !pts.length) return;
+      var isMe = name === state.me;
+      var path = "";
+      pts.forEach(function (p, i) { path += (i === 0 ? "M" : "L") + x(p.day).toFixed(1) + " " + y(p.val).toFixed(1) + " "; });
+      lines += '<path d="' + path + '" fill="none" stroke="' + colorFor(name) + '" stroke-width="' + (isMe ? 3.2 : 2) +
+               '" stroke-linejoin="round" stroke-linecap="round" opacity="' + (isMe ? 1 : 0.85) + '"/>';
+      var last = pts[pts.length - 1];
+      lines += '<circle cx="' + x(last.day).toFixed(1) + '" cy="' + y(last.val).toFixed(1) + '" r="' + (isMe ? 4 : 3) +
+               '" fill="' + colorFor(name) + '" stroke="#0f1226" stroke-width="1.5"/>';
+    });
+
+    var svg =
+      '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet" role="img">' +
+      grid + lines + '</svg>';
+    document.getElementById("chart").innerHTML = svg;
+    document.getElementById("monthLabel").textContent = now.toLocaleString(undefined, { month: "long", year: "numeric" });
+
+    renderLegend();
+  }
+
+  function renderLegend() {
+    var el = document.getElementById("legend");
+    el.innerHTML = "";
+    var mp = monthPrefix();
+    var totals = {};
+    members().forEach(function (n) { totals[n] = 0; });
+    state.entries.forEach(function (e) {
+      if (e.date.indexOf(mp) === 0 && totals.hasOwnProperty(e.who)) totals[e.who] += e.mins;
+    });
+    var ordered = members().slice().sort(function (a, b) { return totals[b] - totals[a]; });
+    ordered.forEach(function (name) {
+      var item = document.createElement("div");
+      item.className = "leg-item" + (state.hidden[name] ? " off" : "") + (name === state.me ? " me" : "");
+      item.innerHTML = '<span class="leg-swatch" style="background:' + colorFor(name) + '"></span>' +
+                       (name === state.me ? name + " (you)" : name);
+      item.onclick = function () { state.hidden[name] = !state.hidden[name]; renderChart(); };
+      el.appendChild(item);
+    });
+  }
+
+  function renderEntries() {
+    var el = document.getElementById("entries");
+    var mine = myEntries().sort(function (a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : 0; }).slice(0, 20);
+    if (!mine.length) { el.innerHTML = '<div class="empty">No entries yet — log your first above.</div>'; return; }
+    el.innerHTML = "";
+    mine.forEach(function (e) {
+      var div = document.createElement("div");
+      div.className = "entry";
+      div.innerHTML =
+        '<div class="meta"><span class="who">' + escapeHtml(e.date) + '</span>' +
+        '<span class="det">' + escapeHtml(e.note || "—") + '</span></div>' +
+        '<div style="display:flex;align-items:center">' +
+        '<span class="mins">' + e.mins + 'm</span>' +
+        '<button class="del" title="Delete">×</button></div>';
+      div.querySelector(".del").onclick = function () {
+        showConfirm({ title: "Delete entry?", msg: e.date + " · " + e.mins + " min" + (e.note ? " · " + e.note : ""), ok: "Delete" }, function () {
+          var removed = e;
+          state.entries = state.entries.filter(function (x) { return x.id !== removed.id; });
+          save(); renderAll();
+          showUndo("Entry deleted", function () {
+            state.entries.push(removed); save(); renderAll();
+          });
+        });
+      };
+      el.appendChild(div);
+    });
+  }
+
+  function renderLeaderboard() {
+    var el = document.getElementById("leaderboard");
+    var range = state.lbRange, t = todayStr(), mp = monthPrefix();
+    var roster = members();
+    var totals = {};
+    roster.forEach(function (n) { totals[n] = 0; });
+    state.entries.forEach(function (e) {
+      var inRange = range === "today" ? e.date === t : e.date.indexOf(mp) === 0;
+      if (inRange && totals.hasOwnProperty(e.who)) totals[e.who] += e.mins;
+    });
+    var arr = roster.map(function (n) { return { name: n, mins: totals[n] }; })
+                     .sort(function (a, b) { return b.mins - a.mins; });
+    var max = Math.max(1, arr[0].mins);
+    el.innerHTML = "";
+    arr.forEach(function (r) {
+      var row = document.createElement("div");
+      row.className = "lb-row";
+      var pct = Math.round((r.mins / max) * 100);
+      row.innerHTML =
+        '<div class="name">' + (r.name === state.me ? "★ " : "") + escapeHtml(r.name) + '</div>' +
+        '<div class="lb-bar"><span style="width:' + pct + '%;background:' + colorFor(r.name) + '"></span></div>' +
+        '<div class="n">' + r.mins + 'm</div>';
+      el.appendChild(row);
+    });
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  function renderAll() { renderStats(); renderChart(); renderEntries(); renderLeaderboard(); }
+
+  // ---- Undo toast (6s) ----
+  var UNDO_MS = 6000;
+  var toastTimer = null, toastUndoFn = null;
+  function showUndo(msg, onUndo) {
+    var t = document.getElementById("toast");
+    document.getElementById("toastMsg").textContent = msg;
+    toastUndoFn = onUndo;
+    t.classList.add("show");
+    var bar = document.getElementById("toastBar");
+    bar.style.transition = "none"; bar.style.width = "100%";
+    void bar.offsetWidth; // reflow so the animation restarts
+    bar.style.transition = "width " + UNDO_MS + "ms linear"; bar.style.width = "0%";
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(hideToast, UNDO_MS);
+  }
+  function hideToast() {
+    document.getElementById("toast").classList.remove("show");
+    toastUndoFn = null;
+    if (toastTimer) { clearTimeout(toastTimer); toastTimer = null; }
+  }
+  document.getElementById("toastUndo").onclick = function () {
+    var fn = toastUndoFn; toastUndoFn = null;
+    hideToast();
+    if (fn) fn();
+  };
+
+  // ---- Themed confirm modal ----
+  var confirmCb = null;
+  function showConfirm(opts, onOk) {
+    document.getElementById("confirmTitle").textContent = opts.title || "Are you sure?";
+    document.getElementById("confirmMsg").textContent = opts.msg || "";
+    document.getElementById("confirmOk").textContent = opts.ok || "Delete";
+    confirmCb = onOk;
+    document.getElementById("confirmModal").classList.add("show");
+  }
+  function hideConfirm() {
+    document.getElementById("confirmModal").classList.remove("show");
+    confirmCb = null;
+  }
+  document.getElementById("confirmCancel").onclick = hideConfirm;
+  document.getElementById("confirmModal").onclick = function (e) { if (e.target === this) hideConfirm(); };
+  document.getElementById("confirmOk").onclick = function () {
+    var cb = confirmCb; hideConfirm(); if (cb) cb();
+  };
+
+  // ---- Custom calendar date picker ----
+  var calView = new Date();
+  var selectedISO = todayStr();
+  function parseISO(s) { var p = s.split("-"); return new Date(+p[0], (+p[1]) - 1, +p[2]); }
+  function fmtNice(d) {
+    if (iso(d) === todayStr()) return "Today";
+    return d.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
+  }
+  function setDate(isoStr) {
+    selectedISO = isoStr;
+    document.getElementById("date").value = isoStr;
+    var d = parseISO(isoStr);
+    document.getElementById("dpLabel").textContent = fmtNice(d);
+    calView = new Date(d.getFullYear(), d.getMonth(), 1);
+  }
+  function renderCal() {
+    var y = calView.getFullYear(), m = calView.getMonth();
+    document.getElementById("calTitle").textContent = calView.toLocaleString(undefined, { month: "long", year: "numeric" });
+    var dow = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
+    var dowEl = document.getElementById("calDow"); dowEl.innerHTML = "";
+    dow.forEach(function (d) { var s = document.createElement("div"); s.className = "cal-dow-cell"; s.textContent = d; dowEl.appendChild(s); });
+    var startDay = (new Date(y, m, 1).getDay() + 6) % 7; // Monday-first
+    var daysInMonth = new Date(y, m + 1, 0).getDate();
+    var daysEl = document.getElementById("calDays"); daysEl.innerHTML = "";
+    for (var i = 0; i < startDay; i++) { var b = document.createElement("div"); b.className = "cal-cell blank"; daysEl.appendChild(b); }
+    var todayISO = todayStr();
+    for (var day = 1; day <= daysInMonth; day++) {
+      var cellISO = y + "-" + pad(m + 1) + "-" + pad(day);
+      var isFuture = cellISO > todayISO;
+      var c = document.createElement("button");
+      c.type = "button";
+      c.className = "cal-cell" + (cellISO === selectedISO ? " sel" : "") + (cellISO === todayISO ? " today" : "") + (isFuture ? " future" : "");
+      c.textContent = day;
+      if (!isFuture) {
+        (function (ci) { c.onclick = function () { setDate(ci); renderCal(); closeCal(); }; })(cellISO);
+      }
+      daysEl.appendChild(c);
+    }
+  }
+  function openCal() { renderCal(); document.getElementById("calPop").classList.add("show"); }
+  function closeCal() { document.getElementById("calPop").classList.remove("show"); }
+  document.getElementById("dpTrigger").onclick = function (e) {
+    e.stopPropagation();
+    var pop = document.getElementById("calPop");
+    if (pop.classList.contains("show")) closeCal(); else openCal();
+  };
+  document.getElementById("calPrev").onclick = function (e) { e.stopPropagation(); calView.setMonth(calView.getMonth() - 1); renderCal(); };
+  document.getElementById("calNext").onclick = function (e) { e.stopPropagation(); calView.setMonth(calView.getMonth() + 1); renderCal(); };
+  document.getElementById("calToday").onclick = function (e) { e.stopPropagation(); setDate(todayStr()); renderCal(); closeCal(); };
+  document.getElementById("calPop").onclick = function (e) { e.stopPropagation(); };
+  document.addEventListener("click", function (e) {
+    var dp = document.getElementById("datepick");
+    if (dp && !dp.contains(e.target)) closeCal();
+  });
+
+  // ---- Interactions ----
+  document.querySelectorAll(".quick button").forEach(function (b) {
+    b.onclick = function () {
+      var cur = parseInt(document.getElementById("mins").value, 10) || 0;
+      document.getElementById("mins").value = cur + parseInt(b.getAttribute("data-add"), 10);
+    };
+  });
+
+  document.querySelectorAll(".stepper .step").forEach(function (b) {
+    b.onclick = function () {
+      var cur = parseInt(document.getElementById("mins").value, 10) || 0;
+      var next = cur + parseInt(b.getAttribute("data-step"), 10);
+      if (next < 0) next = 0;
+      document.getElementById("mins").value = next || "";
+    };
+  });
+
+  document.getElementById("addBtn").onclick = function () {
+    var mins = parseInt(document.getElementById("mins").value, 10);
+    var date = document.getElementById("date").value || todayStr();
+    var note = document.getElementById("note").value.trim();
+    if (!mins || mins <= 0) { alert("Enter minutes greater than 0"); return; }
+    // stack: add to the same day's entry if one already exists
+    var merged = false;
+    for (var i = 0; i < state.entries.length; i++) {
+      var e = state.entries[i];
+      if (e.who === state.me && e.date === date) {
+        e.mins += mins;
+        if (note) { e.note = e.note ? (e.note + "; " + note) : note; }
+        merged = true; break;
+      }
+    }
+    if (!merged) {
+      state.entries.push({ id: uid(), who: state.me, date: date, mins: mins, note: note });
+    }
+    save();
+    document.getElementById("mins").value = "";
+    document.getElementById("note").value = "";
+    renderAll();
+  };
+
+  document.querySelectorAll("#seg button").forEach(function (b) {
+    b.onclick = function () {
+      document.querySelectorAll("#seg button").forEach(function (x) { x.classList.remove("active"); });
+      b.classList.add("active");
+      state.lbRange = b.getAttribute("data-range");
+      renderLeaderboard();
+    };
+  });
+
+  // ---- Admin ----
+  function renderMembers() {
+    var el = document.getElementById("memberList");
+    var list = members();
+    el.innerHTML = "";
+    list.forEach(function (name) {
+      var row = document.createElement("div");
+      row.className = "member";
+      var isAdmin = name === ADMIN;
+      row.innerHTML =
+        '<span class="dot" style="background:' + colorFor(name) + '">' + escapeHtml(name.charAt(0).toUpperCase()) + '</span>' +
+        '<span class="mname">' + escapeHtml(name) + '</span>' +
+        (isAdmin ? '<span class="tag">Admin</span>' : '<button class="del" title="Remove">×</button>');
+      var del = row.querySelector(".del");
+      if (del) del.onclick = function () {
+        showConfirm({ title: "Remove " + name + "?", msg: "Their logged entries stay, but they can no longer sign in.", ok: "Remove" }, function () {
+          var idx = members().indexOf(name);
+          saveMembers(members().filter(function (n) { return n !== name; }));
+          renderMembers(); renderAll();
+          showUndo(name + " removed", function () {
+            var l = members();
+            if (l.indexOf(name) < 0) { l.splice(Math.min(idx < 0 ? l.length : idx, l.length), 0, name); saveMembers(l); }
+            renderMembers(); renderAll();
+          });
+        });
+      };
+      el.appendChild(row);
+    });
+  }
+
+  document.getElementById("addMemberBtn").onclick = function () {
+    var input = document.getElementById("newMember");
+    var err = document.getElementById("memberErr");
+    var name = input.value.trim();
+    err.textContent = "";
+    if (!name) { err.textContent = "Enter a name."; return; }
+    if (!/^[A-Za-z][A-Za-z0-9 _-]{0,23}$/.test(name)) { err.textContent = "Use letters/numbers, 1-24 chars, starting with a letter."; return; }
+    var list = members();
+    if (list.some(function (n) { return n.toLowerCase() === name.toLowerCase(); })) {
+      err.textContent = "That name already exists."; return;
+    }
+    list.push(name);
+    saveMembers(list);
+    input.value = "";
+    renderMembers(); renderAll();
+  };
+  document.getElementById("newMember").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") document.getElementById("addMemberBtn").click();
+  });
+
+  document.getElementById("exportBtn").onclick = function () {
+    var text = members().join("\n") + "\n";
+    var blob = new Blob([text], { type: "text/plain" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = "members.txt";
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+  };
+  document.getElementById("importBtn").onclick = function () { document.getElementById("importFile").click(); };
+  document.getElementById("importFile").onchange = function (ev) {
+    var file = ev.target.files[0]; if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      var names = String(reader.result).split(/\r?\n/)
+        .map(function (s) { return s.trim(); })
+        .filter(function (s) { return s.length; });
+      if (!names.length) { alert("No names found in file."); return; }
+      // ensure admin is always present
+      if (names.map(function (n) { return n.toLowerCase(); }).indexOf(ADMIN.toLowerCase()) < 0) names.unshift(ADMIN);
+      // de-dupe (case-insensitive)
+      var seen = {}, out = [];
+      names.forEach(function (n) { var k = n.toLowerCase(); if (!seen[k]) { seen[k] = 1; out.push(n); } });
+      saveMembers(out);
+      renderMembers(); renderAll();
+      alert("Imported " + out.length + " members.");
+    };
+    reader.readAsText(file);
+    ev.target.value = "";
+  };
+
+  // ---- Boot ----
+  var saved = localStorage.getItem(SESSION_KEY);
+  if (saved && resolveName(saved)) { doLogin(resolveName(saved)); }
+})();
+</script>
+</body>
+</html>

@@ -385,17 +385,22 @@
         <button class="btn" id="addMemberBtn">Add member</button>
       </div>
       <div class="card">
-        <h2>Members file (temp DB)</h2>
-        <p style="color:var(--muted);font-size:12px;margin:0 0 4px;">Members live in this browser for now. Export/import a <code>members.txt</code> to move them between devices — this becomes a real DB table once we add the backend.</p>
+        <h2>Members file</h2>
+        <p style="color:var(--muted);font-size:12px;margin:0 0 4px;">Members sync live via Firebase. Export/import a <code>members.txt</code> for a backup or bulk edit.</p>
         <div class="mini">
           <button id="exportBtn">Export members.txt</button>
           <button id="importBtn">Import members.txt</button>
         </div>
         <input type="file" id="importFile" accept=".txt,text/plain" style="display:none" />
       </div>
+      <div class="card" style="border-color:#5a2436;">
+        <h2 style="color:var(--danger);">Danger zone</h2>
+        <p style="color:var(--muted);font-size:12px;margin:0 0 10px;">Wipes <b>all</b> logged entries and replaces them with only the original August sheet data. Cannot be undone.</p>
+        <button class="btn" id="resetAugBtn" style="background:var(--danger);">Reset to August data</button>
+      </div>
     </section>
 
-    <div class="foot" id="footNote">Connecting… · v2.0</div>
+    <div class="foot" id="footNote">Connecting… · v2.2</div>
   </div>
 
   <nav class="tabs">
@@ -1106,6 +1111,32 @@
     ev.target.value = "";
   };
 
+  document.getElementById("resetAugBtn").onclick = function () {
+    showConfirm({
+      title: "Reset to August data?",
+      msg: "This deletes ALL entries and restores only the original August sheet numbers. This cannot be undone.",
+      ok: "Reset everything"
+    }, function () {
+      var augCols = {
+        Gerli: [192, 299, 90, 69, 120, 156],
+        Kairi: [0, 106, 73, 69, 0, 31],
+        Matis: [90, 233, 110, 60, 137, 0],
+        Rando: [0, 0, 35, 70, 90, 0],
+        Raido: [0, 31, 0, 0, 0, 120]
+      };
+      // delete every existing entry
+      state.entries.slice().forEach(function (e) { Store.deleteEntry(e.id); });
+      // write only the August sheet numbers (skip zeros)
+      var n = 0;
+      Object.keys(augCols).forEach(function (name) {
+        augCols[name].forEach(function (mins, i) {
+          if (mins > 0) { Store.addEntry({ who: name, date: "2026-08-" + pad(i + 1), mins: mins, note: "" }); n++; }
+        });
+      });
+      showToast("Database reset — " + n + " August entries restored");
+    });
+  };
+
   // ---- Data store: Firestore when available, localStorage otherwise ----
   var Store = (function () {
     var mode = "local";
@@ -1206,7 +1237,7 @@
     if (window.__FB) Store.useFirebase(window.__FB); else Store.useLocal();
     Store.start();
     var foot = document.getElementById("footNote");
-    if (foot) foot.textContent = (window.__FB ? "Live · synced via Firebase" : "Offline · this browser only") + " · v2.1";
+    if (foot) foot.textContent = (window.__FB ? "Live · synced via Firebase" : "Offline · this browser only") + " · v2.2";
     var saved = localStorage.getItem(SESSION_KEY);
     if (saved && resolveName(saved)) doLogin(resolveName(saved));
   }

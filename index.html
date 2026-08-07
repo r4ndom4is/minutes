@@ -53,6 +53,29 @@
 
   .card { background: var(--card); border: 1px solid #262c52; border-radius: var(--radius); padding: 18px; margin-bottom: 16px; }
   .card h2 { font-size: 14px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); margin: 0 0 14px; font-weight: 700; }
+  .card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .card-head h2 { margin: 0; }
+  .edit-btn { background: var(--card-2); border: 1px solid #2e3563; color: var(--muted); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; padding: 5px 12px; border-radius: 8px; cursor: pointer; }
+  .edit-btn.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* Participant editor */
+  .pe-sub { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); font-weight: 700; margin: 14px 0 8px; }
+  .pe-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #262c52; }
+  .pe-row:last-of-type { border-bottom: none; }
+  .pe-row .dot { width: 22px; height: 22px; border-radius: 50%; flex: 0 0 auto; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; color: #fff; }
+  .pe-row .nm { flex: 1; font-size: 15px; font-weight: 600; }
+  .pe-row .rm { background: none; border: none; color: var(--danger); font-size: 18px; cursor: pointer; padding: 4px 8px; }
+  .pe-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pe-chip { border: 1px solid #2e3563; background: var(--card-2); color: var(--text); font-size: 13px; font-weight: 600; padding: 7px 12px; border-radius: 12px; cursor: pointer; }
+  .pe-chip:active { background: var(--accent); border-color: var(--accent); }
+  .pe-empty { font-size: 12px; color: var(--muted); padding: 2px 0; }
+  .pe-add { display: flex; gap: 8px; margin-top: 8px; }
+  .pe-add input { flex: 1; min-width: 0; }
+  .pe-add button { flex: 0 0 auto; padding: 0 16px; border-radius: 12px; border: 1px solid #2e3563; background: var(--card-2); color: var(--text); font-weight: 600; font-size: 14px; cursor: pointer; }
+  .pe-done { width: 100%; padding: 13px; border-radius: 12px; border: none; background: var(--accent); color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 16px; }
+  .pe-err { color: var(--danger); font-size: 12px; min-height: 0; margin-top: 6px; }
+
+  .block-note { font-size: 13px; color: #ffc2ce; background: rgba(255,92,124,.1); border: 1px solid #6a2a38; border-radius: 12px; padding: 11px 14px; margin-bottom: 12px; line-height: 1.4; }
 
   /* Personal stats block */
   .me-avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px; color: #fff; flex: 0 0 auto; }
@@ -93,6 +116,7 @@
   .cal-title { font-size: 14px; font-weight: 700; }
   .cal-nav { width: 32px; height: 32px; border-radius: 9px; border: 1px solid #2e3563; background: var(--card-2); color: var(--text); font-size: 18px; cursor: pointer; line-height: 1; }
   .cal-nav:active { background: var(--accent); border-color: var(--accent); }
+  .cal-nav:disabled { opacity: .4; cursor: default; }
   .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
   .cal-dow-cell { text-align: center; font-size: 10px; font-weight: 700; color: var(--muted); padding: 4px 0; text-transform: uppercase; }
   .cal-cell { aspect-ratio: 1 / 1; border: none; background: none; color: var(--text); font-size: 13px; border-radius: 9px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
@@ -167,7 +191,7 @@
   .lb-bar > span { display: block; height: 100%; border-radius: 999px; }
   .lb-row .n { flex: 0 0 auto; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
 
-  .seg { display: flex; background: var(--card-2); border-radius: 12px; padding: 4px; margin-bottom: 14px; }
+  .seg { display: flex; background: var(--card-2); border-radius: 12px; padding: 4px; margin-bottom: 16px; }
   .seg button { flex: 1; padding: 9px; border: none; background: none; color: var(--muted); font-weight: 700; font-size: 14px; border-radius: 9px; cursor: pointer; }
   .seg button.active { background: var(--accent); color: #fff; }
   .seg button:disabled { opacity: .4; cursor: default; }
@@ -309,13 +333,17 @@
       </div>
 
       <div class="card">
-        <h2>Leaderboard</h2>
+        <div class="card-head">
+          <h2>Leaderboard</h2>
+          <button class="edit-btn" id="editParticipants" style="display:none">Edit</button>
+        </div>
         <div class="seg" id="seg">
           <button data-range="today" class="active">Today</button>
           <button data-range="month">Month</button>
         </div>
         <div class="motiv" id="motivation" style="display:none"></div>
         <div id="leaderboard"></div>
+        <div id="participantEdit" style="display:none"></div>
       </div>
     </section>
 
@@ -368,6 +396,7 @@
           <label for="note">Note (optional)</label>
           <input type="text" id="note" placeholder="e.g. Morning run" />
         </div>
+        <div class="block-note" id="logBlockNote" style="display:none"></div>
         <button class="btn" id="addBtn">Add entry</button>
       </div>
 
@@ -434,18 +463,96 @@
   var PALETTE = ["#7c5cff", "#34d399", "#ffb454", "#ff5c7c", "#38bdf8", "#f472d0",
                  "#a3e635", "#fb923c", "#22d3ee", "#c084fc", "#f87171", "#4ade80"];
   var SESSION_KEY = "minutes_session_v3";
-  var VERSION = "2.9";
+  var VERSION = "3.2";
 
   // In-memory cache - the UI's source of truth; kept in sync by Store (Firestore).
   var cache = { members: DEFAULT_MEMBERS.slice(), admins: DEFAULT_ADMINS.slice() };
+  var challengesCache = {}; // "YYYY-MM" -> [participant names]
 
   function members() { return cache.members.slice(); }
   function admins() { return cache.admins.slice(); }
   function isAdmin(name) { return cache.admins.some(function (a) { return a.toLowerCase() === String(name).toLowerCase(); }); }
   function colorFor(name) { var idx = cache.members.indexOf(name); if (idx < 0) idx = 0; return PALETTE[idx % PALETTE.length]; }
 
-  var state = { me: null, entries: [], lbRange: "today", hidden: {}, viewMonth: firstOfMonth(new Date()), openMonths: {} };
+  // Participants for a month: explicit challenge doc, else inherit the most recent
+  // prior defined month, else fall back to the full member roster (first-run bootstrap).
+  function entryAuthorsForMonth(key) {
+    var seen = {}, order = [];
+    state.entries.forEach(function (e) {
+      if (e.date.indexOf(key) === 0 && !seen[e.who]) { seen[e.who] = 1; order.push(e.who); }
+    });
+    return order;
+  }
+  function participantsFor(dateOrKey) {
+    var key = typeof dateOrKey === "string" ? dateOrKey : monthKeyOf(dateOrKey);
+    if (challengesCache[key]) return challengesCache[key].slice();
+    // Past month with no explicit challenge: use who actually logged (stable history,
+    // so adding a new member later never retroactively appears in old months).
+    if (key < monthKeyOf(new Date())) {
+      var authors = entryAuthorsForMonth(key);
+      if (authors.length) return authors;
+    }
+    // Current / future (or an empty past month): inherit the most recent defined month, else the roster.
+    var prior = Object.keys(challengesCache).filter(function (k) { return k < key; }).sort();
+    if (prior.length) return challengesCache[prior[prior.length - 1]].slice();
+    return members();
+  }
+  function isParticipant(name, dateOrKey) {
+    return participantsFor(dateOrKey).some(function (p) { return p.toLowerCase() === String(name).toLowerCase(); });
+  }
+  // A month is editable only if it is the current calendar month or the next one.
+  function monthEditable(dateObj) {
+    var now = new Date();
+    var cur = firstOfMonth(now).getTime();
+    var next = new Date(now.getFullYear(), now.getMonth() + 1, 1).getTime();
+    var d = firstOfMonth(dateObj).getTime();
+    return d === cur || d === next;
+  }
+  // Logging is allowed for the current month and the previous one; older months are closed.
+  function logWindowStart() { var n = new Date(); return new Date(n.getFullYear(), n.getMonth() - 1, 1); }
+  // Earliest month you can browse: the first month with any data or a challenge (else this month).
+  function minNavMonth() {
+    var minKey = monthKeyOf(new Date());
+    state.entries.forEach(function (e) { var k = e.date.slice(0, 7); if (k < minKey) minKey = k; });
+    Object.keys(challengesCache).forEach(function (k) { if (k < minKey) minKey = k; });
+    return new Date(+minKey.slice(0, 4), (+minKey.slice(5, 7)) - 1, 1);
+  }
+  function keyToDate(k) { return new Date(+k.slice(0, 4), (+k.slice(5, 7)) - 1, 1); }
+  function nextMonthKey() { var n = new Date(); return monthKeyOf(new Date(n.getFullYear(), n.getMonth() + 1, 1)); }
+  // Every month key from the group's earliest through the current month.
+  function allMonthKeysToCurrent() {
+    var keys = [], d = firstOfMonth(minNavMonth()), cur = firstOfMonth(new Date());
+    while (d.getTime() <= cur.getTime()) { keys.push(monthKeyOf(d)); d = new Date(d.getFullYear(), d.getMonth() + 1, 1); }
+    return keys;
+  }
+  // Months the signed-in user may browse. Admins: all + next. Others: only ones they're in, + next.
+  function viewableMonthKeys() {
+    var admin = !!state.me && isAdmin(state.me);
+    var base = allMonthKeysToCurrent();
+    var list = admin ? base.slice() : base.filter(function (k) { return isParticipant(state.me, k); });
+    list.push(nextMonthKey());
+    return list;
+  }
+  // The month a user lands on: their latest viewable month at or before now (else the only one, next).
+  function defaultViewKey() {
+    var list = viewableMonthKeys(), todayKey = monthKeyOf(new Date());
+    var cands = list.filter(function (k) { return k <= todayKey; });
+    return cands.length ? cands[cands.length - 1] : list[list.length - 1];
+  }
+  function clampViewMonth() {
+    if (!state.me) return;
+    if (viewableMonthKeys().indexOf(monthKeyOf(state.viewMonth)) < 0) state.viewMonth = keyToDate(defaultViewKey());
+  }
+
+  var state = { me: null, entries: [], lbRange: "today", hidden: {}, viewMonth: firstOfMonth(new Date()), openMonths: {}, editing: false };
   var rosterLoaded = false;
+  var netReady = false; // true once we've received real data from the server (not just cache)
+  function isConnected() { return netReady; }
+  function requireConnection() {
+    if (netReady) return true;
+    showToast("Not connected. Your change wasn't saved — reconnect and try again.", null);
+    return false;
+  }
 
   function seedData() {
     var demo = [];
@@ -580,10 +687,13 @@
   function renderMonthBar() {
     var lbl = document.getElementById("monthLabelTop");
     lbl.textContent = state.viewMonth.toLocaleString(undefined, { month: "long", year: "numeric" });
-    var cur = isCurrentMonth(state.viewMonth);
-    document.getElementById("monthNext").disabled = cur;
-    lbl.classList.toggle("past", !cur);
-    lbl.title = cur ? "" : "Back to current month";
+    var list = viewableMonthKeys();
+    var idx = list.indexOf(monthKeyOf(state.viewMonth));
+    document.getElementById("monthPrev").disabled = (idx <= 0);
+    document.getElementById("monthNext").disabled = (idx < 0 || idx >= list.length - 1);
+    var atDefault = monthKeyOf(state.viewMonth) === defaultViewKey();
+    lbl.classList.toggle("past", !atDefault);
+    lbl.title = atDefault ? "" : "Jump to latest";
   }
 
   // ---- Multi-line cumulative chart (all friends) ----
@@ -594,8 +704,8 @@
     var lastDay = isCur ? new Date().getDate() : new Date(vm.getFullYear(), vm.getMonth() + 1, 0).getDate();
     var maxDay = Math.max(lastDay, 2);
 
-    // build cumulative series per member
-    var roster = members();
+    // build cumulative series per participant
+    var roster = participantsFor(vm);
     var series = {}; // name -> array of {day,val}
     var globalMax = 10;
     var anyData = false;
@@ -674,9 +784,12 @@
   }
 
   function sleepyChartSvg() {
-    return '<svg viewBox="0 0 448 200" preserveAspectRatio="xMidYMid meet" role="img" aria-label="No data this month">' +
-      '<text x="224" y="98" text-anchor="middle" font-size="15" fill="#9aa0c8" font-weight="600">No minutes logged this month</text>' +
-      '<text x="224" y="120" text-anchor="middle" font-size="12" fill="#5a6296">Be the first to get on the board</text>' +
+    var isFuture = state.viewMonth.getTime() > firstOfMonth(new Date()).getTime();
+    var l1 = isFuture ? "This challenge hasn't started yet" : "No minutes on the board yet";
+    var l2 = isFuture ? "Minutes will show up here once it does" : "Log some time to kick it off";
+    return '<svg viewBox="0 0 448 200" preserveAspectRatio="xMidYMid meet" role="img" aria-label="No data">' +
+      '<text x="224" y="98" text-anchor="middle" font-size="15" fill="#9aa0c8" font-weight="600">' + l1 + '</text>' +
+      '<text x="224" y="120" text-anchor="middle" font-size="12" fill="#5a6296">' + l2 + '</text>' +
       '</svg>';
   }
 
@@ -684,12 +797,13 @@
     var el = document.getElementById("legend");
     el.innerHTML = "";
     var mp = monthKeyOf(state.viewMonth);
+    var roster = participantsFor(state.viewMonth);
     var totals = {};
-    members().forEach(function (n) { totals[n] = 0; });
+    roster.forEach(function (n) { totals[n] = 0; });
     state.entries.forEach(function (e) {
       if (e.date.indexOf(mp) === 0 && totals.hasOwnProperty(e.who)) totals[e.who] += e.mins;
     });
-    var ordered = members().slice().sort(function (a, b) { return totals[b] - totals[a]; });
+    var ordered = roster.slice().sort(function (a, b) { return totals[b] - totals[a]; });
     ordered.forEach(function (name) {
       var item = document.createElement("div");
       item.className = "leg-item" + (state.hidden[name] ? " off" : "") + (name === state.me ? " me" : "");
@@ -758,7 +872,43 @@
   }
 
   function renderLeaderboard() {
-    var el = document.getElementById("leaderboard");
+    var editBtn = document.getElementById("editParticipants");
+    var admin = !!state.me && isAdmin(state.me);
+    var canAdminEdit = admin && monthEditable(state.viewMonth);
+    var canSelfToggle = !admin && !!state.me && monthKeyOf(state.viewMonth) === nextMonthKey();
+    if (!canAdminEdit && state.editing) state.editing = false;
+
+    if (canAdminEdit) {
+      editBtn.style.display = "block";
+      editBtn.classList.toggle("on", state.editing);
+      editBtn.textContent = state.editing ? "Done" : "Edit";
+    } else if (canSelfToggle) {
+      editBtn.style.display = "block";
+      var inNext = isParticipant(state.me, monthKeyOf(state.viewMonth));
+      editBtn.classList.toggle("on", inNext);
+      editBtn.textContent = inNext ? "Leave" : "Join";
+    } else {
+      editBtn.style.display = "none";
+    }
+
+    var segEl = document.getElementById("seg");
+    var motEl = document.getElementById("motivation");
+    var lbEl = document.getElementById("leaderboard");
+    var peEl = document.getElementById("participantEdit");
+
+    if (state.editing && canAdminEdit) {
+      segEl.style.display = "none";
+      motEl.style.display = "none";
+      lbEl.style.display = "none";
+      peEl.style.display = "block";
+      renderParticipantEditor(peEl);
+      return;
+    }
+    segEl.style.display = "";
+    lbEl.style.display = "";
+    peEl.style.display = "none";
+
+    var el = lbEl;
     var isCur = isCurrentMonth(state.viewMonth);
     var todayBtn = document.querySelector('#seg [data-range="today"]');
     var monthBtn = document.querySelector('#seg [data-range="month"]');
@@ -769,7 +919,7 @@
     monthBtn.classList.toggle("active", state.lbRange === "month");
 
     var range = state.lbRange, t = todayStr(), mp = monthKeyOf(state.viewMonth);
-    var roster = members();
+    var roster = participantsFor(state.viewMonth);
     var totals = {};
     roster.forEach(function (n) { totals[n] = 0; });
     state.entries.forEach(function (e) {
@@ -792,8 +942,9 @@
       el.appendChild(row);
     });
 
-    // motivational message (contextual to this leaderboard view)
-    var mot = motivationFor(arr, isCur);
+    // motivational message (contextual to this leaderboard view; none for a future month)
+    var isFuture = state.viewMonth.getTime() > firstOfMonth(new Date()).getTime();
+    var mot = isFuture ? null : motivationFor(arr, isCur);
     var mEl = document.getElementById("motivation");
     if (mot) { mEl.style.display = "block"; mEl.className = "motiv " + mot.cls; mEl.textContent = mot.text; }
     else { mEl.style.display = "none"; }
@@ -893,21 +1044,25 @@
     });
   }
 
-  function renderAll() { renderMonthBar(); renderStats(); renderChart(); renderEntries(); renderLeaderboard(); }
+  function renderAll() { clampViewMonth(); renderMonthBar(); renderStats(); renderChart(); renderEntries(); renderLeaderboard(); updateLogGate(); }
 
   // ---- Month carousel ----
   function changeMonth(delta) {
-    var d = state.viewMonth;
-    var next = new Date(d.getFullYear(), d.getMonth() + delta, 1);
-    if (next > firstOfMonth(new Date())) return; // no future months
-    state.viewMonth = next;
+    var list = viewableMonthKeys();
+    var idx = list.indexOf(monthKeyOf(state.viewMonth));
+    if (idx < 0) { clampViewMonth(); renderAll(); return; }
+    var ni = idx + delta;
+    if (ni < 0 || ni >= list.length) return;
+    state.editing = false;
+    state.viewMonth = keyToDate(list[ni]);
     if (!isCurrentMonth(state.viewMonth)) state.lbRange = "month";
     renderAll();
   }
   document.getElementById("monthPrev").onclick = function () { changeMonth(-1); };
   document.getElementById("monthNext").onclick = function () { changeMonth(1); };
   document.getElementById("monthLabelTop").onclick = function () {
-    if (!isCurrentMonth(state.viewMonth)) { state.viewMonth = firstOfMonth(new Date()); renderAll(); }
+    var defKey = defaultViewKey();
+    if (monthKeyOf(state.viewMonth) !== defKey) { state.editing = false; state.viewMonth = keyToDate(defKey); renderAll(); }
   };
 
   // ---- Toast (6s, optional undo) ----
@@ -980,6 +1135,7 @@
     var d = parseISO(isoStr);
     document.getElementById("dpLabel").textContent = fmtNice(d);
     calView = new Date(d.getFullYear(), d.getMonth(), 1);
+    updateLogGate();
   }
   function renderCal() {
     var y = calView.getFullYear(), m = calView.getMonth();
@@ -992,18 +1148,24 @@
     var daysEl = document.getElementById("calDays"); daysEl.innerHTML = "";
     for (var i = 0; i < startDay; i++) { var b = document.createElement("div"); b.className = "cal-cell blank"; daysEl.appendChild(b); }
     var todayISO = todayStr();
+    var minISO = iso(logWindowStart());
     for (var day = 1; day <= daysInMonth; day++) {
       var cellISO = y + "-" + pad(m + 1) + "-" + pad(day);
-      var isFuture = cellISO > todayISO;
+      var blocked = cellISO > todayISO || cellISO < minISO;
       var c = document.createElement("button");
       c.type = "button";
-      c.className = "cal-cell" + (cellISO === selectedISO ? " sel" : "") + (cellISO === todayISO ? " today" : "") + (isFuture ? " future" : "");
+      c.className = "cal-cell" + (cellISO === selectedISO ? " sel" : "") + (cellISO === todayISO ? " today" : "") + (blocked ? " future" : "");
       c.textContent = day;
-      if (!isFuture) {
+      if (!blocked) {
         (function (ci) { c.onclick = function () { setDate(ci); renderCal(); closeCal(); }; })(cellISO);
       }
       daysEl.appendChild(c);
     }
+    // keep calendar navigation within the loggable window
+    var minMonth = new Date(logWindowStart().getFullYear(), logWindowStart().getMonth(), 1);
+    var curMonth = firstOfMonth(new Date());
+    document.getElementById("calPrev").disabled = (new Date(y, m, 1).getTime() <= minMonth.getTime());
+    document.getElementById("calNext").disabled = (new Date(y, m, 1).getTime() >= curMonth.getTime());
   }
   function openCal() { renderCal(); document.getElementById("calPop").classList.add("show"); }
   function closeCal() { document.getElementById("calPop").classList.remove("show"); }
@@ -1043,6 +1205,13 @@
     var date = document.getElementById("date").value || todayStr();
     var note = document.getElementById("note").value.trim();
     if (!mins || mins <= 0) { alert("Enter minutes greater than 0"); return; }
+    if (date < iso(logWindowStart())) { showToast("That month is closed for logging.", null); return; }
+    if (!isParticipant(state.me, date.slice(0, 7))) {
+      var mName = new Date(+date.slice(0, 4), (+date.slice(5, 7)) - 1, 1).toLocaleString(undefined, { month: "long" });
+      showToast("You're not in " + mName + "'s challenge, so you can't log for it.", null);
+      return;
+    }
+    if (!requireConnection()) return;
 
     // stack: add to the same day's entry if one already exists
     var existing = null;
@@ -1108,6 +1277,7 @@
   // Optimistically apply a roster change, persist to Firestore, and confirm only on
   // real success - reverting the change and warning if the write fails.
   function commitRoster(mutate, okMsg, undoFn) {
+    if (!requireConnection()) return;
     var prevM = cache.members.slice(), prevA = cache.admins.slice();
     mutate();
     renderMembers(); renderAll(); if (state.me) refreshAdminAccess();
@@ -1119,6 +1289,125 @@
       renderMembers(); renderAll(); if (state.me) refreshAdminAccess();
       showToast("⚠ Couldn't save. Check your connection and try again", null);
     });
+  }
+
+  // ---- Challenge participants (per month) ----
+  function commitChallenge(key, newList) {
+    if (!requireConnection()) return;
+    var prev = challengesCache.hasOwnProperty(key) ? challengesCache[key].slice() : null;
+    challengesCache[key] = newList.slice();
+    renderAll();
+    return Store.saveChallenge(key, newList).catch(function (err) {
+      console.error("Challenge save failed:", err);
+      if (prev === null) delete challengesCache[key]; else challengesCache[key] = prev;
+      renderAll();
+      showToast("⚠ Couldn't save. Check your connection and try again", null);
+    });
+  }
+  function addParticipant(key, current, name) {
+    if (current.some(function (p) { return p.toLowerCase() === name.toLowerCase(); })) return;
+    commitChallenge(key, current.concat([name]));
+  }
+  function removeParticipant(key, current, name) {
+    commitChallenge(key, current.filter(function (p) { return p.toLowerCase() !== name.toLowerCase(); }));
+  }
+  function addNewParticipant(key, current) {
+    var input = document.getElementById("peNewName");
+    var err = document.getElementById("peErr");
+    var name = input.value.trim();
+    err.textContent = "";
+    if (!name) { err.textContent = "Enter a name."; return; }
+    if (!/^[A-Za-z][A-Za-z0-9 _-]{0,23}$/.test(name)) { err.textContent = "Use letters/numbers, 1-24 chars, starting with a letter."; return; }
+    if (current.some(function (p) { return p.toLowerCase() === name.toLowerCase(); })) { err.textContent = "Already a participant."; return; }
+    if (!requireConnection()) return;
+    if (!members().some(function (m) { return m.toLowerCase() === name.toLowerCase(); })) {
+      cache.members = members().concat([name]);
+      Store.saveRoster().catch(warnSaveFail);
+    }
+    commitChallenge(key, current.concat([name]));
+  }
+
+  function renderParticipantEditor(el) {
+    var key = monthKeyOf(state.viewMonth);
+    var current = participantsFor(state.viewMonth);
+    var roster = members();
+    var monthName = state.viewMonth.toLocaleString(undefined, { month: "long", year: "numeric" });
+    el.innerHTML = "";
+
+    var s1 = document.createElement("div"); s1.className = "pe-sub"; s1.textContent = "In " + monthName; el.appendChild(s1);
+    if (!current.length) { var e0 = document.createElement("div"); e0.className = "pe-empty"; e0.textContent = "No one yet. Add people below."; el.appendChild(e0); }
+    current.forEach(function (name) {
+      var row = document.createElement("div"); row.className = "pe-row";
+      row.innerHTML = '<span class="dot" style="background:' + colorFor(name) + '">' + escapeHtml(name.charAt(0).toUpperCase()) + '</span>' +
+        '<span class="nm">' + escapeHtml(name) + '</span><button class="rm" title="Remove">×</button>';
+      row.querySelector(".rm").onclick = function () { removeParticipant(key, current, name); };
+      el.appendChild(row);
+    });
+
+    var others = roster.filter(function (m) { return current.map(function (c) { return c.toLowerCase(); }).indexOf(m.toLowerCase()) < 0; });
+    var s2 = document.createElement("div"); s2.className = "pe-sub"; s2.textContent = "Add existing members"; el.appendChild(s2);
+    if (!others.length) { var e1 = document.createElement("div"); e1.className = "pe-empty"; e1.textContent = "Everyone is already in."; el.appendChild(e1); }
+    else {
+      var chips = document.createElement("div"); chips.className = "pe-chips";
+      others.forEach(function (m) {
+        var c = document.createElement("button"); c.type = "button"; c.className = "pe-chip"; c.textContent = "+ " + m;
+        c.onclick = function () { addParticipant(key, current, m); };
+        chips.appendChild(c);
+      });
+      el.appendChild(chips);
+    }
+
+    var s3 = document.createElement("div"); s3.className = "pe-sub"; s3.textContent = "Add someone new"; el.appendChild(s3);
+    var addRow = document.createElement("div"); addRow.className = "pe-add";
+    addRow.innerHTML = '<input type="text" id="peNewName" placeholder="New name" autocomplete="off" autocapitalize="words" /><button type="button" id="peNewBtn">Add</button>';
+    el.appendChild(addRow);
+    var errEl = document.createElement("div"); errEl.className = "pe-err"; errEl.id = "peErr"; el.appendChild(errEl);
+    addRow.querySelector("#peNewBtn").onclick = function () { addNewParticipant(key, current); };
+    addRow.querySelector("#peNewName").addEventListener("keydown", function (ev) { if (ev.key === "Enter") addNewParticipant(key, current); });
+
+    var done = document.createElement("button"); done.type = "button"; done.className = "pe-done"; done.textContent = "Done";
+    done.onclick = function () { state.editing = false; renderLeaderboard(); };
+    el.appendChild(done);
+  }
+
+  function toggleSelfParticipation() {
+    var key = monthKeyOf(state.viewMonth);
+    var current = participantsFor(state.viewMonth);
+    if (isParticipant(state.me, key)) {
+      commitChallenge(key, current.filter(function (p) { return p.toLowerCase() !== state.me.toLowerCase(); }));
+    } else {
+      commitChallenge(key, current.concat([state.me]));
+    }
+  }
+
+  document.getElementById("editParticipants").onclick = function () {
+    if (!!state.me && isAdmin(state.me) && monthEditable(state.viewMonth)) {
+      state.editing = !state.editing;
+      renderLeaderboard();
+    } else {
+      toggleSelfParticipation();
+    }
+  };
+
+  // Show/hide the Log-tab block when the signed-in user isn't in the selected date's challenge.
+  function updateLogGate() {
+    if (!state.me) return;
+    var dateVal = document.getElementById("date").value || todayStr();
+    var mk = dateVal.slice(0, 7);
+    var note = document.getElementById("logBlockNote");
+    var btn = document.getElementById("addBtn");
+    var mName = new Date(+mk.slice(0, 4), (+mk.slice(5, 7)) - 1, 1).toLocaleString(undefined, { month: "long" });
+    var msg = null;
+    if (dateVal < iso(logWindowStart())) msg = mName + " is closed for logging. You can only log the current and previous month.";
+    else if (!isParticipant(state.me, mk)) msg = "You're not in " + mName + "'s challenge, so you can't log for it. Ask an admin to add you.";
+    if (msg) {
+      note.textContent = msg;
+      note.style.display = "block";
+      btn.disabled = true;
+    } else {
+      note.style.display = "none";
+      if (btn.textContent !== "Saving…") btn.disabled = false;
+    }
   }
 
   function toggleAdmin(name) {
@@ -1219,6 +1508,7 @@
 
     function fbStart() {
       fb.onSnapshot(fb.collection(fb.db, "entries"), function (snap) {
+        if (!snap.metadata.fromCache) netReady = true;
         var arr = [];
         snap.forEach(function (d) { var v = d.data(); arr.push({ id: d.id, who: v.who, date: v.date, mins: v.mins, note: v.note || "" }); });
         emitEntries(arr);
@@ -1226,11 +1516,12 @@
 
       var rosterRef = fb.doc(fb.db, "meta", "roster");
       fb.onSnapshot(rosterRef, function (d) {
+        if (!d.metadata.fromCache) netReady = true;
         if (d.exists()) {
           var v = d.data();
           emitRoster(v.members || DEFAULT_MEMBERS.slice(), v.admins || DEFAULT_ADMINS.slice());
-        } else if (!didSeed) {
-          // first run ever: seed roster + demo entries into Firestore (guarded against re-firing)
+        } else if (!didSeed && !d.metadata.fromCache) {
+          // first run ever: seed roster + demo entries into Firestore (only once, only from the server)
           didSeed = true;
           fb.setDoc(rosterRef, { members: DEFAULT_MEMBERS.slice(), admins: DEFAULT_ADMINS.slice() });
           seedData().forEach(function (en) {
@@ -1238,10 +1529,16 @@
           });
         }
       }, function (err) { console.error("roster listener:", err); });
+
+      fb.onSnapshot(fb.collection(fb.db, "challenges"), function (snap) {
+        var next = {};
+        snap.forEach(function (d) { var v = d.data(); next[d.id] = (v && v.participants) ? v.participants : []; });
+        challengesCache = next;
+        renderAll();
+      }, function (err) { console.error("challenges listener:", err); });
     }
 
     return {
-      connected: function () { return !!fb; },
       init: function (f) { fb = f; },
       start: function () { if (fb) fbStart(); },
       addEntry: function (obj) {
@@ -1259,6 +1556,9 @@
       },
       saveRoster: function () {
         return fb.setDoc(fb.doc(fb.db, "meta", "roster"), { members: cache.members, admins: cache.admins });
+      },
+      saveChallenge: function (key, participants) {
+        return fb.setDoc(fb.doc(fb.db, "challenges", key), { participants: participants });
       }
     };
   })();
@@ -1270,7 +1570,10 @@
     console.log("Minutes v" + VERSION);
     if (window.__FB) Store.init(window.__FB);
     Store.start();
-    if (!Store.connected()) showToast("⚠ Not connected. Your changes won\u2019t be saved", null);
+    // If we never receive real server data, warn once (viewing works, saving is blocked).
+    setTimeout(function () {
+      if (!netReady) showToast("Not connected. You can view, but changes won\u2019t save until you reconnect.", null);
+    }, 5000);
     var saved = localStorage.getItem(SESSION_KEY);
     if (saved && resolveName(saved)) doLogin(resolveName(saved));
   }

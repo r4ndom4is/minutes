@@ -463,7 +463,7 @@
   var PALETTE = ["#7c5cff", "#34d399", "#ffb454", "#ff5c7c", "#38bdf8", "#f472d0",
                  "#a3e635", "#fb923c", "#22d3ee", "#c084fc", "#f87171", "#4ade80"];
   var SESSION_KEY = "minutes_session_v3";
-  var VERSION = "3.4";
+  var VERSION = "3.5";
 
   // In-memory cache - the UI's source of truth; kept in sync by Store (Firestore).
   var cache = { members: DEFAULT_MEMBERS.slice(), admins: DEFAULT_ADMINS.slice() };
@@ -521,8 +521,15 @@
   function keyToDate(k) { return new Date(+k.slice(0, 4), (+k.slice(5, 7)) - 1, 1); }
   function nextMonthKey() { var n = new Date(); return monthKeyOf(new Date(n.getFullYear(), n.getMonth() + 1, 1)); }
   // Every month key from the group's earliest through the current month.
+  // Admins can always reach the previous month too (it's editable), even with no data yet.
   function allMonthKeysToCurrent() {
-    var keys = [], d = firstOfMonth(minNavMonth()), cur = firstOfMonth(new Date());
+    var start = firstOfMonth(minNavMonth());
+    if (!!state.me && isAdmin(state.me)) {
+      var n = new Date();
+      var prev = new Date(n.getFullYear(), n.getMonth() - 1, 1);
+      if (prev.getTime() < start.getTime()) start = prev;
+    }
+    var keys = [], d = start, cur = firstOfMonth(new Date());
     while (d.getTime() <= cur.getTime()) { keys.push(monthKeyOf(d)); d = new Date(d.getFullYear(), d.getMonth() + 1, 1); }
     return keys;
   }

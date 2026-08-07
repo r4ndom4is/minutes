@@ -382,7 +382,7 @@
       </div>
     </section>
 
-    <div class="foot" id="footNote">Connecting… · v2.7</div>
+    <div class="foot" id="footNote">Connecting… · v2.8</div>
   </div>
 
   <nav class="tabs">
@@ -432,6 +432,7 @@
   function colorFor(name) { var idx = cache.members.indexOf(name); if (idx < 0) idx = 0; return PALETTE[idx % PALETTE.length]; }
 
   var state = { me: null, entries: [], lbRange: "today", hidden: {}, viewMonth: firstOfMonth(new Date()), openMonths: {} };
+  var rosterLoaded = false;
 
   function seedData() {
     var demo = [];
@@ -500,8 +501,14 @@
   }
 
   document.getElementById("loginBtn").onclick = function () {
-    var name = resolveName(document.getElementById("loginName").value);
-    if (!name) { document.getElementById("loginErr").textContent = "Name not recognised. Ask the admin to add you."; return; }
+    var raw = document.getElementById("loginName").value;
+    var name = resolveName(raw);
+    if (!name) {
+      document.getElementById("loginErr").textContent = (!rosterLoaded && raw.trim())
+        ? "Still connecting… try again in a moment."
+        : "Name not recognised. Ask the admin to add you.";
+      return;
+    }
     doLogin(name);
   };
   document.getElementById("loginName").addEventListener("keydown", function (e) {
@@ -1076,9 +1083,15 @@
     function emitRoster(m, a) {
       if (m && m.length) cache.members = m;
       if (a && a.length) cache.admins = a;
+      rosterLoaded = true;
       renderAll();
       if (document.getElementById("tab-admin").classList.contains("active")) renderMembers();
-      if (state.me) refreshAdminAccess();
+      if (state.me) { refreshAdminAccess(); }
+      else {
+        // roster is now authoritative — resume a saved session that the default list couldn't match yet
+        var saved = localStorage.getItem(SESSION_KEY);
+        if (saved && resolveName(saved)) doLogin(resolveName(saved));
+      }
     }
 
     function fbStart() {
@@ -1132,7 +1145,7 @@
     if (window.__FB) Store.init(window.__FB);
     Store.start();
     var foot = document.getElementById("footNote");
-    if (foot) foot.textContent = (Store.connected() ? "Live · synced via Firebase" : "Not connected — reload with a connection") + " · v2.7";
+    if (foot) foot.textContent = (Store.connected() ? "Live · synced via Firebase" : "Not connected — reload with a connection") + " · v2.8";
     var saved = localStorage.getItem(SESSION_KEY);
     if (saved && resolveName(saved)) doLogin(resolveName(saved));
   }

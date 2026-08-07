@@ -463,7 +463,7 @@
   var PALETTE = ["#7c5cff", "#34d399", "#ffb454", "#ff5c7c", "#38bdf8", "#f472d0",
                  "#a3e635", "#fb923c", "#22d3ee", "#c084fc", "#f87171", "#4ade80"];
   var SESSION_KEY = "minutes_session_v3";
-  var VERSION = "3.2";
+  var VERSION = "3.4";
 
   // In-memory cache - the UI's source of truth; kept in sync by Store (Firestore).
   var cache = { members: DEFAULT_MEMBERS.slice(), admins: DEFAULT_ADMINS.slice() };
@@ -500,13 +500,14 @@
   function isParticipant(name, dateOrKey) {
     return participantsFor(dateOrKey).some(function (p) { return p.toLowerCase() === String(name).toLowerCase(); });
   }
-  // A month is editable only if it is the current calendar month or the next one.
+  // Admins may edit the previous, current, and next month's roster.
   function monthEditable(dateObj) {
     var now = new Date();
+    var prev = new Date(now.getFullYear(), now.getMonth() - 1, 1).getTime();
     var cur = firstOfMonth(now).getTime();
     var next = new Date(now.getFullYear(), now.getMonth() + 1, 1).getTime();
     var d = firstOfMonth(dateObj).getTime();
-    return d === cur || d === next;
+    return d === prev || d === cur || d === next;
   }
   // Logging is allowed for the current month and the previous one; older months are closed.
   function logWindowStart() { var n = new Date(); return new Date(n.getFullYear(), n.getMonth() - 1, 1); }
@@ -966,7 +967,7 @@
       return { cls: "seed", text: pickDaily([
         "🌱 Empty board. Be the first to put minutes on it.",
         "🕳️ Nothing here yet. Someone break the ice.",
-        "☀️ Clean slate. Log the first minutes and set the pace."
+        "☀️ Log the first minutes and set the pace."
       ]) };
     }
 
@@ -1373,8 +1374,17 @@
   function toggleSelfParticipation() {
     var key = monthKeyOf(state.viewMonth);
     var current = participantsFor(state.viewMonth);
+    var monthName = state.viewMonth.toLocaleString(undefined, { month: "long" });
     if (isParticipant(state.me, key)) {
-      commitChallenge(key, current.filter(function (p) { return p.toLowerCase() !== state.me.toLowerCase(); }));
+      showConfirm({
+        title: "Leave " + monthName + "'s challenge?",
+        msg: "You won't be included next month. You can re-join anytime before it starts.",
+        ok: "Leave",
+        danger: true,
+        icon: ICON_SHIELD
+      }, function () {
+        commitChallenge(key, current.filter(function (p) { return p.toLowerCase() !== state.me.toLowerCase(); }));
+      });
     } else {
       commitChallenge(key, current.concat([state.me]));
     }

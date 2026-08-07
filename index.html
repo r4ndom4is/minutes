@@ -395,7 +395,7 @@
       </div>
     </section>
 
-    <div class="foot">Local mockup · data stored in this browser only · v1.8</div>
+    <div class="foot" id="footNote">Connecting… · v2.0</div>
   </div>
 
   <nav class="tabs">
@@ -432,39 +432,26 @@
 
   var DEFAULT_MEMBERS = ["Gerli", "Kairi", "Matis", "Rando", "Raido"];
   var DEFAULT_ADMINS = ["Rando", "Matis"];
-  var ADMINS_KEY = "minutes_admins_v1";
-  function admins() {
-    try { var a = JSON.parse(localStorage.getItem(ADMINS_KEY)); return (a && a.length) ? a : DEFAULT_ADMINS.slice(); }
-    catch (e) { return DEFAULT_ADMINS.slice(); }
-  }
-  function saveAdmins(list) { localStorage.setItem(ADMINS_KEY, JSON.stringify(list)); }
-  function isAdmin(name) { return admins().some(function (a) { return a.toLowerCase() === String(name).toLowerCase(); }); }
   var PALETTE = ["#7c5cff", "#34d399", "#ffb454", "#ff5c7c", "#38bdf8", "#f472d0",
                  "#a3e635", "#fb923c", "#22d3ee", "#c084fc", "#f87171", "#4ade80"];
-  var MEMBERS_KEY = "minutes_members_v2";
-  var STORE_KEY = "minutes_entries_v5";
   var SESSION_KEY = "minutes_session_v3";
+  var LS_ENTRIES = "minutes_entries_v5";
+  var LS_MEMBERS = "minutes_members_v2";
+  var LS_ADMINS = "minutes_admins_v1";
 
-  function members() {
-    try { var m = JSON.parse(localStorage.getItem(MEMBERS_KEY)); return (m && m.length) ? m : DEFAULT_MEMBERS.slice(); }
-    catch (e) { return DEFAULT_MEMBERS.slice(); }
-  }
-  function saveMembers(list) { localStorage.setItem(MEMBERS_KEY, JSON.stringify(list)); }
-  function colorFor(name) {
-    var idx = members().indexOf(name);
-    if (idx < 0) idx = 0;
-    return PALETTE[idx % PALETTE.length];
-  }
+  // In-memory cache — the UI's source of truth; kept in sync by Store (Firestore or localStorage).
+  var cache = { members: DEFAULT_MEMBERS.slice(), admins: DEFAULT_ADMINS.slice() };
 
-  var state = { me: null, entries: load(), lbRange: "today", hidden: {}, viewMonth: firstOfMonth(new Date()), openMonths: {} };
+  function members() { return cache.members.slice(); }
+  function admins() { return cache.admins.slice(); }
+  function isAdmin(name) { return cache.admins.some(function (a) { return a.toLowerCase() === String(name).toLowerCase(); }); }
+  function saveMembers(list) { cache.members = list.slice(); Store.saveRoster(); }
+  function saveAdmins(list) { cache.admins = list.slice(); Store.saveRoster(); }
+  function colorFor(name) { var idx = cache.members.indexOf(name); if (idx < 0) idx = 0; return PALETTE[idx % PALETTE.length]; }
 
-  function load() {
-    try { return JSON.parse(localStorage.getItem(STORE_KEY)) || seed(); }
-    catch (e) { return seed(); }
-  }
-  function save() { localStorage.setItem(STORE_KEY, JSON.stringify(state.entries)); }
+  var state = { me: null, entries: [], lbRange: "today", hidden: {}, viewMonth: firstOfMonth(new Date()), openMonths: {} };
 
-  function seed() {
+  function seedData() {
     var demo = [];
     function add(name, ym, dayMins) {
       dayMins.forEach(function (pair) {
@@ -495,7 +482,6 @@
     add("Rando", "2026-06", [[1,40],[5,60],[9,70],[13,50],[17,90],[21,65],[25,80],[29,40]]);
     add("Raido", "2026-06", [[3,31],[10,120],[16,60],[23,90],[30,45]]);
 
-    localStorage.setItem(STORE_KEY, JSON.stringify(demo));
     return demo;
   }
 
@@ -720,11 +706,8 @@
     div.querySelector(".del").onclick = function () {
       showConfirm({ title: "Delete entry?", msg: niceDate(e.date) + " · " + e.mins + " min" + (e.note ? " · " + e.note : ""), ok: "Delete" }, function () {
         var removed = e;
-        state.entries = state.entries.filter(function (x) { return x.id !== removed.id; });
-        save(); renderAll();
-        showToast("Entry deleted", function () {
-          state.entries.push(removed); save(); renderAll();
-        });
+        Store.deleteEntry(removed.id);
+        showToast("Entry deleted", function () { Store.putEntry(removed); });
       });
     };
     return div;
@@ -967,26 +950,17 @@
     var undoFn;
     if (existing) {
       var id = existing.id, prevMins = existing.mins, prevNote = existing.note;
-      existing.mins += mins;
-      if (note) { existing.note = existing.note ? (existing.note + "; " + note) : note; }
-      undoFn = function () {
-        for (var j = 0; j < state.entries.length; j++) {
-          if (state.entries[j].id === id) { state.entries[j].mins = prevMins; state.entries[j].note = prevNote; break; }
-        }
-        save(); renderAll();
-      };
+      var newMins = existing.mins + mins;
+      var newNote = note ? (existing.note ? existing.note + "; " + note : note) : existing.note;
+      Store.updateEntry(id, { mins: newMins, note: newNote });
+      undoFn = function () { Store.updateEntry(id, { mins: prevMins, note: prevNote }); };
     } else {
-      var newId = uid();
-      state.entries.push({ id: newId, who: state.me, date: date, mins: mins, note: note });
-      undoFn = function () {
-        state.entries = state.entries.filter(function (x) { return x.id !== newId; });
-        save(); renderAll();
-      };
+      var newId = Store.addEntry({ who: state.me, date: date, mins: mins, note: note });
+      undoFn = function () { Store.deleteEntry(newId); };
     }
 
     // ensure the affected month is expanded so the new entry is discoverable
     state.openMonths[date.slice(0, 7)] = true;
-    save();
     document.getElementById("mins").value = "";
     document.getElementById("note").value = "";
     renderAll();
@@ -1132,10 +1106,152 @@
     ev.target.value = "";
   };
 
+  // ---- Data store: Firestore when available, localStorage otherwise ----
+  var Store = (function () {
+    var mode = "local";
+    var fb = null;
+    var lsEntries = [];
+
+    function emitEntries(arr) { state.entries = arr; renderAll(); }
+    function emitRoster(m, a) {
+      if (m && m.length) cache.members = m;
+      if (a && a.length) cache.admins = a;
+      renderAll();
+      if (document.getElementById("tab-admin").classList.contains("active")) renderMembers();
+      if (state.me) refreshAdminAccess();
+    }
+
+    function localLoadEntries() {
+      try { var e = JSON.parse(localStorage.getItem(LS_ENTRIES)); if (e) return e; } catch (x) {}
+      var seeded = seedData();
+      localStorage.setItem(LS_ENTRIES, JSON.stringify(seeded));
+      return seeded;
+    }
+    function localLoadRoster() {
+      var m, a;
+      try { m = JSON.parse(localStorage.getItem(LS_MEMBERS)); } catch (x) {}
+      try { a = JSON.parse(localStorage.getItem(LS_ADMINS)); } catch (x) {}
+      return { members: (m && m.length) ? m : DEFAULT_MEMBERS.slice(), admins: (a && a.length) ? a : DEFAULT_ADMINS.slice() };
+    }
+    function localPersistEntries() { localStorage.setItem(LS_ENTRIES, JSON.stringify(lsEntries)); }
+
+    function fbStart() {
+      fb.onSnapshot(fb.collection(fb.db, "entries"), function (snap) {
+        var arr = [];
+        snap.forEach(function (d) { var v = d.data(); arr.push({ id: d.id, who: v.who, date: v.date, mins: v.mins, note: v.note || "" }); });
+        emitEntries(arr);
+      }, function (err) { console.error("entries listener:", err); });
+
+      var rosterRef = fb.doc(fb.db, "meta", "roster");
+      fb.onSnapshot(rosterRef, function (d) {
+        if (d.exists()) {
+          var v = d.data();
+          emitRoster(v.members || DEFAULT_MEMBERS.slice(), v.admins || DEFAULT_ADMINS.slice());
+        } else {
+          // first run ever: seed roster + demo entries into Firestore
+          fb.setDoc(rosterRef, { members: DEFAULT_MEMBERS.slice(), admins: DEFAULT_ADMINS.slice() });
+          seedData().forEach(function (en) {
+            fb.setDoc(fb.doc(fb.db, "entries", en.id), { who: en.who, date: en.date, mins: en.mins, note: en.note || "" });
+          });
+        }
+      }, function (err) { console.error("roster listener:", err); });
+    }
+
+    return {
+      useFirebase: function (f) { fb = f; mode = "fb"; },
+      useLocal: function () { mode = "local"; },
+      start: function () {
+        if (mode === "fb") { fbStart(); }
+        else {
+          var r = localLoadRoster(); cache.members = r.members; cache.admins = r.admins;
+          lsEntries = localLoadEntries();
+          emitEntries(lsEntries.slice());
+          emitRoster(r.members, r.admins);
+        }
+      },
+      addEntry: function (obj) {
+        var id = obj.id || uid();
+        if (mode === "fb") {
+          fb.setDoc(fb.doc(fb.db, "entries", id), { who: obj.who, date: obj.date, mins: obj.mins, note: obj.note || "" });
+        } else {
+          lsEntries.push({ id: id, who: obj.who, date: obj.date, mins: obj.mins, note: obj.note || "" });
+          localPersistEntries(); emitEntries(lsEntries.slice());
+        }
+        return id;
+      },
+      updateEntry: function (id, fields) {
+        if (mode === "fb") { fb.updateDoc(fb.doc(fb.db, "entries", id), fields); }
+        else {
+          for (var i = 0; i < lsEntries.length; i++) { if (lsEntries[i].id === id) { for (var k in fields) lsEntries[i][k] = fields[k]; } }
+          localPersistEntries(); emitEntries(lsEntries.slice());
+        }
+      },
+      deleteEntry: function (id) {
+        if (mode === "fb") { fb.deleteDoc(fb.doc(fb.db, "entries", id)); }
+        else { lsEntries = lsEntries.filter(function (x) { return x.id !== id; }); localPersistEntries(); emitEntries(lsEntries.slice()); }
+      },
+      putEntry: function (obj) {
+        if (mode === "fb") { fb.setDoc(fb.doc(fb.db, "entries", obj.id), { who: obj.who, date: obj.date, mins: obj.mins, note: obj.note || "" }); }
+        else { lsEntries.push(obj); localPersistEntries(); emitEntries(lsEntries.slice()); }
+      },
+      saveRoster: function () {
+        if (mode === "fb") { fb.setDoc(fb.doc(fb.db, "meta", "roster"), { members: cache.members, admins: cache.admins }); }
+        else { localStorage.setItem(LS_MEMBERS, JSON.stringify(cache.members)); localStorage.setItem(LS_ADMINS, JSON.stringify(cache.admins)); }
+      }
+    };
+  })();
+
   // ---- Boot ----
-  var saved = localStorage.getItem(SESSION_KEY);
-  if (saved && resolveName(saved)) { doLogin(resolveName(saved)); }
+  function begin() {
+    if (window.__FB) Store.useFirebase(window.__FB); else Store.useLocal();
+    Store.start();
+    var foot = document.getElementById("footNote");
+    if (foot) foot.textContent = (window.__FB ? "Live · synced via Firebase" : "Offline · this browser only") + " · v2.1";
+    var saved = localStorage.getItem(SESSION_KEY);
+    if (saved && resolveName(saved)) doLogin(resolveName(saved));
+  }
+  var began = false;
+  function tryBegin() { if (began) return; began = true; begin(); }
+  if (window.__FB) { tryBegin(); }
+  else {
+    window.addEventListener("minutes-fb-ready", tryBegin);
+    setTimeout(tryBegin, 6000); // fall back to localStorage if Firebase never loads
+  }
 })();
+</script>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js";
+  import { getFirestore, collection, onSnapshot, setDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAqaZ5b4txwYn1Ts57rwvGE3jRUWS9GDxA",
+    authDomain: "minutes-7b06d.firebaseapp.com",
+    projectId: "minutes-7b06d",
+    storageBucket: "minutes-7b06d.firebasestorage.app",
+    messagingSenderId: "41683816465",
+    appId: "1:41683816465:web:6abdac5887b6d9830da1b0"
+  };
+
+  try {
+    const app = initializeApp(firebaseConfig);
+    // App Check — verifies requests come from this app (reCAPTCHA v3).
+    // Wrapped so local file:// use still works while enforcement is off.
+    try {
+      initializeAppCheck(app, {
+        provider: new ReCaptchaV3Provider("6Le083ktAAAAAEIzFRGfMYvLxFmEZ4p4nsh7IHQO"),
+        isTokenAutoRefreshEnabled: true
+      });
+    } catch (ac) {
+      console.warn("App Check init skipped:", ac);
+    }
+    const db = getFirestore(app);
+    window.__FB = { db, collection, onSnapshot, setDoc, updateDoc, deleteDoc, doc };
+  } catch (e) {
+    console.error("Firebase init failed — falling back to local storage:", e);
+  }
+  window.dispatchEvent(new Event("minutes-fb-ready"));
 </script>
 </body>
 </html>

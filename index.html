@@ -169,6 +169,14 @@
   .seg button.active { background: var(--accent); color: #fff; }
   .seg button:disabled { opacity: .4; cursor: default; }
 
+  /* Motivational banner */
+  .motiv { border-radius: 12px; padding: 11px 14px; font-size: 13.5px; font-weight: 600; margin-bottom: 14px; line-height: 1.45; border: 1px solid #2e3563; background: var(--card-2); }
+  .motiv.lead { background: linear-gradient(90deg, rgba(255,196,84,.16), rgba(255,196,84,.03)); border-color: #6a5326; color: #ffe4ad; }
+  .motiv.warn { background: linear-gradient(90deg, rgba(255,92,124,.16), rgba(255,92,124,.03)); border-color: #6a2a38; color: #ffc2ce; }
+  .motiv.climb { background: linear-gradient(90deg, rgba(124,92,255,.16), rgba(124,92,255,.03)); border-color: #3a2f88; color: #d7ccff; }
+  .motiv.zero { background: linear-gradient(90deg, rgba(56,189,248,.14), rgba(56,189,248,.03)); border-color: #245063; color: #bfe8fb; }
+  .motiv.seed, .motiv.past { background: var(--card-2); color: var(--text); }
+
   /* Month carousel */
   .monthbar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
   .mb-nav { width: 40px; height: 40px; flex: 0 0 auto; border-radius: 12px; border: 1px solid #2e3563; background: var(--card); color: var(--text); font-size: 22px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; }
@@ -303,6 +311,7 @@
           <button data-range="today" class="active">Today</button>
           <button data-range="month">Month</button>
         </div>
+        <div class="motiv" id="motivation" style="display:none"></div>
         <div id="leaderboard"></div>
       </div>
     </section>
@@ -382,7 +391,7 @@
       </div>
     </section>
 
-    <div class="foot" id="footNote">Connecting… · v2.8</div>
+    <div class="foot" id="footNote">Connecting… · v2.9</div>
   </div>
 
   <nav class="tabs">
@@ -762,6 +771,100 @@
         '<div class="n">' + r.mins + 'm</div>';
       el.appendChild(row);
     });
+
+    // motivational banner (contextual to this leaderboard view)
+    var mot = motivationFor(arr, isCur);
+    var mEl = document.getElementById("motivation");
+    if (mot) { mEl.style.display = "block"; mEl.className = "motiv " + mot.cls; mEl.textContent = mot.text; }
+    else { mEl.style.display = "none"; }
+  }
+
+  function pickDaily(list) { return list[Math.floor(Date.now() / 86400000) % list.length]; }
+
+  function motivationFor(arr, isCur) {
+    var me = state.me;
+    if (!me || !arr.length) return null;
+    var myIdx = -1;
+    for (var i = 0; i < arr.length; i++) { if (arr[i].name === me) { myIdx = i; break; } }
+    if (myIdx < 0) return null;
+    var my = arr[myIdx], leader = arr[0], n = arr.length, CLOSE = 30;
+    var monthName = state.viewMonth.toLocaleString(undefined, { month: "long" });
+
+    // Nobody has minutes in this view
+    if (leader.mins === 0) {
+      return { cls: "seed", text: pickDaily([
+        "🌱 Empty board — be the first to put minutes on it.",
+        "🕳️ Nothing here yet. Someone break the ice.",
+        "☀️ Clean slate. Log the first minutes and set the pace."
+      ]) };
+    }
+
+    // Past month → concise recap
+    if (!isCur) {
+      if (my.mins === 0) return { cls: "zero", text: "🛋️ You sat out " + monthName + " — 0 minutes. New month, new you." };
+      if (myIdx === 0) return { cls: "lead", text: "👑 You won " + monthName + " with " + my.mins + " min. Legend." };
+      var aP = arr[myIdx - 1];
+      return { cls: "past", text: "🏁 You finished #" + (myIdx + 1) + " in " + monthName + ", " + (aP.mins - my.mins) + " min off " + aP.name + "." };
+    }
+
+    // Present — you're on zero
+    if (my.mins === 0) {
+      return { cls: "zero", text: pickDaily([
+        "🛋️ 0 minutes. Get off the couch — " + leader.name + "'s already on " + leader.mins + ".",
+        "👟 The couch called; it wants a break. " + leader.name + " leads with " + leader.mins + ".",
+        "😴 Zilch so far. " + leader.name + " is " + leader.mins + " min ahead of your nap."
+      ]) };
+    }
+
+    // Present — leader
+    if (myIdx === 0) {
+      var chaser = arr[1];
+      if (!chaser || chaser.mins === 0) {
+        return { cls: "lead", text: pickDaily([
+          "👑 You're the only one on the board. Lonely at the top.",
+          "🥇 Total domination — nobody else has logged a minute."
+        ]) };
+      }
+      var gap = my.mins - chaser.mins;
+      if (gap === 0) return { cls: "warn", text: "🤝 Dead heat at the top with " + chaser.name + ". Break the tie." };
+      if (gap <= CLOSE) {
+        return { cls: "warn", text: pickDaily([
+          "👀 " + chaser.name + " is only " + gap + " min behind. Don't blink.",
+          "😰 Feel that breath on your neck? " + chaser.name + " is " + gap + " min back.",
+          "🏃 " + chaser.name + " is creeping up — just " + gap + " min. Keep pushing."
+        ]) };
+      }
+      return { cls: "lead", text: pickDaily([
+        "👑 Top dog — " + gap + " min clear of " + chaser.name + ". Kudos.",
+        "🥇 Untouchable (for now) — " + gap + " min up on " + chaser.name + ".",
+        "👑 Sitting pretty at #1, " + gap + " min over " + chaser.name + "."
+      ]) };
+    }
+
+    // Present — last place (with minutes)
+    if (myIdx === n - 1) {
+      var ahead = arr[myIdx - 1], gapU = ahead.mins - my.mins;
+      return { cls: "climb", text: pickDaily([
+        "🐢 Someone's gotta be last. " + gapU + " min to pass " + ahead.name + " — go.",
+        "🪫 Rock bottom, but on the board. " + gapU + " min to overtake " + ahead.name + ".",
+        "💪 Only way is up — " + gapU + " min to leapfrog " + ahead.name + "."
+      ]) };
+    }
+
+    // Present — middle of the pack
+    var aheadM = arr[myIdx - 1], gapUp = aheadM.mins - my.mins;
+    var chaserM = arr[myIdx + 1], gapDown = chaserM ? my.mins - chaserM.mins : 9999;
+    if (chaserM && chaserM.mins > 0 && gapDown <= CLOSE) {
+      return { cls: "warn", text: pickDaily([
+        "⚠️ " + chaserM.name + " is " + gapDown + " min back and gaining. Don't slack.",
+        "😬 " + chaserM.name + " is breathing down your neck (" + gapDown + " min). Push."
+      ]) };
+    }
+    return { cls: "climb", text: pickDaily([
+      "🔥 Just " + gapUp + " min behind " + aheadM.name + ". Reel 'em in.",
+      "🎯 " + aheadM.name + " is " + gapUp + " min ahead — close the gap.",
+      "🚀 " + gapUp + " min to catch " + aheadM.name + ". You've got this."
+    ]) };
   }
 
   function escapeHtml(s) {
@@ -1145,7 +1248,7 @@
     if (window.__FB) Store.init(window.__FB);
     Store.start();
     var foot = document.getElementById("footNote");
-    if (foot) foot.textContent = (Store.connected() ? "Live · synced via Firebase" : "Not connected — reload with a connection") + " · v2.8";
+    if (foot) foot.textContent = (Store.connected() ? "Live · synced via Firebase" : "Not connected — reload with a connection") + " · v2.9";
     var saved = localStorage.getItem(SESSION_KEY);
     if (saved && resolveName(saved)) doLogin(resolveName(saved));
   }

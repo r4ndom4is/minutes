@@ -463,7 +463,7 @@
   var PALETTE = ["#7c5cff", "#34d399", "#ffb454", "#ff5c7c", "#38bdf8", "#f472d0",
                  "#a3e635", "#fb923c", "#22d3ee", "#c084fc", "#f87171", "#4ade80"];
   var SESSION_KEY = "minutes_session_v3";
-  var VERSION = "3.5";
+  var VERSION = "3.6";
 
   // In-memory cache - the UI's source of truth; kept in sync by Store (Firestore).
   var cache = { members: DEFAULT_MEMBERS.slice(), admins: DEFAULT_ADMINS.slice() };
@@ -555,7 +555,6 @@
   var state = { me: null, entries: [], lbRange: "today", hidden: {}, viewMonth: firstOfMonth(new Date()), openMonths: {}, editing: false };
   var rosterLoaded = false;
   var netReady = false; // true once we've received real data from the server (not just cache)
-  function isConnected() { return netReady; }
   function requireConnection() {
     if (netReady) return true;
     showToast("Not connected. Your change wasn't saved — reconnect and try again.", null);
@@ -605,6 +604,9 @@
 
   function doLogin(name) {
     state.me = name;
+    // reset per-user view state so nothing leaks between sessions on a shared device
+    state.editing = false; state.hidden = {}; state.openMonths = {}; state.lbRange = "today";
+    state.viewMonth = firstOfMonth(new Date());
     localStorage.setItem(SESSION_KEY, name);
     document.getElementById("login").style.display = "none";
     document.getElementById("app").style.display = "block";
@@ -614,6 +616,7 @@
     av.style.background = colorFor(name);
     setDate(todayStr());
     document.getElementById("adminTabBtn").style.display = isAdmin(name) ? "flex" : "none";
+    state.viewMonth = keyToDate(defaultViewKey());
     switchTab("stats");
     renderAll();
     window.scrollTo(0, 0);
@@ -666,6 +669,7 @@
 
   function statsHtml(monthDate) {
     var isCur = isCurrentMonth(monthDate);
+    var isFuture = monthDate.getTime() > firstOfMonth(new Date()).getTime();
     var mKey = monthKeyOf(monthDate), t = todayStr();
     var monthTotal = 0, todayTotal = 0, bestDay = 0;
     myEntries().forEach(function (e) {
@@ -673,8 +677,8 @@
       if (e.date === t) todayTotal += e.mins;
     });
     var monthName = monthDate.toLocaleString(undefined, { month: "long" });
-    var tile1label = isCur ? "Today" : "Best day";
-    var tile1val = isCur ? todayTotal : bestDay;
+    var tile1label = isCur ? "Today" : (isFuture ? "Upcoming" : "Best day");
+    var tile1val = isCur ? todayTotal : (isFuture ? 0 : bestDay);
     return '<div class="stats">' +
         '<div class="tile accent">' +
           '<div class="label"><span class="badge">You</span> ' + tile1label + '</div>' +

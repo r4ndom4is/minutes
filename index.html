@@ -463,7 +463,8 @@
   var PALETTE = ["#7c5cff", "#34d399", "#ffb454", "#ff5c7c", "#38bdf8", "#f472d0",
                  "#a3e635", "#fb923c", "#22d3ee", "#c084fc", "#f87171", "#4ade80"];
   var SESSION_KEY = "minutes_session_v3";
-  var VERSION = "3.6";
+  var ADMINSESS_KEY = "minutes_adminsess_v1";
+  var VERSION = "3.7";
 
   // In-memory cache - the UI's source of truth; kept in sync by Store (Firestore).
   var cache = { members: DEFAULT_MEMBERS.slice(), admins: DEFAULT_ADMINS.slice() };
@@ -472,6 +473,8 @@
   function members() { return cache.members.slice(); }
   function admins() { return cache.admins.slice(); }
   function isAdmin(name) { return cache.admins.some(function (a) { return a.toLowerCase() === String(name).toLowerCase(); }); }
+  // Current user wields admin powers only if they signed in with the admin gesture AND are still an admin.
+  function meIsAdmin() { return !!state.me && state.isAdminSession && isAdmin(state.me); }
   function colorFor(name) { var idx = cache.members.indexOf(name); if (idx < 0) idx = 0; return PALETTE[idx % PALETTE.length]; }
 
   // Participants for a month: explicit challenge doc, else inherit the most recent
@@ -524,7 +527,7 @@
   // Admins can always reach the previous month too (it's editable), even with no data yet.
   function allMonthKeysToCurrent() {
     var start = firstOfMonth(minNavMonth());
-    if (!!state.me && isAdmin(state.me)) {
+    if (meIsAdmin()) {
       var n = new Date();
       var prev = new Date(n.getFullYear(), n.getMonth() - 1, 1);
       if (prev.getTime() < start.getTime()) start = prev;
@@ -535,7 +538,7 @@
   }
   // Months the signed-in user may browse. Admins: all + next. Others: only ones they're in, + next.
   function viewableMonthKeys() {
-    var admin = !!state.me && isAdmin(state.me);
+    var admin = meIsAdmin();
     var base = allMonthKeysToCurrent();
     var list = admin ? base.slice() : base.filter(function (k) { return isParticipant(state.me, k); });
     list.push(nextMonthKey());
@@ -552,7 +555,7 @@
     if (viewableMonthKeys().indexOf(monthKeyOf(state.viewMonth)) < 0) state.viewMonth = keyToDate(defaultViewKey());
   }
 
-  var state = { me: null, entries: [], lbRange: "today", hidden: {}, viewMonth: firstOfMonth(new Date()), openMonths: {}, editing: false };
+  var state = { me: null, entries: [], lbRange: "today", hidden: {}, viewMonth: firstOfMonth(new Date()), openMonths: {}, editing: false, isAdminSession: false };
   var rosterLoaded = false;
   var netReady = false; // true once we've received real data from the server (not just cache)
   function requireConnection() {
@@ -602,12 +605,14 @@
     return null;
   }
 
-  function doLogin(name) {
+  function doLogin(name, adminMode) {
     state.me = name;
+    state.isAdminSession = !!adminMode && isAdmin(name);
     // reset per-user view state so nothing leaks between sessions on a shared device
     state.editing = false; state.hidden = {}; state.openMonths = {}; state.lbRange = "today";
     state.viewMonth = firstOfMonth(new Date());
     localStorage.setItem(SESSION_KEY, name);
+    if (state.isAdminSession) localStorage.setItem(ADMINSESS_KEY, "1"); else localStorage.removeItem(ADMINSESS_KEY);
     document.getElementById("login").style.display = "none";
     document.getElementById("app").style.display = "block";
     document.getElementById("meName").textContent = name;
@@ -615,7 +620,7 @@
     av.textContent = name.charAt(0).toUpperCase();
     av.style.background = colorFor(name);
     setDate(todayStr());
-    document.getElementById("adminTabBtn").style.display = isAdmin(name) ? "flex" : "none";
+    document.getElementById("adminTabBtn").style.display = meIsAdmin() ? "flex" : "none";
     state.viewMonth = keyToDate(defaultViewKey());
     switchTab("stats");
     renderAll();
@@ -624,7 +629,9 @@
 
   function doLogout() {
     state.me = null;
+    state.isAdminSession = false;
     localStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem(ADMINSESS_KEY);
     document.getElementById("app").style.display = "none";
     document.getElementById("login").style.display = "block";
     document.getElementById("loginName").value = "";
@@ -632,15 +639,18 @@
   }
 
   document.getElementById("loginBtn").onclick = function () {
-    var raw = document.getElementById("loginName").value;
-    var name = resolveName(raw);
-    if (!name) {
-      document.getElementById("loginErr").textContent = (!rosterLoaded && raw.trim())
-        ? "Still connecting… try again in a moment."
-        : "Name not recognised. Ask the admin to add you.";
-      return;
+    var raw = document.getElementById("loginName").value.trim();
+    // Exact member match logs in as a regular user (even for admins).
+    var direct = resolveName(raw);
+    if (direct) { doLogin(direct, false); return; }
+    // Admin gesture: name followed by "a" (e.g. "Matisa" or "Matis a") grants admin powers.
+    if (/a$/i.test(raw)) {
+      var base = resolveName(raw.replace(/\s*a$/i, "").trim());
+      if (base && isAdmin(base)) { doLogin(base, true); return; }
     }
-    doLogin(name);
+    document.getElementById("loginErr").textContent = (!rosterLoaded && raw)
+      ? "Still connecting… try again in a moment."
+      : "Name not recognised. Ask the admin to add you.";
   };
   document.getElementById("loginName").addEventListener("keydown", function (e) {
     if (e.key === "Enter") document.getElementById("loginBtn").click();
@@ -649,7 +659,7 @@
 
   // ---- Tabs ----
   function switchTab(tab) {
-    if (tab === "admin" && !isAdmin(state.me)) tab = "stats";
+    if (tab === "admin" && !meIsAdmin()) tab = "stats";
     document.querySelectorAll(".tab-panel").forEach(function (p) { p.classList.remove("active"); });
     document.getElementById("tab-" + tab).classList.add("active");
     document.querySelectorAll("nav.tabs button").forEach(function (b) {
@@ -885,7 +895,7 @@
 
   function renderLeaderboard() {
     var editBtn = document.getElementById("editParticipants");
-    var admin = !!state.me && isAdmin(state.me);
+    var admin = meIsAdmin();
     var canAdminEdit = admin && monthEditable(state.viewMonth);
     var canSelfToggle = !admin && !!state.me && monthKeyOf(state.viewMonth) === nextMonthKey();
     if (!canAdminEdit && state.editing) state.editing = false;
@@ -1281,7 +1291,7 @@
   }
 
   function refreshAdminAccess() {
-    var stillAdmin = isAdmin(state.me);
+    var stillAdmin = meIsAdmin();
     document.getElementById("adminTabBtn").style.display = stillAdmin ? "flex" : "none";
     if (!stillAdmin) switchTab("stats");
   }
@@ -1402,7 +1412,7 @@
   }
 
   document.getElementById("editParticipants").onclick = function () {
-    if (!!state.me && isAdmin(state.me) && monthEditable(state.viewMonth)) {
+    if (meIsAdmin() && monthEditable(state.viewMonth)) {
       state.editing = !state.editing;
       renderLeaderboard();
     } else {
@@ -1523,7 +1533,7 @@
       else {
         // roster is now authoritative - resume a saved session that the default list couldn't match yet
         var saved = localStorage.getItem(SESSION_KEY);
-        if (saved && resolveName(saved)) doLogin(resolveName(saved));
+        if (saved && resolveName(saved)) doLogin(resolveName(saved), localStorage.getItem(ADMINSESS_KEY) === "1");
       }
     }
 
@@ -1596,7 +1606,7 @@
       if (!netReady) showToast("Not connected. You can view, but changes won\u2019t save until you reconnect.", null);
     }, 5000);
     var saved = localStorage.getItem(SESSION_KEY);
-    if (saved && resolveName(saved)) doLogin(resolveName(saved));
+    if (saved && resolveName(saved)) doLogin(resolveName(saved), localStorage.getItem(ADMINSESS_KEY) === "1");
   }
   var began = false;
   function tryBegin() { if (began) return; began = true; begin(); }

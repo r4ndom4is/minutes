@@ -46,10 +46,16 @@
 
   /* ---- App ---- */
   #app { display: none; padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 12px); }
-  header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
-  header h1 { font-size: 20px; margin: 0; letter-spacing: -0.5px; }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+  header .greet { display: flex; align-items: center; gap: 11px; flex: 1 1 auto; min-width: 0; }
+  header .greet-text { min-width: 0; }
+  header h1 { font-size: 20px; margin: 0; letter-spacing: -0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   header .sub { font-size: 12px; color: var(--muted); }
-  .logout { background: var(--card-2); border: 1px solid #2e3563; color: var(--muted); font-size: 13px; font-weight: 600; padding: 8px 12px; border-radius: 12px; cursor: pointer; }
+  .logout { display: flex; align-items: center; gap: 7px; flex: 0 0 auto; background: var(--card-2); border: 1px solid #2e3563; color: var(--muted); font-size: 13px; font-weight: 600; padding: 8px 12px; border-radius: 12px; cursor: pointer; }
+  .logout svg { width: 15px; height: 15px; display: block; flex: 0 0 auto; }
+  .logout:active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .logout.icononly { padding: 9px; }
+  .logout.icononly .lbl { display: none; }
 
   .card { background: var(--card); border: 1px solid #262c52; border-radius: var(--radius); padding: 18px; margin-bottom: 16px; }
   .card h2 { font-size: 14px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); margin: 0 0 14px; font-weight: 700; }
@@ -209,8 +215,9 @@
   .mb-nav { width: 40px; height: 40px; flex: 0 0 auto; border-radius: 12px; border: 1px solid #2e3563; background: var(--card); color: var(--text); font-size: 22px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; }
   .mb-nav:disabled { opacity: .4; cursor: default; }
   .mb-nav:not(:disabled):active { background: var(--accent); border-color: var(--accent); }
-  .mb-label { flex: 1; text-align: center; background: none; border: none; color: var(--text); font-size: 17px; font-weight: 800; letter-spacing: -.3px; cursor: default; padding: 9px; border-radius: 12px; }
+  .mb-label { flex: 1; text-align: center; background: none; border: none; color: var(--text); font-size: 17px; font-weight: 800; letter-spacing: -.3px; cursor: default; padding: 0 9px; line-height: 40px; border-radius: 12px; }
   .mb-label.past { cursor: pointer; text-decoration: underline dotted; text-underline-offset: 5px; text-decoration-color: var(--muted); }
+  .dateheader { display: flex; align-items: center; justify-content: center; height: 40px; margin-bottom: 16px; font-size: 17px; font-weight: 800; letter-spacing: -.3px; color: var(--text); }
 
   .ver-tag { text-align: center; color: var(--muted); font-size: 11px; opacity: .5; margin-top: 16px; padding-bottom: 4px; }
 
@@ -276,13 +283,21 @@
     border-top: 1px solid #262c52; display: flex;
   }
   nav.tabs button {
-    flex: 1; background: none; border: none; color: var(--muted); cursor: pointer;
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    flex: 1; background: none; border: none; color: var(--muted); cursor: pointer; position: relative;
+    display: flex; align-items: center; justify-content: center;
     font-size: 11px; font-weight: 600;
   }
-  nav.tabs button .ico { line-height: 0; }
+  nav.tabs button::before {
+    content: ""; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 26px; height: 3px; border-radius: 0 0 3px 3px;
+    background: linear-gradient(90deg, var(--accent), #9d86ff);
+    opacity: 0; transition: opacity .15s ease;
+  }
+  nav.tabs button.active::before { opacity: 1; }
+  nav.tabs button .tab-inner { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 18px; }
+  nav.tabs button .ico { display: inline-flex; align-items: center; justify-content: center; }
   nav.tabs button .ico svg { width: 23px; height: 23px; display: block; }
-  nav.tabs button.active { color: var(--accent); }
+  nav.tabs button.active { color: var(--accent); font-weight: 700; }
 </style>
 </head>
 <body>
@@ -306,14 +321,17 @@
 <div id="app">
   <div class="wrap">
     <header>
-      <div style="display:flex;align-items:center;gap:11px">
+      <div class="greet">
         <div class="me-avatar" id="headAvatar"></div>
-        <div>
+        <div class="greet-text">
           <h1>Hi, <span id="meName">you</span> 👋</h1>
           <div class="sub" id="tabSub">Stats</div>
         </div>
       </div>
-      <button class="logout" id="logoutBtn">Log out</button>
+      <button class="logout" id="logoutBtn" aria-label="Log out">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        <span class="lbl">Log out</span>
+      </button>
     </header>
 
     <!-- STATS TAB -->
@@ -349,6 +367,7 @@
 
     <!-- LOG TAB -->
     <section class="tab-panel" id="tab-log">
+      <div class="dateheader" id="logDateHeader"></div>
       <div class="statsblock" id="statsblockNow"></div>
 
       <div class="card">
@@ -428,11 +447,11 @@
 
   <nav class="tabs">
     <button data-tab="stats" class="active">
-      <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 16 9 10 13 14 21 5"/></svg></span>Stats</button>
+      <span class="tab-inner"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 16 9 10 13 14 21 5"/></svg></span><span class="lbl">Stats</span></span></button>
     <button data-tab="log">
-      <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>Log</button>
+      <span class="tab-inner"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span><span class="lbl">Log</span></span></button>
     <button data-tab="admin" id="adminTabBtn" style="display:none">
-      <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.2"/><path d="M5 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5"/></svg></span>Admin</button>
+      <span class="tab-inner"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.2"/><path d="M5 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5"/></svg></span><span class="lbl">Admin</span></span></button>
   </nav>
 
   <div class="toast" id="toast">
@@ -464,7 +483,7 @@
                  "#a3e635", "#fb923c", "#22d3ee", "#c084fc", "#f87171", "#4ade80"];
   var SESSION_KEY = "minutes_session_v3";
   var ADMINSESS_KEY = "minutes_adminsess_v1";
-  var VERSION = "3.7";
+  var VERSION = "4.3";
 
   // In-memory cache - the UI's source of truth; kept in sync by Store (Firestore).
   var cache = { members: DEFAULT_MEMBERS.slice(), admins: DEFAULT_ADMINS.slice() };
@@ -625,7 +644,18 @@
     switchTab("stats");
     renderAll();
     window.scrollTo(0, 0);
+    adjustHeader();
   }
+
+  // Collapse the Log out button to icon-only when the greeting would collide with it (long name / narrow screen).
+  function adjustHeader() {
+    var h1 = document.querySelector("header h1");
+    var logout = document.getElementById("logoutBtn");
+    if (!h1 || !logout) return;
+    logout.classList.remove("icononly");
+    if (h1.scrollWidth > h1.clientWidth + 1) logout.classList.add("icononly");
+  }
+  window.addEventListener("resize", adjustHeader);
 
   function doLogout() {
     state.me = null;
@@ -1066,7 +1096,11 @@
     });
   }
 
-  function renderAll() { clampViewMonth(); renderMonthBar(); renderStats(); renderChart(); renderEntries(); renderLeaderboard(); updateLogGate(); }
+  function renderLogHeader() {
+    var el = document.getElementById("logDateHeader");
+    if (el) el.textContent = "Today, " + new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  }
+  function renderAll() { clampViewMonth(); renderMonthBar(); renderLogHeader(); renderStats(); renderChart(); renderEntries(); renderLeaderboard(); updateLogGate(); }
 
   // ---- Month carousel ----
   function changeMonth(delta) {

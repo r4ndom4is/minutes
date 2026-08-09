@@ -427,6 +427,9 @@
 
     <!-- ADMIN TAB (admin only) -->
     <section class="tab-panel" id="tab-admin">
+      <div class="dateheader">Overview</div>
+      <div class="statsblock" id="statsblockAdmin"></div>
+
       <div class="card">
         <h2>Members</h2>
         <div id="memberList"></div>
@@ -483,7 +486,7 @@
                  "#a3e635", "#fb923c", "#22d3ee", "#c084fc", "#f87171", "#4ade80"];
   var SESSION_KEY = "minutes_session_v3";
   var ADMINSESS_KEY = "minutes_adminsess_v1";
-  var VERSION = "4.5";
+  var VERSION = "4.6";
 
   // In-memory cache - the UI's source of truth; kept in sync by Store (Firestore).
   var cache = { members: DEFAULT_MEMBERS.slice(), admins: DEFAULT_ADMINS.slice() };
@@ -734,6 +737,37 @@
   function renderStats() {
     document.getElementById("statsblockView").innerHTML = statsHtml(state.viewMonth);
     document.getElementById("statsblockNow").innerHTML = statsHtml(firstOfMonth(new Date()));
+    var adminEl = document.getElementById("statsblockAdmin");
+    if (adminEl) adminEl.innerHTML = adminStatsHtml();
+  }
+
+  function daysAgo(dateStr) {
+    var p = dateStr.split("-");
+    var d = new Date(+p[0], (+p[1]) - 1, +p[2]);
+    var t = new Date(); t.setHours(0, 0, 0, 0);
+    return Math.round((t.getTime() - d.getTime()) / 86400000);
+  }
+  function adminStatsHtml() {
+    var mc = members().length;
+    var latest = null;
+    state.entries.forEach(function (e) { if (!latest || e.date > latest.date) latest = e; });
+    var actVal, actSmall;
+    if (!latest) { actVal = "—"; actSmall = "no entries"; }
+    else {
+      var da = daysAgo(latest.date);
+      actVal = da <= 0 ? "Today" : da === 1 ? "Yesterday" : da + "d ago";
+      actSmall = latest.who;
+    }
+    return '<div class="stats">' +
+        '<div class="tile accent">' +
+          '<div class="label">Members</div>' +
+          '<div class="value">' + mc + ' <small>' + (mc === 1 ? "person" : "people") + '</small></div>' +
+        '</div>' +
+        '<div class="tile">' +
+          '<div class="label">Last activity</div>' +
+          '<div class="value">' + actVal + ' <small>' + escapeHtml(actSmall) + '</small></div>' +
+        '</div>' +
+      '</div>';
   }
 
   function renderMonthBar() {

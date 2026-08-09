@@ -215,9 +215,9 @@
   .mb-nav { width: 40px; height: 40px; flex: 0 0 auto; border-radius: 12px; border: 1px solid #2e3563; background: var(--card); color: var(--text); font-size: 22px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; }
   .mb-nav:disabled { opacity: .4; cursor: default; }
   .mb-nav:not(:disabled):active { background: var(--accent); border-color: var(--accent); }
-  .mb-label { flex: 1; text-align: center; background: none; border: none; color: var(--text); font-size: 17px; font-weight: 800; letter-spacing: -.3px; cursor: default; padding: 0 9px; line-height: 40px; border-radius: 12px; }
+  .mb-label { flex: 1; text-align: center; background: none; border: none; color: var(--text); font-size: 17px; font-weight: 600; letter-spacing: -.3px; cursor: default; padding: 0 9px; line-height: 40px; border-radius: 12px; }
   .mb-label.past { cursor: pointer; text-decoration: underline dotted; text-underline-offset: 5px; text-decoration-color: var(--muted); }
-  .dateheader { display: flex; align-items: center; justify-content: center; height: 40px; margin-bottom: 16px; font-size: 17px; font-weight: 800; letter-spacing: -.3px; color: var(--text); }
+  .dateheader { display: flex; align-items: center; justify-content: center; height: 40px; margin-bottom: 16px; font-size: 17px; font-weight: 600; letter-spacing: -.3px; color: var(--text); }
 
   .ver-tag { text-align: center; color: var(--muted); font-size: 11px; opacity: .5; margin-top: 16px; padding-bottom: 4px; }
 
@@ -289,7 +289,7 @@
   }
   nav.tabs button::before {
     content: ""; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-    width: 26px; height: 3px; border-radius: 0 0 3px 3px;
+    width: 64px; height: 3px; border-radius: 0 0 3px 3px;
     background: linear-gradient(90deg, var(--accent), #9d86ff);
     opacity: 0; transition: opacity .15s ease;
   }
@@ -483,7 +483,7 @@
                  "#a3e635", "#fb923c", "#22d3ee", "#c084fc", "#f87171", "#4ade80"];
   var SESSION_KEY = "minutes_session_v3";
   var ADMINSESS_KEY = "minutes_adminsess_v1";
-  var VERSION = "4.3";
+  var VERSION = "4.5";
 
   // In-memory cache - the UI's source of truth; kept in sync by Store (Firestore).
   var cache = { members: DEFAULT_MEMBERS.slice(), admins: DEFAULT_ADMINS.slice() };
@@ -1098,7 +1098,7 @@
 
   function renderLogHeader() {
     var el = document.getElementById("logDateHeader");
-    if (el) el.textContent = "Today, " + new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+    if (el) el.textContent = new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
   }
   function renderAll() { clampViewMonth(); renderMonthBar(); renderLogHeader(); renderStats(); renderChart(); renderEntries(); renderLeaderboard(); updateLogGate(); }
 

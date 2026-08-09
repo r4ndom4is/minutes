@@ -427,7 +427,7 @@
 
     <!-- ADMIN TAB (admin only) -->
     <section class="tab-panel" id="tab-admin">
-      <div class="dateheader">Overview</div>
+      <div class="dateheader" id="adminDateHeader"></div>
       <div class="statsblock" id="statsblockAdmin"></div>
 
       <div class="card">
@@ -486,7 +486,7 @@
                  "#a3e635", "#fb923c", "#22d3ee", "#c084fc", "#f87171", "#4ade80"];
   var SESSION_KEY = "minutes_session_v3";
   var ADMINSESS_KEY = "minutes_adminsess_v1";
-  var VERSION = "4.6";
+  var VERSION = "4.9";
 
   // In-memory cache - the UI's source of truth; kept in sync by Store (Firestore).
   var cache = { members: DEFAULT_MEMBERS.slice(), admins: DEFAULT_ADMINS.slice() };
@@ -751,12 +751,12 @@
     var mc = members().length;
     var latest = null;
     state.entries.forEach(function (e) { if (!latest || e.date > latest.date) latest = e; });
-    var actVal, actSmall;
-    if (!latest) { actVal = "—"; actSmall = "no entries"; }
+    var actName, actWhen;
+    if (!latest) { actName = "—"; actWhen = "no entries yet"; }
     else {
       var da = daysAgo(latest.date);
-      actVal = da <= 0 ? "Today" : da === 1 ? "Yesterday" : da + "d ago";
-      actSmall = latest.who;
+      actName = latest.who;
+      actWhen = da <= 0 ? "today" : da === 1 ? "yesterday" : da + " days ago";
     }
     return '<div class="stats">' +
         '<div class="tile accent">' +
@@ -765,7 +765,7 @@
         '</div>' +
         '<div class="tile">' +
           '<div class="label">Last activity</div>' +
-          '<div class="value">' + actVal + ' <small>' + escapeHtml(actSmall) + '</small></div>' +
+          '<div class="value">' + escapeHtml(actName) + ' <small>' + escapeHtml(actWhen) + '</small></div>' +
         '</div>' +
       '</div>';
   }
@@ -1131,8 +1131,9 @@
   }
 
   function renderLogHeader() {
-    var el = document.getElementById("logDateHeader");
-    if (el) el.textContent = new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+    var txt = new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+    var l = document.getElementById("logDateHeader"); if (l) l.textContent = txt;
+    var a = document.getElementById("adminDateHeader"); if (a) a.textContent = txt;
   }
   function renderAll() { clampViewMonth(); renderMonthBar(); renderLogHeader(); renderStats(); renderChart(); renderEntries(); renderLeaderboard(); updateLogGate(); }
 

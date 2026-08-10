@@ -254,6 +254,19 @@
   .entry .edit:active { color: var(--accent); }
   .empty { color: var(--muted); font-size: 14px; text-align: center; padding: 18px 0; }
 
+  /* Categories */
+  .cat-row { margin-bottom: 12px; }
+  .cat-row:last-child { margin-bottom: 0; }
+  .cat-line { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+  .cat-name { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; min-width: 0; }
+  .cat-name .dot { width: 10px; height: 10px; border-radius: 50%; flex: 0 0 auto; }
+  .cat-name .lbl { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cat-num { font-size: 13px; font-weight: 800; color: var(--accent-2); flex: 0 0 auto; }
+  .cat-num .cat-pct { color: var(--muted); font-weight: 600; }
+  .cat-track { height: 8px; border-radius: 6px; background: var(--card-2); overflow: hidden; }
+  .cat-fill { height: 100%; border-radius: 6px; min-width: 4px; }
+  .cat-untag { opacity: .82; }
+
   /* Entries - month accordion */
   .mgroup { border: 1px solid var(--border); border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
   .mgroup-head { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 13px 14px; background: var(--card-2); border: none; color: var(--text); cursor: pointer; text-align: left; }
@@ -494,6 +507,11 @@
         <div class="chart-legend" id="legend"></div>
       </div>
 
+      <div class="card" id="catCard">
+        <h2>Categories</h2>
+        <div id="catBody"></div>
+      </div>
+
       <div class="card">
         <div class="card-head">
           <h2>Leaderboard &amp; Members</h2>
@@ -658,7 +676,7 @@
                  "#a3e635", "#fb923c", "#22d3ee", "#c084fc", "#f87171", "#4ade80"];
   var SESSION_KEY = "minutes_session_v3";
   var ADMINSESS_KEY = "minutes_adminsess_v1";
-  var VERSION = "7.2";
+  var VERSION = "7.6";
   var TAG_MAX = 32;
 
   // In-memory cache - the UI's source of truth; kept in sync by Store (Firestore).
@@ -1042,6 +1060,52 @@
     renderLegend();
   }
 
+  // ---- Categories (personal, by tag, this month) ----
+  var CAT_UNTAG = "untagged";
+  function catColor(tag) {
+    if (!tag || tag === CAT_UNTAG) return "#8a8f98";
+    var h = 5381;
+    for (var i = 0; i < tag.length; i++) h = (((h << 5) + h + tag.charCodeAt(i)) >>> 0);
+    return PALETTE[h % PALETTE.length];
+  }
+  function catAgg(vm) {
+    var mp = monthKeyOf(vm);
+    var map = {};
+    myEntries().forEach(function (e) {
+      if (e.date.indexOf(mp) !== 0) return;
+      var k = (e.note || "").trim().toLowerCase() || CAT_UNTAG;
+      if (!map[k]) map[k] = { tag: k, mins: 0, count: 0 };
+      map[k].mins += e.mins; map[k].count += 1;
+    });
+    var arr = Object.keys(map).map(function (k) { return map[k]; });
+    arr.sort(function (a, b) {
+      if (a.tag === CAT_UNTAG) return 1;
+      if (b.tag === CAT_UNTAG) return -1;
+      return b.mins - a.mins || a.tag.localeCompare(b.tag);
+    });
+    var total = arr.reduce(function (s, c) { return s + c.mins; }, 0);
+    return { arr: arr, total: total };
+  }
+  function renderCategories() {
+    var body = document.getElementById("catBody"); if (!body) return;
+    var agg = catAgg(state.viewMonth);
+    if (!agg.total) { body.innerHTML = '<div class="empty">No minutes logged this month.</div>'; return; }
+    var arr = agg.arr, total = agg.total;
+
+    var bars = arr.map(function (c) {
+      var pct = Math.round(c.mins / total * 100);
+      var logs = c.count === 1 ? "1 log" : c.count + " logs";
+      return '<div class="cat-row' + (c.tag === CAT_UNTAG ? ' cat-untag' : '') + '">' +
+             '<div class="cat-line"><span class="cat-name">' +
+             '<span class="dot" style="background:' + catColor(c.tag) + '"></span>' +
+             '<span class="lbl">' + escapeHtml(c.tag) + '</span></span>' +
+             '<span class="cat-num">' + c.mins + 'm<span class="cat-pct"> · ' + pct + '% · ' + logs + '</span></span></div>' +
+             '<div class="cat-track"><div class="cat-fill" style="width:' + pct + '%;background:' + catColor(c.tag) + '"></div></div></div>';
+    }).join("");
+
+    body.innerHTML = '<div class="cat-bars">' + bars + '</div>';
+  }
+
   function sleepyChartSvg() {
     var C = chartColors();
     var isFuture = state.viewMonth.getTime() > firstOfMonth(new Date()).getTime();
@@ -1354,7 +1418,7 @@
       return { cls: "zero", text: pickDaily([
         "🛋️ 0 minutes. Get off the couch, " + leader.name + "'s already on " + leader.mins + ".",
         "👟 The couch called; it wants a break. " + leader.name + " leads with " + leader.mins + ".",
-        "😴 Zilch so far. " + leader.name + " is " + leader.mins + " min ahead of your nap."
+        "😴 " + leader.name + " is " + leader.mins + " min ahead of your nap."
       ]) };
     }
 
@@ -1420,7 +1484,7 @@
     var l = document.getElementById("logDateHeader"); if (l) l.textContent = txt;
     var a = document.getElementById("adminDateHeader"); if (a) a.textContent = txt;
   }
-  function renderAll() { clampViewMonth(); renderMonthBar(); renderLogHeader(); renderStats(); renderChart(); renderEntries(); renderTagChips(); renderLeaderboard(); renderMotiv(); updateLogGate(); }
+  function renderAll() { clampViewMonth(); renderMonthBar(); renderLogHeader(); renderStats(); renderChart(); renderCategories(); renderEntries(); renderTagChips(); renderLeaderboard(); renderMotiv(); updateLogGate(); }
 
   // ---- Month carousel ----
   function changeMonth(delta) {

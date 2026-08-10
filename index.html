@@ -38,8 +38,8 @@
     --border: #23284a;
     --border-2: #2c3159;
     --tint-accent: rgba(124,92,255,0.20);
-    --tint-accent-fg: var(--tint-accent-fg);
-    --tint-danger: var(--tint-danger);
+    --tint-accent-fg: #c9bdff;
+    --tint-danger: rgba(255,92,124,0.16);
     --tile-accent-bg: #241f52;
     --tile-accent-bd: #3a2f88;
     --note-fg: #ffc2ce;
@@ -126,7 +126,7 @@
   header .greet-text { min-width: 0; }
   header h1 { font-size: 20px; margin: 0; letter-spacing: -0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   header .sub { font-size: 12px; color: var(--muted); }
-  .gear { flex: 0 0 auto; display: flex; align-items: center; justify-content: center; background: var(--card-2); border: 1px solid var(--border-2); color: var(--muted); padding: 9px; border-radius: 12px; cursor: pointer; }
+  .gear { flex: 0 0 auto; width: 40px; height: 40px; padding: 9px; display: flex; align-items: center; justify-content: center; background: var(--card-2); border: 1px solid var(--border-2); color: var(--muted); border-radius: 12px; cursor: pointer; }
   .gear svg { width: 18px; height: 18px; display: block; }
   .gear:active, .gear.open { background: var(--accent); border-color: var(--accent); color: #fff; }
 
@@ -259,7 +259,7 @@
   .mgroup-body { padding: 0 14px; display: none; }
   .mgroup.open .mgroup-body { display: block; }
 
-  /* Leaderboard */
+  /* Leaderboard & Members */
   .lb-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; }
   .lb-row.me .rank { color: var(--text); }
   .lb-row.me .name { font-weight: 800; color: var(--text); }
@@ -274,6 +274,7 @@
   .seg button { flex: 1; padding: 9px; border: none; background: none; color: var(--muted); font-weight: 700; font-size: 14px; border-radius: 9px; cursor: pointer; }
   .seg button.active { background: var(--accent); color: #fff; }
   .seg button:disabled { opacity: .4; cursor: default; }
+  .seg button .seg-count { margin-left: 5px; font-weight: 700; opacity: .6; font-variant-numeric: tabular-nums; }
 
   /* Motivational hero line (scope pill + text, auto-cycles today/month) */
   .motiv { display: flex; align-items: flex-start; gap: 9px; width: 100%; text-align: left;
@@ -486,7 +487,7 @@
 
       <div class="card">
         <div class="card-head">
-          <h2>Leaderboard</h2>
+          <h2>Leaderboard &amp; Members</h2>
           <button class="edit-btn" id="editParticipants" style="display:none">Edit</button>
         </div>
         <div class="seg" id="seg">
@@ -546,7 +547,7 @@
         </div>
         <div class="field">
           <label for="note">Note (optional)</label>
-          <input type="text" id="note" placeholder="e.g. Morning run" />
+          <input type="text" id="note" placeholder="e.g. Morning run" maxlength="200" />
         </div>
         <div class="block-note" id="logBlockNote" style="display:none"></div>
         <button class="btn" id="addBtn">Add entry</button>
@@ -619,7 +620,8 @@
                  "#a3e635", "#fb923c", "#22d3ee", "#c084fc", "#f87171", "#4ade80"];
   var SESSION_KEY = "minutes_session_v3";
   var ADMINSESS_KEY = "minutes_adminsess_v1";
-  var VERSION = "5.5";
+  var VERSION = "6.0";
+  var NOTE_MAX = 200;
 
   // In-memory cache - the UI's source of truth; kept in sync by Store (Firestore).
   var cache = { members: DEFAULT_MEMBERS.slice(), admins: DEFAULT_ADMINS.slice() };
@@ -764,7 +766,7 @@
     state.me = name;
     state.isAdminSession = !!adminMode && isAdmin(name);
     // reset per-user view state so nothing leaks between sessions on a shared device
-    state.editing = false; state.hidden = {}; state.openMonths = {}; state.lbRange = "today";
+    state.editing = false; state.hidden = {}; state.openMonths = {}; state.lbRange = "today"; lbRangeTouched = false;
     state.viewMonth = firstOfMonth(new Date());
     localStorage.setItem(SESSION_KEY, name);
     if (state.isAdminSession) localStorage.setItem(ADMINSESS_KEY, "1"); else localStorage.removeItem(ADMINSESS_KEY);
@@ -1091,6 +1093,7 @@
     });
   }
 
+  var lbRangeTouched = false;
   function renderLeaderboard() {
     var editBtn = document.getElementById("editParticipants");
     var admin = meIsAdmin();
@@ -1130,22 +1133,31 @@
     var isCur = isCurrentMonth(state.viewMonth);
     var todayBtn = document.querySelector('#seg [data-range="today"]');
     var monthBtn = document.querySelector('#seg [data-range="month"]');
-    monthBtn.textContent = state.viewMonth.toLocaleString(undefined, { month: "long" });
+    var monthName = state.viewMonth.toLocaleString(undefined, { month: "long" });
+
+    // participation counts (people with >0 min) per range
+    var tArr = rangeArr("today"), mArr = rangeArr("month");
+    var totalPeople = mArr.length;
+    var tCount = tArr.filter(function (x) { return x.mins > 0; }).length;
+    var mCount = mArr.filter(function (x) { return x.mins > 0; }).length;
+
     todayBtn.disabled = !isCur;
+    var isFuture = state.viewMonth.getTime() > firstOfMonth(new Date()).getTime();
+    // default to Month when nobody has logged today yet (until the user picks a tab)
     if (!isCur) state.lbRange = "month";
+    else if (!lbRangeTouched) state.lbRange = tCount > 0 ? "today" : "month";
+
+    todayBtn.innerHTML = isCur
+      ? 'Today <span class="seg-count">' + tCount + '/' + totalPeople + '</span>'
+      : 'Today';
+    monthBtn.innerHTML = isFuture
+      ? escapeHtml(monthName)
+      : escapeHtml(monthName) + ' <span class="seg-count">' + mCount + '/' + totalPeople + '</span>';
     todayBtn.classList.toggle("active", state.lbRange === "today");
     monthBtn.classList.toggle("active", state.lbRange === "month");
 
-    var range = state.lbRange, t = todayStr(), mp = monthKeyOf(state.viewMonth);
-    var roster = participantsFor(state.viewMonth);
-    var totals = {};
-    roster.forEach(function (n) { totals[n] = 0; });
-    state.entries.forEach(function (e) {
-      var inRange = range === "today" ? e.date === t : e.date.indexOf(mp) === 0;
-      if (inRange && totals.hasOwnProperty(e.who)) totals[e.who] += e.mins;
-    });
-    var arr = roster.map(function (n) { return { name: n, mins: totals[n] }; })
-                     .sort(function (a, b) { return b.mins - a.mins; });
+    var range = state.lbRange;
+    var arr = range === "today" ? tArr : mArr;
     var max = Math.max(1, arr[0].mins);
     el.innerHTML = "";
     arr.forEach(function (r, i) {
@@ -1163,6 +1175,7 @@
 
   // ---- Motivational hero line (auto-cycles today / month) ----
   var motivTimer = null;
+  var MOTIV_MS = 12000;
   var motivView = { scopes: [], idx: 0 };
 
   function rangeArr(range) {
@@ -1203,7 +1216,7 @@
     if (motivView.idx >= scopes.length) motivView.idx = 0;
     mEl.style.display = "flex";
     paintMotiv(motivView.idx, false);
-    if (scopes.length > 1) motivTimer = setInterval(flipMotiv, 7000);
+    if (scopes.length > 1) motivTimer = setInterval(flipMotiv, MOTIV_MS);
   }
 
   function paintMotiv(i, animate) {
@@ -1491,7 +1504,7 @@
   document.getElementById("addBtn").onclick = function () {
     var mins = parseInt(document.getElementById("mins").value, 10);
     var date = document.getElementById("date").value || todayStr();
-    var note = document.getElementById("note").value.trim();
+    var note = document.getElementById("note").value.trim().slice(0, NOTE_MAX);
     if (!mins || mins <= 0) { alert("Enter minutes greater than 0"); return; }
     if (date < iso(logWindowStart())) { showToast("That month is closed for logging.", null); return; }
     if (!isParticipant(state.me, date.slice(0, 7))) {
@@ -1511,7 +1524,7 @@
     if (existing) {
       var id = existing.id, prevMins = existing.mins, prevNote = existing.note;
       var newMins = existing.mins + mins;
-      var newNote = note ? (existing.note ? existing.note + "; " + note : note) : existing.note;
+      var newNote = note ? (existing.note ? (existing.note + "; " + note).slice(0, NOTE_MAX) : note) : existing.note;
       writePromise = Store.updateEntry(id, { mins: newMins, note: newNote });
       undoFn = function () { Store.updateEntry(id, { mins: prevMins, note: prevNote }).catch(warnSaveFail); };
     } else {
@@ -1545,6 +1558,7 @@
   document.querySelectorAll("#seg button").forEach(function (b) {
     b.onclick = function () {
       if (b.disabled) return;
+      lbRangeTouched = true;
       state.lbRange = b.getAttribute("data-range");
       renderLeaderboard();
     };
@@ -1553,7 +1567,7 @@
   document.getElementById("motivation").onclick = function () {
     if (motivView.scopes.length < 2) return;
     flipMotiv();
-    if (motivTimer) { clearInterval(motivTimer); motivTimer = setInterval(flipMotiv, 7000); }
+    if (motivTimer) { clearInterval(motivTimer); motivTimer = setInterval(flipMotiv, MOTIV_MS); }
   };
 
   // ---- Admin ----

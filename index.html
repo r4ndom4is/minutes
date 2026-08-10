@@ -169,7 +169,7 @@
 
   .field { margin-bottom: 12px; }
   .field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
-  #tagSuggest { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+  #tagSuggest { display: flex; align-items: center; gap: 10px; margin: 2px 0 10px; }
   #tagSuggest .tag-sub { margin: 0; flex: 0 0 auto; white-space: nowrap; }
   #tagSuggest .pe-chips { flex: 1 1 auto; min-width: 0; }
   input[type=number], input[type=text], input[type=date] {
@@ -552,11 +552,11 @@
         </div>
         <div class="field">
           <label for="note">Tag (optional)</label>
-          <input type="text" id="note" placeholder="e.g. Reading" maxlength="32" autocomplete="off" />
           <div id="tagSuggest" style="display:none">
             <label class="tag-sub">Recent tags</label>
             <div class="pe-chips" id="tagChips"></div>
           </div>
+          <input type="text" id="note" placeholder="e.g. Running" maxlength="32" autocomplete="off" />
         </div>
         <div class="block-note" id="logBlockNote" style="display:none"></div>
         <button class="btn" id="addBtn">Add entry</button>
@@ -629,7 +629,7 @@
                  "#a3e635", "#fb923c", "#22d3ee", "#c084fc", "#f87171", "#4ade80"];
   var SESSION_KEY = "minutes_session_v3";
   var ADMINSESS_KEY = "minutes_adminsess_v1";
-  var VERSION = "6.5";
+  var VERSION = "6.8";
   var TAG_MAX = 32;
 
   // In-memory cache - the UI's source of truth; kept in sync by Store (Firestore).
@@ -1049,12 +1049,12 @@
     div.className = "entry";
     div.innerHTML =
       '<div class="meta"><span class="who">' + escapeHtml(niceDate(e.date)) + '</span>' +
-      (e.note ? '<span class="det tag">' + escapeHtml(e.note) + '</span>' : '') + '</div>' +
+      (e.note ? '<span class="det tag">' + escapeHtml(e.note.toLowerCase()) + '</span>' : '') + '</div>' +
       '<div style="display:flex;align-items:center">' +
       '<span class="mins">' + e.mins + 'm</span>' +
       '<button class="del" title="Delete">×</button></div>';
     div.querySelector(".del").onclick = function () {
-      showConfirm({ title: "Delete entry?", msg: niceDate(e.date) + " · " + e.mins + " min" + (e.note ? " · " + e.note : ""), ok: "Delete" }, function () {
+      showConfirm({ title: "Delete entry?", msg: niceDate(e.date) + " · " + e.mins + " min" + (e.note ? " · " + e.note.toLowerCase() : ""), ok: "Delete" }, function () {
         var removed = e;
         Store.deleteEntry(removed.id).then(function () {
           showToast("Entry deleted", function () { Store.putEntry(removed).catch(warnSaveFail); });
@@ -1112,7 +1112,7 @@
       .forEach(function (e) {
         var t = (e.note || "").trim(); if (!t) return;
         var k = t.toLowerCase(); if (seen[k]) return;
-        seen[k] = 1; out.push(t);
+        seen[k] = 1; out.push(k);
       });
     return out;
   }
@@ -1552,7 +1552,7 @@
   document.getElementById("addBtn").onclick = function () {
     var mins = parseInt(document.getElementById("mins").value, 10);
     var date = document.getElementById("date").value || todayStr();
-    var tag = document.getElementById("note").value.trim().slice(0, TAG_MAX);
+    var tag = document.getElementById("note").value.trim().toLowerCase().slice(0, TAG_MAX);
     if (!mins || mins <= 0) { alert("Enter minutes greater than 0"); return; }
     if (date < iso(logWindowStart())) { showToast("That month is closed for logging.", null); return; }
     if (!isParticipant(state.me, date.slice(0, 7))) {

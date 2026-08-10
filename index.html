@@ -673,7 +673,7 @@
                  "#a3e635", "#fb923c", "#22d3ee", "#c084fc", "#f87171", "#4ade80"];
   var SESSION_KEY = "minutes_session_v3";
   var ADMINSESS_KEY = "minutes_adminsess_v1";
-  var VERSION = "9.1";
+  var VERSION = "9.2";
   var TAG_MAX = 32;
 
   // In-memory cache - the UI's source of truth; kept in sync by Store (Firestore).
@@ -1042,7 +1042,7 @@
       var isMe = name === state.me;
       var path = "";
       pts.forEach(function (p, i) { path += (i === 0 ? "M" : "L") + x(p.day).toFixed(1) + " " + y(p.val).toFixed(1) + " "; });
-      lines += '<path d="' + path + '" fill="none" stroke="' + colorFor(name) + '" stroke-width="' + (isMe ? 3.2 : 2) +
+      lines += '<path d="' + path + '" fill="none" stroke="' + colorFor(name) + '" stroke-width="' + (isMe ? 3.5 : 2.5) +
                '" stroke-linejoin="round" stroke-linecap="round" opacity="' + (isMe ? 1 : 0.85) + '"/>';
       var last = pts[pts.length - 1];
       lines += '<circle cx="' + x(last.day).toFixed(1) + '" cy="' + y(last.val).toFixed(1) + '" r="' + (isMe ? 4 : 3) +

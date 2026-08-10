@@ -635,6 +635,7 @@
       </div>
       <div class="field">
         <label for="editTag">Tag (optional)</label>
+        <div class="pe-chips" id="editTagChips" style="margin-bottom:8px;display:none"></div>
         <input type="text" id="editTag" maxlength="32" autocomplete="off" placeholder="e.g. Running" />
       </div>
       <div class="edit-err" id="editErr"></div>
@@ -657,7 +658,7 @@
                  "#a3e635", "#fb923c", "#22d3ee", "#c084fc", "#f87171", "#4ade80"];
   var SESSION_KEY = "minutes_session_v3";
   var ADMINSESS_KEY = "minutes_adminsess_v1";
-  var VERSION = "7.1";
+  var VERSION = "7.2";
   var TAG_MAX = 32;
 
   // In-memory cache - the UI's source of truth; kept in sync by Store (Firestore).
@@ -1135,13 +1136,10 @@
     return out;
   }
 
-  function renderTagChips() {
-    var wrap = document.getElementById("tagChips"); if (!wrap) return;
-    var box = document.getElementById("tagSuggest");
-    var input = document.getElementById("note");
+  function buildTagChips(wrap, input) {
+    wrap.innerHTML = "";
     var cur = (input ? input.value : "").trim().toLowerCase();
     var tags = myTags().slice(0, 8);
-    wrap.innerHTML = "";
     tags.forEach(function (t) {
       var b = document.createElement("button");
       b.type = "button";
@@ -1150,12 +1148,24 @@
       b.onclick = function () {
         // tap a selected chip again to clear it
         input.value = (input.value.trim().toLowerCase() === t.toLowerCase()) ? "" : t;
-        renderTagChips();
+        buildTagChips(wrap, input);
       };
       wrap.appendChild(b);
     });
-    if (input) input.placeholder = tags.length ? "e.g. Running, or pick a recent tag" : "e.g. Running";
-    if (box) box.style.display = tags.length ? "flex" : "none";
+    return tags.length;
+  }
+  function renderTagChips() {
+    var wrap = document.getElementById("tagChips"); if (!wrap) return;
+    var box = document.getElementById("tagSuggest");
+    var input = document.getElementById("note");
+    var n = buildTagChips(wrap, input);
+    if (input) input.placeholder = n ? "e.g. Running, or pick a recent tag" : "e.g. Running";
+    if (box) box.style.display = n ? "flex" : "none";
+  }
+  function renderEditTagChips() {
+    var wrap = document.getElementById("editTagChips"); if (!wrap) return;
+    var n = buildTagChips(wrap, document.getElementById("editTag"));
+    wrap.style.display = n ? "flex" : "none";
   }
 
   var lbRangeTouched = false;
@@ -1499,6 +1509,7 @@
     document.getElementById("editMins").value = e.mins;
     document.getElementById("editTag").value = (e.note || "").trim().toLowerCase();
     document.getElementById("editErr").textContent = "";
+    renderEditTagChips();
     var s = document.getElementById("editSave");
     s.disabled = false; s.textContent = "Save";
     document.getElementById("editModal").classList.add("show");
@@ -1646,6 +1657,7 @@
 
   // ---- Interactions ----
   document.getElementById("note").addEventListener("input", renderTagChips);
+  document.getElementById("editTag").addEventListener("input", renderEditTagChips);
 
   document.querySelectorAll(".quick button").forEach(function (b) {
     b.onclick = function () {
@@ -1655,6 +1667,7 @@
   });
 
   document.querySelectorAll(".stepper .step").forEach(function (b) {
+    if (b.closest("#editModal")) return;
     b.onclick = function () {
       var cur = parseInt(document.getElementById("mins").value, 10) || 0;
       var next = cur + parseInt(b.getAttribute("data-step"), 10);

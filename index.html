@@ -255,10 +255,10 @@
   .empty { color: var(--muted); font-size: 14px; text-align: center; padding: 18px 0; }
 
   /* Categories */
-  .cat-track { display: block; height: 8px; border-radius: 6px; background: var(--border); overflow: hidden; }
+  .cat-track { display: block; height: 6px; border-radius: 6px; background: var(--border); overflow: hidden; }
   .cat-fill { display: block; height: 100%; border-radius: 6px; min-width: 4px; }
   .cat-untag { opacity: .82; }
-  .cat-line { margin-top: 7px; }
+  .cat-line { margin-top: 9px; }
   .cat-titlerow { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
   .cat-titlerow .nm { font-weight: 700; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .cat-meta { flex: 0 0 auto; font-size: 12px; color: var(--muted); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -277,15 +277,17 @@
   .mgroup.open .mgroup-body { display: block; }
 
   /* Leaderboard & Members */
-  .lb-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; }
-  .lb-row.me .rank { color: var(--text); }
-  .lb-row.me .name { font-weight: 800; color: var(--text); }
-  .lb-row.me .n { color: var(--text); font-weight: 700; }
-  .lb-row .rank { flex: 0 0 16px; text-align: right; font-size: 13px; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
-  .lb-row .name { flex: 0 0 84px; font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .lb-bar { flex: 1; height: 10px; background: var(--border); border-radius: 999px; overflow: hidden; }
+  .lb-row { padding: 11px 0; border-top: 1px solid var(--border); }
+  .lb-row:first-child { border-top: none; }
+  .lb-top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+  .lb-row .name { flex: 1 1 auto; min-width: 0; font-size: 16px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lb-row .rank { color: var(--muted); font-weight: 700; font-variant-numeric: tabular-nums; margin-right: 8px; }
+  .lb-row .n { flex: 0 0 auto; font-size: 13px; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .lb-bar { display: block; height: 6px; background: var(--border); border-radius: 999px; overflow: hidden; margin-top: 8px; }
   .lb-bar > span { display: block; height: 100%; border-radius: 999px; }
-  .lb-row .n { flex: 0 0 auto; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .lb-row.me .name { font-weight: 800; color: var(--text); }
+  .lb-row.me .rank { color: var(--text); }
+  .lb-row.me .n { color: var(--text); font-weight: 700; }
 
   .seg { display: flex; background: var(--card-2); border-radius: 12px; padding: 4px; margin-bottom: 16px; }
   .seg button { flex: 1; padding: 9px; border: none; background: none; color: var(--muted); font-weight: 700; font-size: 14px; border-radius: 9px; cursor: pointer; }
@@ -672,7 +674,7 @@
                  "#a3e635", "#fb923c", "#22d3ee", "#c084fc", "#f87171", "#4ade80"];
   var SESSION_KEY = "minutes_session_v3";
   var ADMINSESS_KEY = "minutes_adminsess_v1";
-  var VERSION = "8.3";
+  var VERSION = "8.4";
   var TAG_MAX = 32;
 
   // In-memory cache - the UI's source of truth; kept in sync by Store (Firestore).
@@ -1323,10 +1325,11 @@
       row.className = "lb-row" + (r.name === state.me ? " me" : "");
       var pct = Math.round((r.mins / max) * 100);
       row.innerHTML =
-        '<div class="rank">' + (i + 1) + '</div>' +
-        '<div class="name">' + escapeHtml(r.name) + '</div>' +
-        '<div class="lb-bar"><span style="width:' + pct + '%;background:' + colorFor(r.name) + '"></span></div>' +
-        '<div class="n">' + r.mins + 'm</div>';
+        '<div class="lb-top">' +
+          '<span class="name"><span class="rank">' + (i + 1) + '</span>' + escapeHtml(r.name) + '</span>' +
+          '<span class="n">' + r.mins + 'm</span>' +
+        '</div>' +
+        '<div class="lb-bar"><span style="width:' + pct + '%;background:' + colorFor(r.name) + '"></span></div>';
       el.appendChild(row);
     });
   }

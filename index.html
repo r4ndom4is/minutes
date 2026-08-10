@@ -277,8 +277,7 @@
   .mgroup.open .mgroup-body { display: block; }
 
   /* Leaderboard & Members */
-  .lb-row { padding: 11px 0; border-top: 1px solid var(--border); }
-  .lb-row:first-child { border-top: none; }
+  .lb-row { padding: 10px 10px; }
   .lb-top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
   .lb-row .name { flex: 1 1 auto; min-width: 0; font-size: 16px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .lb-row .rank { color: var(--muted); font-weight: 700; font-variant-numeric: tabular-nums; margin-right: 8px; }
@@ -674,7 +673,7 @@
                  "#a3e635", "#fb923c", "#22d3ee", "#c084fc", "#f87171", "#4ade80"];
   var SESSION_KEY = "minutes_session_v3";
   var ADMINSESS_KEY = "minutes_adminsess_v1";
-  var VERSION = "8.4";
+  var VERSION = "8.7";
   var TAG_MAX = 32;
 
   // In-memory cache - the UI's source of truth; kept in sync by Store (Firestore).
@@ -1175,7 +1174,7 @@
       var pct = Math.round(g.mins / grand * 100);
       var isOpen = state.openCats.hasOwnProperty(g.tag) ? state.openCats[g.tag] : false;
       var col = catColor(g.tag);
-      var metaTxt = (g.count > 1 ? '×' + g.count + ' · ' : '') + pct + '%';
+      var metaTxt = '×' + g.count + ' · ' + pct + '%';
 
       var wrap = document.createElement("div");
       wrap.className = "mgroup" + (isOpen ? " open" : "") + (g.tag === CAT_UNTAG ? " cat-untag" : "");

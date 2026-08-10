@@ -223,6 +223,10 @@
   .quick { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
   .quick button { flex: 1; min-width: 56px; padding: 10px; border-radius: 12px; border: 1px solid var(--border-2); background: var(--card-2); color: var(--text); font-weight: 600; cursor: pointer; font-size: 14px; }
   .quick button:active { background: var(--accent); border-color: var(--accent); }
+  .tagchips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .tagchips .tc { font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border-2); background: var(--card-2); color: var(--muted); cursor: pointer; }
+  .tagchips .tc:active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .tagchips .tc.on { background: var(--tint-accent); border-color: var(--tint-accent); color: var(--tint-accent-fg); }
   .btn { width: 100%; padding: 15px; border-radius: 12px; border: none; background: var(--accent); color: #fff; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 6px; }
   .btn:active { transform: scale(.98); }
   .btn:disabled { opacity: .55; cursor: default; }
@@ -243,6 +247,7 @@
   .entry .meta { display: flex; flex-direction: column; gap: 3px; }
   .entry .who { font-weight: 700; font-size: 15px; }
   .entry .det { font-size: 12px; color: var(--muted); }
+  .entry .det.tag { display: inline-block; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--border-2); background: var(--card-2); font-size: 11px; font-weight: 600; }
   .entry .mins { font-weight: 800; font-size: 16px; color: var(--accent-2); }
   .entry .del { background: none; border: none; color: var(--danger); font-size: 18px; cursor: pointer; padding: 4px 8px; margin-left: 6px; }
   .empty { color: var(--muted); font-size: 14px; text-align: center; padding: 18px 0; }
@@ -546,8 +551,9 @@
           </div>
         </div>
         <div class="field">
-          <label for="note">Note (optional)</label>
-          <input type="text" id="note" placeholder="e.g. Morning run" maxlength="200" />
+          <label for="note">Tag (optional)</label>
+          <input type="text" id="note" placeholder="e.g. Reading" maxlength="32" autocomplete="off" />
+          <div class="tagchips" id="tagChips" style="display:none"></div>
         </div>
         <div class="block-note" id="logBlockNote" style="display:none"></div>
         <button class="btn" id="addBtn">Add entry</button>
@@ -620,8 +626,8 @@
                  "#a3e635", "#fb923c", "#22d3ee", "#c084fc", "#f87171", "#4ade80"];
   var SESSION_KEY = "minutes_session_v3";
   var ADMINSESS_KEY = "minutes_adminsess_v1";
-  var VERSION = "6.0";
-  var NOTE_MAX = 200;
+  var VERSION = "6.1";
+  var TAG_MAX = 32;
 
   // In-memory cache - the UI's source of truth; kept in sync by Store (Firestore).
   var cache = { members: DEFAULT_MEMBERS.slice(), admins: DEFAULT_ADMINS.slice() };
@@ -1040,7 +1046,7 @@
     div.className = "entry";
     div.innerHTML =
       '<div class="meta"><span class="who">' + escapeHtml(niceDate(e.date)) + '</span>' +
-      '<span class="det">' + escapeHtml(e.note || "") + '</span></div>' +
+      (e.note ? '<span class="det tag">' + escapeHtml(e.note) + '</span>' : '') + '</div>' +
       '<div style="display:flex;align-items:center">' +
       '<span class="mins">' + e.mins + 'm</span>' +
       '<button class="del" title="Delete">×</button></div>';
@@ -1091,6 +1097,42 @@
       wrap.appendChild(body);
       el.appendChild(wrap);
     });
+  }
+
+  function sameTag(a, b) { return (a || "").trim().toLowerCase() === (b || "").trim().toLowerCase(); }
+
+  // distinct non-empty tags from my own entries, most-recent-first (case-insensitive de-dupe)
+  function myTags() {
+    var seen = {}, out = [];
+    myEntries().slice()
+      .sort(function (a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : 0; })
+      .forEach(function (e) {
+        var t = (e.note || "").trim(); if (!t) return;
+        var k = t.toLowerCase(); if (seen[k]) return;
+        seen[k] = 1; out.push(t);
+      });
+    return out;
+  }
+
+  function renderTagChips() {
+    var wrap = document.getElementById("tagChips"); if (!wrap) return;
+    var input = document.getElementById("note");
+    var cur = (input ? input.value : "").trim().toLowerCase();
+    var tags = myTags().slice(0, 8);
+    wrap.innerHTML = "";
+    tags.forEach(function (t) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "tc" + (t.toLowerCase() === cur ? " on" : "");
+      b.textContent = t;
+      b.onclick = function () {
+        // tap a selected chip again to clear it
+        input.value = (input.value.trim().toLowerCase() === t.toLowerCase()) ? "" : t;
+        renderTagChips();
+      };
+      wrap.appendChild(b);
+    });
+    wrap.style.display = tags.length ? "flex" : "none";
   }
 
   var lbRangeTouched = false;
@@ -1345,7 +1387,7 @@
     var l = document.getElementById("logDateHeader"); if (l) l.textContent = txt;
     var a = document.getElementById("adminDateHeader"); if (a) a.textContent = txt;
   }
-  function renderAll() { clampViewMonth(); renderMonthBar(); renderLogHeader(); renderStats(); renderChart(); renderEntries(); renderLeaderboard(); renderMotiv(); updateLogGate(); }
+  function renderAll() { clampViewMonth(); renderMonthBar(); renderLogHeader(); renderStats(); renderChart(); renderEntries(); renderTagChips(); renderLeaderboard(); renderMotiv(); updateLogGate(); }
 
   // ---- Month carousel ----
   function changeMonth(delta) {
@@ -1485,6 +1527,8 @@
   });
 
   // ---- Interactions ----
+  document.getElementById("note").addEventListener("input", renderTagChips);
+
   document.querySelectorAll(".quick button").forEach(function (b) {
     b.onclick = function () {
       var cur = parseInt(document.getElementById("mins").value, 10) || 0;
@@ -1504,7 +1548,7 @@
   document.getElementById("addBtn").onclick = function () {
     var mins = parseInt(document.getElementById("mins").value, 10);
     var date = document.getElementById("date").value || todayStr();
-    var note = document.getElementById("note").value.trim().slice(0, NOTE_MAX);
+    var tag = document.getElementById("note").value.trim().slice(0, TAG_MAX);
     if (!mins || mins <= 0) { alert("Enter minutes greater than 0"); return; }
     if (date < iso(logWindowStart())) { showToast("That month is closed for logging.", null); return; }
     if (!isParticipant(state.me, date.slice(0, 7))) {
@@ -1514,22 +1558,22 @@
     }
     if (!requireConnection()) return;
 
-    // stack: add to the same day's entry if one already exists
+    // fold into the same day's entry only when the tag matches; different tags stay
+    // separate so per-tag breakdowns can be built later
     var existing = null;
     for (var i = 0; i < state.entries.length; i++) {
       var e = state.entries[i];
-      if (e.who === state.me && e.date === date) { existing = e; break; }
+      if (e.who === state.me && e.date === date && sameTag(e.note, tag)) { existing = e; break; }
     }
     var undoFn, writePromise;
     if (existing) {
-      var id = existing.id, prevMins = existing.mins, prevNote = existing.note;
+      var id = existing.id, prevMins = existing.mins;
       var newMins = existing.mins + mins;
-      var newNote = note ? (existing.note ? (existing.note + "; " + note).slice(0, NOTE_MAX) : note) : existing.note;
-      writePromise = Store.updateEntry(id, { mins: newMins, note: newNote });
-      undoFn = function () { Store.updateEntry(id, { mins: prevMins, note: prevNote }).catch(warnSaveFail); };
+      writePromise = Store.updateEntry(id, { mins: newMins });
+      undoFn = function () { Store.updateEntry(id, { mins: prevMins }).catch(warnSaveFail); };
     } else {
       var newId = uid();
-      writePromise = Store.addEntry({ id: newId, who: state.me, date: date, mins: mins, note: note });
+      writePromise = Store.addEntry({ id: newId, who: state.me, date: date, mins: mins, note: tag });
       undoFn = function () { Store.deleteEntry(newId).catch(warnSaveFail); };
     }
 

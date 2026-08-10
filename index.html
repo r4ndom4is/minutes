@@ -255,20 +255,22 @@
   .empty { color: var(--muted); font-size: 14px; text-align: center; padding: 18px 0; }
 
   /* Categories */
-  .cat-track { height: 8px; border-radius: 6px; background: var(--card-2); overflow: hidden; }
-  .cat-fill { height: 100%; border-radius: 6px; min-width: 4px; }
+  .cat-track { display: block; height: 8px; border-radius: 6px; background: var(--border); overflow: hidden; }
+  .cat-fill { display: block; height: 100%; border-radius: 6px; min-width: 4px; }
   .cat-untag { opacity: .82; }
-  .cat-track.mini { display: inline-block; width: 60px; height: 6px; vertical-align: middle; margin-right: 7px; }
-  .cat-hdot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 8px; vertical-align: baseline; }
-  .mg-cnt { color: var(--muted); font-weight: 700; font-size: 12px; margin-left: 5px; }
+  .cat-line { margin-top: 7px; }
+  .cat-titlerow { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+  .cat-titlerow .nm { font-weight: 700; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cat-meta { flex: 0 0 auto; font-size: 12px; color: var(--muted); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
   /* Entries - month accordion */
   .mgroup { border: 1px solid var(--border); border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
   .mgroup-head { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 13px 14px; background: var(--card-2); border: none; color: var(--text); cursor: pointer; text-align: left; }
   .mgroup-head .mg-title { font-weight: 700; font-size: 15px; display: block; }
+  .mgroup-head .mg-left { flex: 1; min-width: 0; }
   .mgroup-head .mg-sub { font-size: 12px; color: var(--muted); margin-top: 2px; display: block; }
   .mgroup-head .mg-right { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; }
-  .mgroup-head .mg-total { font-weight: 800; color: var(--accent-2); font-size: 14px; }
+  .mgroup-head .mg-total { font-weight: 800; color: var(--accent-2); font-size: 16px; min-width: 62px; text-align: right; font-variant-numeric: tabular-nums; }
   .mg-chev { transition: transform .18s ease; color: var(--muted); font-size: 18px; line-height: 1; }
   .mgroup.open .mg-chev { transform: rotate(90deg); }
   .mgroup-body { padding: 0 14px; display: none; }
@@ -670,7 +672,7 @@
                  "#a3e635", "#fb923c", "#22d3ee", "#c084fc", "#f87171", "#4ade80"];
   var SESSION_KEY = "minutes_session_v3";
   var ADMINSESS_KEY = "minutes_adminsess_v1";
-  var VERSION = "7.8";
+  var VERSION = "8.1";
   var TAG_MAX = 32;
 
   // In-memory cache - the UI's source of truth; kept in sync by Store (Firestore).
@@ -1171,15 +1173,15 @@
       var pct = Math.round(g.mins / grand * 100);
       var isOpen = state.openCats.hasOwnProperty(g.tag) ? state.openCats[g.tag] : (i === 0);
       var col = catColor(g.tag);
-      var cnt = g.count > 1 ? '<span class="mg-cnt">×' + g.count + '</span>' : '';
+      var metaTxt = (g.count > 1 ? '×' + g.count + ' · ' : '') + pct + '%';
 
       var wrap = document.createElement("div");
       wrap.className = "mgroup" + (isOpen ? " open" : "") + (g.tag === CAT_UNTAG ? " cat-untag" : "");
       var head = document.createElement("button");
       head.type = "button"; head.className = "mgroup-head";
       head.innerHTML =
-        '<span><span class="mg-title"><span class="cat-hdot" style="background:' + col + '"></span>' + escapeHtml(g.tag) + cnt + '</span>' +
-        '<span class="mg-sub"><span class="cat-track mini"><span class="cat-fill" style="width:' + pct + '%;background:' + col + '"></span></span>' + pct + '%</span></span>' +
+        '<span class="mg-left"><span class="cat-titlerow"><span class="nm">' + escapeHtml(g.tag) + '</span><span class="cat-meta">' + metaTxt + '</span></span>' +
+        '<span class="cat-track cat-line"><span class="cat-fill" style="width:' + pct + '%;background:' + col + '"></span></span></span>' +
         '<span class="mg-right"><span class="mg-total">' + g.mins + 'm</span><span class="mg-chev">›</span></span>';
       head.onclick = function () { state.openCats[g.tag] = !isOpen; renderEntries(); };
       wrap.appendChild(head);

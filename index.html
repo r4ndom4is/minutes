@@ -260,7 +260,7 @@
   .cat-untag { opacity: .82; }
   .cat-line { margin-top: 7px; }
   .cat-titlerow { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
-  .cat-titlerow .nm { font-weight: 700; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cat-titlerow .nm { font-weight: 700; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .cat-meta { flex: 0 0 auto; font-size: 12px; color: var(--muted); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
   /* Entries - month accordion */
@@ -672,7 +672,7 @@
                  "#a3e635", "#fb923c", "#22d3ee", "#c084fc", "#f87171", "#4ade80"];
   var SESSION_KEY = "minutes_session_v3";
   var ADMINSESS_KEY = "minutes_adminsess_v1";
-  var VERSION = "8.1";
+  var VERSION = "8.2";
   var TAG_MAX = 32;
 
   // In-memory cache - the UI's source of truth; kept in sync by Store (Firestore).
@@ -1171,7 +1171,7 @@
     groups.forEach(function (g, i) {
       var list = g.entries.slice().sort(function (a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : 0; });
       var pct = Math.round(g.mins / grand * 100);
-      var isOpen = state.openCats.hasOwnProperty(g.tag) ? state.openCats[g.tag] : (i === 0);
+      var isOpen = state.openCats.hasOwnProperty(g.tag) ? state.openCats[g.tag] : false;
       var col = catColor(g.tag);
       var metaTxt = (g.count > 1 ? '×' + g.count + ' · ' : '') + pct + '%';
 

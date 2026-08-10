@@ -255,18 +255,12 @@
   .empty { color: var(--muted); font-size: 14px; text-align: center; padding: 18px 0; }
 
   /* Categories */
-  .cat-row { margin-bottom: 12px; }
-  .cat-row:last-child { margin-bottom: 0; }
-  .cat-line { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
-  .cat-name { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; min-width: 0; }
-  .cat-name .dot { width: 10px; height: 10px; border-radius: 50%; flex: 0 0 auto; }
-  .cat-name .lbl { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .cat-name .cat-cnt { color: var(--muted); font-weight: 700; font-size: 12px; flex: 0 0 auto; }
-  .cat-num { font-size: 13px; font-weight: 800; color: var(--accent-2); flex: 0 0 auto; }
-  .cat-num .cat-pct { color: var(--muted); font-weight: 600; }
   .cat-track { height: 8px; border-radius: 6px; background: var(--card-2); overflow: hidden; }
   .cat-fill { height: 100%; border-radius: 6px; min-width: 4px; }
   .cat-untag { opacity: .82; }
+  .cat-track.mini { display: inline-block; width: 60px; height: 6px; vertical-align: middle; margin-right: 7px; }
+  .cat-hdot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 8px; vertical-align: baseline; }
+  .mg-cnt { color: var(--muted); font-weight: 700; font-size: 12px; margin-left: 5px; }
 
   /* Entries - month accordion */
   .mgroup { border: 1px solid var(--border); border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
@@ -508,11 +502,6 @@
         <div class="chart-legend" id="legend"></div>
       </div>
 
-      <div class="card" id="catCard">
-        <h2>Categories</h2>
-        <div id="catBody"></div>
-      </div>
-
       <div class="card">
         <div class="card-head">
           <h2>Leaderboard &amp; Members</h2>
@@ -586,6 +575,10 @@
 
       <div class="card">
         <h2>Your entries</h2>
+        <div class="seg" id="entriesSeg">
+          <button type="button" data-egroup="date" class="active">By date</button>
+          <button type="button" data-egroup="category">By category</button>
+        </div>
         <div id="entries"></div>
       </div>
     </section>
@@ -677,7 +670,7 @@
                  "#a3e635", "#fb923c", "#22d3ee", "#c084fc", "#f87171", "#4ade80"];
   var SESSION_KEY = "minutes_session_v3";
   var ADMINSESS_KEY = "minutes_adminsess_v1";
-  var VERSION = "7.7";
+  var VERSION = "7.8";
   var TAG_MAX = 32;
 
   // In-memory cache - the UI's source of truth; kept in sync by Store (Firestore).
@@ -769,7 +762,7 @@
     if (viewableMonthKeys().indexOf(monthKeyOf(state.viewMonth)) < 0) state.viewMonth = keyToDate(defaultViewKey());
   }
 
-  var state = { me: null, entries: [], lbRange: "today", hidden: {}, viewMonth: firstOfMonth(new Date()), openMonths: {}, editing: false, isAdminSession: false };
+  var state = { me: null, entries: [], lbRange: "today", hidden: {}, viewMonth: firstOfMonth(new Date()), openMonths: {}, entriesGroup: "date", openCats: {}, editing: false, isAdminSession: false };
   var rosterLoaded = false;
   var netReady = false; // true once we've received real data from the server (not just cache)
   function requireConnection() {
@@ -823,7 +816,7 @@
     state.me = name;
     state.isAdminSession = !!adminMode && isAdmin(name);
     // reset per-user view state so nothing leaks between sessions on a shared device
-    state.editing = false; state.hidden = {}; state.openMonths = {}; state.lbRange = "today"; lbRangeTouched = false;
+    state.editing = false; state.hidden = {}; state.openMonths = {}; state.openCats = {}; state.entriesGroup = "date"; state.lbRange = "today"; lbRangeTouched = false;
     state.viewMonth = firstOfMonth(new Date());
     localStorage.setItem(SESSION_KEY, name);
     if (state.isAdminSession) localStorage.setItem(ADMINSESS_KEY, "1"); else localStorage.removeItem(ADMINSESS_KEY);
@@ -1061,7 +1054,7 @@
     renderLegend();
   }
 
-  // ---- Categories (personal, by tag, this month) ----
+  // ---- Category helpers (personal, by tag) ----
   var CAT_UNTAG = "untagged";
   function catColor(tag) {
     if (!tag || tag === CAT_UNTAG) return "#8a8f98";
@@ -1069,42 +1062,19 @@
     for (var i = 0; i < tag.length; i++) h = (((h << 5) + h + tag.charCodeAt(i)) >>> 0);
     return PALETTE[h % PALETTE.length];
   }
-  function catAgg(vm) {
-    var mp = monthKeyOf(vm);
+  // group entries by lowercased tag -> [{ tag, mins, count, entries[] }], mins desc, untagged last
+  function catGroups(entries) {
     var map = {};
-    myEntries().forEach(function (e) {
-      if (e.date.indexOf(mp) !== 0) return;
+    entries.forEach(function (e) {
       var k = (e.note || "").trim().toLowerCase() || CAT_UNTAG;
-      if (!map[k]) map[k] = { tag: k, mins: 0, count: 0 };
-      map[k].mins += e.mins; map[k].count += 1;
+      if (!map[k]) map[k] = { tag: k, mins: 0, count: 0, entries: [] };
+      map[k].mins += e.mins; map[k].count += 1; map[k].entries.push(e);
     });
-    var arr = Object.keys(map).map(function (k) { return map[k]; });
-    arr.sort(function (a, b) {
+    return Object.keys(map).map(function (k) { return map[k]; }).sort(function (a, b) {
       if (a.tag === CAT_UNTAG) return 1;
       if (b.tag === CAT_UNTAG) return -1;
       return b.mins - a.mins || a.tag.localeCompare(b.tag);
     });
-    var total = arr.reduce(function (s, c) { return s + c.mins; }, 0);
-    return { arr: arr, total: total };
-  }
-  function renderCategories() {
-    var body = document.getElementById("catBody"); if (!body) return;
-    var agg = catAgg(state.viewMonth);
-    if (!agg.total) { body.innerHTML = '<div class="empty">No minutes logged this month.</div>'; return; }
-    var arr = agg.arr, total = agg.total;
-
-    var bars = arr.map(function (c) {
-      var pct = Math.round(c.mins / total * 100);
-      var cnt = c.count > 1 ? '<span class="cat-cnt">×' + c.count + '</span>' : '';
-      return '<div class="cat-row' + (c.tag === CAT_UNTAG ? ' cat-untag' : '') + '">' +
-             '<div class="cat-line"><span class="cat-name">' +
-             '<span class="dot" style="background:' + catColor(c.tag) + '"></span>' +
-             '<span class="lbl">' + escapeHtml(c.tag) + '</span>' + cnt + '</span>' +
-             '<span class="cat-num">' + c.mins + 'm<span class="cat-pct"> · ' + pct + '%</span></span></div>' +
-             '<div class="cat-track"><div class="cat-fill" style="width:' + pct + '%;background:' + catColor(c.tag) + '"></div></div></div>';
-    }).join("");
-
-    body.innerHTML = '<div class="cat-bars">' + bars + '</div>';
   }
 
   function sleepyChartSvg() {
@@ -1138,12 +1108,12 @@
     });
   }
 
-  function entryRow(e) {
+  function entryRow(e, hideTag) {
     var div = document.createElement("div");
     div.className = "entry";
     div.innerHTML =
       '<div class="meta"><span class="who">' + escapeHtml(niceDate(e.date)) + '</span>' +
-      (e.note ? '<span class="det tag">' + escapeHtml(e.note.toLowerCase()) + '</span>' : '') + '</div>' +
+      (!hideTag && e.note ? '<span class="det tag">' + escapeHtml(e.note.toLowerCase()) + '</span>' : '') + '</div>' +
       '<div style="display:flex;align-items:center">' +
       '<span class="mins">' + e.mins + 'm</span>' +
       '<button class="edit" title="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg></button></div>';
@@ -1154,7 +1124,13 @@
   function renderEntries() {
     var el = document.getElementById("entries");
     var mine = myEntries();
+    syncEntriesSeg();
     if (!mine.length) { el.innerHTML = '<div class="empty">No entries yet. Log your first above.</div>'; return; }
+    if (state.entriesGroup === "category") renderEntriesByCategory(el, mine);
+    else renderEntriesByDate(el, mine);
+  }
+
+  function renderEntriesByDate(el, mine) {
     var groups = {};
     mine.forEach(function (e) { var k = e.date.slice(0, 7); (groups[k] = groups[k] || []).push(e); });
     var keys = Object.keys(groups).sort().reverse();
@@ -1183,6 +1159,42 @@
       list.forEach(function (e) { body.appendChild(entryRow(e)); });
       wrap.appendChild(body);
       el.appendChild(wrap);
+    });
+  }
+
+  function renderEntriesByCategory(el, mine) {
+    var groups = catGroups(mine);
+    var grand = mine.reduce(function (s, e) { return s + e.mins; }, 0) || 1;
+    el.innerHTML = "";
+    groups.forEach(function (g, i) {
+      var list = g.entries.slice().sort(function (a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : 0; });
+      var pct = Math.round(g.mins / grand * 100);
+      var isOpen = state.openCats.hasOwnProperty(g.tag) ? state.openCats[g.tag] : (i === 0);
+      var col = catColor(g.tag);
+      var cnt = g.count > 1 ? '<span class="mg-cnt">×' + g.count + '</span>' : '';
+
+      var wrap = document.createElement("div");
+      wrap.className = "mgroup" + (isOpen ? " open" : "") + (g.tag === CAT_UNTAG ? " cat-untag" : "");
+      var head = document.createElement("button");
+      head.type = "button"; head.className = "mgroup-head";
+      head.innerHTML =
+        '<span><span class="mg-title"><span class="cat-hdot" style="background:' + col + '"></span>' + escapeHtml(g.tag) + cnt + '</span>' +
+        '<span class="mg-sub"><span class="cat-track mini"><span class="cat-fill" style="width:' + pct + '%;background:' + col + '"></span></span>' + pct + '%</span></span>' +
+        '<span class="mg-right"><span class="mg-total">' + g.mins + 'm</span><span class="mg-chev">›</span></span>';
+      head.onclick = function () { state.openCats[g.tag] = !isOpen; renderEntries(); };
+      wrap.appendChild(head);
+
+      var body = document.createElement("div"); body.className = "mgroup-body";
+      list.forEach(function (e) { body.appendChild(entryRow(e, true)); });
+      wrap.appendChild(body);
+      el.appendChild(wrap);
+    });
+  }
+
+  function syncEntriesSeg() {
+    var seg = document.getElementById("entriesSeg"); if (!seg) return;
+    seg.querySelectorAll("button").forEach(function (b) {
+      b.classList.toggle("active", b.getAttribute("data-egroup") === state.entriesGroup);
     });
   }
 
@@ -1485,7 +1497,7 @@
     var l = document.getElementById("logDateHeader"); if (l) l.textContent = txt;
     var a = document.getElementById("adminDateHeader"); if (a) a.textContent = txt;
   }
-  function renderAll() { clampViewMonth(); renderMonthBar(); renderLogHeader(); renderStats(); renderChart(); renderCategories(); renderEntries(); renderTagChips(); renderLeaderboard(); renderMotiv(); updateLogGate(); }
+  function renderAll() { clampViewMonth(); renderMonthBar(); renderLogHeader(); renderStats(); renderChart(); renderEntries(); renderTagChips(); renderLeaderboard(); renderMotiv(); updateLogGate(); }
 
   // ---- Month carousel ----
   function changeMonth(delta) {
@@ -1723,6 +1735,14 @@
   // ---- Interactions ----
   document.getElementById("note").addEventListener("input", renderTagChips);
   document.getElementById("editTag").addEventListener("input", renderEditTagChips);
+  document.querySelectorAll("#entriesSeg button").forEach(function (b) {
+    b.onclick = function () {
+      var g = b.getAttribute("data-egroup");
+      if (g === state.entriesGroup) return;
+      state.entriesGroup = g;
+      renderEntries();
+    };
+  });
 
   document.querySelectorAll(".quick button").forEach(function (b) {
     b.onclick = function () {

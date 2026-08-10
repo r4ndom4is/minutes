@@ -279,7 +279,7 @@
   /* Leaderboard & Members */
   .lb-row { padding: 10px 10px; }
   .lb-top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
-  .lb-row .name { flex: 1 1 auto; min-width: 0; font-size: 16px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lb-row .name { flex: 1 1 auto; min-width: 0; font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .lb-row .rank { color: var(--muted); font-weight: 700; font-variant-numeric: tabular-nums; margin-right: 8px; }
   .lb-row .n { flex: 0 0 auto; font-size: 13px; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; }
   .lb-bar { display: block; height: 6px; background: var(--border); border-radius: 999px; overflow: hidden; margin-top: 8px; }
@@ -339,10 +339,10 @@
     display: flex; align-items: center; gap: 16px; padding: 13px 16px;
     border-radius: 12px; box-shadow: var(--shadow-toast);
     opacity: 0; pointer-events: none; transition: opacity .18s ease, transform .18s ease;
-    max-width: calc(100% - 32px); overflow: hidden;
+    width: calc(100% - 32px); max-width: 448px; overflow: hidden;
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
-  .toast .msg { font-size: 14px; color: var(--text); }
+  .toast .msg { flex: 1 1 auto; min-width: 0; font-size: 14px; line-height: 1.35; color: var(--text); }
   .toast .undo { background: none; border: none; color: var(--accent-2); font-weight: 800; font-size: 13px; cursor: pointer; text-transform: uppercase; letter-spacing: .6px; flex: 0 0 auto; }
   .toast .bar { position: absolute; left: 0; bottom: 0; height: 3px; width: 100%; background: var(--accent); }
   .toast.success .bar { background: var(--accent-2); }
@@ -673,7 +673,7 @@
                  "#a3e635", "#fb923c", "#22d3ee", "#c084fc", "#f87171", "#4ade80"];
   var SESSION_KEY = "minutes_session_v3";
   var ADMINSESS_KEY = "minutes_adminsess_v1";
-  var VERSION = "8.7";
+  var VERSION = "8.9";
   var TAG_MAX = 32;
 
   // In-memory cache - the UI's source of truth; kept in sync by Store (Firestore).
@@ -770,7 +770,7 @@
   var netReady = false; // true once we've received real data from the server (not just cache)
   function requireConnection() {
     if (netReady) return true;
-    showToast("Not connected. Your change wasn't saved — reconnect and try again.", null);
+    showToast("Not connected. Your change wasn't saved. Reconnect and try again.", null);
     return false;
   }
 
@@ -2199,7 +2199,7 @@
     Store.start();
     // If we never receive real server data, warn once (viewing works, saving is blocked).
     setTimeout(function () {
-      if (!netReady) showToast("Not connected. You can view, but changes won\u2019t save until you reconnect.", null);
+      if (!netReady) showToast("Not connected. Changes won't save until you reconnect.", null);
     }, 5000);
     var saved = localStorage.getItem(SESSION_KEY);
     if (saved && resolveName(saved)) doLogin(resolveName(saved), localStorage.getItem(ADMINSESS_KEY) === "1");

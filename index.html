@@ -116,7 +116,8 @@
 
   /* Pull-to-refresh (standalone PWA loses the native one) */
   #ptr { position: fixed; top: calc(env(safe-area-inset-top) + 6px); left: 0; right: 0; display: flex; justify-content: center; pointer-events: none; z-index: 60; transform: translateY(-48px); opacity: 0; will-change: transform, opacity; }
-  #ptr .ptr-spinner { width: 26px; height: 26px; border-radius: 50%; border: 2.5px solid var(--border-2); border-top-color: var(--accent); box-sizing: border-box; }
+  #ptr .ptr-spinner { width: 26px; height: 26px; border-radius: 50%; border: 2.5px solid var(--border-2); border-top-color: var(--accent); box-sizing: border-box; transition: transform .15s ease; }
+  #ptr.ready .ptr-spinner { transform: scale(1.15); border-color: var(--accent); border-top-color: var(--accent); }
   #ptr.spin .ptr-spinner { animation: ptrspin .7s linear infinite; }
   @keyframes ptrspin { to { transform: rotate(360deg); } }
 
@@ -2359,15 +2360,23 @@
   (function () {
     var ptr = document.getElementById("ptr");
     if (!ptr) return;
+    var content = Array.prototype.slice.call(document.querySelectorAll(".wrap"));
     var startY = 0, pulling = false, dist = 0;
-    var THRESH = 70, MAX = 110, REST = 22;
+    var THRESH = 95, MAX = 150, REST = 22, RESIST = 0.5;
 
     function atTop() { return (window.scrollY || document.documentElement.scrollTop || 0) <= 0; }
+    function setContentY(y, anim) {
+      content.forEach(function (el) {
+        el.style.transition = anim ? "transform .25s ease" : "none";
+        el.style.transform = y ? ("translateY(" + y + "px)") : "";
+      });
+    }
     function reset() {
       ptr.style.transition = "transform .2s, opacity .2s";
       ptr.style.transform = "translateY(-48px)";
       ptr.style.opacity = "0";
-      ptr.classList.remove("spin");
+      ptr.classList.remove("spin", "ready");
+      setContentY(0, true);
     }
 
     window.addEventListener("touchstart", function (e) {
@@ -2380,11 +2389,13 @@
       if (!atTop()) { pulling = false; reset(); return; }
       var dy = e.touches[0].clientY - startY;
       if (dy <= 0) { reset(); return; }
-      dist = Math.min(MAX, dy * 0.5);
+      dist = Math.min(MAX, dy * RESIST);
       if (dist > 6 && e.cancelable) e.preventDefault();
       ptr.style.transition = "none";
       ptr.style.transform = "translateY(" + (dist - 48) + "px)";
       ptr.style.opacity = String(Math.min(1, dist / THRESH));
+      ptr.classList.toggle("ready", dist >= THRESH);
+      setContentY(dist, false);
     }, { passive: false });
 
     window.addEventListener("touchend", function () {
@@ -2392,10 +2403,12 @@
       pulling = false;
       ptr.style.transition = "transform .25s, opacity .25s";
       if (dist >= THRESH) {
+        ptr.classList.remove("ready");
         ptr.classList.add("spin");
         ptr.style.transform = "translateY(" + REST + "px)";
         ptr.style.opacity = "1";
-        setTimeout(function () { location.reload(); }, 320);
+        setContentY(REST + 24, true); // hold the page down while it spins
+        setTimeout(function () { location.reload(); }, 650);
       } else { reset(); }
     }, { passive: true });
   })();

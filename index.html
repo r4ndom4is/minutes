@@ -265,23 +265,22 @@
   .cat-titlerow .nm { font-weight: 700; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .cat-meta { flex: 0 0 auto; font-size: 12px; color: var(--muted); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
-  /* Entries - month accordion */
-  .mgroup { border: 1px solid var(--border); border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
-  .mgroup-head { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 13px 14px; background: var(--card-2); border: none; color: var(--text); cursor: pointer; text-align: left; }
+  /* Entries - month/category accordion (shares the flush recessed shell + chevron/total with the leaderboard) */
+  .mgroup { background: var(--card-2); }
+  .mgroup + .mgroup { border-top: 1px solid var(--border); }
+  .mgroup-head { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 13px 14px; background: none; border: none; color: var(--text); cursor: pointer; text-align: left; font-family: inherit; }
   .mgroup-head .mg-title { font-weight: 700; font-size: 15px; display: block; }
   .mgroup-head .mg-left { flex: 1; min-width: 0; }
   .mgroup-head .mg-sub { font-size: 12px; color: var(--muted); margin-top: 2px; display: block; }
   .mgroup-head .mg-right { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; }
-  .mgroup-head .mg-total { font-weight: 800; color: var(--total); font-size: 16px; min-width: 62px; text-align: right; font-variant-numeric: tabular-nums; }
-  .mg-chev { transition: transform .18s ease; color: var(--muted); font-size: 18px; line-height: 1; }
-  .mgroup.open .mg-chev { transform: rotate(90deg); }
-  .mgroup-body { padding: 0 14px; display: none; }
+  .mgroup-body { padding: 2px 14px 10px 22px; display: none; background: var(--card); }
   .mgroup.open .mgroup-body { display: block; }
 
   /* Leaderboard & Members */
-  /* Leaderboard - expandable per person (flush accordion, mirrors Log "By category") */
-  #leaderboard { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  /* Flush recessed accordion shell shared by the leaderboard and the Log-page lists */
+  #leaderboard, #entries { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
   #leaderboard:empty { display: none; }
+  #entries:has(> .empty) { border: none; }
   .lb-person { background: var(--card-2); }
   .lb-person + .lb-person { border-top: 1px solid var(--border); }
   .lb-person.me { box-shadow: inset 3px 0 0 var(--accent); }
@@ -292,9 +291,9 @@
   .lb-person.me .lb-name { font-weight: 800; }
   .lb-rank { color: var(--muted); font-weight: 700; font-variant-numeric: tabular-nums; margin-right: 9px; }
   .lb-right { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; }
-  .lb-total { font-weight: 800; color: var(--total); font-size: 16px; min-width: 58px; text-align: right; font-variant-numeric: tabular-nums; }
-  .lb-chev { transition: transform .18s ease; color: var(--muted); font-size: 18px; line-height: 1; }
-  .lb-person.open .lb-chev { transform: rotate(90deg); }
+  .mgroup-head .mg-total, .lb-total { font-weight: 800; color: var(--total); font-size: 16px; min-width: 58px; text-align: right; font-variant-numeric: tabular-nums; }
+  .mg-chev, .lb-chev { transition: transform .18s ease; color: var(--muted); font-size: 18px; line-height: 1; }
+  .mgroup.open .mg-chev, .lb-person.open .lb-chev { transform: rotate(90deg); }
   .lb-body { padding: 2px 14px 10px 22px; display: none; background: var(--card); }
   .lb-person.open .lb-body { display: block; }
   .lb-tag { padding: 9px 0; border-top: 1px solid var(--border); }
@@ -691,7 +690,7 @@
                  "#a3e635", "#fb923c", "#22d3ee", "#c084fc", "#f87171", "#4ade80"];
   var SESSION_KEY = "minutes_session_v3";
   var ADMINSESS_KEY = "minutes_adminsess_v1";
-  var VERSION = "9.4";
+  var VERSION = "9.5";
   var TAG_MAX = 32;
 
   // In-memory cache - the UI's source of truth; kept in sync by Store (Firestore).

@@ -110,7 +110,10 @@
     --shadow-modal: 0 24px 60px -18px rgba(30,34,70,.22);
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { margin: 0; padding: 0; overscroll-behavior-y: contain; }
+  html, body { margin: 0; padding: 0; }
+  /* Only suppress the browser's native pull-to-refresh when installed standalone (where our
+     custom gesture takes over). In a normal tab, leave the native refresh intact. */
+  @media (display-mode: standalone) { html, body { overscroll-behavior-y: contain; } }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     background: var(--bg);
@@ -715,7 +718,7 @@
                  "#a3e635", "#fb923c", "#22d3ee", "#c084fc", "#f87171", "#4ade80"];
   var SESSION_KEY = "minutes_session_v3";
   var ADMINSESS_KEY = "minutes_adminsess_v1";
-  var VERSION = "9.11";
+  var VERSION = "9.12";
   var TAG_MAX = 32;
 
   // In-memory cache - the UI's source of truth; kept in sync by Store (Firestore).
@@ -2370,7 +2373,14 @@
 
 <script>
   // Custom pull-to-refresh: iOS removes the native gesture in standalone PWA mode.
+  // In a normal browser tab (Safari/Edge/Chrome on iOS) the browser's own native
+  // pull-to-refresh still runs and can't be reliably suppressed, so we'd get BOTH.
+  // Only take over the gesture when actually running standalone; otherwise leave the
+  // native browser refresh alone.
   (function () {
+    var standalone = (window.navigator.standalone === true) ||
+      (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
+    if (!standalone) { var p = document.getElementById("ptr"); if (p) p.style.display = "none"; return; }
     var ptr = document.getElementById("ptr");
     if (!ptr) return;
     var content = Array.prototype.slice.call(document.querySelectorAll(".wrap"));

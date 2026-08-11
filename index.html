@@ -295,7 +295,7 @@
   .lb-total { font-weight: 800; color: var(--total); font-size: 16px; min-width: 58px; text-align: right; font-variant-numeric: tabular-nums; }
   .lb-chev { transition: transform .18s ease; color: var(--muted); font-size: 18px; line-height: 1; }
   .lb-person.open .lb-chev { transform: rotate(90deg); }
-  .lb-body { padding: 0 14px 4px; display: none; }
+  .lb-body { padding: 2px 14px 10px 22px; display: none; background: var(--card); }
   .lb-person.open .lb-body { display: block; }
   .lb-tag { padding: 9px 0; border-top: 1px solid var(--border); }
   .lb-tag:first-child { border-top: none; }
@@ -691,7 +691,7 @@
                  "#a3e635", "#fb923c", "#22d3ee", "#c084fc", "#f87171", "#4ade80"];
   var SESSION_KEY = "minutes_session_v3";
   var ADMINSESS_KEY = "minutes_adminsess_v1";
-  var VERSION = "9.3";
+  var VERSION = "9.4";
   var TAG_MAX = 32;
 
   // In-memory cache - the UI's source of truth; kept in sync by Store (Firestore).

@@ -715,7 +715,7 @@
                  "#a3e635", "#fb923c", "#22d3ee", "#c084fc", "#f87171", "#4ade80"];
   var SESSION_KEY = "minutes_session_v3";
   var ADMINSESS_KEY = "minutes_adminsess_v1";
-  var VERSION = "9.10";
+  var VERSION = "9.11";
   var TAG_MAX = 32;
 
   // In-memory cache - the UI's source of truth; kept in sync by Store (Firestore).
@@ -1850,7 +1850,7 @@
     var mins = parseInt(document.getElementById("mins").value, 10);
     var date = document.getElementById("date").value || todayStr();
     var tag = document.getElementById("note").value.trim().toLowerCase().slice(0, TAG_MAX);
-    if (!mins || mins <= 0) { alert("Enter minutes greater than 0"); return; }
+    if (!mins || mins <= 0) { showToast("Enter minutes greater than 0.", null); return; }
     if (date < iso(logWindowStart())) { showToast("That month is closed for logging.", null); return; }
     if (!isParticipant(state.me, date.slice(0, 7))) {
       var mName = new Date(+date.slice(0, 4), (+date.slice(5, 7)) - 1, 1).toLocaleString(undefined, { month: "long" });
@@ -2310,6 +2310,9 @@
     var av = document.querySelectorAll(".ver-tag");
     av.forEach(function (el) { el.textContent = "v" + VERSION; });
     console.log("Minutes v" + VERSION);
+    // Bridge for the pull-to-refresh script (separate scope): re-render live data without a page teardown.
+    window.__APP_VERSION = VERSION;
+    window.__minutesRefresh = function () { try { renderAll(); } catch (e) {} };
     if (window.__FB) Store.init(window.__FB);
     Store.start();
     // If we never receive real server data, warn once (viewing works, saving is blocked).
@@ -2418,9 +2421,34 @@
         ptr.style.transform = "translateY(" + REST + "px)";
         ptr.style.opacity = "1";
         setContentY(REST + 24, true); // hold the page down while it spins
-        setTimeout(function () { location.reload(); }, 650);
+        softRefresh();
       } else { reset(); }
     }, { passive: true });
+
+    // Data is live via Firestore snapshots, so a full page reload is unnecessary and causes
+    // an empty-then-repopulated flash. Instead re-render in place, and only hard-reload when a
+    // genuinely newer app version has been deployed.
+    function softRefresh() {
+      var started = Date.now();
+      var finish = function () {
+        // keep the spinner visible for a minimum beat so the gesture feels intentional
+        var wait = Math.max(0, 500 - (Date.now() - started));
+        setTimeout(function () { ptr.classList.remove("spin"); reset(); }, wait);
+      };
+      var current = window.__APP_VERSION || "";
+      fetch("./index.html", { cache: "no-store" })
+        .then(function (r) { return r.text(); })
+        .then(function (t) {
+          var m = t.match(/var VERSION\s*=\s*"([^"]+)"/);
+          if (m && current && m[1] !== current) { location.reload(); return; }
+          if (window.__minutesRefresh) window.__minutesRefresh();
+          finish();
+        })
+        .catch(function () {
+          if (window.__minutesRefresh) window.__minutesRefresh();
+          finish();
+        });
+    }
   })();
 </script>
 

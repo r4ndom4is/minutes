@@ -21,6 +21,11 @@
         t = (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches) ? "light" : "dark";
       }
       document.documentElement.setAttribute("data-theme", t);
+      // Pre-hide the login screen on reload if a session exists, so a logged-in
+      // user doesn't see a flash of the login card before JS restores their view.
+      if (localStorage.getItem("minutes_session_v3")) {
+        document.documentElement.classList.add("has-session");
+      }
     } catch (e) {
       document.documentElement.setAttribute("data-theme", "dark");
     }
@@ -123,6 +128,9 @@
 
   /* ---- Login ---- */
   #login { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; }
+  /* Boot gate: avoid a login-screen flash on reload when a session is saved. */
+  html.has-session #login { display: none !important; }
+  html.has-session #app { display: block !important; }
   .login-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 26px 22px; text-align: center; }
   .login-card .logo { font-size: 40px; margin-bottom: 14px; line-height: 0; }
   .login-card .logo svg { width: 168px; height: 168px; display: inline-block; vertical-align: middle; }
@@ -2310,6 +2318,8 @@
     }, 5000);
     var saved = localStorage.getItem(SESSION_KEY);
     if (saved && resolveName(saved)) doLogin(resolveName(saved), localStorage.getItem(ADMINSESS_KEY) === "1");
+    // Release the boot gate now that visibility is decided (restored -> app, else login).
+    document.documentElement.classList.remove("has-session");
   }
   var began = false;
   function tryBegin() { if (began) return; began = true; begin(); }

@@ -35,6 +35,7 @@
     --text: #eef0ff;
     --muted: #9aa0c8;
     --muted-2: #5a6296;
+    --total: #cdd2f0;
     --border: #23284a;
     --border-2: #2c3159;
     --tint-accent: rgba(124,92,255,0.20);
@@ -69,6 +70,7 @@
     --text: #1c1e2e;
     --muted: #6b7194;
     --muted-2: #a2a7c0;
+    --total: #3a4068;
     --border: #e6e8f2;
     --border-2: #dfe2ee;
     --tint-accent: rgba(124,92,255,0.14);
@@ -270,23 +272,39 @@
   .mgroup-head .mg-left { flex: 1; min-width: 0; }
   .mgroup-head .mg-sub { font-size: 12px; color: var(--muted); margin-top: 2px; display: block; }
   .mgroup-head .mg-right { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; }
-  .mgroup-head .mg-total { font-weight: 800; color: var(--accent-2); font-size: 16px; min-width: 62px; text-align: right; font-variant-numeric: tabular-nums; }
+  .mgroup-head .mg-total { font-weight: 800; color: var(--total); font-size: 16px; min-width: 62px; text-align: right; font-variant-numeric: tabular-nums; }
   .mg-chev { transition: transform .18s ease; color: var(--muted); font-size: 18px; line-height: 1; }
   .mgroup.open .mg-chev { transform: rotate(90deg); }
   .mgroup-body { padding: 0 14px; display: none; }
   .mgroup.open .mgroup-body { display: block; }
 
   /* Leaderboard & Members */
-  .lb-row { padding: 10px 10px; }
-  .lb-top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
-  .lb-row .name { flex: 1 1 auto; min-width: 0; font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .lb-row .rank { color: var(--muted); font-weight: 700; font-variant-numeric: tabular-nums; margin-right: 8px; }
-  .lb-row .n { flex: 0 0 auto; font-size: 13px; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; }
-  .lb-bar { display: block; height: 5px; background: var(--border); border-radius: 999px; overflow: hidden; margin-top: 8px; }
-  .lb-bar > span { display: block; height: 100%; border-radius: 999px; }
-  .lb-row.me .name { font-weight: 800; color: var(--text); }
-  .lb-row.me .rank { color: var(--text); }
-  .lb-row.me .n { color: var(--text); font-weight: 700; }
+  /* Leaderboard - expandable per person (flush accordion, mirrors Log "By category") */
+  #leaderboard { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  #leaderboard:empty { display: none; }
+  .lb-person { background: var(--card-2); }
+  .lb-person + .lb-person { border-top: 1px solid var(--border); }
+  .lb-person.me { box-shadow: inset 3px 0 0 var(--accent); }
+  .lb-head { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 13px 14px; background: none; border: none; color: var(--text); cursor: pointer; text-align: left; font-family: inherit; }
+  .lb-head:disabled { cursor: default; }
+  .lb-left { flex: 1; min-width: 0; }
+  .lb-name { display: block; font-weight: 700; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lb-person.me .lb-name { font-weight: 800; }
+  .lb-rank { color: var(--muted); font-weight: 700; font-variant-numeric: tabular-nums; margin-right: 9px; }
+  .lb-right { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; }
+  .lb-total { font-weight: 800; color: var(--total); font-size: 16px; min-width: 58px; text-align: right; font-variant-numeric: tabular-nums; }
+  .lb-chev { transition: transform .18s ease; color: var(--muted); font-size: 18px; line-height: 1; }
+  .lb-person.open .lb-chev { transform: rotate(90deg); }
+  .lb-body { padding: 0 14px 4px; display: none; }
+  .lb-person.open .lb-body { display: block; }
+  .lb-tag { padding: 9px 0; border-top: 1px solid var(--border); }
+  .lb-tag:first-child { border-top: none; }
+  .lb-tag.cat-untag { opacity: .82; }
+  .lb-tagtop { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+  .lb-taglead { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lb-tagname { font-weight: 600; font-size: 14px; }
+  .lb-tagmeta { font-size: 12px; color: var(--muted); font-weight: 600; margin-left: 6px; font-variant-numeric: tabular-nums; }
+  .lb-tagmins { flex: 0 0 auto; font-size: 13px; color: var(--muted); font-weight: 600; font-variant-numeric: tabular-nums; }
 
   .seg { display: flex; background: var(--card-2); border-radius: 12px; padding: 4px; margin-bottom: 16px; }
   .seg button { flex: 1; padding: 9px; border: none; background: none; color: var(--muted); font-weight: 700; font-size: 14px; border-radius: 9px; cursor: pointer; }
@@ -673,7 +691,7 @@
                  "#a3e635", "#fb923c", "#22d3ee", "#c084fc", "#f87171", "#4ade80"];
   var SESSION_KEY = "minutes_session_v3";
   var ADMINSESS_KEY = "minutes_adminsess_v1";
-  var VERSION = "9.2";
+  var VERSION = "9.3";
   var TAG_MAX = 32;
 
   // In-memory cache - the UI's source of truth; kept in sync by Store (Firestore).
@@ -1253,6 +1271,7 @@
   }
 
   var lbRangeTouched = false;
+  var lbOpen = {};
   function renderLeaderboard() {
     var editBtn = document.getElementById("editParticipants");
     var admin = meIsAdmin();
@@ -1318,18 +1337,52 @@
     var range = state.lbRange;
     var arr = range === "today" ? tArr : mArr;
     var max = Math.max(1, arr[0].mins);
+    // per-person entries in the active range, for the expandable tag breakdown
+    var tKey = todayStr(), mKey = monthKeyOf(state.viewMonth);
+    var byPerson = {};
+    state.entries.forEach(function (e) {
+      var inRange = range === "today" ? e.date === tKey : e.date.indexOf(mKey) === 0;
+      if (inRange) (byPerson[e.who] = byPerson[e.who] || []).push(e);
+    });
     el.innerHTML = "";
     arr.forEach(function (r, i) {
-      var row = document.createElement("div");
-      row.className = "lb-row" + (r.name === state.me ? " me" : "");
       var pct = Math.round((r.mins / max) * 100);
-      row.innerHTML =
-        '<div class="lb-top">' +
-          '<span class="name"><span class="rank">' + (i + 1) + '</span>' + escapeHtml(r.name) + '</span>' +
-          '<span class="n">' + r.mins + 'm</span>' +
-        '</div>' +
-        '<div class="lb-bar"><span style="width:' + pct + '%;background:' + colorFor(r.name) + '"></span></div>';
-      el.appendChild(row);
+      var pentries = byPerson[r.name] || [];
+      var groups = catGroups(pentries);
+      var ptot = r.mins || 1;
+      var open = !!lbOpen[r.name] && pentries.length > 0;
+
+      var wrap = document.createElement("div");
+      wrap.className = "lb-person" + (r.name === state.me ? " me" : "") + (open ? " open" : "");
+
+      var head = document.createElement("button");
+      head.type = "button"; head.className = "lb-head";
+      head.innerHTML =
+        '<span class="lb-left"><span class="lb-name"><span class="lb-rank">' + (i + 1) + '</span>' + escapeHtml(r.name) + '</span>' +
+        '<span class="cat-track cat-line"><span class="cat-fill" style="width:' + pct + '%;background:' + colorFor(r.name) + '"></span></span></span>' +
+        '<span class="lb-right"><span class="lb-total">' + r.mins + 'm</span>' +
+        (pentries.length ? '<span class="lb-chev">›</span>' : '') + '</span>';
+      if (pentries.length) {
+        head.onclick = function () { lbOpen[r.name] = !lbOpen[r.name]; renderLeaderboard(); };
+      } else {
+        head.disabled = true;
+      }
+      wrap.appendChild(head);
+
+      var body = document.createElement("div"); body.className = "lb-body";
+      groups.forEach(function (g) {
+        var gpct = Math.round(g.mins / ptot * 100);
+        var trow = document.createElement("div");
+        trow.className = "lb-tag" + (g.tag === CAT_UNTAG ? " cat-untag" : "");
+        trow.innerHTML =
+          '<div class="lb-tagtop"><span class="lb-taglead"><span class="lb-tagname">' + escapeHtml(capTag(g.tag)) + '</span>' +
+          '<span class="lb-tagmeta">×' + g.count + ' · ' + gpct + '%</span></span>' +
+          '<span class="lb-tagmins">' + g.mins + 'm</span></div>' +
+          '<span class="cat-track cat-line"><span class="cat-fill" style="width:' + gpct + '%;background:' + catColor(g.tag) + '"></span></span>';
+        body.appendChild(trow);
+      });
+      wrap.appendChild(body);
+      el.appendChild(wrap);
     });
   }
 

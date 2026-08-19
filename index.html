@@ -386,12 +386,19 @@
   @media (prefers-reduced-motion: reduce) { .motiv { transition: none; } }
 
   /* Month carousel */
-  .monthbar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+  .round-head { margin: 2px 0 16px; }
+  .rh-title { display: flex; align-items: center; gap: 9px; }
+  .rh-emoji { font-size: 24px; line-height: 1; flex: 0 0 auto; }
+  .rh-name { font-size: 24px; font-weight: 700; letter-spacing: -.5px; color: var(--text); line-height: 1.15; min-width: 0; overflow-wrap: anywhere; }
+  .rh-nest { position: relative; display: flex; align-items: center; gap: 10px; margin: 9px 0 0 7px; padding-left: 15px; }
+  .rh-nest::before { content: ""; position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 2px; height: 20px; border-radius: 1px; background: var(--border-2); }
+  .rh-rtag { flex: 0 0 auto; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); background: var(--card-2); border: 1px solid var(--border); border-radius: 6px; padding: 4px 7px; }
+  .rh-label { flex: 1; min-width: 0; text-align: left; background: none; border: none; color: var(--text); font-size: 15px; font-weight: 600; letter-spacing: -.2px; cursor: default; padding: 0; line-height: 40px; border-radius: 8px; }
+  .rh-label.past { cursor: pointer; text-decoration: underline dotted; text-underline-offset: 5px; text-decoration-color: var(--muted-2); }
+  .rh-nav { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
   .mb-nav { width: 40px; height: 40px; flex: 0 0 auto; border-radius: 12px; border: 1px solid var(--border-2); background: var(--card); color: var(--text); font-size: 22px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; }
   .mb-nav:disabled { opacity: .4; cursor: default; }
   .mb-nav:not(:disabled):active { background: var(--accent); border-color: var(--accent); }
-  .mb-label { flex: 1; text-align: center; background: none; border: none; color: var(--text); font-size: 16px; font-weight: 600; letter-spacing: -.3px; cursor: default; padding: 0 9px; line-height: 40px; border-radius: 12px; }
-  .mb-label.past { cursor: pointer; text-decoration: underline dotted; text-underline-offset: 5px; text-decoration-color: var(--muted); }
   .dateheader { display: flex; align-items: center; justify-content: center; height: 40px; margin-bottom: 16px; font-size: 16px; font-weight: 600; letter-spacing: -.3px; color: var(--text); }
 
   .ver-tag { text-align: center; color: var(--muted); font-size: 11px; opacity: .5; margin-top: 16px; padding-bottom: 4px; }
@@ -517,16 +524,7 @@
   nav.tabs button .tab-inner { padding: 6px 8px; }
 
   /* Challenge switcher chip (under header) */
-  .chall-chip {
-    display: inline-flex; align-items: center; gap: 8px; margin: 2px 0 14px;
-    background: var(--card); border: 1px solid var(--border-2); color: var(--text);
-    border-radius: 999px; padding: 7px 14px; cursor: pointer; font: inherit;
-    box-shadow: var(--shadow-pop); max-width: 100%;
-  }
-  .chall-chip:active { background: var(--card-2); }
-  .chall-chip .cc-emoji { font-size: 16px; line-height: 1; }
-  .chall-chip .cc-name { font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .chall-chip .cc-caret { color: var(--muted); font-size: 14px; margin-left: 2px; }
+
 
   /* Challenges page */
   .sub-note { color: var(--muted); font-size: 13px; margin: -2px 0 12px; }
@@ -628,18 +626,21 @@
       </div>
     </header>
 
-    <button class="chall-chip" id="challChip" style="display:none" aria-label="Switch challenge">
-      <span class="cc-emoji" id="ccEmoji">🏆</span>
-      <span class="cc-name" id="ccName">Challenge</span>
-      <span class="cc-caret">⌄</span>
-    </button>
-
     <!-- STATS TAB -->
     <section class="tab-panel active" id="tab-stats">
-      <div class="monthbar">
-        <button class="mb-nav" id="monthPrev" aria-label="Previous month">‹</button>
-        <button class="mb-label" id="monthLabelTop">Month</button>
-        <button class="mb-nav" id="monthNext" aria-label="Next month">›</button>
+      <div class="round-head">
+        <div class="rh-title">
+          <span class="rh-emoji" id="ccEmoji">🏆</span>
+          <span class="rh-name" id="ccName">Challenge</span>
+        </div>
+        <div class="rh-nest">
+          <span class="rh-rtag" id="roundTag">Round 1</span>
+          <button class="rh-label" id="monthLabelTop">Month</button>
+          <div class="rh-nav">
+            <button class="mb-nav" id="monthPrev" aria-label="Previous round">‹</button>
+            <button class="mb-nav" id="monthNext" aria-label="Next round">›</button>
+          </div>
+        </div>
       </div>
 
       <div class="statsblock" id="statsblockView"></div>
@@ -883,7 +884,7 @@
                  "#a3e635", "#fb923c", "#22d3ee", "#c084fc", "#f87171", "#4ade80"];
   var SESSION_KEY = "minutes_session_v3";
   var ACTIVECID_KEY = "minutes_active_cid";
-  var VERSION = "10.4";
+  var VERSION = "10.6";
   var TAG_MAX = 32;
 
   // ---- Multi-challenge model (handle-keyed; a name IS the identity) ----
@@ -891,7 +892,7 @@
   // approval. Each challenge has monthly "rounds" derived from entry dates; round
   // metadata (lock, participants) lives in a subcollection. Entries carry a `cid`.
   var FOUNDING_CID = "founding";
-  var FOUNDING_NAME = "Challenge Accepted: Vol. 1";
+  var FOUNDING_NAME = "The Original Six";
   var FOUNDING_EMOJI = "🏆";
 
   // In-memory cache - the UI's source of truth; kept in sync by Store (Firestore).
@@ -998,6 +999,12 @@
     return new Date(+minKey.slice(0, 4), (+minKey.slice(5, 7)) - 1, 1);
   }
   function keyToDate(k) { return new Date(+k.slice(0, 4), (+k.slice(5, 7)) - 1, 1); }
+  // Round 1 = the challenge's first active month (minNavMonth); count forward from there.
+  // Returns <1 for months before the first round (e.g. an admin's empty pre-start month).
+  function roundNumberOf(d) {
+    var s = minNavMonth();
+    return (d.getFullYear() - s.getFullYear()) * 12 + (d.getMonth() - s.getMonth()) + 1;
+  }
   function nextMonthKey() { var n = new Date(); return monthKeyOf(new Date(n.getFullYear(), n.getMonth() + 1, 1)); }
   // Every month key from the group's earliest through the current month.
   // Admins can always reach the previous month too (it's editable), even with no data yet.
@@ -1111,7 +1118,6 @@
     document.getElementById("login").style.display = "block";
     document.getElementById("loginName").value = "";
     document.getElementById("loginErr").textContent = "";
-    var chip = document.getElementById("challChip"); if (chip) chip.style.display = "none";
   }
 
   document.getElementById("loginBtn").onclick = function () {
@@ -1144,12 +1150,11 @@
 
   // ---- Challenges page + switcher ----
   function renderChallChip() {
-    var chip = document.getElementById("challChip");
-    if (!chip) return;
-    if (!state.me) { chip.style.display = "none"; return; }
-    chip.style.display = "inline-flex";
-    document.getElementById("ccEmoji").textContent = challEmoji(activeCid());
-    document.getElementById("ccName").textContent = challName(activeCid());
+    var emo = document.getElementById("ccEmoji");
+    var nm = document.getElementById("ccName");
+    if (!emo || !nm) return;
+    emo.textContent = challEmoji(activeCid());
+    nm.textContent = challName(activeCid());
   }
 
   function switchChallenge(cid) {
@@ -1265,8 +1270,6 @@
     });
   }
 
-  document.getElementById("challChip").onclick = function () { switchTab("challenges"); };
-
   // ---- Create / rename challenge (admins) ----
   var challMode = "create", challEditCid = null;
   function openChallModal(mode, cid) {
@@ -1298,10 +1301,14 @@
   document.getElementById("challCancel").onclick = hideChallModal;
   document.getElementById("challModal").onclick = function (e) { if (e.target === this) hideChallModal(); };
 
+  // Opaque, unguessable challenge id (link-share ready). Name is a separate display field,
+  // so ids never leak the name and can't be enumerated. Founding keeps its fixed "founding" id.
   function genCid(name) {
-    var slug = String(name || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 20) || "c";
-    var cid = slug;
-    while (challMeta[cid]) { cid = slug + "-" + Math.random().toString(36).slice(2, 6); }
+    var cid;
+    do {
+      cid = "";
+      for (var i = 0; i < 10; i++) cid += "abcdefghijkmnpqrstuvwxyz23456789".charAt(Math.floor(Math.random() * 32));
+    } while (cid === FOUNDING_CID || challMeta[cid]);
     return cid;
   }
 
@@ -1417,6 +1424,12 @@
   function renderMonthBar() {
     var lbl = document.getElementById("monthLabelTop");
     lbl.textContent = state.viewMonth.toLocaleString(undefined, { month: "long", year: "numeric" });
+    var rtag = document.getElementById("roundTag");
+    if (rtag) {
+      var rn = roundNumberOf(state.viewMonth);
+      if (rn < 1) { rtag.style.display = "none"; }
+      else { rtag.style.display = ""; rtag.textContent = "Round " + rn; }
+    }
     var list = viewableMonthKeys();
     var idx = list.indexOf(monthKeyOf(state.viewMonth));
     document.getElementById("monthPrev").disabled = (idx <= 0);

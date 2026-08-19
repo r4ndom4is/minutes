@@ -154,9 +154,50 @@
   header .greet-text { min-width: 0; }
   header h1 { font-size: 20px; margin: 0; letter-spacing: -0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   header .sub { font-size: 12px; color: var(--muted); }
-  .gear { flex: 0 0 auto; width: 40px; height: 40px; padding: 9px; display: flex; align-items: center; justify-content: center; background: var(--card-2); border: 1px solid var(--border-2); color: var(--muted); border-radius: 12px; cursor: pointer; }
+  .gear { flex: 0 0 auto; width: 40px; height: 40px; padding: 9px; display: flex; align-items: center; justify-content: center; background: var(--card-2); border: 1px solid var(--border-2); color: var(--muted); border-radius: 12px; cursor: pointer; position: relative; }
   .gear svg { width: 18px; height: 18px; display: block; }
   .gear:active, .gear.open { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .gear-badge {
+    position: absolute; top: -6px; right: -6px;
+    min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box;
+    background: #e5484d; color: #fff; border-radius: 999px;
+    font-size: 11px; font-weight: 800; line-height: 18px; text-align: center;
+    box-shadow: 0 0 0 2px var(--bg);
+  }
+  .gear-badge[hidden] { display: none; }
+  .sm-badge { margin-left: auto; min-width: 20px; height: 20px; padding: 0 6px; box-sizing: border-box; background: #e5484d; color: #fff; border-radius: 999px; font-size: 11px; font-weight: 800; line-height: 20px; text-align: center; }
+  .sm-badge[hidden] { display: none; }
+
+  /* Backoffice console (full-screen overlay for global admins) */
+  .backoffice { position: fixed; inset: 0; z-index: 46; background: var(--bg); overflow-y: auto; display: none; }
+  .backoffice.show { display: block; }
+  .bo-topbar { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 12px; padding: 14px 18px; background: var(--card); border-bottom: 1px solid var(--border); }
+  .bo-title { font-size: 17px; font-weight: 800; letter-spacing: .2px; }
+  .bo-close { margin-left: auto; width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--border-2); background: var(--card-2); color: var(--text); font-size: 22px; line-height: 1; cursor: pointer; }
+  .bo-body { max-width: 560px; margin: 0 auto; padding: 16px; }
+  .bo-chall { border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px; margin-bottom: 12px; background: var(--card-2); }
+  .bo-chall-head { display: flex; align-items: center; gap: 10px; }
+  .bo-chall-emoji { font-size: 20px; }
+  .bo-chall-name { font-weight: 700; flex: 1; }
+  .bo-chall-owners { font-size: 12px; color: var(--muted); margin: 4px 0 2px; }
+  .bo-chall-manage { border: none; background: var(--accent); color: #fff; border-radius: 999px; padding: 6px 12px; font-weight: 700; font-size: 12px; cursor: pointer; }
+  .bo-chall-pending { font-size: 12px; font-weight: 700; color: #e5484d; }
+
+  /* Manage-challenge modal rows */
+  .manage-modal { text-align: left; }
+  .mg-section-h { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin: 14px 0 6px; }
+  .mg-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--border); }
+  .mg-row:last-child { border-bottom: none; }
+  .mg-name { flex: 1; font-weight: 600; }
+  .mg-owner-pill { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; color: var(--accent); background: color-mix(in srgb, var(--accent) 16%, transparent); border-radius: 999px; padding: 2px 7px; }
+  .mg-btn { border: 1px solid var(--border-2); background: var(--card-2); color: var(--text); border-radius: 999px; padding: 5px 10px; font-weight: 700; font-size: 11px; cursor: pointer; }
+  .mg-btn.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .mg-del { border: none; background: none; color: var(--muted); font-size: 18px; cursor: pointer; padding: 0 4px; }
+  .mg-empty { font-size: 13px; color: var(--muted); padding: 6px 0; }
+
+  /* Pending-count button on a challenge row */
+  .chall-row .cr-req { position: relative; background: color-mix(in srgb, #e5484d 14%, transparent); }
+  .cr-req .cr-req-count { font-size: 12px; font-weight: 800; color: #e5484d; }
 
   .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; margin-bottom: 16px; }
   .card h2 { font-size: 14px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); margin: 0 0 14px; font-weight: 700; }
@@ -444,6 +485,15 @@
   nav.tabs button .ico { display: inline-flex; align-items: center; justify-content: center; }
   nav.tabs button .ico svg { width: 23px; height: 23px; display: block; }
   nav.tabs button.active { color: var(--accent); font-weight: 700; }
+  nav.tabs button .ico { position: relative; }
+  .tab-badge {
+    position: absolute; top: -6px; left: 100%; margin-left: -9px;
+    min-width: 16px; height: 16px; padding: 0 4px; box-sizing: border-box;
+    background: #e5484d; color: #fff; border-radius: 999px;
+    font-size: 10px; font-weight: 800; line-height: 16px; text-align: center;
+    box-shadow: 0 0 0 2px var(--card);
+  }
+  .tab-badge[hidden] { display: none; }
 
   /* Settings menu (gear) */
   header { position: relative; }
@@ -520,6 +570,8 @@
   .approve-row .ar-btn { border: none; border-radius: 999px; padding: 7px 13px; font-weight: 700; font-size: 12px; cursor: pointer; }
   .approve-row .ar-approve { background: var(--accent); color: #fff; }
   .approve-row .ar-deny { background: var(--card-2); color: var(--text); border: 1px solid var(--border-2); }
+  .approve-group { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; padding: 12px 0 4px; }
+  .approve-group:first-child { padding-top: 2px; }
   .lock-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; }
   .lock-btn { border: 1px solid var(--border-2); background: var(--card-2); color: var(--text); border-radius: 999px; padding: 8px 14px; font-weight: 700; font-size: 13px; cursor: pointer; }
   .lock-btn.locked { background: rgba(255,92,124,.15); color: #d64d6a; border-color: transparent; }
@@ -559,6 +611,7 @@
       </div>
       <button class="gear" id="gearBtn" aria-label="Settings" aria-haspopup="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span class="gear-badge" id="adminBadge" hidden>0</span>
       </button>
       <div class="settings-menu" id="settingsMenu">
         <div class="sm-row">
@@ -574,6 +627,11 @@
           </div>
         </div>
         <div class="sm-sep"></div>
+        <button class="sm-item" id="menuBackoffice" style="display:none">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><line x1="7" y1="7" x2="7.01" y2="7"/><line x1="7" y1="17" x2="7.01" y2="17"/></svg>
+          <span>Backoffice</span>
+          <span class="sm-badge" id="menuBackofficeBadge" hidden>0</span>
+        </button>
         <button class="sm-item" id="menuLogout">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
           <span>Log out</span>
@@ -690,30 +748,6 @@
       </div>
     </section>
 
-    <!-- ADMIN TAB (admin only) -->
-    <section class="tab-panel" id="tab-admin">
-      <div class="dateheader" id="adminDateHeader"></div>
-      <div class="statsblock" id="statsblockAdmin"></div>
-
-      <div class="card">
-        <h2>Members</h2>
-        <div id="memberList"></div>
-      </div>
-      <div class="card" id="approvalsCard" style="display:none">
-        <h2 id="approvalsTitle">Pending requests</h2>
-        <div id="approvalList"></div>
-      </div>
-      <div class="card">
-        <h2>Add member</h2>
-        <div class="field">
-          <label for="newMember">Name (this is their username &amp; key)</label>
-          <input type="text" id="newMember" placeholder="e.g. Morgan" autocomplete="off" autocapitalize="words" />
-        </div>
-        <div class="login-err" id="memberErr" style="text-align:left"></div>
-        <button class="btn" id="addMemberBtn">Add member</button>
-      </div>
-    </section>
-
     <!-- CHALLENGES TAB -->
     <section class="tab-panel" id="tab-challenges">
       <div class="card">
@@ -740,8 +774,6 @@
       <span class="tab-inner"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span><span class="lbl">Log</span></span></button>
     <button data-tab="challenges">
       <span class="tab-inner"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v4a6 6 0 0 1-12 0z"/><path d="M6 5H3v2a3 3 0 0 0 3 3M18 5h3v2a3 3 0 0 1-3 3"/><line x1="12" y1="13" x2="12" y2="17"/><path d="M8 21h8M9 21a3 3 0 0 1 3-3 3 3 0 0 1 3 3"/></svg></span><span class="lbl">Challenges</span></span></button>
-    <button data-tab="admin" id="adminTabBtn" style="display:none">
-      <span class="tab-inner"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.2"/><path d="M5 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5"/></svg></span><span class="lbl">Admin</span></span></button>
   </nav>
 
   <div class="toast" id="toast">
@@ -807,6 +839,50 @@
       </div>
     </div>
   </div>
+
+  <!-- BACKOFFICE (global admins) -->
+  <div class="backoffice" id="backofficeView">
+    <div class="bo-topbar">
+      <span class="bo-title">Backoffice</span>
+      <button class="bo-close" id="boClose" aria-label="Close backoffice">&times;</button>
+    </div>
+    <div class="bo-body">
+      <div class="card" id="approvalsCard" style="display:none">
+        <h2 id="approvalsTitle">Pending requests</h2>
+        <div id="approvalList"></div>
+      </div>
+      <div class="card">
+        <h2>Challenges</h2>
+        <div id="boChallList"></div>
+        <button class="btn ghost" id="boCreateChall" style="margin-top:10px">+ Create a challenge</button>
+      </div>
+      <div class="card">
+        <h2>Users</h2>
+        <div id="memberList"></div>
+      </div>
+      <div class="card">
+        <h2>Add user</h2>
+        <div class="field">
+          <label for="newMember">Name (this is their username &amp; key)</label>
+          <input type="text" id="newMember" placeholder="e.g. Morgan" autocomplete="off" autocapitalize="words" />
+        </div>
+        <div class="login-err" id="memberErr" style="text-align:left"></div>
+        <button class="btn" id="addMemberBtn">Add user</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MANAGE ONE CHALLENGE (owner or admin) -->
+  <div class="modal-overlay" id="manageModal">
+    <div class="modal manage-modal">
+      <div class="modal-title" id="manageTitle">Manage</div>
+      <div id="manageBody"></div>
+      <div class="modal-actions">
+        <button class="mbtn ghost" id="manageClose">Close</button>
+        <button class="mbtn primary" id="manageRename">Rename</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -818,9 +894,8 @@
   var PALETTE = ["#7c5cff", "#34d399", "#ffb454", "#ff5c7c", "#38bdf8", "#f472d0",
                  "#a3e635", "#fb923c", "#22d3ee", "#c084fc", "#f87171", "#4ade80"];
   var SESSION_KEY = "minutes_session_v3";
-  var ADMINSESS_KEY = "minutes_adminsess_v1";
   var ACTIVECID_KEY = "minutes_active_cid";
-  var VERSION = "10.2";
+  var VERSION = "10.4";
   var TAG_MAX = 32;
 
   // ---- Multi-challenge model (handle-keyed; a name IS the identity) ----
@@ -843,7 +918,8 @@
   function admins() { return cache.admins.slice(); }
   function isAdmin(name) { return cache.admins.some(function (a) { return a.toLowerCase() === String(name).toLowerCase(); }); }
   // Current user wields admin powers only if they signed in with the admin gesture AND are still an admin.
-  function meIsAdmin() { return !!state.me && state.isAdminSession && isAdmin(state.me); }
+  // Global admin = the logged-in name is in the admins list (no login gesture needed).
+  function meIsAdmin() { return !!state.me && isAdmin(state.me); }
   function colorFor(name) { var idx = cache.members.indexOf(name); if (idx < 0) idx = 0; return PALETTE[idx % PALETTE.length]; }
 
   // ---- Challenge accessors ----
@@ -859,6 +935,25 @@
   }
   function myStatus(cid) { var e = (membersByCid[cid] || {})[state.me]; return e ? e.status : null; }
   function myRole(cid) { var e = (membersByCid[cid] || {})[state.me]; return e ? e.role : null; }
+  // ---- Approval scope: an owner manages their own challenge(s); a global admin manages all. ----
+  function iOwn(cid) {
+    var m = challMeta[cid];
+    if (m && m.owner && state.me && String(m.owner).toLowerCase() === String(state.me).toLowerCase()) return true;
+    return myRole(cid) === "owner";
+  }
+  function canApprove(cid) { return !!state.me && (meIsAdmin() || iOwn(cid)); }
+  function ownersOf(cid) {
+    var mm = membersByCid[cid] || {};
+    return Object.keys(mm).filter(function (h) { return mm[h].role === "owner" && mm[h].status === "approved"; }).sort();
+  }
+  function approvableCids() { return Object.keys(challMeta).filter(canApprove); }
+  function pendingFor(cid) {
+    var mm = membersByCid[cid] || {};
+    return Object.keys(mm).filter(function (h) { return mm[h].status === "pending"; }).sort();
+  }
+  function pendingCount() {
+    return approvableCids().reduce(function (n, c) { return n + pendingFor(c).length; }, 0);
+  }
   // The competing pool for the active challenge: approved members, or the roster as a
   // pre-migration fallback (founding has no member docs until migration runs).
   function challengeMembers() { var a = approvedHandles(activeCid()); return a.length ? a : members(); }
@@ -948,7 +1043,7 @@
     if (viewableMonthKeys().indexOf(monthKeyOf(state.viewMonth)) < 0) state.viewMonth = keyToDate(defaultViewKey());
   }
 
-  var state = { me: null, entries: [], lbRange: "today", hidden: {}, viewMonth: firstOfMonth(new Date()), openMonths: {}, entriesGroup: "date", openCats: {}, editing: false, isAdminSession: false, activeCid: (function () { try { return localStorage.getItem(ACTIVECID_KEY) || FOUNDING_CID; } catch (e) { return FOUNDING_CID; } })() };
+  var state = { me: null, entries: [], lbRange: "today", hidden: {}, viewMonth: firstOfMonth(new Date()), openMonths: {}, entriesGroup: "date", openCats: {}, editing: false, activeCid: (function () { try { return localStorage.getItem(ACTIVECID_KEY) || FOUNDING_CID; } catch (e) { return FOUNDING_CID; } })() };
   var rosterLoaded = false;
   var netReady = false; // true once we've received real data from the server (not just cache)
   function requireConnection() {
@@ -998,14 +1093,12 @@
     return null;
   }
 
-  function doLogin(name, adminMode) {
+  function doLogin(name) {
     state.me = name;
-    state.isAdminSession = !!adminMode && isAdmin(name);
     // reset per-user view state so nothing leaks between sessions on a shared device
     state.editing = false; state.hidden = {}; state.openMonths = {}; state.openCats = {}; state.entriesGroup = "date"; state.lbRange = "today"; lbRangeTouched = false;
     state.viewMonth = firstOfMonth(new Date());
     localStorage.setItem(SESSION_KEY, name);
-    if (state.isAdminSession) localStorage.setItem(ADMINSESS_KEY, "1"); else localStorage.removeItem(ADMINSESS_KEY);
     document.getElementById("login").style.display = "none";
     document.getElementById("app").style.display = "block";
     document.getElementById("meName").textContent = name;
@@ -1013,7 +1106,7 @@
     av.textContent = name.charAt(0).toUpperCase();
     av.style.background = colorFor(name);
     setDate(todayStr());
-    document.getElementById("adminTabBtn").style.display = meIsAdmin() ? "flex" : "none";
+    refreshAdminAccess();
     state.viewMonth = keyToDate(defaultViewKey());
     switchTab("stats");
     renderChallChip();
@@ -1024,9 +1117,8 @@
 
   function doLogout() {
     state.me = null;
-    state.isAdminSession = false;
     localStorage.removeItem(SESSION_KEY);
-    localStorage.removeItem(ADMINSESS_KEY);
+    closeBackoffice();
     document.getElementById("app").style.display = "none";
     document.getElementById("login").style.display = "block";
     document.getElementById("loginName").value = "";
@@ -1036,14 +1128,8 @@
 
   document.getElementById("loginBtn").onclick = function () {
     var raw = document.getElementById("loginName").value.trim();
-    // Exact member match logs in as a regular user (even for admins).
     var direct = resolveName(raw);
-    if (direct) { doLogin(direct, false); return; }
-    // Admin gesture: name followed by "a" (e.g. "Matisa" or "Matis a") grants admin powers.
-    if (/a$/i.test(raw)) {
-      var base = resolveName(raw.replace(/\s*a$/i, "").trim());
-      if (base && isAdmin(base)) { doLogin(base, true); return; }
-    }
+    if (direct) { doLogin(direct); return; }
     document.getElementById("loginErr").textContent = (!rosterLoaded && raw)
       ? "Still connecting… try again in a moment."
       : "Name not recognised. Ask the admin to add you.";
@@ -1054,15 +1140,13 @@
 
   // ---- Tabs ----
   function switchTab(tab) {
-    if (tab === "admin" && !meIsAdmin()) tab = "stats";
     document.querySelectorAll(".tab-panel").forEach(function (p) { p.classList.remove("active"); });
     document.getElementById("tab-" + tab).classList.add("active");
     document.querySelectorAll("nav.tabs button").forEach(function (b) {
       b.classList.toggle("active", b.getAttribute("data-tab") === tab);
     });
-    var label = { stats: "Stats", log: "Log time", admin: "Admin", challenges: "Challenges" }[tab] || "";
+    var label = { stats: "Stats", log: "Log time", challenges: "Challenges" }[tab] || "";
     document.getElementById("tabSub").textContent = label;
-    if (tab === "admin") renderMembers();
     if (tab === "challenges") renderChallenges();
     window.scrollTo(0, 0);
   }
@@ -1124,11 +1208,20 @@
       act.onclick = function () { requestJoinChallenge(cid); };
     }
     row.appendChild(act);
-    if (meIsAdmin()) {
+    if (meIsAdmin() || iOwn(cid)) {
+      var pc = pendingFor(cid).length;
+      if (pc) {
+        var reqBtn = document.createElement("button");
+        reqBtn.className = "cr-edit cr-req"; reqBtn.title = pc + " pending request" + (pc === 1 ? "" : "s");
+        reqBtn.setAttribute("aria-label", "Pending requests");
+        reqBtn.innerHTML = '<span class="cr-req-count">' + (pc > 9 ? "9+" : pc) + '</span>';
+        reqBtn.onclick = function () { openManageChallenge(cid); };
+        row.appendChild(reqBtn);
+      }
       var edit = document.createElement("button");
-      edit.className = "cr-edit"; edit.title = "Edit challenge"; edit.setAttribute("aria-label", "Edit challenge");
-      edit.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>';
-      edit.onclick = function () { openChallModal("edit", cid); };
+      edit.className = "cr-edit"; edit.title = "Manage challenge"; edit.setAttribute("aria-label", "Manage challenge");
+      edit.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
+      edit.onclick = function () { openManageChallenge(cid); };
       row.appendChild(edit);
     }
     return row;
@@ -1187,7 +1280,8 @@
   // ---- Create / rename challenge (admins) ----
   var challMode = "create", challEditCid = null;
   function openChallModal(mode, cid) {
-    if (!meIsAdmin()) return;
+    if (mode === "edit" && cid) { if (!meIsAdmin() && !iOwn(cid)) return; }
+    else if (!meIsAdmin()) return;
     challMode = mode; challEditCid = (mode === "edit") ? cid : null;
     var em = document.getElementById("challEmojiInput");
     var nm = document.getElementById("challNameInput");
@@ -1235,7 +1329,10 @@
       return c !== challEditCid && challName(c).trim().toLowerCase() === name.toLowerCase();
     });
     if (dupe) { err.textContent = "A challenge with that name already exists."; return; }
-    if (!meIsAdmin()) { err.textContent = "Admins only."; return; }
+    var editing = (challMode === "edit" && challEditCid);
+    if (editing ? !(meIsAdmin() || iOwn(challEditCid)) : !meIsAdmin()) {
+      err.textContent = editing ? "Owners or admins only." : "Admins only."; return;
+    }
     if (!requireConnection()) return;
     save.disabled = true;
     if (challMode === "edit" && challEditCid) {
@@ -2267,8 +2364,10 @@
 
   function refreshAdminAccess() {
     var stillAdmin = meIsAdmin();
-    document.getElementById("adminTabBtn").style.display = stillAdmin ? "flex" : "none";
-    if (!stillAdmin) switchTab("stats");
+    var mb = document.getElementById("menuBackoffice");
+    if (mb) mb.style.display = stillAdmin ? "flex" : "none";
+    if (!stillAdmin) closeBackoffice();
+    updateAdminBadge();
   }
 
   // Optimistically apply a roster change, persist to Firestore, and confirm only on
@@ -2499,45 +2598,191 @@
     renderApprovals();
   }
 
-  // Pending join requests for the active challenge (admin only).
+  // Pending join requests across every challenge the current user can approve
+  // (challenges they own, or all challenges when they're a global admin), grouped by challenge.
   function renderApprovals() {
     var card = document.getElementById("approvalsCard");
     var list = document.getElementById("approvalList");
     if (!card || !list) return;
-    var cid = activeCid();
-    var mm = membersByCid[cid] || {};
-    var pending = Object.keys(mm).filter(function (h) { return mm[h].status === "pending"; }).sort();
-    if (!meIsAdmin()) { card.style.display = "none"; return; }
+    var groups = approvableCids()
+      .map(function (cid) { return { cid: cid, pending: pendingFor(cid) }; })
+      .filter(function (g) { return g.pending.length; })
+      .sort(function (a, b) { return challName(a.cid).localeCompare(challName(b.cid)); });
+    var total = groups.reduce(function (n, g) { return n + g.pending.length; }, 0);
+    if (!total) { card.style.display = "none"; return; }
     card.style.display = "block";
-    document.getElementById("approvalsTitle").textContent = "Pending requests · " + challName(cid);
+    document.getElementById("approvalsTitle").textContent = "Pending requests · " + total;
     list.innerHTML = "";
-    if (!pending.length) { list.innerHTML = '<div class="empty-note">No pending requests.</div>'; return; }
-    pending.forEach(function (h) {
-      var row = document.createElement("div");
-      row.className = "approve-row";
-      row.innerHTML =
-        '<span class="dot" style="background:' + colorFor(h) + '">' + escapeHtml(h.charAt(0).toUpperCase()) + '</span>' +
-        '<span class="ar-name">' + escapeHtml(h) + '</span>';
-      var ok = document.createElement("button"); ok.className = "ar-btn ar-approve"; ok.textContent = "Approve";
-      var no = document.createElement("button"); no.className = "ar-btn ar-deny"; no.textContent = "Deny";
-      ok.onclick = function () {
-        if (!requireConnection()) return;
-        ok.disabled = no.disabled = true;
-        Store.setMember(cid, h, { handle: h, role: (mm[h].role || "member"), status: "approved", ts: mm[h].ts || Date.now() })
-          .then(function () { showToast("✓ " + h + " approved", null, true); })
-          .catch(function (e) { console.error(e); ok.disabled = no.disabled = false; showToast("⚠ Couldn't approve"); });
-      };
-      no.onclick = function () {
-        if (!requireConnection()) return;
-        ok.disabled = no.disabled = true;
-        Store.removeMember(cid, h)
-          .then(function () { showToast(h + " denied"); })
-          .catch(function (e) { console.error(e); ok.disabled = no.disabled = false; showToast("⚠ Couldn't deny"); });
-      };
-      row.appendChild(ok); row.appendChild(no);
-      list.appendChild(row);
+    groups.forEach(function (g) {
+      var hd = document.createElement("div");
+      hd.className = "approve-group";
+      hd.textContent = challEmoji(g.cid) + " " + challName(g.cid);
+      list.appendChild(hd);
+      g.pending.forEach(function (h) { list.appendChild(buildApproveRow(g.cid, h)); });
     });
   }
+
+  function buildApproveRow(cid, h) {
+    var mm = membersByCid[cid] || {};
+    var row = document.createElement("div");
+    row.className = "approve-row";
+    row.innerHTML =
+      '<span class="dot" style="background:' + colorFor(h) + '">' + escapeHtml(h.charAt(0).toUpperCase()) + '</span>' +
+      '<span class="ar-name">' + escapeHtml(h) + '</span>';
+    var ok = document.createElement("button"); ok.className = "ar-btn ar-approve"; ok.textContent = "Approve";
+    var no = document.createElement("button"); no.className = "ar-btn ar-deny"; no.textContent = "Deny";
+    ok.onclick = function () {
+      if (!requireConnection()) return;
+      ok.disabled = no.disabled = true;
+      Store.setMember(cid, h, { handle: h, role: ((mm[h] || {}).role || "member"), status: "approved", ts: (mm[h] || {}).ts || Date.now() })
+        .then(function () { showToast("✓ " + h + " approved", null, true); })
+        .catch(function (e) { console.error(e); ok.disabled = no.disabled = false; showToast("⚠ Couldn't approve"); });
+    };
+    no.onclick = function () {
+      if (!requireConnection()) return;
+      ok.disabled = no.disabled = true;
+      Store.removeMember(cid, h)
+        .then(function () { showToast(h + " denied"); })
+        .catch(function (e) { console.error(e); ok.disabled = no.disabled = false; showToast("⚠ Couldn't deny"); });
+    };
+    row.appendChild(ok); row.appendChild(no);
+    return row;
+  }
+
+  // Live pending-request count badge on the gear icon + Backoffice menu row.
+  function updateAdminBadge() {
+    var n = meIsAdmin() ? pendingCount() : 0;
+    var txt = n > 9 ? "9+" : String(n);
+    ["adminBadge", "menuBackofficeBadge"].forEach(function (id) {
+      var b = document.getElementById(id);
+      if (!b) return;
+      if (n > 0) { b.textContent = txt; b.hidden = false; }
+      else { b.hidden = true; }
+    });
+  }
+
+  // ---- Backoffice console (global admins only) ----
+  function boOpen() { var v = document.getElementById("backofficeView"); return !!v && v.classList.contains("show"); }
+  function openBackoffice() {
+    if (!meIsAdmin()) return;
+    renderBackoffice();
+    document.getElementById("backofficeView").classList.add("show");
+  }
+  function closeBackoffice() {
+    var v = document.getElementById("backofficeView");
+    if (v) v.classList.remove("show");
+    closeManageModal();
+  }
+  function renderBackoffice() {
+    if (!meIsAdmin()) { closeBackoffice(); return; }
+    renderApprovals();
+    renderMembers();
+    renderBoChallenges();
+  }
+  function renderBoChallenges() {
+    var el = document.getElementById("boChallList");
+    if (!el) return;
+    el.innerHTML = "";
+    var cids = Object.keys(challMeta).sort(function (a, b) { return challName(a).localeCompare(challName(b)); });
+    if (!cids.length) { el.innerHTML = '<div class="mg-empty">No challenges yet.</div>'; return; }
+    cids.forEach(function (cid) {
+      var owners = ownersOf(cid);
+      var pc = pendingFor(cid).length;
+      var card = document.createElement("div"); card.className = "bo-chall";
+      var head = document.createElement("div"); head.className = "bo-chall-head";
+      head.innerHTML =
+        '<span class="bo-chall-emoji">' + escapeHtml(challEmoji(cid)) + '</span>' +
+        '<span class="bo-chall-name">' + escapeHtml(challName(cid)) + '</span>';
+      var manage = document.createElement("button"); manage.className = "bo-chall-manage"; manage.textContent = "Manage";
+      manage.onclick = function () { openManageChallenge(cid); };
+      head.appendChild(manage);
+      card.appendChild(head);
+      var ow = document.createElement("div"); ow.className = "bo-chall-owners";
+      ow.textContent = owners.length ? ("Owners: " + owners.join(", ")) : "No owners";
+      card.appendChild(ow);
+      if (pc) { var p = document.createElement("div"); p.className = "bo-chall-pending"; p.textContent = pc + " pending request" + (pc === 1 ? "" : "s"); card.appendChild(p); }
+      el.appendChild(card);
+    });
+  }
+
+  // ---- Manage one challenge (approvals for owner OR admin; roles/removal admin-only) ----
+  var manageCid = null;
+  function openManageChallenge(cid) {
+    if (!(meIsAdmin() || iOwn(cid))) return;
+    manageCid = cid;
+    renderManage(cid);
+    document.getElementById("manageModal").classList.add("show");
+  }
+  function closeManageModal() {
+    var m = document.getElementById("manageModal");
+    if (m) m.classList.remove("show");
+    manageCid = null;
+  }
+  function renderManage(cid) {
+    var body = document.getElementById("manageBody");
+    if (!body) return;
+    document.getElementById("manageTitle").textContent = challEmoji(cid) + " " + challName(cid);
+    var isAdm = meIsAdmin();
+    var rename = document.getElementById("manageRename");
+    rename.style.display = (isAdm || iOwn(cid)) ? "" : "none";
+    body.innerHTML = "";
+
+    var pend = pendingFor(cid);
+    var ph = document.createElement("div"); ph.className = "mg-section-h";
+    ph.textContent = "Pending requests" + (pend.length ? " · " + pend.length : "");
+    body.appendChild(ph);
+    if (!pend.length) { var pe = document.createElement("div"); pe.className = "mg-empty"; pe.textContent = "None right now."; body.appendChild(pe); }
+    else { pend.forEach(function (h) { body.appendChild(buildApproveRow(cid, h)); }); }
+
+    var mm = membersByCid[cid] || {};
+    var approved = Object.keys(mm).filter(function (h) { return mm[h].status === "approved"; }).sort();
+    var mh = document.createElement("div"); mh.className = "mg-section-h";
+    mh.textContent = "Members" + (approved.length ? " · " + approved.length : "");
+    body.appendChild(mh);
+    if (!approved.length) { var em = document.createElement("div"); em.className = "mg-empty"; em.textContent = "No members yet."; body.appendChild(em); }
+    approved.forEach(function (h) {
+      var isOwner = mm[h].role === "owner";
+      var row = document.createElement("div"); row.className = "mg-row";
+      row.innerHTML =
+        '<span class="dot" style="background:' + colorFor(h) + '">' + escapeHtml(h.charAt(0).toUpperCase()) + '</span>' +
+        '<span class="mg-name">' + escapeHtml(h) + '</span>' +
+        ((isOwner && !isAdm) ? '<span class="mg-owner-pill">Owner</span>' : '');
+      if (isAdm) {
+        var toggle = document.createElement("button");
+        toggle.className = "mg-btn" + (isOwner ? " on" : "");
+        toggle.textContent = isOwner ? "Owner" : "Make owner";
+        toggle.onclick = function () { setOwnerRole(cid, h, !isOwner); };
+        row.appendChild(toggle);
+        var del = document.createElement("button"); del.className = "mg-del"; del.title = "Remove from challenge"; del.textContent = "×";
+        del.onclick = function () { removeFromChallenge(cid, h); };
+        row.appendChild(del);
+      }
+      body.appendChild(row);
+    });
+  }
+  function setOwnerRole(cid, h, makeOwner) {
+    if (!meIsAdmin()) return;
+    if (!requireConnection()) return;
+    var cur = (membersByCid[cid] || {})[h] || {};
+    if (!makeOwner && cur.role === "owner" && ownersOf(cid).length <= 1) { showToast("Can't remove the last owner"); return; }
+    Store.setMember(cid, h, { handle: h, role: makeOwner ? "owner" : "member", status: "approved", ts: cur.ts || Date.now() })
+      .then(function () { showToast(makeOwner ? ("✓ " + h + " is now an owner") : (h + " is no longer an owner"), null, makeOwner); })
+      .catch(function (e) { console.error(e); showToast("⚠ Couldn't update role"); });
+  }
+  function removeFromChallenge(cid, h) {
+    if (!meIsAdmin()) return;
+    showConfirm({ title: "Remove " + h + "?", msg: "They'll be removed from " + challName(cid) + ". Their logged entries stay.", ok: "Remove" }, function () {
+      if (!requireConnection()) return;
+      Store.removeMember(cid, h)
+        .then(function () { showToast(h + " removed"); })
+        .catch(function (e) { console.error(e); showToast("⚠ Couldn't remove"); });
+    });
+  }
+  document.getElementById("boClose").onclick = closeBackoffice;
+  document.getElementById("boCreateChall").onclick = function () { openChallModal("create"); };
+  document.getElementById("manageClose").onclick = closeManageModal;
+  document.getElementById("manageModal").onclick = function (e) { if (e.target === this) closeManageModal(); };
+  document.getElementById("manageRename").onclick = function () { var cid = manageCid; closeManageModal(); openChallModal("edit", cid); };
 
   document.getElementById("addMemberBtn").onclick = function () {
     var input = document.getElementById("newMember");
@@ -2566,7 +2811,7 @@
 
     function isMonthId(id) { return /^\d{4}-\d{2}$/.test(id); }
     function challengesTabActive() { var el = document.getElementById("tab-challenges"); return el && el.classList.contains("active"); }
-    function adminTabActive() { return document.getElementById("tab-admin").classList.contains("active"); }
+    function adminTabActive() { return !!document.getElementById("backofficeView") && document.getElementById("backofficeView").classList.contains("show"); }
 
     function applyActiveEntries() {
       var cid = activeCid();
@@ -2578,12 +2823,12 @@
       if (a && a.length) cache.admins = a;
       rosterLoaded = true;
       renderAll();
-      if (adminTabActive()) renderMembers();
+      if (adminTabActive()) renderBackoffice();
       if (state.me) { refreshAdminAccess(); }
       else {
         // roster is now authoritative - resume a saved session that the default list couldn't match yet
         var saved = localStorage.getItem(SESSION_KEY);
-        if (saved && resolveName(saved)) doLogin(resolveName(saved), localStorage.getItem(ADMINSESS_KEY) === "1");
+        if (saved && resolveName(saved)) doLogin(resolveName(saved));
       }
     }
 
@@ -2608,7 +2853,9 @@
       renderAll();
       renderChallChip();
       if (challengesTabActive()) renderChallenges();
-      if (adminTabActive()) renderMembers();
+      if (adminTabActive()) renderBackoffice();
+      if (manageCid && document.getElementById("manageModal").classList.contains("show")) renderManage(manageCid);
+      updateAdminBadge();
     }
 
     function fbStart() {
@@ -2654,6 +2901,7 @@
         renderAll();
         renderChallChip();
         if (challengesTabActive()) renderChallenges();
+        updateAdminBadge();
         maybeMigrate();
       }, function (err) { console.error("challenges listener:", err); });
 
@@ -2795,6 +3043,8 @@
     });
     var ml = document.getElementById("menuLogout");
     if (ml) ml.addEventListener("click", function () { toggleMenu(false); doLogout(); });
+    var mbo = document.getElementById("menuBackoffice");
+    if (mbo) mbo.addEventListener("click", function () { toggleMenu(false); openBackoffice(); });
     document.addEventListener("click", function (e) {
       var m = document.getElementById("settingsMenu");
       var g = document.getElementById("gearBtn");
@@ -2807,9 +3057,12 @@
   // close the top layer. Overlays closed via UI silently remove the sentinel too.
   function initBackButton() {
     var order = [
+      ["manageModal", closeManageModal],
       ["editModal", hideEdit],
       ["confirmModal", hideConfirm],
       ["calPop", closeCal],
+      ["challModal", hideChallModal],
+      ["backofficeView", closeBackoffice],
       ["settingsMenu", function () { toggleMenu(false); }]
     ];
     var els = order.map(function (o) { return document.getElementById(o[0]); }).filter(Boolean);
@@ -2856,7 +3109,7 @@
       if (!netReady) showToast("Not connected. Changes won't save until you reconnect.", null);
     }, 5000);
     var saved = localStorage.getItem(SESSION_KEY);
-    if (saved && resolveName(saved)) doLogin(resolveName(saved), localStorage.getItem(ADMINSESS_KEY) === "1");
+    if (saved && resolveName(saved)) doLogin(resolveName(saved));
     // Release the boot gate now that visibility is decided (restored -> app, else login).
     document.documentElement.classList.remove("has-session");
   }

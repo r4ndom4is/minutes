@@ -154,19 +154,9 @@
   header .greet-text { min-width: 0; }
   header h1 { font-size: 20px; margin: 0; letter-spacing: -0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   header .sub { font-size: 12px; color: var(--muted); }
-  .gear { flex: 0 0 auto; width: 40px; height: 40px; padding: 9px; display: flex; align-items: center; justify-content: center; background: var(--card-2); border: 1px solid var(--border-2); color: var(--muted); border-radius: 12px; cursor: pointer; position: relative; }
+  .gear { flex: 0 0 auto; width: 40px; height: 40px; padding: 9px; display: flex; align-items: center; justify-content: center; background: var(--card-2); border: 1px solid var(--border-2); color: var(--muted); border-radius: 12px; cursor: pointer; }
   .gear svg { width: 18px; height: 18px; display: block; }
   .gear:active, .gear.open { background: var(--accent); border-color: var(--accent); color: #fff; }
-  .gear-badge {
-    position: absolute; top: -6px; right: -6px;
-    min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box;
-    background: #e5484d; color: #fff; border-radius: 999px;
-    font-size: 11px; font-weight: 800; line-height: 18px; text-align: center;
-    box-shadow: 0 0 0 2px var(--bg);
-  }
-  .gear-badge[hidden] { display: none; }
-  .sm-badge { margin-left: auto; min-width: 20px; height: 20px; padding: 0 6px; box-sizing: border-box; background: #e5484d; color: #fff; border-radius: 999px; font-size: 11px; font-weight: 800; line-height: 20px; text-align: center; }
-  .sm-badge[hidden] { display: none; }
 
   /* Backoffice console (full-screen overlay for global admins) */
   .backoffice { position: fixed; inset: 0; z-index: 46; background: var(--bg); overflow-y: auto; display: none; }
@@ -611,7 +601,6 @@
       </div>
       <button class="gear" id="gearBtn" aria-label="Settings" aria-haspopup="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        <span class="gear-badge" id="adminBadge" hidden>0</span>
       </button>
       <div class="settings-menu" id="settingsMenu">
         <div class="sm-row">
@@ -630,7 +619,6 @@
         <button class="sm-item" id="menuBackoffice" style="display:none">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><line x1="7" y1="7" x2="7.01" y2="7"/><line x1="7" y1="17" x2="7.01" y2="17"/></svg>
           <span>Backoffice</span>
-          <span class="sm-badge" id="menuBackofficeBadge" hidden>0</span>
         </button>
         <button class="sm-item" id="menuLogout">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
@@ -773,7 +761,7 @@
     <button data-tab="log">
       <span class="tab-inner"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span><span class="lbl">Log</span></span></button>
     <button data-tab="challenges">
-      <span class="tab-inner"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v4a6 6 0 0 1-12 0z"/><path d="M6 5H3v2a3 3 0 0 0 3 3M18 5h3v2a3 3 0 0 1-3 3"/><line x1="12" y1="13" x2="12" y2="17"/><path d="M8 21h8M9 21a3 3 0 0 1 3-3 3 3 0 0 1 3 3"/></svg></span><span class="lbl">Challenges</span></span></button>
+      <span class="tab-inner"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v4a6 6 0 0 1-12 0z"/><path d="M6 5H3v2a3 3 0 0 0 3 3M18 5h3v2a3 3 0 0 1-3 3"/><line x1="12" y1="13" x2="12" y2="17"/><path d="M8 21h8M9 21a3 3 0 0 1 3-3 3 3 0 0 1 3 3"/></svg><span class="tab-badge" id="challTabBadge" hidden>0</span></span><span class="lbl">Challenges</span></span></button>
   </nav>
 
   <div class="toast" id="toast">
@@ -1243,7 +1231,9 @@
     if (!myCids.length) { mine.innerHTML = '<div class="empty-note">You haven\'t joined a challenge yet. Pick one from Discover below.</div>'; }
     else myCids.forEach(function (c) { mine.appendChild(challRow(c)); });
     disc.innerHTML = "";
-    cids.forEach(function (c) { disc.appendChild(challRow(c)); });
+    var discCids = cids.filter(function (c) { var s = myStatus(c); return s !== "approved" && s !== "pending"; });
+    if (!discCids.length) { disc.innerHTML = '<div class="empty-note">No new challenges to discover right now.</div>'; }
+    else discCids.forEach(function (c) { disc.appendChild(challRow(c)); });
     var cbtn = document.getElementById("createChallBtn");
     if (cbtn) {
       if (meIsAdmin()) {
@@ -2649,16 +2639,14 @@
     return row;
   }
 
-  // Live pending-request count badge on the gear icon + Backoffice menu row.
+  // Live pending-request count badge on the Challenges tab — shown to anyone who can
+  // approve (challenge owners + global admins); scoped to their approvable challenges.
   function updateAdminBadge() {
-    var n = meIsAdmin() ? pendingCount() : 0;
-    var txt = n > 9 ? "9+" : String(n);
-    ["adminBadge", "menuBackofficeBadge"].forEach(function (id) {
-      var b = document.getElementById(id);
-      if (!b) return;
-      if (n > 0) { b.textContent = txt; b.hidden = false; }
-      else { b.hidden = true; }
-    });
+    var n = pendingCount();
+    var b = document.getElementById("challTabBadge");
+    if (!b) return;
+    if (n > 0) { b.textContent = n > 9 ? "9+" : String(n); b.hidden = false; }
+    else { b.hidden = true; }
   }
 
   // ---- Backoffice console (global admins only) ----

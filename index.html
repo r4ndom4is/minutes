@@ -161,7 +161,7 @@
   /* Backoffice console (full-screen overlay for global admins) */
   .backoffice { position: fixed; inset: 0; z-index: 46; background: var(--bg); overflow-y: auto; display: none; }
   .backoffice.show { display: block; }
-  .bo-topbar { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 12px; padding: 14px 18px; background: var(--card); border-bottom: 1px solid var(--border); }
+  .bo-topbar { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 12px; padding: calc(14px + env(safe-area-inset-top)) 18px 14px; background: var(--card); border-bottom: 1px solid var(--border); }
   .bo-title { font-size: 17px; font-weight: 800; letter-spacing: .2px; }
   .bo-close { margin-left: auto; width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--border-2); background: var(--card-2); color: var(--text); font-size: 22px; line-height: 1; cursor: pointer; }
   .bo-body { max-width: 560px; margin: 0 auto; padding: 16px; }

@@ -472,6 +472,56 @@
   .theme-toggle .tt-opt svg { width: 15px; height: 15px; display: block; }
   [data-theme="light"] .theme-toggle .tt-opt[data-theme-choice="light"] { color: #fff; }
   [data-theme="dark"] .theme-toggle .tt-opt[data-theme-choice="dark"] { color: #fff; }
+
+  /* Tighter tab padding so 4 tabs fit on narrow phones */
+  nav.tabs button .tab-inner { padding: 6px 8px; }
+
+  /* Challenge switcher chip (under header) */
+  .chall-chip {
+    display: inline-flex; align-items: center; gap: 8px; margin: 2px 0 14px;
+    background: var(--card); border: 1px solid var(--border-2); color: var(--text);
+    border-radius: 999px; padding: 7px 14px; cursor: pointer; font: inherit;
+    box-shadow: var(--shadow-pop); max-width: 100%;
+  }
+  .chall-chip:active { background: var(--card-2); }
+  .chall-chip .cc-emoji { font-size: 16px; line-height: 1; }
+  .chall-chip .cc-name { font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chall-chip .cc-caret { color: var(--muted); font-size: 14px; margin-left: 2px; }
+
+  /* Challenges page */
+  .sub-note { color: var(--muted); font-size: 13px; margin: -2px 0 12px; }
+  .btn.ghost { background: var(--card-2); color: var(--text); border: 1px solid var(--border-2); }
+  .btn.ghost:disabled { opacity: .55; cursor: default; }
+  .chall-row {
+    display: flex; align-items: center; gap: 12px; padding: 12px;
+    border: 1px solid var(--border); border-radius: 14px; margin-bottom: 10px;
+    background: var(--card-2);
+  }
+  .chall-row.active-cid { border-color: var(--accent); }
+  .chall-row .cr-emoji { font-size: 22px; line-height: 1; flex: 0 0 auto; }
+  .chall-row .cr-main { flex: 1; min-width: 0; }
+  .chall-row .cr-name { font-weight: 700; font-size: 15px; }
+  .chall-row .cr-meta { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .chall-row .cr-act { flex: 0 0 auto; border: none; border-radius: 999px; padding: 8px 14px; font-weight: 700; font-size: 13px; cursor: pointer; background: var(--accent); color: #fff; }
+  .chall-row .cr-act.secondary { background: var(--card); color: var(--text); border: 1px solid var(--border-2); }
+  .chall-row .cr-act:disabled { opacity: .6; cursor: default; }
+  .cr-badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; margin-left: 8px; vertical-align: middle; }
+  .cr-badge.pending { background: rgba(255,180,84,.18); color: #b8791f; }
+  .cr-badge.active { background: rgba(124,92,255,.18); color: var(--accent); }
+  .empty-note { color: var(--muted); font-size: 13px; padding: 6px 2px; }
+
+  /* Approvals + round-lock (admin) */
+  .approve-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .approve-row:last-child { border-bottom: none; }
+  .approve-row .ar-name { flex: 1; font-weight: 600; }
+  .approve-row .ar-btn { border: none; border-radius: 999px; padding: 7px 13px; font-weight: 700; font-size: 12px; cursor: pointer; }
+  .approve-row .ar-approve { background: var(--accent); color: #fff; }
+  .approve-row .ar-deny { background: var(--card-2); color: var(--text); border: 1px solid var(--border-2); }
+  .lock-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; }
+  .lock-btn { border: 1px solid var(--border-2); background: var(--card-2); color: var(--text); border-radius: 999px; padding: 8px 14px; font-weight: 700; font-size: 13px; cursor: pointer; }
+  .lock-btn.locked { background: rgba(255,92,124,.15); color: #d64d6a; border-color: transparent; }
+  .lock-info { font-size: 13px; color: var(--muted); flex: 1; min-width: 0; }
+  .lock-tag { display: inline-flex; align-items: center; gap: 5px; color: #d64d6a; font-size: 12px; font-weight: 700; }
 </style>
 </head>
 <body>
@@ -528,6 +578,12 @@
         <div class="sm-ver" id="menuVer"></div>
       </div>
     </header>
+
+    <button class="chall-chip" id="challChip" style="display:none" aria-label="Switch challenge">
+      <span class="cc-emoji" id="ccEmoji">🏆</span>
+      <span class="cc-name" id="ccName">Challenge</span>
+      <span class="cc-caret">⌄</span>
+    </button>
 
     <!-- STATS TAB -->
     <section class="tab-panel active" id="tab-stats">
@@ -640,6 +696,10 @@
         <h2>Members</h2>
         <div id="memberList"></div>
       </div>
+      <div class="card" id="approvalsCard" style="display:none">
+        <h2 id="approvalsTitle">Pending requests</h2>
+        <div id="approvalList"></div>
+      </div>
       <div class="card">
         <h2>Add member</h2>
         <div class="field">
@@ -651,6 +711,22 @@
       </div>
     </section>
 
+    <!-- CHALLENGES TAB -->
+    <section class="tab-panel" id="tab-challenges">
+      <div class="card">
+        <h2>My challenges</h2>
+        <div id="myChallList"></div>
+      </div>
+      <div class="card">
+        <h2>Discover</h2>
+        <div class="sub-note">Public challenges you can join. Joining needs an admin's OK.</div>
+        <div id="discoverList"></div>
+      </div>
+      <div class="card">
+        <button class="btn ghost" id="createChallBtn" disabled>Create a challenge · coming soon</button>
+      </div>
+    </section>
+
     <div class="ver-tag"></div>
   </div>
 
@@ -659,6 +735,8 @@
       <span class="tab-inner"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 16 9 10 13 14 21 5"/></svg></span><span class="lbl">Stats</span></span></button>
     <button data-tab="log">
       <span class="tab-inner"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span><span class="lbl">Log</span></span></button>
+    <button data-tab="challenges">
+      <span class="tab-inner"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v4a6 6 0 0 1-12 0z"/><path d="M6 5H3v2a3 3 0 0 0 3 3M18 5h3v2a3 3 0 0 1-3 3"/><line x1="12" y1="13" x2="12" y2="17"/><path d="M8 21h8M9 21a3 3 0 0 1 3-3 3 3 0 0 1 3 3"/></svg></span><span class="lbl">Challenges</span></span></button>
     <button data-tab="admin" id="adminTabBtn" style="display:none">
       <span class="tab-inner"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.2"/><path d="M5 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5"/></svg></span><span class="lbl">Admin</span></span></button>
   </nav>
@@ -718,12 +796,25 @@
                  "#a3e635", "#fb923c", "#22d3ee", "#c084fc", "#f87171", "#4ade80"];
   var SESSION_KEY = "minutes_session_v3";
   var ADMINSESS_KEY = "minutes_adminsess_v1";
-  var VERSION = "9.12";
+  var ACTIVECID_KEY = "minutes_active_cid";
+  var VERSION = "10.1";
   var TAG_MAX = 32;
+
+  // ---- Multi-challenge model (handle-keyed; a name IS the identity) ----
+  // A "challenge" is a durable, renamable unit (stable cid). Members join with admin
+  // approval. Each challenge has monthly "rounds" derived from entry dates; round
+  // metadata (lock, participants) lives in a subcollection. Entries carry a `cid`.
+  var FOUNDING_CID = "founding";
+  var FOUNDING_NAME = "Challenge Accepted: Vol. 1";
+  var FOUNDING_EMOJI = "🏆";
 
   // In-memory cache - the UI's source of truth; kept in sync by Store (Firestore).
   var cache = { members: DEFAULT_MEMBERS.slice(), admins: DEFAULT_ADMINS.slice() };
-  var challengesCache = {}; // "YYYY-MM" -> [participant names]
+  var challengesCache = {}; // LEGACY top-level "YYYY-MM" -> [names] (founding fallback pre-migration)
+  var challMeta = {};       // cid -> { name, emoji, color, owner, createdTs }
+  var membersByCid = {};    // cid -> { handle: { handle, role, status, ts } }
+  var roundsByCid = {};     // cid -> { "YYYY-MM": { locked, participants:[handle] } }
+  var migratedV2 = false;   // true once the one-time migration has run
 
   function members() { return cache.members.slice(); }
   function admins() { return cache.admins.slice(); }
@@ -731,6 +822,24 @@
   // Current user wields admin powers only if they signed in with the admin gesture AND are still an admin.
   function meIsAdmin() { return !!state.me && state.isAdminSession && isAdmin(state.me); }
   function colorFor(name) { var idx = cache.members.indexOf(name); if (idx < 0) idx = 0; return PALETTE[idx % PALETTE.length]; }
+
+  // ---- Challenge accessors ----
+  function activeCid() { return state.activeCid || FOUNDING_CID; }
+  function cidOf(e) { return e.cid || FOUNDING_CID; }
+  function challName(cid) { var m = challMeta[cid]; if (m && m.name) return m.name; return cid === FOUNDING_CID ? FOUNDING_NAME : cid; }
+  function challEmoji(cid) { var m = challMeta[cid]; return (m && m.emoji) || FOUNDING_EMOJI; }
+  function activeMembers() { return membersByCid[activeCid()] || {}; }
+  function activeRounds() { return roundsByCid[activeCid()] || {}; }
+  function approvedHandles(cid) {
+    var mm = membersByCid[cid] || {};
+    return Object.keys(mm).filter(function (h) { return mm[h].status === "approved"; });
+  }
+  function myStatus(cid) { var e = (membersByCid[cid] || {})[state.me]; return e ? e.status : null; }
+  function myRole(cid) { var e = (membersByCid[cid] || {})[state.me]; return e ? e.role : null; }
+  // The competing pool for the active challenge: approved members, or the roster as a
+  // pre-migration fallback (founding has no member docs until migration runs).
+  function challengeMembers() { var a = approvedHandles(activeCid()); return a.length ? a : members(); }
+  function roundLocked(key) { var r = activeRounds()[key]; return !!(r && r.locked); }
 
   // Participants for a month: explicit challenge doc, else inherit the most recent
   // prior defined month, else fall back to the full member roster (first-run bootstrap).
@@ -743,17 +852,23 @@
   }
   function participantsFor(dateOrKey) {
     var key = typeof dateOrKey === "string" ? dateOrKey : monthKeyOf(dateOrKey);
-    if (challengesCache[key]) return challengesCache[key].slice();
-    // Past month with no explicit challenge: use who actually logged (stable history,
+    var rounds = activeRounds();
+    if (rounds[key] && rounds[key].participants && rounds[key].participants.length) return rounds[key].participants.slice();
+    // Founding pre-migration fallback: legacy top-level challenges/{YYYY-MM} docs.
+    if (activeCid() === FOUNDING_CID && challengesCache[key]) return challengesCache[key].slice();
+    // Past month with no explicit round: use who actually logged (stable history,
     // so adding a new member later never retroactively appears in old months).
     if (key < monthKeyOf(new Date())) {
       var authors = entryAuthorsForMonth(key);
       if (authors.length) return authors;
     }
-    // Current / future (or an empty past month): inherit the most recent defined month, else the roster.
-    var prior = Object.keys(challengesCache).filter(function (k) { return k < key; }).sort();
-    if (prior.length) return challengesCache[prior[prior.length - 1]].slice();
-    return members();
+    // Current / future (or an empty past month): inherit the most recent defined round.
+    var defined = {};
+    Object.keys(rounds).forEach(function (k) { if (rounds[k] && rounds[k].participants && rounds[k].participants.length) defined[k] = rounds[k].participants; });
+    if (activeCid() === FOUNDING_CID) Object.keys(challengesCache).forEach(function (k) { if (!defined[k]) defined[k] = challengesCache[k]; });
+    var prior = Object.keys(defined).filter(function (k) { return k < key; }).sort();
+    if (prior.length) return defined[prior[prior.length - 1]].slice();
+    return challengeMembers();
   }
   function isParticipant(name, dateOrKey) {
     return participantsFor(dateOrKey).some(function (p) { return p.toLowerCase() === String(name).toLowerCase(); });
@@ -810,7 +925,7 @@
     if (viewableMonthKeys().indexOf(monthKeyOf(state.viewMonth)) < 0) state.viewMonth = keyToDate(defaultViewKey());
   }
 
-  var state = { me: null, entries: [], lbRange: "today", hidden: {}, viewMonth: firstOfMonth(new Date()), openMonths: {}, entriesGroup: "date", openCats: {}, editing: false, isAdminSession: false };
+  var state = { me: null, entries: [], lbRange: "today", hidden: {}, viewMonth: firstOfMonth(new Date()), openMonths: {}, entriesGroup: "date", openCats: {}, editing: false, isAdminSession: false, activeCid: (function () { try { return localStorage.getItem(ACTIVECID_KEY) || FOUNDING_CID; } catch (e) { return FOUNDING_CID; } })() };
   var rosterLoaded = false;
   var netReady = false; // true once we've received real data from the server (not just cache)
   function requireConnection() {
@@ -878,7 +993,9 @@
     document.getElementById("adminTabBtn").style.display = meIsAdmin() ? "flex" : "none";
     state.viewMonth = keyToDate(defaultViewKey());
     switchTab("stats");
+    renderChallChip();
     renderAll();
+    try { Store.checkMigration(); } catch (e) {}
     window.scrollTo(0, 0);
   }
 
@@ -891,6 +1008,7 @@
     document.getElementById("login").style.display = "block";
     document.getElementById("loginName").value = "";
     document.getElementById("loginErr").textContent = "";
+    var chip = document.getElementById("challChip"); if (chip) chip.style.display = "none";
   }
 
   document.getElementById("loginBtn").onclick = function () {
@@ -919,14 +1037,110 @@
     document.querySelectorAll("nav.tabs button").forEach(function (b) {
       b.classList.toggle("active", b.getAttribute("data-tab") === tab);
     });
-    var label = { stats: "Stats", log: "Log time", admin: "Admin" }[tab] || "";
+    var label = { stats: "Stats", log: "Log time", admin: "Admin", challenges: "Challenges" }[tab] || "";
     document.getElementById("tabSub").textContent = label;
     if (tab === "admin") renderMembers();
+    if (tab === "challenges") renderChallenges();
     window.scrollTo(0, 0);
   }
   document.querySelectorAll("nav.tabs button").forEach(function (b) {
     b.onclick = function () { switchTab(b.getAttribute("data-tab")); };
   });
+
+  // ---- Challenges page + switcher ----
+  function renderChallChip() {
+    var chip = document.getElementById("challChip");
+    if (!chip) return;
+    if (!state.me) { chip.style.display = "none"; return; }
+    chip.style.display = "inline-flex";
+    document.getElementById("ccEmoji").textContent = challEmoji(activeCid());
+    document.getElementById("ccName").textContent = challName(activeCid());
+  }
+
+  function switchChallenge(cid) {
+    if (cid === activeCid()) { switchTab("stats"); return; }
+    state.activeCid = cid;
+    try { localStorage.setItem(ACTIVECID_KEY, cid); } catch (e) {}
+    // reset per-challenge view state
+    state.viewMonth = firstOfMonth(new Date());
+    state.editing = false; lbRangeTouched = false; state.lbRange = "today";
+    lbOpen = {};
+    state.entries = entriesAll.filter(function (e) { return cidOf(e) === cid; });
+    state.viewMonth = keyToDate(defaultViewKey());
+    renderChallChip();
+    renderAll();
+    switchTab("stats");
+  }
+
+  function challRow(cid, opts) {
+    opts = opts || {};
+    var row = document.createElement("div");
+    row.className = "chall-row" + (cid === activeCid() ? " active-cid" : "");
+    var approved = approvedHandles(cid).length;
+    var meta = document.createElement("div"); meta.className = "cr-main";
+    var nm = document.createElement("div"); nm.className = "cr-name";
+    nm.textContent = challName(cid);
+    if (cid === activeCid()) { var ab = document.createElement("span"); ab.className = "cr-badge active"; ab.textContent = "Active"; nm.appendChild(ab); }
+    else if (myStatus(cid) === "pending") { var pb = document.createElement("span"); pb.className = "cr-badge pending"; pb.textContent = "Requested"; nm.appendChild(pb); }
+    var mt = document.createElement("div"); mt.className = "cr-meta";
+    mt.textContent = approved + " member" + (approved === 1 ? "" : "s");
+    meta.appendChild(nm); meta.appendChild(mt);
+
+    var em = document.createElement("span"); em.className = "cr-emoji"; em.textContent = challEmoji(cid);
+    row.appendChild(em); row.appendChild(meta);
+
+    var act = document.createElement("button"); act.className = "cr-act";
+    var status = myStatus(cid);
+    if (status === "approved") {
+      act.textContent = cid === activeCid() ? "Open" : "Switch";
+      act.onclick = function () { switchChallenge(cid); };
+    } else if (status === "pending") {
+      act.textContent = "Requested"; act.className += " secondary"; act.disabled = true;
+    } else {
+      act.textContent = "Request to join";
+      act.onclick = function () { requestJoinChallenge(cid); };
+    }
+    row.appendChild(act);
+    return row;
+  }
+
+  function renderChallenges() {
+    renderChallChip();
+    var mine = document.getElementById("myChallList");
+    var disc = document.getElementById("discoverList");
+    if (!mine || !disc) return;
+    var cids = Object.keys(challMeta);
+    // stable order: founding first, then by createdTs, then name
+    cids.sort(function (a, b) {
+      if (a === FOUNDING_CID) return -1; if (b === FOUNDING_CID) return 1;
+      return (challMeta[a].createdTs || 0) - (challMeta[b].createdTs || 0);
+    });
+    var myCids = cids.filter(function (c) { var s = myStatus(c); return s === "approved" || s === "pending"; });
+    mine.innerHTML = "";
+    if (!myCids.length) { mine.innerHTML = '<div class="empty-note">You haven\'t joined a challenge yet. Pick one from Discover below.</div>'; }
+    else myCids.forEach(function (c) { mine.appendChild(challRow(c)); });
+    disc.innerHTML = "";
+    cids.forEach(function (c) { disc.appendChild(challRow(c)); });
+  }
+
+  function requestJoinChallenge(cid) {
+    if (!state.me) return;
+    if (!requireConnection()) return;
+    // Optimistic: show Requested immediately.
+    if (!membersByCid[cid]) membersByCid[cid] = {};
+    membersByCid[cid][state.me] = { handle: state.me, role: "member", status: "pending", ts: Date.now() };
+    renderChallenges();
+    Store.requestJoin(cid).then(function () {
+      showToast("✓ Request sent to " + challName(cid) + "'s admins", null, true);
+    }).catch(function (err) {
+      console.error("requestJoin failed:", err);
+      if (membersByCid[cid]) delete membersByCid[cid][state.me];
+      renderChallenges();
+      showToast("⚠ Couldn't send request. Try again.", null);
+    });
+  }
+
+  document.getElementById("challChip").onclick = function () { switchTab("challenges"); };
 
   // ---- Data helpers ----
   function myEntries() { return state.entries.filter(function (e) { return e.who === state.me; }); }
@@ -1310,7 +1524,7 @@
       editBtn.style.display = "block";
       editBtn.classList.toggle("on", state.editing);
       editBtn.textContent = state.editing ? "Done" : "Edit";
-    } else if (canSelfToggle) {
+    } else if (canSelfToggle && !roundLocked(monthKeyOf(state.viewMonth))) {
       editBtn.style.display = "block";
       var inNext = isParticipant(state.me, monthKeyOf(state.viewMonth));
       editBtn.classList.toggle("on", inNext);
@@ -1724,7 +1938,7 @@
       writePromise = Store.updateEntry(tId, { mins: tPrev + newMins }).then(function () { return Store.deleteEntry(id); });
       undoFn = function () {
         Store.updateEntry(tId, { mins: tPrev }).catch(warnSaveFail);
-        Store.putEntry({ id: id, who: ent.who, date: ent.date, mins: prevMins, note: prevNote }).catch(warnSaveFail);
+        Store.putEntry({ id: id, who: ent.who, date: ent.date, mins: prevMins, note: prevNote, cid: ent.cid }).catch(warnSaveFail);
       };
     } else {
       writePromise = Store.updateEntry(id, { mins: newMins, note: newTag });
@@ -1746,7 +1960,7 @@
     if (!editId) return;
     var ent = findEntry(editId);
     if (!ent) { hideEdit(); return; }
-    var removed = { id: ent.id, who: ent.who, date: ent.date, mins: ent.mins, note: ent.note };
+    var removed = { id: ent.id, who: ent.who, date: ent.date, mins: ent.mins, note: ent.note, cid: ent.cid };
     hideEdit();
     showConfirm({ title: "Delete entry?", msg: niceDate(removed.date) + " · " + removed.mins + " min" + (removed.note ? " · " + capTag(removed.note) : ""), ok: "Delete" }, function () {
       Store.deleteEntry(removed.id).then(function () {
@@ -1860,6 +2074,11 @@
       showToast("You're not in " + mName + "'s challenge, so you can't log for it.", null);
       return;
     }
+    if (roundLocked(date.slice(0, 7))) {
+      var lName = new Date(+date.slice(0, 4), (+date.slice(5, 7)) - 1, 1).toLocaleString(undefined, { month: "long" });
+      showToast(lName + "'s round is locked by an admin, so logging is closed.", null);
+      return;
+    }
     if (!requireConnection()) return;
 
     // fold into the same day's entry only when the tag matches; different tags stay
@@ -1947,15 +2166,19 @@
     });
   }
 
-  // ---- Challenge participants (per month) ----
+  // ---- Challenge rounds (per month, per active challenge) ----
   function commitChallenge(key, newList) {
     if (!requireConnection()) return;
-    var prev = challengesCache.hasOwnProperty(key) ? challengesCache[key].slice() : null;
-    challengesCache[key] = newList.slice();
+    var cid = activeCid();
+    if (!roundsByCid[cid]) roundsByCid[cid] = {};
+    var rounds = roundsByCid[cid];
+    var prev = rounds.hasOwnProperty(key) ? { locked: rounds[key].locked, participants: rounds[key].participants.slice() } : null;
+    var locked = prev ? prev.locked : false;
+    rounds[key] = { locked: locked, participants: newList.slice() };
     renderAll();
-    return Store.saveChallenge(key, newList).catch(function (err) {
-      console.error("Challenge save failed:", err);
-      if (prev === null) delete challengesCache[key]; else challengesCache[key] = prev;
+    return Store.saveRound(cid, key, { locked: locked, participants: newList }).catch(function (err) {
+      console.error("Round save failed:", err);
+      if (prev === null) delete rounds[key]; else rounds[key] = prev;
       renderAll();
       showToast("⚠ Couldn't save. Check your connection and try again", null);
     });
@@ -1989,6 +2212,23 @@
     var roster = members();
     var monthName = state.viewMonth.toLocaleString(undefined, { month: "long", year: "numeric" });
     el.innerHTML = "";
+
+    // Admin lock/unlock for this round.
+    var locked = roundLocked(key);
+    var lockBar = document.createElement("div"); lockBar.className = "lock-bar";
+    var lockInfo = document.createElement("div"); lockInfo.className = "lock-info";
+    lockInfo.textContent = locked ? "🔒 Round locked — logging is closed." : "🔓 Round open — members can log.";
+    var lockBtn = document.createElement("button"); lockBtn.type = "button";
+    lockBtn.className = "lock-btn" + (locked ? " locked" : "");
+    lockBtn.textContent = locked ? "Unlock round" : "Lock round";
+    lockBtn.onclick = function () {
+      if (!requireConnection()) return;
+      lockBtn.disabled = true;
+      Store.saveRound(activeCid(), key, { locked: !locked, participants: participantsFor(state.viewMonth) })
+        .then(function () { showToast(!locked ? "🔒 Round locked" : "🔓 Round unlocked", null, true); })
+        .catch(function (e) { console.error(e); lockBtn.disabled = false; showToast("⚠ Couldn't change lock"); });
+    };
+    lockBar.appendChild(lockInfo); lockBar.appendChild(lockBtn); el.appendChild(lockBar);
 
     var s1 = document.createElement("div"); s1.className = "pe-sub"; s1.textContent = "In " + monthName; el.appendChild(s1);
     if (!current.length) { var e0 = document.createElement("div"); e0.className = "pe-empty"; e0.textContent = "No one yet. Add people below."; el.appendChild(e0); }
@@ -2028,6 +2268,7 @@
 
   function toggleSelfParticipation() {
     var key = monthKeyOf(state.viewMonth);
+    if (roundLocked(key)) { showToast("This round is locked by an admin."); return; }
     var current = participantsFor(state.viewMonth);
     var monthName = state.viewMonth.toLocaleString(undefined, { month: "long" });
     if (isParticipant(state.me, key)) {
@@ -2065,6 +2306,7 @@
     var msg = null;
     if (dateVal < iso(logWindowStart())) msg = mName + " is closed for logging. You can only log the current and previous month.";
     else if (!isParticipant(state.me, mk)) msg = "You're not in " + mName + "'s challenge, so you can't log for it. Ask an admin to add you.";
+    else if (roundLocked(mk)) msg = mName + "'s round is locked by an admin, so logging is closed.";
     if (msg) {
       note.textContent = msg;
       note.style.display = "block";
@@ -2132,6 +2374,47 @@
       };
       el.appendChild(row);
     });
+    renderApprovals();
+  }
+
+  // Pending join requests for the active challenge (admin only).
+  function renderApprovals() {
+    var card = document.getElementById("approvalsCard");
+    var list = document.getElementById("approvalList");
+    if (!card || !list) return;
+    var cid = activeCid();
+    var mm = membersByCid[cid] || {};
+    var pending = Object.keys(mm).filter(function (h) { return mm[h].status === "pending"; }).sort();
+    if (!meIsAdmin()) { card.style.display = "none"; return; }
+    card.style.display = "block";
+    document.getElementById("approvalsTitle").textContent = "Pending requests · " + challName(cid);
+    list.innerHTML = "";
+    if (!pending.length) { list.innerHTML = '<div class="empty-note">No pending requests.</div>'; return; }
+    pending.forEach(function (h) {
+      var row = document.createElement("div");
+      row.className = "approve-row";
+      row.innerHTML =
+        '<span class="dot" style="background:' + colorFor(h) + '">' + escapeHtml(h.charAt(0).toUpperCase()) + '</span>' +
+        '<span class="ar-name">' + escapeHtml(h) + '</span>';
+      var ok = document.createElement("button"); ok.className = "ar-btn ar-approve"; ok.textContent = "Approve";
+      var no = document.createElement("button"); no.className = "ar-btn ar-deny"; no.textContent = "Deny";
+      ok.onclick = function () {
+        if (!requireConnection()) return;
+        ok.disabled = no.disabled = true;
+        Store.setMember(cid, h, { handle: h, role: (mm[h].role || "member"), status: "approved", ts: mm[h].ts || Date.now() })
+          .then(function () { showToast("✓ " + h + " approved", null, true); })
+          .catch(function (e) { console.error(e); ok.disabled = no.disabled = false; showToast("⚠ Couldn't approve"); });
+      };
+      no.onclick = function () {
+        if (!requireConnection()) return;
+        ok.disabled = no.disabled = true;
+        Store.removeMember(cid, h)
+          .then(function () { showToast(h + " denied"); })
+          .catch(function (e) { console.error(e); ok.disabled = no.disabled = false; showToast("⚠ Couldn't deny"); });
+      };
+      row.appendChild(ok); row.appendChild(no);
+      list.appendChild(row);
+    });
   }
 
   document.getElementById("addMemberBtn").onclick = function () {
@@ -2152,17 +2435,28 @@
   });
 
   // ---- Data store: Firestore only ----
+  var entriesAll = [];        // every entry (all challenges), with cid + _hadCid for migration
   var Store = (function () {
     var fb = null;
     var didSeed = false;
+    var cidSubbed = {};        // cid -> true (avoid duplicate subcollection listeners)
+    var migrationTried = false;
 
-    function emitEntries(arr) { state.entries = arr; renderAll(); }
+    function isMonthId(id) { return /^\d{4}-\d{2}$/.test(id); }
+    function challengesTabActive() { var el = document.getElementById("tab-challenges"); return el && el.classList.contains("active"); }
+    function adminTabActive() { return document.getElementById("tab-admin").classList.contains("active"); }
+
+    function applyActiveEntries() {
+      var cid = activeCid();
+      state.entries = entriesAll.filter(function (e) { return (e.cid || FOUNDING_CID) === cid; });
+      renderAll();
+    }
     function emitRoster(m, a) {
       if (m && m.length) cache.members = m;
       if (a && a.length) cache.admins = a;
       rosterLoaded = true;
       renderAll();
-      if (document.getElementById("tab-admin").classList.contains("active")) renderMembers();
+      if (adminTabActive()) renderMembers();
       if (state.me) { refreshAdminAccess(); }
       else {
         // roster is now authoritative - resume a saved session that the default list couldn't match yet
@@ -2171,12 +2465,38 @@
       }
     }
 
+    // Live-subscribe a challenge's members + rounds subcollections (few challenges in v1).
+    function subscribeCid(cid) {
+      if (cidSubbed[cid]) return;
+      cidSubbed[cid] = true;
+      fb.onSnapshot(fb.collection(fb.db, "challenges", cid, "members"), function (snap) {
+        var m = {};
+        snap.forEach(function (d) { var v = d.data() || {}; m[d.id] = { handle: v.handle || d.id, role: v.role || "member", status: v.status || "approved", ts: v.ts || 0 }; });
+        membersByCid[cid] = m;
+        onCidData();
+      }, function (err) { console.error("members listener (" + cid + "):", err); });
+      fb.onSnapshot(fb.collection(fb.db, "challenges", cid, "rounds"), function (snap) {
+        var r = {};
+        snap.forEach(function (d) { var v = d.data() || {}; r[d.id] = { locked: !!v.locked, participants: v.participants || [] }; });
+        roundsByCid[cid] = r;
+        onCidData();
+      }, function (err) { console.error("rounds listener (" + cid + "):", err); });
+    }
+    function onCidData() {
+      renderAll();
+      renderChallChip();
+      if (challengesTabActive()) renderChallenges();
+      if (adminTabActive()) renderMembers();
+    }
+
     function fbStart() {
       fb.onSnapshot(fb.collection(fb.db, "entries"), function (snap) {
         if (!snap.metadata.fromCache) netReady = true;
         var arr = [];
-        snap.forEach(function (d) { var v = d.data(); arr.push({ id: d.id, who: v.who, date: v.date, mins: v.mins, note: v.note || "" }); });
-        emitEntries(arr);
+        snap.forEach(function (d) { var v = d.data(); arr.push({ id: d.id, who: v.who, date: v.date, mins: v.mins, note: v.note || "", cid: v.cid || FOUNDING_CID, _hadCid: v.cid != null }); });
+        entriesAll = arr;
+        applyActiveEntries();
+        maybeMigrate();
       }, function (err) { console.error("entries listener:", err); });
 
       var rosterRef = fb.doc(fb.db, "meta", "roster");
@@ -2190,25 +2510,89 @@
           didSeed = true;
           fb.setDoc(rosterRef, { members: DEFAULT_MEMBERS.slice(), admins: DEFAULT_ADMINS.slice() });
           seedData().forEach(function (en) {
-            fb.setDoc(fb.doc(fb.db, "entries", en.id), { who: en.who, date: en.date, mins: en.mins, note: en.note || "" });
+            fb.setDoc(fb.doc(fb.db, "entries", en.id), { who: en.who, date: en.date, mins: en.mins, note: en.note || "", cid: FOUNDING_CID });
           });
         }
       }, function (err) { console.error("roster listener:", err); });
 
+      // Top-level "challenges" holds BOTH metadata docs (id="founding", …) and legacy
+      // month docs (id="YYYY-MM"). Split them; subscribe each challenge's subcollections.
       fb.onSnapshot(fb.collection(fb.db, "challenges"), function (snap) {
-        var next = {};
-        snap.forEach(function (d) { var v = d.data(); next[d.id] = (v && v.participants) ? v.participants : []; });
-        challengesCache = next;
+        var meta = {}, legacy = {};
+        snap.forEach(function (d) {
+          var v = d.data() || {};
+          if (isMonthId(d.id)) legacy[d.id] = v.participants || [];
+          else meta[d.id] = { name: v.name || "", emoji: v.emoji || "", color: v.color || "", owner: v.owner || "", createdTs: v.createdTs || 0 };
+        });
+        // Founding always appears in the switcher, even before it's been created/migrated.
+        if (!meta[FOUNDING_CID]) meta[FOUNDING_CID] = { name: FOUNDING_NAME, emoji: FOUNDING_EMOJI, color: "", owner: "", createdTs: 0 };
+        challMeta = meta;
+        challengesCache = legacy;
+        Object.keys(challMeta).forEach(subscribeCid);
         renderAll();
+        renderChallChip();
+        if (challengesTabActive()) renderChallenges();
+        maybeMigrate();
       }, function (err) { console.error("challenges listener:", err); });
+
+      fb.onSnapshot(fb.doc(fb.db, "meta", "migratedV2"), function (d) {
+        migratedV2 = d.exists();
+      }, function (err) { console.error("migratedV2 listener:", err); });
+    }
+
+    // One-time, admin-triggered migration onto the multi-challenge model.
+    function maybeMigrate() {
+      if (migratedV2 || migrationTried) return;
+      if (!netReady || !state.me || !meIsAdmin()) return;
+      migrationTried = true;
+      var roster = members(), adminList = admins();
+      var owner = adminList[0] || roster[0] || state.me;
+      var chain = Promise.resolve();
+      // 1) founding metadata
+      chain = chain.then(function () {
+        return fb.setDoc(fb.doc(fb.db, "challenges", FOUNDING_CID), {
+          name: FOUNDING_NAME, emoji: FOUNDING_EMOJI, color: "", owner: owner,
+          type: "monthly", visibility: "public", createdTs: Date.now()
+        });
+      });
+      // 2) members from roster (admins -> admin, owner -> owner, all approved)
+      roster.forEach(function (h, i) {
+        var role = (h === owner) ? "owner" : (isAdmin(h) ? "admin" : "member");
+        chain = chain.then(function () {
+          return fb.setDoc(fb.doc(fb.db, "challenges", FOUNDING_CID, "members", h), { handle: h, role: role, status: "approved", ts: i });
+        });
+      });
+      // 3) legacy month docs -> founding rounds
+      Object.keys(challengesCache).forEach(function (k) {
+        var parts = challengesCache[k] || [];
+        chain = chain.then(function () {
+          return fb.setDoc(fb.doc(fb.db, "challenges", FOUNDING_CID, "rounds", k), { locked: false, participants: parts });
+        });
+      });
+      // 4) backfill entries that predate cid
+      entriesAll.forEach(function (e) {
+        if (!e._hadCid) {
+          chain = chain.then(function () { return fb.updateDoc(fb.doc(fb.db, "entries", e.id), { cid: FOUNDING_CID }); });
+        }
+      });
+      // 5) guard
+      chain.then(function () {
+        return fb.setDoc(fb.doc(fb.db, "meta", "migratedV2"), { ts: Date.now(), by: state.me });
+      }).then(function () {
+        console.log("Migration to multi-challenge complete.");
+      }).catch(function (err) {
+        console.error("Migration failed:", err);
+        migrationTried = false; // allow a retry next snapshot
+      });
     }
 
     return {
       init: function (f) { fb = f; },
       start: function () { if (fb) fbStart(); },
+      checkMigration: function () { maybeMigrate(); },
       addEntry: function (obj) {
         var id = obj.id || uid();
-        return fb.setDoc(fb.doc(fb.db, "entries", id), { who: obj.who, date: obj.date, mins: obj.mins, note: obj.note || "" }).then(function () { return id; });
+        return fb.setDoc(fb.doc(fb.db, "entries", id), { who: obj.who, date: obj.date, mins: obj.mins, note: obj.note || "", cid: obj.cid || activeCid() }).then(function () { return id; });
       },
       updateEntry: function (id, fields) {
         return fb.updateDoc(fb.doc(fb.db, "entries", id), fields);
@@ -2217,13 +2601,24 @@
         return fb.deleteDoc(fb.doc(fb.db, "entries", id));
       },
       putEntry: function (obj) {
-        return fb.setDoc(fb.doc(fb.db, "entries", obj.id), { who: obj.who, date: obj.date, mins: obj.mins, note: obj.note || "" });
+        return fb.setDoc(fb.doc(fb.db, "entries", obj.id), { who: obj.who, date: obj.date, mins: obj.mins, note: obj.note || "", cid: obj.cid || FOUNDING_CID });
       },
       saveRoster: function () {
         return fb.setDoc(fb.doc(fb.db, "meta", "roster"), { members: cache.members, admins: cache.admins });
       },
-      saveChallenge: function (key, participants) {
-        return fb.setDoc(fb.doc(fb.db, "challenges", key), { participants: participants });
+      // Round metadata (lock + participants) for the active challenge.
+      saveRound: function (cid, key, data) {
+        return fb.setDoc(fb.doc(fb.db, "challenges", cid, "rounds", key), { locked: !!data.locked, participants: data.participants || [] });
+      },
+      // Membership writes (approval flow).
+      requestJoin: function (cid) {
+        return fb.setDoc(fb.doc(fb.db, "challenges", cid, "members", state.me), { handle: state.me, role: "member", status: "pending", ts: Date.now() });
+      },
+      setMember: function (cid, handle, data) {
+        return fb.setDoc(fb.doc(fb.db, "challenges", cid, "members", handle), data);
+      },
+      removeMember: function (cid, handle) {
+        return fb.deleteDoc(fb.doc(fb.db, "challenges", cid, "members", handle));
       }
     };
   })();

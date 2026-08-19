@@ -399,7 +399,6 @@
   .mb-nav { width: 40px; height: 40px; flex: 0 0 auto; border-radius: 12px; border: 1px solid var(--border-2); background: var(--card); color: var(--text); font-size: 22px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; }
   .mb-nav:disabled { opacity: .4; cursor: default; }
   .mb-nav:not(:disabled):active { background: var(--accent); border-color: var(--accent); }
-  .dateheader { display: flex; align-items: center; justify-content: center; height: 40px; margin-bottom: 16px; font-size: 16px; font-weight: 600; letter-spacing: -.3px; color: var(--text); }
 
   .ver-tag { text-align: center; color: var(--muted); font-size: 11px; opacity: .5; margin-top: 16px; padding-bottom: 4px; }
 
@@ -672,7 +671,16 @@
 
     <!-- LOG TAB -->
     <section class="tab-panel" id="tab-log">
-      <div class="dateheader" id="logDateHeader"></div>
+      <div class="round-head">
+        <div class="rh-title">
+          <span class="rh-emoji" id="logEmoji">🏆</span>
+          <span class="rh-name" id="logName">Challenge</span>
+        </div>
+        <div class="rh-nest">
+          <span class="rh-rtag" id="logRoundTag">Round 1</span>
+          <span class="rh-label" id="logMonthLabel">Month</span>
+        </div>
+      </div>
       <div class="statsblock" id="statsblockNow"></div>
 
       <div class="card">
@@ -2017,9 +2025,19 @@
   }
 
   function renderLogHeader() {
-    var txt = new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
-    var l = document.getElementById("logDateHeader"); if (l) l.textContent = txt;
-    var a = document.getElementById("adminDateHeader"); if (a) a.textContent = txt;
+    var emo = document.getElementById("logEmoji");
+    if (emo) emo.textContent = challEmoji(activeCid());
+    var nm = document.getElementById("logName");
+    if (nm) nm.textContent = challName(activeCid());
+    var now = firstOfMonth(new Date());
+    var lbl = document.getElementById("logMonthLabel");
+    if (lbl) lbl.textContent = now.toLocaleString(undefined, { month: "long", year: "numeric" });
+    var rtag = document.getElementById("logRoundTag");
+    if (rtag) {
+      var rn = roundNumberOf(now);
+      if (rn < 1) { rtag.style.display = "none"; }
+      else { rtag.style.display = ""; rtag.textContent = "Round " + rn; }
+    }
   }
   function renderAll() { clampViewMonth(); renderMonthBar(); renderLogHeader(); renderStats(); renderChart(); renderEntries(); renderTagChips(); renderLeaderboard(); renderMotiv(); updateLogGate(); }
 

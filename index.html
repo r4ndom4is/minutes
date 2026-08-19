@@ -348,19 +348,18 @@
   .lb-person.me .lb-name { font-weight: 800; }
   .lb-rank { color: var(--muted); font-weight: 700; font-variant-numeric: tabular-nums; margin-right: 9px; }
   .lb-right { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; }
-  .mgroup-head .mg-total, .lb-total { font-weight: 800; color: var(--total); font-size: 16px; min-width: 58px; text-align: right; font-variant-numeric: tabular-nums; }
+  .mgroup-head .mg-total, .lb-total { font-weight: 800; color: var(--total); font-size: 16px; width: 66px; text-align: right; font-variant-numeric: tabular-nums; }
   .mg-chev, .lb-chev { transition: transform .18s ease; color: var(--muted); font-size: 18px; line-height: 1; }
+  .lb-chev.off { opacity: .28; }
   .mgroup.open .mg-chev, .lb-person.open .lb-chev { transform: rotate(90deg); }
   .lb-body { padding: 2px 14px 10px 22px; display: none; background: var(--card); }
   .lb-person.open .lb-body { display: block; }
-  .lb-tag { padding: 9px 0; border-top: 1px solid var(--border); }
+  .lb-tag { padding: 9px 0; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
   .lb-tag:first-child { border-top: none; }
   .lb-tag.cat-untag { opacity: .82; }
-  .lb-tagtop { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
-  .lb-taglead { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .lb-tagname { font-weight: 600; font-size: 14px; }
   .lb-tagmeta { font-size: 12px; color: var(--muted); font-weight: 600; margin-left: 6px; font-variant-numeric: tabular-nums; }
-  .lb-tagmins { flex: 0 0 auto; font-size: 13px; color: var(--muted); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .lb-tagmins { font-size: 13px; color: var(--muted); font-weight: 600; width: 66px; text-align: right; font-variant-numeric: tabular-nums; }
 
   .seg { display: flex; background: var(--card-2); border-radius: 12px; padding: 4px; margin-bottom: 16px; }
   .seg button { flex: 1; padding: 9px; border: none; background: none; color: var(--muted); font-weight: 700; font-size: 14px; border-radius: 9px; cursor: pointer; }
@@ -892,7 +891,7 @@
                  "#a3e635", "#fb923c", "#22d3ee", "#c084fc", "#f87171", "#4ade80"];
   var SESSION_KEY = "minutes_session_v3";
   var ACTIVECID_KEY = "minutes_active_cid";
-  var VERSION = "10.6";
+  var VERSION = "10.7";
   var TAG_MAX = 32;
 
   // ---- Multi-challenge model (handle-keyed; a name IS the identity) ----
@@ -1844,7 +1843,7 @@
         '<span class="lb-left"><span class="lb-name"><span class="lb-rank">' + (i + 1) + '</span>' + escapeHtml(r.name) + '</span>' +
         '<span class="cat-track cat-line"><span class="cat-fill" style="width:' + pct + '%;background:' + colorFor(r.name) + '"></span></span></span>' +
         '<span class="lb-right"><span class="lb-total">' + r.mins + 'm</span>' +
-        (pentries.length ? '<span class="lb-chev">›</span>' : '') + '</span>';
+        '<span class="lb-chev' + (pentries.length ? '' : ' off') + '">›</span></span>';
       if (pentries.length) {
         head.onclick = function () { lbOpen[r.name] = !lbOpen[r.name]; renderLeaderboard(); };
       } else {
@@ -1858,10 +1857,10 @@
         var trow = document.createElement("div");
         trow.className = "lb-tag" + (g.tag === CAT_UNTAG ? " cat-untag" : "");
         trow.innerHTML =
-          '<div class="lb-tagtop"><span class="lb-taglead"><span class="lb-tagname">' + escapeHtml(capTag(g.tag)) + '</span>' +
+          '<span class="lb-left"><span class="cat-titlerow"><span class="lb-tagname">' + escapeHtml(capTag(g.tag)) + '</span>' +
           '<span class="lb-tagmeta">×' + g.count + ' · ' + gpct + '%</span></span>' +
-          '<span class="lb-tagmins">' + g.mins + 'm</span></div>' +
-          '<span class="cat-track cat-line"><span class="cat-fill" style="width:' + gpct + '%;background:' + catColor(g.tag) + '"></span></span>';
+          '<span class="cat-track cat-line"><span class="cat-fill" style="width:' + gpct + '%;background:' + catColor(g.tag) + '"></span></span></span>' +
+          '<span class="lb-right"><span class="lb-tagmins">' + g.mins + 'm</span></span>';
         body.appendChild(trow);
       });
       wrap.appendChild(body);

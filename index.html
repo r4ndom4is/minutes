@@ -505,6 +505,9 @@
   .chall-row .cr-act { flex: 0 0 auto; border: none; border-radius: 999px; padding: 8px 14px; font-weight: 700; font-size: 13px; cursor: pointer; background: var(--accent); color: #fff; }
   .chall-row .cr-act.secondary { background: var(--card); color: var(--text); border: 1px solid var(--border-2); }
   .chall-row .cr-act:disabled { opacity: .6; cursor: default; }
+  .chall-row .cr-edit { flex: 0 0 auto; width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--border-2); background: var(--card-2); color: var(--muted); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+  .chall-row .cr-edit svg { width: 16px; height: 16px; }
+  .chall-row .cr-edit:active { background: var(--border); }
   .cr-badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; margin-left: 8px; vertical-align: middle; }
   .cr-badge.pending { background: rgba(255,180,84,.18); color: #b8791f; }
   .cr-badge.active { background: rgba(124,92,255,.18); color: var(--accent); }
@@ -784,6 +787,26 @@
       <button class="mbtn edit-del" id="editDelete">Delete entry</button>
     </div>
   </div>
+
+  <div class="modal-overlay" id="challModal">
+    <div class="modal">
+      <div class="m-ico accent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v4a6 6 0 0 1-12 0z"/><path d="M6 5H3v2a3 3 0 0 0 3 3M18 5h3v2a3 3 0 0 1-3 3"/><line x1="12" y1="13" x2="12" y2="17"/><path d="M8 21h8M9 21a3 3 0 0 1 3-3 3 3 0 0 1 3 3"/></svg></div>
+      <div class="modal-title" id="challModalTitle">New challenge</div>
+      <div class="field">
+        <label for="challEmojiInput">Emoji</label>
+        <input type="text" id="challEmojiInput" maxlength="8" autocomplete="off" placeholder="🔥" style="width:84px;text-align:center;font-size:20px" />
+      </div>
+      <div class="field">
+        <label for="challNameInput">Name</label>
+        <input type="text" id="challNameInput" maxlength="40" autocomplete="off" autocapitalize="words" placeholder="e.g. September Sprint" />
+      </div>
+      <div class="edit-err" id="challErr"></div>
+      <div class="modal-actions">
+        <button class="mbtn ghost" id="challCancel">Cancel</button>
+        <button class="mbtn primary" id="challSave">Create</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -797,7 +820,7 @@
   var SESSION_KEY = "minutes_session_v3";
   var ADMINSESS_KEY = "minutes_adminsess_v1";
   var ACTIVECID_KEY = "minutes_active_cid";
-  var VERSION = "10.1";
+  var VERSION = "10.2";
   var TAG_MAX = 32;
 
   // ---- Multi-challenge model (handle-keyed; a name IS the identity) ----
@@ -1101,6 +1124,13 @@
       act.onclick = function () { requestJoinChallenge(cid); };
     }
     row.appendChild(act);
+    if (meIsAdmin()) {
+      var edit = document.createElement("button");
+      edit.className = "cr-edit"; edit.title = "Edit challenge"; edit.setAttribute("aria-label", "Edit challenge");
+      edit.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>';
+      edit.onclick = function () { openChallModal("edit", cid); };
+      row.appendChild(edit);
+    }
     return row;
   }
 
@@ -1121,6 +1151,18 @@
     else myCids.forEach(function (c) { mine.appendChild(challRow(c)); });
     disc.innerHTML = "";
     cids.forEach(function (c) { disc.appendChild(challRow(c)); });
+    var cbtn = document.getElementById("createChallBtn");
+    if (cbtn) {
+      if (meIsAdmin()) {
+        cbtn.disabled = false;
+        cbtn.textContent = "+ Create a challenge";
+        cbtn.onclick = function () { openChallModal("create"); };
+      } else {
+        cbtn.disabled = true;
+        cbtn.textContent = "Create a challenge · admins only";
+        cbtn.onclick = null;
+      }
+    }
   }
 
   function requestJoinChallenge(cid) {
@@ -1141,6 +1183,86 @@
   }
 
   document.getElementById("challChip").onclick = function () { switchTab("challenges"); };
+
+  // ---- Create / rename challenge (admins) ----
+  var challMode = "create", challEditCid = null;
+  function openChallModal(mode, cid) {
+    if (!meIsAdmin()) return;
+    challMode = mode; challEditCid = (mode === "edit") ? cid : null;
+    var em = document.getElementById("challEmojiInput");
+    var nm = document.getElementById("challNameInput");
+    var save = document.getElementById("challSave");
+    document.getElementById("challErr").textContent = "";
+    if (mode === "edit" && cid) {
+      document.getElementById("challModalTitle").textContent = "Edit challenge";
+      save.textContent = "Save";
+      em.value = challEmoji(cid);
+      nm.value = challName(cid);
+    } else {
+      document.getElementById("challModalTitle").textContent = "New challenge";
+      save.textContent = "Create";
+      em.value = ""; nm.value = "";
+    }
+    save.disabled = false;
+    document.getElementById("challModal").classList.add("show");
+    setTimeout(function () { nm.focus(); }, 30);
+  }
+  function hideChallModal() {
+    document.getElementById("challModal").classList.remove("show");
+    challEditCid = null;
+  }
+  document.getElementById("challCancel").onclick = hideChallModal;
+  document.getElementById("challModal").onclick = function (e) { if (e.target === this) hideChallModal(); };
+
+  function genCid(name) {
+    var slug = String(name || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 20) || "c";
+    var cid = slug;
+    while (challMeta[cid]) { cid = slug + "-" + Math.random().toString(36).slice(2, 6); }
+    return cid;
+  }
+
+  function submitChallModal() {
+    var em = document.getElementById("challEmojiInput");
+    var nm = document.getElementById("challNameInput");
+    var err = document.getElementById("challErr");
+    var save = document.getElementById("challSave");
+    var name = nm.value.trim();
+    var emoji = em.value.trim() || "🔥";
+    err.textContent = "";
+    if (!name) { err.textContent = "Enter a name."; return; }
+    if (name.length > 40) { err.textContent = "Keep it under 40 characters."; return; }
+    var dupe = Object.keys(challMeta).some(function (c) {
+      return c !== challEditCid && challName(c).trim().toLowerCase() === name.toLowerCase();
+    });
+    if (dupe) { err.textContent = "A challenge with that name already exists."; return; }
+    if (!meIsAdmin()) { err.textContent = "Admins only."; return; }
+    if (!requireConnection()) return;
+    save.disabled = true;
+    if (challMode === "edit" && challEditCid) {
+      var cid = challEditCid;
+      if (challMeta[cid]) { challMeta[cid].name = name; challMeta[cid].emoji = emoji; }
+      renderChallenges(); renderChallChip();
+      Store.renameChallenge(cid, { name: name, emoji: emoji }).then(function () {
+        hideChallModal(); showToast("✓ Challenge updated", null, true);
+      }).catch(function (e2) { console.error("renameChallenge failed:", e2); save.disabled = false; err.textContent = "Couldn't save. Try again."; });
+    } else {
+      var ncid = genCid(name);
+      challMeta[ncid] = { name: name, emoji: emoji, color: "", owner: state.me, createdTs: Date.now() };
+      if (!membersByCid[ncid]) membersByCid[ncid] = {};
+      membersByCid[ncid][state.me] = { handle: state.me, role: "owner", status: "approved", ts: 0 };
+      renderChallenges();
+      Store.createChallenge(ncid, name, emoji).then(function () {
+        hideChallModal(); showToast('✓ "' + name + '" created', null, true);
+      }).catch(function (e2) {
+        console.error("createChallenge failed:", e2);
+        save.disabled = false; err.textContent = "Couldn't create. Try again.";
+        delete challMeta[ncid]; if (membersByCid[ncid]) delete membersByCid[ncid][state.me];
+        renderChallenges();
+      });
+    }
+  }
+  document.getElementById("challSave").onclick = submitChallModal;
+  document.getElementById("challNameInput").addEventListener("keydown", function (e) { if (e.key === "Enter") submitChallModal(); });
 
   // ---- Data helpers ----
   function myEntries() { return state.entries.filter(function (e) { return e.who === state.me; }); }
@@ -2619,6 +2741,22 @@
       },
       removeMember: function (cid, handle) {
         return fb.deleteDoc(fb.doc(fb.db, "challenges", cid, "members", handle));
+      },
+      // Create a new challenge; creator becomes owner + approved.
+      createChallenge: function (cid, name, emoji) {
+        return fb.setDoc(fb.doc(fb.db, "challenges", cid), {
+          name: name, emoji: emoji || "🔥", color: "", owner: state.me,
+          type: "monthly", visibility: "public", createdTs: Date.now()
+        }).then(function () {
+          return fb.setDoc(fb.doc(fb.db, "challenges", cid, "members", state.me), { handle: state.me, role: "owner", status: "approved", ts: 0 });
+        });
+      },
+      // Rename / re-emoji an existing challenge.
+      renameChallenge: function (cid, data) {
+        var patch = {};
+        if (data.name != null) patch.name = data.name;
+        if (data.emoji != null) patch.emoji = data.emoji;
+        return fb.updateDoc(fb.doc(fb.db, "challenges", cid), patch);
       }
     };
   })();

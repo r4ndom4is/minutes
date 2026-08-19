@@ -359,7 +359,7 @@
   .lb-tag.cat-untag { opacity: .82; }
   .lb-tagname { font-weight: 600; font-size: 14px; }
   .lb-tagmeta { font-size: 12px; color: var(--muted); font-weight: 600; margin-left: 6px; font-variant-numeric: tabular-nums; }
-  .lb-tagmins { font-size: 13px; color: var(--muted); font-weight: 600; width: 66px; text-align: right; font-variant-numeric: tabular-nums; }
+  .lb-tagmins { font-size: 13px; color: var(--muted); font-weight: 600; width: 50px; text-align: right; font-variant-numeric: tabular-nums; }
 
   .seg { display: flex; background: var(--card-2); border-radius: 12px; padding: 4px; margin-bottom: 16px; }
   .seg button { flex: 1; padding: 9px; border: none; background: none; color: var(--muted); font-weight: 700; font-size: 14px; border-radius: 9px; cursor: pointer; }
@@ -1563,8 +1563,6 @@
       map[k].mins += e.mins; map[k].count += 1; map[k].entries.push(e);
     });
     return Object.keys(map).map(function (k) { return map[k]; }).sort(function (a, b) {
-      if (a.tag === CAT_UNTAG) return 1;
-      if (b.tag === CAT_UNTAG) return -1;
       return b.mins - a.mins || a.tag.localeCompare(b.tag);
     });
   }

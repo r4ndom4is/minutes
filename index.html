@@ -158,9 +158,13 @@
   .gear svg { width: 18px; height: 18px; display: block; }
   .gear:active, .gear.open { background: var(--accent); border-color: var(--accent); color: #fff; }
 
-  /* Backoffice console (full-screen overlay for global admins) */
-  .backoffice { position: fixed; inset: 0; z-index: 46; background: var(--bg); overflow-y: auto; display: none; }
+  /* Backoffice console — a full-screen view that scrolls with the window like the other
+     pages (login / app), rather than a fixed overlay with its own scroll container. */
+  .backoffice { display: none; min-height: 100vh; background: var(--bg); }
   .backoffice.show { display: block; }
+  /* While the backoffice is open, hide the tab content and bottom nav so it owns the page. */
+  #app.bo-active > .wrap, #app.bo-active > nav.tabs { display: none; }
+  #app.bo-active { padding-bottom: 0; }
   .bo-topbar { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 12px; padding: calc(14px + env(safe-area-inset-top)) 18px 14px; background: var(--card); border-bottom: 1px solid var(--border); }
   .bo-title { font-size: 17px; font-weight: 800; letter-spacing: .2px; }
   .bo-close { margin-left: auto; width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--border-2); background: var(--card-2); color: var(--text); font-size: 22px; line-height: 1; cursor: pointer; }
@@ -2694,11 +2698,14 @@
   function openBackoffice() {
     if (!meIsAdmin()) return;
     renderBackoffice();
+    document.getElementById("app").classList.add("bo-active");
     document.getElementById("backofficeView").classList.add("show");
+    window.scrollTo(0, 0);
   }
   function closeBackoffice() {
     var v = document.getElementById("backofficeView");
     if (v) v.classList.remove("show");
+    document.getElementById("app").classList.remove("bo-active");
     closeManageModal();
   }
   function renderBackoffice() {

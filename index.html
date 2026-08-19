@@ -999,12 +999,13 @@
   }
   // Logging is allowed for the current month and the previous one; older months are closed.
   function logWindowStart() { var n = new Date(); return new Date(n.getFullYear(), n.getMonth() - 1, 1); }
-  // Earliest month you can browse: the first month with any data or a challenge (else this month).
+  // Earliest month you can browse: the first month that has real logged minutes (else this month).
+  // NB: we intentionally do NOT anchor on roster-only/empty month docs — a stray empty month
+  // (e.g. a leftover challenges/YYYY-MM doc with participants but no entries) must not become Round 1.
   function minNavMonth() {
     var minKey = monthKeyOf(new Date());
     state.entries.forEach(function (e) { var k = e.date.slice(0, 7); if (k < minKey) minKey = k; });
-    Object.keys(challengesCache).forEach(function (k) { if (k < minKey) minKey = k; });
-    return new Date(+minKey.slice(0, 4), (+minKey.slice(5, 7)) - 1, 1);
+    return keyToDate(minKey);
   }
   function keyToDate(k) { return new Date(+k.slice(0, 4), (+k.slice(5, 7)) - 1, 1); }
   // Round 1 = the challenge's first active month (minNavMonth); count forward from there.
@@ -1766,6 +1767,17 @@
     var segEl = document.getElementById("seg");
     var lbEl = document.getElementById("leaderboard");
     var peEl = document.getElementById("participantEdit");
+
+    // Months before Round 1 (a pre-start month, e.g. an admin browsing the empty month before the
+    // challenge began) have no standings — show a placeholder rather than the full member roster.
+    if (roundNumberOf(state.viewMonth) < 1) {
+      editBtn.style.display = "none";
+      segEl.style.display = "none";
+      peEl.style.display = "none";
+      lbEl.style.display = "";
+      lbEl.innerHTML = '<div class="empty">Before the challenge started — no standings yet.</div>';
+      return;
+    }
 
     if (state.editing && canAdminEdit) {
       segEl.style.display = "none";

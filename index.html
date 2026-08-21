@@ -590,8 +590,11 @@
   .chall-row .cr-emoji { font-size: 24px; line-height: 1; flex: 0 0 auto; }
   .chall-row .cr-main { flex: 1; min-width: 0; }
   .chall-row .cr-name { font-weight: 700; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .chall-row .cr-meta { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .chall-row .cr-meta { color: var(--muted); font-size: 12px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .chall-row .cr-sub { color: var(--total); font-size: 12.5px; font-weight: 600; margin-top: 3px; }
+  .chall-row .cr-stat { display: flex; align-items: center; gap: 8px; margin-top: 6px; min-width: 0; }
+  .chall-row .cr-stat .cr-standing { margin: 0; }
+  .chall-row .cr-stat .cr-sub { margin: 0; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .chall-row .cr-right { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; }
   .chall-row .cr-standing { flex: 0 0 auto; font-size: 11px; font-weight: 800; border-radius: 999px; padding: 5px 10px; white-space: nowrap; letter-spacing: .01em; }
   .chall-row .cr-standing.rank { background: var(--tint-accent); color: var(--tint-accent-fg); }
@@ -604,8 +607,6 @@
   .chall-row .cr-edit, .bo-chall .cr-edit { flex: 0 0 auto; position: relative; width: 34px; height: 34px; border-radius: var(--r-sm); border: 1px solid var(--border-2); background: var(--card-2); color: var(--muted); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
   .chall-row .cr-edit svg, .bo-chall .cr-edit svg { width: 16px; height: 16px; }
   .chall-row .cr-edit:active, .bo-chall .cr-edit:active { background: var(--border); }
-  .chall-row .cr-chev { flex: 0 0 auto; color: var(--muted-2); display: inline-flex; align-items: center; margin-left: -2px; }
-  .chall-row .cr-chev svg { width: 18px; height: 18px; }
   .empty-note { color: var(--muted); font-size: 13px; padding: 6px 2px; }
 
   /* Approvals + round-lock (admin) */
@@ -960,7 +961,7 @@
                  "#a3e635", "#fb923c", "#22d3ee", "#c084fc", "#f87171", "#4ade80"];
   var SESSION_KEY = "minutes_session_v3";
   var ACTIVECID_KEY = "minutes_active_cid";
-  var VERSION = "11.0";
+  var VERSION = "11.1";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -1320,9 +1321,18 @@
     mt.textContent = members + " member" + (members === 1 ? "" : "s") + " · Round " + rn;
     main.appendChild(nm); main.appendChild(mt);
     if (isApproved) {
+      // Standing + minutes share row 3 of the left column, keeping the right rail
+      // narrow so the meta line never wraps on phone-width screens.
+      var stat = document.createElement("div"); stat.className = "cr-stat";
+      var pill = document.createElement("span");
+      if (!st.anyMins) { pill.className = "cr-standing muted"; pill.textContent = "New round"; }
+      else if (st.leading) { pill.className = "cr-standing lead"; pill.textContent = "Leading"; }
+      else if (st.mins > 0) { pill.className = "cr-standing rank"; pill.textContent = "#" + st.rank + " of " + st.of; }
+      else { pill.className = "cr-standing muted"; pill.textContent = "#" + st.rank + " of " + st.of; }
       var sub = document.createElement("div"); sub.className = "cr-sub";
       sub.textContent = st.mins.toLocaleString("en-US") + " min this round";
-      main.appendChild(sub);
+      stat.appendChild(pill); stat.appendChild(sub);
+      main.appendChild(stat);
     }
     row.appendChild(main);
 
@@ -1330,12 +1340,6 @@
     row.appendChild(right);
 
     if (isApproved) {
-      var pill = document.createElement("span");
-      if (!st.anyMins) { pill.className = "cr-standing muted"; pill.textContent = "New round"; }
-      else if (st.leading) { pill.className = "cr-standing lead"; pill.textContent = "Leading"; }
-      else if (st.mins > 0) { pill.className = "cr-standing rank"; pill.textContent = "#" + st.rank + " of " + st.of; }
-      else { pill.className = "cr-standing muted"; pill.textContent = "#" + st.rank + " of " + st.of; }
-      right.appendChild(pill);
       // Whole row opens this challenge (its Stats).
       row.classList.add("tappable");
       row.setAttribute("role", "button");
@@ -1348,7 +1352,7 @@
       right.appendChild(pend);
     } else {
       var actR = document.createElement("button"); actR.className = "cr-act";
-      actR.textContent = "Request to join";
+      actR.textContent = "Join";
       actR.onclick = function (e) { e.stopPropagation(); requestJoinChallenge(cid); };
       right.appendChild(actR);
     }
@@ -1361,11 +1365,6 @@
         (pc ? '<span class="cr-reqdot">' + (pc > 9 ? "9+" : pc) + '</span>' : '');
       edit.onclick = function (e) { e.stopPropagation(); openManageChallenge(cid); };
       right.appendChild(edit);
-    }
-    if (isApproved) {
-      var chev = document.createElement("span"); chev.className = "cr-chev";
-      chev.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>';
-      row.appendChild(chev);
     }
     return row;
   }

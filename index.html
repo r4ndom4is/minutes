@@ -35,6 +35,8 @@
   :root {
     color-scheme: dark;
     --radius: 16px;
+    /* radius scale */
+    --r-pill: 999px; --r-lg: 14px; --r-md: 12px; --r-sm: 10px; --r-xs: 8px;
     --nav-h: 68px;
     /* identity + status colors (shared across themes) */
     --accent: #7c5cff;
@@ -42,6 +44,7 @@
     --danger: #ff5c7c;
     /* chrome - Minimal Dark (default) */
     --bg: #14162b;
+    --frame-outer: #0c0d1c;
     --card: #191c33;
     --card-2: #202443;
     --text: #eef0ff;
@@ -77,6 +80,7 @@
   [data-theme="light"] {
     color-scheme: light;
     --bg: #f4f5fa;
+    --frame-outer: #e4e7f0;
     --card: #ffffff;
     --card-2: #f0f1f7;
     --text: #1c1e2e;
@@ -154,7 +158,7 @@
   header .greet-text { min-width: 0; }
   header h1 { font-size: 20px; margin: 0; letter-spacing: -0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   header .sub { font-size: 12px; color: var(--muted); }
-  .gear { flex: 0 0 auto; width: 40px; height: 40px; padding: 9px; display: flex; align-items: center; justify-content: center; background: var(--card-2); border: 1px solid var(--border-2); color: var(--muted); border-radius: 12px; cursor: pointer; }
+  .gear { flex: 0 0 auto; width: 40px; height: 40px; padding: 9px; display: flex; align-items: center; justify-content: center; background: var(--card-2); border: 1px solid var(--border-2); color: var(--muted); border-radius: var(--r-md); cursor: pointer; }
   .gear svg { width: 18px; height: 18px; display: block; }
   .gear:active, .gear.open { background: var(--accent); border-color: var(--accent); color: #fff; }
 
@@ -167,31 +171,45 @@
   #app.bo-active { padding-bottom: 0; }
   .bo-topbar { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 12px; padding: calc(14px + env(safe-area-inset-top)) 18px 14px; background: var(--card); border-bottom: 1px solid var(--border); }
   .bo-title { font-size: 17px; font-weight: 800; letter-spacing: .2px; }
-  .bo-close { margin-left: auto; width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--border-2); background: var(--card-2); color: var(--text); font-size: 22px; line-height: 1; cursor: pointer; }
+  .bo-close { margin-left: auto; width: 36px; height: 36px; border-radius: var(--r-sm); border: 1px solid var(--border-2); background: var(--card-2); color: var(--text); font-size: 22px; line-height: 1; cursor: pointer; }
   .bo-body { max-width: 560px; margin: 0 auto; padding: 16px; }
-  .bo-chall { border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px; margin-bottom: 12px; background: var(--card-2); }
-  .bo-chall-head { display: flex; align-items: center; gap: 10px; }
-  .bo-chall-emoji { font-size: 20px; }
-  .bo-chall-name { font-weight: 700; flex: 1; }
-  .bo-chall-owners { font-size: 12px; color: var(--muted); margin: 4px 0 2px; }
-  .bo-chall-manage { border: none; background: var(--accent); color: #fff; border-radius: 999px; padding: 6px 12px; font-weight: 700; font-size: 12px; cursor: pointer; }
-  .bo-chall-pending { font-size: 12px; font-weight: 700; color: #e5484d; }
+  .bo-chall { display: flex; align-items: center; gap: 12px; border: 1px solid var(--border); border-radius: 14px; padding: 13px 14px; margin-bottom: 10px; background: var(--card-2); }
+  .bo-chall-emoji { font-size: 24px; line-height: 1; flex: 0 0 auto; }
+  .bo-chall-main { flex: 1; min-width: 0; }
+  .bo-chall-name { font-weight: 700; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bo-chall-owners { font-size: 12px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bo-chall-right { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; }
 
   /* Manage-challenge modal rows */
-  .manage-modal { text-align: left; }
+  .modal.manage-modal { text-align: left; max-width: 440px; display: flex; flex-direction: column; max-height: calc(100dvh - 48px); }
+  .modal.manage-modal .modal-title { flex: 0 0 auto; }
+  .modal.manage-modal .m-ico { flex: 0 0 auto; }
+  .modal.manage-modal #manageBody { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+  .modal.manage-modal .modal-actions { flex: 0 0 auto; gap: 12px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
   .mg-section-h { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin: 14px 0 6px; }
   .mg-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--border); }
+  /* ---- Avatar (unified): circular initial. Color set inline via colorFor(). ---- */
+  .dot { width: 26px; height: 26px; border-radius: 50%; flex: 0 0 auto; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; color: #fff; }
+  .dot.sm { width: 22px; height: 22px; font-size: 11px; }
+  .dot.lg { width: 36px; height: 36px; font-size: 16px; }
   .mg-row:last-child { border-bottom: none; }
-  .mg-name { flex: 1; font-weight: 600; }
+  .mg-name { flex: 1; min-width: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .mg-owner-pill { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; color: var(--accent); background: color-mix(in srgb, var(--accent) 16%, transparent); border-radius: 999px; padding: 2px 7px; }
   .mg-btn { border: 1px solid var(--border-2); background: var(--card-2); color: var(--text); border-radius: 999px; padding: 5px 10px; font-weight: 700; font-size: 11px; cursor: pointer; }
   .mg-btn.on { background: var(--accent); color: #fff; border-color: var(--accent); }
-  .mg-del { border: none; background: none; color: var(--muted); font-size: 18px; cursor: pointer; padding: 0 4px; }
   .mg-empty { font-size: 13px; color: var(--muted); padding: 6px 0; }
 
-  /* Pending-count button on a challenge row */
-  .chall-row .cr-req { position: relative; background: color-mix(in srgb, #e5484d 14%, transparent); }
-  .cr-req .cr-req-count { font-size: 12px; font-weight: 800; color: #e5484d; }
+  /* Count bubble (unified primitive) — small red numeric badge */
+  .badge-count, .chall-row .cr-edit .cr-reqdot, .bo-chall .cr-edit .cr-reqdot, .tab-badge {
+    min-width: 16px; height: 16px; padding: 0 4px; box-sizing: border-box;
+    background: #e5484d; color: #fff; border-radius: var(--r-pill);
+    font-size: 10px; font-weight: 800; line-height: 16px; text-align: center;
+  }
+  /* Pending-count badge on a challenge row's manage cog */
+  .chall-row .cr-edit .cr-reqdot, .bo-chall .cr-edit .cr-reqdot {
+    position: absolute; top: -6px; right: -6px;
+    box-shadow: 0 0 0 2px var(--card-2); pointer-events: none;
+  }
 
   .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; margin-bottom: 16px; }
   .card h2 { font-size: 14px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); margin: 0 0 14px; font-weight: 700; }
@@ -204,24 +222,22 @@
   .pe-sub { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); font-weight: 700; margin: 14px 0 8px; }
   .pe-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
   .pe-row:last-of-type { border-bottom: none; }
-  .pe-row .dot { width: 22px; height: 22px; border-radius: 50%; flex: 0 0 auto; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; color: #fff; }
+
   .pe-row .nm { flex: 1; font-size: 15px; font-weight: 600; }
-  .pe-row .rm { background: none; border: none; color: var(--danger); font-size: 18px; cursor: pointer; padding: 4px 8px; }
   .pe-chips { display: flex; flex-wrap: wrap; gap: 8px; }
-  .pe-chip { border: 1px solid var(--border-2); background: var(--card-2); color: var(--text); font-size: 13px; font-weight: 600; padding: 7px 12px; border-radius: 12px; cursor: pointer; }
+  .pe-chip { border: 1px solid var(--border-2); background: var(--card-2); color: var(--text); font-size: 13px; font-weight: 600; padding: 7px 12px; border-radius: var(--r-pill); cursor: pointer; }
   .pe-chip:active { background: var(--accent); border-color: var(--accent); }
   .pe-chip.on { background: var(--accent); border-color: var(--accent); color: #fff; }
   .pe-empty { font-size: 12px; color: var(--muted); padding: 2px 0; }
   .pe-add { display: flex; gap: 8px; margin-top: 8px; }
   .pe-add input { flex: 1; min-width: 0; }
-  .pe-add button { flex: 0 0 auto; padding: 0 16px; border-radius: 12px; border: 1px solid var(--border-2); background: var(--card-2); color: var(--text); font-weight: 600; font-size: 14px; cursor: pointer; }
-  .pe-done { width: 100%; padding: 13px; border-radius: 12px; border: none; background: var(--accent); color: #fff; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 16px; }
+  .pe-add button { flex: 0 0 auto; padding: 0 18px; border-radius: var(--r-pill); border: 1px solid var(--border-2); background: var(--card-2); color: var(--text); font-weight: 700; font-size: 14px; cursor: pointer; }
+  .pe-done { width: 100%; padding: 13px; border-radius: var(--r-md); border: none; background: var(--accent); color: #fff; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 16px; }
   .pe-err { color: var(--danger); font-size: 12px; min-height: 0; margin-top: 6px; }
 
   .block-note { font-size: 13px; color: var(--note-fg); background: var(--note-bg); border: 1px solid var(--note-bd); border-radius: 12px; padding: 11px 14px; margin-bottom: 12px; line-height: 1.4; }
 
   /* Personal stats block */
-  .me-avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px; color: #fff; flex: 0 0 auto; }
   .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
   .tile { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; position: relative; }
   .tile .label { font-size: 11px; color: var(--muted); margin-bottom: 6px; display: flex; align-items: center; gap: 6px; min-height: 18px; }
@@ -259,7 +275,7 @@
   .cal-pop.show { opacity: 1; transform: none; pointer-events: auto; }
   .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
   .cal-title { font-size: 14px; font-weight: 700; }
-  .cal-nav { width: 32px; height: 32px; border-radius: 9px; border: 1px solid var(--border-2); background: var(--card-2); color: var(--text); font-size: 18px; cursor: pointer; line-height: 1; }
+  .cal-nav { width: 32px; height: 32px; border-radius: var(--r-sm); border: 1px solid var(--border-2); background: var(--card-2); color: var(--text); font-size: 18px; cursor: pointer; line-height: 1; }
   .cal-nav:active { background: var(--accent); border-color: var(--accent); }
   .cal-nav:disabled { opacity: .4; cursor: default; }
   .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
@@ -281,7 +297,7 @@
   input[type=number]::-webkit-inner-spin-button,
   input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
   .stepper { display: flex; gap: 6px; }
-  .stepper .step { flex: 0 0 42px; border: 1px solid var(--border-2); background: var(--card-2); color: var(--text); border-radius: 12px; font-size: 22px; font-weight: 500; cursor: pointer; line-height: 1; display: flex; align-items: center; justify-content: center; }
+  .stepper .step { flex: 0 0 42px; border: 1px solid var(--border-2); background: var(--card-2); color: var(--text); border-radius: var(--r-md); font-size: 22px; font-weight: 500; cursor: pointer; line-height: 1; display: flex; align-items: center; justify-content: center; }
   .stepper .step:active { background: var(--accent); border-color: var(--accent); }
   .stepper input { flex: 1 1 auto; width: 100%; min-width: 0; text-align: center; padding-left: 4px; padding-right: 4px; }
   .row { display: flex; gap: 10px; }
@@ -391,6 +407,10 @@
   /* Month carousel */
   .round-head { margin: 2px 0 16px; }
   .rh-title { display: flex; align-items: center; gap: 9px; }
+  .rh-back { flex: 0 0 auto; width: 36px; height: 36px; margin-right: 1px; border-radius: var(--r-sm); border: 1px solid var(--border-2); background: var(--card-2); color: var(--text); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: background .15s ease, border-color .15s ease; }
+  .rh-back svg { width: 20px; height: 20px; }
+  .rh-back:hover { border-color: var(--muted-2); }
+  .rh-back:active { background: var(--border); }
   .rh-emoji { font-size: 24px; line-height: 1; flex: 0 0 auto; }
   .rh-name { font-size: 24px; font-weight: 700; letter-spacing: -.5px; color: var(--text); line-height: 1.15; min-width: 0; overflow-wrap: anywhere; }
   .rh-nest { position: relative; display: flex; align-items: center; gap: 10px; margin: 9px 0 0 7px; padding-left: 15px; }
@@ -399,7 +419,7 @@
   .rh-label { flex: 1; min-width: 0; text-align: left; background: none; border: none; color: var(--text); font-size: 15px; font-weight: 600; letter-spacing: -.2px; cursor: default; padding: 0; line-height: 40px; border-radius: 8px; }
   .rh-label.past { cursor: pointer; text-decoration: underline dotted; text-underline-offset: 5px; text-decoration-color: var(--muted-2); }
   .rh-nav { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
-  .mb-nav { width: 40px; height: 40px; flex: 0 0 auto; border-radius: 12px; border: 1px solid var(--border-2); background: var(--card); color: var(--text); font-size: 22px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .mb-nav { width: 40px; height: 40px; flex: 0 0 auto; border-radius: var(--r-md); border: 1px solid var(--border-2); background: var(--card); color: var(--text); font-size: 22px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; }
   .mb-nav:disabled { opacity: .4; cursor: default; }
   .mb-nav:not(:disabled):active { background: var(--accent); border-color: var(--accent); }
 
@@ -408,17 +428,15 @@
   /* Admin */
   .member { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
   .member:last-child { border-bottom: none; }
-  .member .dot { width: 22px; height: 22px; border-radius: 50%; flex: 0 0 auto; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; color: #fff; }
   .member .mname { flex: 1; font-size: 15px; font-weight: 600; }
   .member .roletoggle { font-size: 10px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; padding: 5px 10px; border-radius: 8px; border: 1px solid var(--border-2); background: var(--card-2); color: var(--muted); cursor: pointer; flex: 0 0 auto; }
   .member .roletoggle.on { background: var(--tint-accent); color: var(--tint-accent-fg); border-color: var(--border-2); }
-  .member .del { background: none; border: none; color: var(--danger); font-size: 18px; cursor: pointer; padding: 4px 8px; }
 
   /* Undo toast */
   .toast {
     position: fixed; left: 50%; transform: translateX(-50%) translateY(18px);
     bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 16px);
-    z-index: 40; background: var(--toast-bg); border: 1px solid var(--toast-bd);
+    z-index: 55; background: var(--toast-bg); border: 1px solid var(--toast-bd);
     display: flex; align-items: center; gap: 16px; padding: 13px 16px;
     border-radius: 12px; box-shadow: var(--shadow-toast);
     opacity: 0; pointer-events: none; transition: opacity .18s ease, transform .18s ease;
@@ -438,15 +456,20 @@
     opacity: 0; pointer-events: none; transition: opacity .18s ease;
   }
   .modal-overlay.show { opacity: 1; pointer-events: auto; }
+  /* Layer scale: base modals 50 < confirm 52 < toast 55 < ptr 60.
+     confirm is the one reusable nested dialog (it can open over the manage modal),
+     so it sits just above base modals but stays below toasts. */
+  #confirmModal { z-index: 52; }
   .modal {
     width: 100%; max-width: 340px; background: var(--card); border: 1px solid var(--border-2);
-    border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow-modal);
+    border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow-modal); position: relative;
     transform: translateY(12px) scale(.97); transition: transform .18s ease;
   }
   .modal-overlay.show .modal { transform: none; }
   .modal .m-ico { width: 44px; height: 44px; border-radius: 12px; background: var(--tint-danger); color: var(--danger); display: flex; align-items: center; justify-content: center; margin-bottom: 14px; }
   .modal .m-ico.accent { background: var(--tint-accent); color: var(--accent); }
   .modal .m-ico svg { width: 24px; height: 24px; }
+  .modal .m-ico.emoji { font-size: 22px; line-height: 1; }
   .modal-title { font-size: 18px; font-weight: 800; margin-bottom: 6px; letter-spacing: -.3px; }
   .modal-msg { font-size: 14px; color: var(--muted); line-height: 1.5; margin-bottom: 20px; }
   .modal-actions { display: flex; gap: 10px; }
@@ -455,7 +478,16 @@
   .mbtn.danger { background: var(--danger); color: #fff; border-color: var(--danger); }
   .mbtn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
   .mbtn:active { transform: scale(.98); }
-  .edit-del { width: 100%; margin-top: 10px; background: var(--card-2); color: var(--danger); border-color: var(--border-2); }
+  .edit-del { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: var(--card-2); color: var(--danger); border-color: var(--border-2); }
+  .edit-del svg { width: 16px; height: 16px; }
+  /* Popup close (× top-right) — dismiss, never destructive */
+  .modal-x { position: absolute; top: 14px; right: 14px; width: 30px; height: 30px; border: none; background: none; color: var(--muted); border-radius: var(--r-sm); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1; }
+  .modal-x svg { width: 18px; height: 18px; }
+  .modal-x:hover, .modal-x:active { background: var(--card-2); color: var(--text); }
+  /* Destructive remove (trash) — shared across every per-row delete */
+  .icon-del { border: none; background: none; color: var(--muted); cursor: pointer; padding: 4px; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--r-sm); flex: 0 0 auto; }
+  .icon-del svg { width: 16px; height: 16px; }
+  .icon-del:hover, .icon-del:active { color: var(--danger); }
   .edit-err { color: var(--danger); font-size: 13px; min-height: 0; margin: -2px 0 12px; }
 
   /* Tabs */
@@ -487,12 +519,26 @@
   nav.tabs button .ico { position: relative; }
   .tab-badge {
     position: absolute; top: -6px; left: 100%; margin-left: -9px;
-    min-width: 16px; height: 16px; padding: 0 4px; box-sizing: border-box;
-    background: #e5484d; color: #fff; border-radius: 999px;
-    font-size: 10px; font-weight: 800; line-height: 16px; text-align: center;
     box-shadow: 0 0 0 2px var(--card);
   }
   .tab-badge[hidden] { display: none; }
+
+  /* ---- Desktop: center the mobile-first app in a phone-style frame ---- */
+  @media (min-width: 640px) {
+    body { background: var(--frame-outer); }
+    #login, #app {
+      max-width: 480px;
+      margin-left: auto; margin-right: auto;
+      background: var(--bg);
+      min-height: 100vh;
+      box-shadow: 0 0 0 1px var(--border), 0 30px 80px -24px rgba(20,22,45,.45);
+    }
+    nav.tabs {
+      left: 50%; right: auto;
+      transform: translateX(-50%);
+      width: 480px; max-width: 100%;
+    }
+  }
 
   /* Settings menu (gear) */
   header { position: relative; }
@@ -533,30 +579,39 @@
   .btn.ghost { background: var(--card-2); color: var(--text); border: 1px solid var(--border-2); }
   .btn.ghost:disabled { opacity: .55; cursor: default; }
   .chall-row {
-    display: flex; align-items: center; gap: 12px; padding: 12px;
+    display: flex; align-items: center; gap: 12px; padding: 13px 14px;
     border: 1px solid var(--border); border-radius: 14px; margin-bottom: 10px;
     background: var(--card-2);
   }
-  .chall-row.active-cid { border-color: var(--accent); }
-  .chall-row .cr-emoji { font-size: 22px; line-height: 1; flex: 0 0 auto; }
+  .chall-row.active-cid { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 7%, var(--card-2)); }
+  .chall-row.tappable { cursor: pointer; transition: border-color .15s ease, background .15s ease, transform .06s ease; }
+  .chall-row.tappable:hover { border-color: var(--border-2); background: var(--card); }
+  .chall-row.tappable:active { transform: scale(.99); }
+  .chall-row .cr-emoji { font-size: 24px; line-height: 1; flex: 0 0 auto; }
   .chall-row .cr-main { flex: 1; min-width: 0; }
-  .chall-row .cr-name { font-weight: 700; font-size: 15px; }
+  .chall-row .cr-name { font-weight: 700; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .chall-row .cr-meta { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .chall-row .cr-sub { color: var(--total); font-size: 12.5px; font-weight: 600; margin-top: 3px; }
+  .chall-row .cr-right { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; }
+  .chall-row .cr-standing { flex: 0 0 auto; font-size: 11px; font-weight: 800; border-radius: 999px; padding: 5px 10px; white-space: nowrap; letter-spacing: .01em; }
+  .chall-row .cr-standing.rank { background: var(--tint-accent); color: var(--tint-accent-fg); }
+  .chall-row .cr-standing.lead { background: color-mix(in srgb, var(--accent-2) 16%, transparent); color: color-mix(in srgb, var(--accent-2) 72%, var(--text)); }
+  .chall-row .cr-standing.muted { background: var(--card); color: var(--muted); border: 1px solid var(--border); }
+  .chall-row .cr-standing.pend { background: color-mix(in srgb, #ffb454 18%, transparent); color: color-mix(in srgb, #ffb454 72%, var(--text)); }
   .chall-row .cr-act { flex: 0 0 auto; border: none; border-radius: 999px; padding: 8px 14px; font-weight: 700; font-size: 13px; cursor: pointer; background: var(--accent); color: #fff; }
   .chall-row .cr-act.secondary { background: var(--card); color: var(--text); border: 1px solid var(--border-2); }
   .chall-row .cr-act:disabled { opacity: .6; cursor: default; }
-  .chall-row .cr-edit { flex: 0 0 auto; width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--border-2); background: var(--card-2); color: var(--muted); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
-  .chall-row .cr-edit svg { width: 16px; height: 16px; }
-  .chall-row .cr-edit:active { background: var(--border); }
-  .cr-badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; margin-left: 8px; vertical-align: middle; }
-  .cr-badge.pending { background: rgba(255,180,84,.18); color: #b8791f; }
-  .cr-badge.active { background: rgba(124,92,255,.18); color: var(--accent); }
+  .chall-row .cr-edit, .bo-chall .cr-edit { flex: 0 0 auto; position: relative; width: 34px; height: 34px; border-radius: var(--r-sm); border: 1px solid var(--border-2); background: var(--card-2); color: var(--muted); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+  .chall-row .cr-edit svg, .bo-chall .cr-edit svg { width: 16px; height: 16px; }
+  .chall-row .cr-edit:active, .bo-chall .cr-edit:active { background: var(--border); }
+  .chall-row .cr-chev { flex: 0 0 auto; color: var(--muted-2); display: inline-flex; align-items: center; margin-left: -2px; }
+  .chall-row .cr-chev svg { width: 18px; height: 18px; }
   .empty-note { color: var(--muted); font-size: 13px; padding: 6px 2px; }
 
   /* Approvals + round-lock (admin) */
   .approve-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
   .approve-row:last-child { border-bottom: none; }
-  .approve-row .ar-name { flex: 1; font-weight: 600; }
+  .approve-row .ar-name { flex: 1; min-width: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .approve-row .ar-btn { border: none; border-radius: 999px; padding: 7px 13px; font-weight: 700; font-size: 12px; cursor: pointer; }
   .approve-row .ar-approve { background: var(--accent); color: #fff; }
   .approve-row .ar-deny { background: var(--card-2); color: var(--text); border: 1px solid var(--border-2); }
@@ -593,7 +648,7 @@
   <div class="wrap">
     <header>
       <div class="greet">
-        <div class="me-avatar" id="headAvatar"></div>
+        <div class="dot lg" id="headAvatar"></div>
         <div class="greet-text">
           <h1>Hi, <span id="meName">you</span> 👋</h1>
           <div class="sub" id="tabSub">Stats</div>
@@ -632,6 +687,7 @@
     <section class="tab-panel active" id="tab-stats">
       <div class="round-head">
         <div class="rh-title">
+          <button class="rh-back" id="statsBack" aria-label="Back to challenges" title="Back to challenges"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
           <span class="rh-emoji" id="ccEmoji">🏆</span>
           <span class="rh-name" id="ccName">Challenge</span>
         </div>
@@ -676,6 +732,7 @@
     <section class="tab-panel" id="tab-log">
       <div class="round-head">
         <div class="rh-title">
+          <button class="rh-back" id="logBack" aria-label="Back to challenges" title="Back to challenges"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
           <span class="rh-emoji" id="logEmoji">🏆</span>
           <span class="rh-name" id="logName">Challenge</span>
         </div>
@@ -768,12 +825,12 @@
   </div>
 
   <nav class="tabs">
+    <button data-tab="challenges">
+      <span class="tab-inner"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v4a6 6 0 0 1-12 0z"/><path d="M6 5H3v2a3 3 0 0 0 3 3M18 5h3v2a3 3 0 0 1-3 3"/><line x1="12" y1="13" x2="12" y2="17"/><path d="M8 21h8M9 21a3 3 0 0 1 3-3 3 3 0 0 1 3 3"/></svg><span class="tab-badge" id="challTabBadge" hidden>0</span></span><span class="lbl">Challenges</span></span></button>
     <button data-tab="stats" class="active">
       <span class="tab-inner"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 16 9 10 13 14 21 5"/></svg></span><span class="lbl">Stats</span></span></button>
     <button data-tab="log">
       <span class="tab-inner"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span><span class="lbl">Log</span></span></button>
-    <button data-tab="challenges">
-      <span class="tab-inner"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v4a6 6 0 0 1-12 0z"/><path d="M6 5H3v2a3 3 0 0 0 3 3M18 5h3v2a3 3 0 0 1-3 3"/><line x1="12" y1="13" x2="12" y2="17"/><path d="M8 21h8M9 21a3 3 0 0 1 3-3 3 3 0 0 1 3 3"/></svg><span class="tab-badge" id="challTabBadge" hidden>0</span></span><span class="lbl">Challenges</span></span></button>
   </nav>
 
   <div class="toast" id="toast">
@@ -796,6 +853,7 @@
 
   <div class="modal-overlay" id="editModal">
     <div class="modal">
+      <button class="modal-x" id="editClose" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></button>
       <div class="m-ico accent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg></div>
       <div class="modal-title" id="editTitle">Edit entry</div>
       <div class="field">
@@ -813,15 +871,15 @@
       </div>
       <div class="edit-err" id="editErr"></div>
       <div class="modal-actions">
-        <button class="mbtn ghost" id="editCancel">Cancel</button>
+        <button class="mbtn edit-del" id="editDelete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Delete</button>
         <button class="mbtn primary" id="editSave">Save</button>
       </div>
-      <button class="mbtn edit-del" id="editDelete">Delete entry</button>
     </div>
   </div>
 
   <div class="modal-overlay" id="challModal">
     <div class="modal">
+      <button class="modal-x" id="challClose" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></button>
       <div class="m-ico accent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v4a6 6 0 0 1-12 0z"/><path d="M6 5H3v2a3 3 0 0 0 3 3M18 5h3v2a3 3 0 0 1-3 3"/><line x1="12" y1="13" x2="12" y2="17"/><path d="M8 21h8M9 21a3 3 0 0 1 3-3 3 3 0 0 1 3 3"/></svg></div>
       <div class="modal-title" id="challModalTitle">New challenge</div>
       <div class="field">
@@ -834,7 +892,6 @@
       </div>
       <div class="edit-err" id="challErr"></div>
       <div class="modal-actions">
-        <button class="mbtn ghost" id="challCancel">Cancel</button>
         <button class="mbtn primary" id="challSave">Create</button>
       </div>
     </div>
@@ -875,11 +932,12 @@
   <!-- MANAGE ONE CHALLENGE (owner or admin) -->
   <div class="modal-overlay" id="manageModal">
     <div class="modal manage-modal">
+      <button class="modal-x" id="manageX" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></button>
+      <div class="m-ico accent emoji" id="manageIco"></div>
       <div class="modal-title" id="manageTitle">Manage</div>
       <div id="manageBody"></div>
       <div class="modal-actions">
-        <button class="mbtn ghost" id="manageClose">Close</button>
-        <button class="mbtn primary" id="manageRename">Rename</button>
+        <button class="mbtn primary" id="manageRename">Edit details</button>
       </div>
     </div>
   </div>
@@ -889,14 +947,25 @@
 (function () {
   "use strict";
 
-  var DEFAULT_MEMBERS = ["Gerli", "Kairi", "Matis", "Rando", "Raido"];
-  var DEFAULT_ADMINS = ["Rando", "Matis"];
+  // Shared trash-2 (feather) icon for per-row remove buttons + destructive actions.
+  var TRASH_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
+
+  // Real names live ONLY in Firestore (meta/roster) - never baked into the deployed
+  // HTML. Since a typed name IS the login credential, hardcoding the roster here would
+  // let anyone who views source sign in as any friend. Prod loads the roster from the
+  // server; the localhost demo seeds its own throwaway names (see DemoStore).
+  var DEFAULT_MEMBERS = [];
+  var DEFAULT_ADMINS = [];
   var PALETTE = ["#7c5cff", "#34d399", "#ffb454", "#ff5c7c", "#38bdf8", "#f472d0",
                  "#a3e635", "#fb923c", "#22d3ee", "#c084fc", "#f87171", "#4ade80"];
   var SESSION_KEY = "minutes_session_v3";
   var ACTIVECID_KEY = "minutes_active_cid";
-  var VERSION = "10.7";
+  var VERSION = "11.0";
   var TAG_MAX = 32;
+  // Local preview mode: when served from localhost, use an in-memory demo backend
+  // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
+  // network/App Check. GitHub Pages is never localhost, so this cannot activate in prod.
+  var IS_DEMO = (location.hostname === "localhost" || location.hostname === "127.0.0.1");
 
   // ---- Multi-challenge model (handle-keyed; a name IS the identity) ----
   // A "challenge" is a durable, renamable unit (stable cid). Members join with admin
@@ -935,6 +1004,31 @@
   }
   function myStatus(cid) { var e = (membersByCid[cid] || {})[state.me]; return e ? e.status : null; }
   function myRole(cid) { var e = (membersByCid[cid] || {})[state.me]; return e ? e.role : null; }
+  // Current round number for a specific challenge, derived from its earliest entry month.
+  function challRoundNumber(cid) {
+    var earliest = null;
+    entriesAll.forEach(function (e) {
+      if (cidOf(e) === cid) { var k = e.date.slice(0, 7); if (!earliest || k < earliest) earliest = k; }
+    });
+    if (!earliest) return 1;
+    var mk = monthKeyOf(new Date());
+    return (+mk.slice(0, 4) - +earliest.slice(0, 4)) * 12 + (+mk.slice(5, 7) - +earliest.slice(5, 7)) + 1;
+  }
+  // The signed-in user's standing in a challenge this (current) round.
+  function challStanding(cid) {
+    var mk = monthKeyOf(new Date());
+    var members = approvedHandles(cid);
+    var totals = {};
+    members.forEach(function (h) { totals[h] = 0; });
+    entriesAll.forEach(function (e) {
+      if (cidOf(e) === cid && e.date.indexOf(mk) === 0 && totals.hasOwnProperty(e.who)) totals[e.who] += e.mins;
+    });
+    var ordered = members.slice().sort(function (a, b) { return totals[b] - totals[a]; });
+    var mine = totals[state.me] || 0;
+    var rank = ordered.indexOf(state.me) + 1;
+    var anyMins = members.some(function (h) { return totals[h] > 0; });
+    return { rank: rank, of: members.length, mins: mine, anyMins: anyMins, leading: rank === 1 && members.length > 1 && mine > 0 };
+  }
   // ---- Approval scope: an owner manages their own challenge(s); a global admin manages all. ----
   function iOwn(cid) {
     var m = challMeta[cid];
@@ -1100,6 +1194,23 @@
     return null;
   }
 
+  // Where to land after login: resume the last challenge if the user has an approved
+  // membership; brand-new / not-yet-approved users start on the Challenges hub to pick one.
+  function landingTab() {
+    var approved = Object.keys(challMeta).filter(function (c) { return myStatus(c) === "approved"; });
+    if (approved.length) {
+      if (myStatus(state.activeCid) !== "approved") {
+        state.activeCid = approved[0];
+        try { localStorage.setItem(ACTIVECID_KEY, approved[0]); } catch (e) {}
+      }
+      return "stats";
+    }
+    // No approved membership known. If data hasn't loaded yet, resume optimistically;
+    // once loaded, an unapproved user belongs on the hub.
+    var loaded = rosterLoaded && Object.keys(membersByCid).length > 0;
+    return loaded ? "challenges" : "stats";
+  }
+
   function doLogin(name) {
     state.me = name;
     // reset per-user view state so nothing leaks between sessions on a shared device
@@ -1115,7 +1226,7 @@
     setDate(todayStr());
     refreshAdminAccess();
     state.viewMonth = keyToDate(defaultViewKey());
-    switchTab("stats");
+    switchTab(landingTab());
     renderChallChip();
     renderAll();
     try { Store.checkMigration(); } catch (e) {}
@@ -1159,6 +1270,10 @@
   document.querySelectorAll("nav.tabs button").forEach(function (b) {
     b.onclick = function () { switchTab(b.getAttribute("data-tab")); };
   });
+  (function () {
+    var sb = document.getElementById("statsBack"); if (sb) sb.onclick = function () { switchTab("challenges"); };
+    var lb = document.getElementById("logBack"); if (lb) lb.onclick = function () { switchTab("challenges"); };
+  })();
 
   // ---- Challenges page + switcher ----
   function renderChallChip() {
@@ -1186,48 +1301,71 @@
 
   function challRow(cid, opts) {
     opts = opts || {};
+    var status = myStatus(cid);
+    var isApproved = status === "approved";
+    var isActive = cid === activeCid();
+    var members = approvedHandles(cid).length;
+    var rn = challRoundNumber(cid);
+    var st = isApproved ? challStanding(cid) : null;
+
     var row = document.createElement("div");
-    row.className = "chall-row" + (cid === activeCid() ? " active-cid" : "");
-    var approved = approvedHandles(cid).length;
-    var meta = document.createElement("div"); meta.className = "cr-main";
-    var nm = document.createElement("div"); nm.className = "cr-name";
-    nm.textContent = challName(cid);
-    if (cid === activeCid()) { var ab = document.createElement("span"); ab.className = "cr-badge active"; ab.textContent = "Active"; nm.appendChild(ab); }
-    else if (myStatus(cid) === "pending") { var pb = document.createElement("span"); pb.className = "cr-badge pending"; pb.textContent = "Requested"; nm.appendChild(pb); }
-    var mt = document.createElement("div"); mt.className = "cr-meta";
-    mt.textContent = approved + " member" + (approved === 1 ? "" : "s");
-    meta.appendChild(nm); meta.appendChild(mt);
+    row.className = "chall-row" + (isActive ? " active-cid" : "");
 
     var em = document.createElement("span"); em.className = "cr-emoji"; em.textContent = challEmoji(cid);
-    row.appendChild(em); row.appendChild(meta);
+    row.appendChild(em);
 
-    var act = document.createElement("button"); act.className = "cr-act";
-    var status = myStatus(cid);
-    if (status === "approved") {
-      act.textContent = cid === activeCid() ? "Open" : "Switch";
-      act.onclick = function () { switchChallenge(cid); };
-    } else if (status === "pending") {
-      act.textContent = "Requested"; act.className += " secondary"; act.disabled = true;
-    } else {
-      act.textContent = "Request to join";
-      act.onclick = function () { requestJoinChallenge(cid); };
+    var main = document.createElement("div"); main.className = "cr-main";
+    var nm = document.createElement("div"); nm.className = "cr-name"; nm.textContent = challName(cid);
+    var mt = document.createElement("div"); mt.className = "cr-meta";
+    mt.textContent = members + " member" + (members === 1 ? "" : "s") + " · Round " + rn;
+    main.appendChild(nm); main.appendChild(mt);
+    if (isApproved) {
+      var sub = document.createElement("div"); sub.className = "cr-sub";
+      sub.textContent = st.mins.toLocaleString("en-US") + " min this round";
+      main.appendChild(sub);
     }
-    row.appendChild(act);
+    row.appendChild(main);
+
+    var right = document.createElement("div"); right.className = "cr-right";
+    row.appendChild(right);
+
+    if (isApproved) {
+      var pill = document.createElement("span");
+      if (!st.anyMins) { pill.className = "cr-standing muted"; pill.textContent = "New round"; }
+      else if (st.leading) { pill.className = "cr-standing lead"; pill.textContent = "Leading"; }
+      else if (st.mins > 0) { pill.className = "cr-standing rank"; pill.textContent = "#" + st.rank + " of " + st.of; }
+      else { pill.className = "cr-standing muted"; pill.textContent = "#" + st.rank + " of " + st.of; }
+      right.appendChild(pill);
+      // Whole row opens this challenge (its Stats).
+      row.classList.add("tappable");
+      row.setAttribute("role", "button");
+      row.tabIndex = 0;
+      var open = function () { switchChallenge(cid); };
+      row.onclick = open;
+      row.onkeydown = function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } };
+    } else if (status === "pending") {
+      var pend = document.createElement("span"); pend.className = "cr-standing pend"; pend.textContent = "Requested";
+      right.appendChild(pend);
+    } else {
+      var actR = document.createElement("button"); actR.className = "cr-act";
+      actR.textContent = "Request to join";
+      actR.onclick = function (e) { e.stopPropagation(); requestJoinChallenge(cid); };
+      right.appendChild(actR);
+    }
     if (meIsAdmin() || iOwn(cid)) {
       var pc = pendingFor(cid).length;
-      if (pc) {
-        var reqBtn = document.createElement("button");
-        reqBtn.className = "cr-edit cr-req"; reqBtn.title = pc + " pending request" + (pc === 1 ? "" : "s");
-        reqBtn.setAttribute("aria-label", "Pending requests");
-        reqBtn.innerHTML = '<span class="cr-req-count">' + (pc > 9 ? "9+" : pc) + '</span>';
-        reqBtn.onclick = function () { openManageChallenge(cid); };
-        row.appendChild(reqBtn);
-      }
       var edit = document.createElement("button");
-      edit.className = "cr-edit"; edit.title = "Manage challenge"; edit.setAttribute("aria-label", "Manage challenge");
-      edit.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
-      edit.onclick = function () { openManageChallenge(cid); };
-      row.appendChild(edit);
+      edit.className = "cr-edit"; edit.setAttribute("aria-label", "Manage challenge");
+      edit.title = pc ? ("Manage · " + pc + " pending request" + (pc === 1 ? "" : "s")) : "Manage challenge";
+      edit.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>' +
+        (pc ? '<span class="cr-reqdot">' + (pc > 9 ? "9+" : pc) + '</span>' : '');
+      edit.onclick = function (e) { e.stopPropagation(); openManageChallenge(cid); };
+      right.appendChild(edit);
+    }
+    if (isApproved) {
+      var chev = document.createElement("span"); chev.className = "cr-chev";
+      chev.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>';
+      row.appendChild(chev);
     }
     return row;
   }
@@ -1310,7 +1448,7 @@
     document.getElementById("challModal").classList.remove("show");
     challEditCid = null;
   }
-  document.getElementById("challCancel").onclick = hideChallModal;
+  document.getElementById("challClose").onclick = hideChallModal;
   document.getElementById("challModal").onclick = function (e) { if (e.target === this) hideChallModal(); };
 
   // Opaque, unguessable challenge id (link-share ready). Name is a separate display field,
@@ -1753,9 +1891,15 @@
     if (!canAdminEdit && state.editing) state.editing = false;
 
     if (canAdminEdit) {
-      editBtn.style.display = "block";
-      editBtn.classList.toggle("on", state.editing);
-      editBtn.textContent = state.editing ? "Done" : "Edit";
+      // While editing, the panel's own full-width "Done" is the single finish action —
+      // hide this header toggle to avoid two Done buttons for the same state.
+      if (state.editing) {
+        editBtn.style.display = "none";
+      } else {
+        editBtn.style.display = "block";
+        editBtn.classList.remove("on");
+        editBtn.textContent = "Edit";
+      }
     } else if (canSelfToggle && !roundLocked(monthKeyOf(state.viewMonth))) {
       editBtn.style.display = "block";
       var inNext = isParticipant(state.me, monthKeyOf(state.viewMonth));
@@ -2150,7 +2294,7 @@
     document.getElementById("editModal").classList.remove("show");
     editId = null;
   }
-  document.getElementById("editCancel").onclick = hideEdit;
+  document.getElementById("editClose").onclick = hideEdit;
   document.getElementById("editModal").onclick = function (ev) { if (ev.target === this) hideEdit(); };
   document.querySelectorAll("#editModal .step").forEach(function (b) {
     b.onclick = function () {
@@ -2489,8 +2633,8 @@
     if (!current.length) { var e0 = document.createElement("div"); e0.className = "pe-empty"; e0.textContent = "No one yet. Add people below."; el.appendChild(e0); }
     current.forEach(function (name) {
       var row = document.createElement("div"); row.className = "pe-row";
-      row.innerHTML = '<span class="dot" style="background:' + colorFor(name) + '">' + escapeHtml(name.charAt(0).toUpperCase()) + '</span>' +
-        '<span class="nm">' + escapeHtml(name) + '</span><button class="rm" title="Remove">×</button>';
+      row.innerHTML = '<span class="dot sm" style="background:' + colorFor(name) + '">' + escapeHtml(name.charAt(0).toUpperCase()) + '</span>' +
+        '<span class="nm">' + escapeHtml(name) + '</span><button class="rm icon-del" title="Remove">' + TRASH_SVG + '</button>';
       row.querySelector(".rm").onclick = function () { removeParticipant(key, current, name); };
       el.appendChild(row);
     });
@@ -2604,10 +2748,10 @@
       row.className = "member";
       var admin = isAdmin(name);
       row.innerHTML =
-        '<span class="dot" style="background:' + colorFor(name) + '">' + escapeHtml(name.charAt(0).toUpperCase()) + '</span>' +
+        '<span class="dot sm" style="background:' + colorFor(name) + '">' + escapeHtml(name.charAt(0).toUpperCase()) + '</span>' +
         '<span class="mname">' + escapeHtml(name) + '</span>' +
         '<button class="roletoggle' + (admin ? ' on' : '') + '" title="Toggle admin">' + (admin ? "Admin" : "Member") + '</button>' +
-        '<button class="del" title="Remove">×</button>';
+        '<button class="del icon-del" title="Remove">' + TRASH_SVG + '</button>';
       row.querySelector(".roletoggle").onclick = function () { toggleAdmin(name); };
       row.querySelector(".del").onclick = function () {
         if (isAdmin(name) && admins().length <= 1) { showToast("Can't remove the last admin"); return; }
@@ -2723,19 +2867,29 @@
     cids.forEach(function (cid) {
       var owners = ownersOf(cid);
       var pc = pendingFor(cid).length;
+      var members = approvedHandles(cid).length;
       var card = document.createElement("div"); card.className = "bo-chall";
-      var head = document.createElement("div"); head.className = "bo-chall-head";
-      head.innerHTML =
-        '<span class="bo-chall-emoji">' + escapeHtml(challEmoji(cid)) + '</span>' +
-        '<span class="bo-chall-name">' + escapeHtml(challName(cid)) + '</span>';
-      var manage = document.createElement("button"); manage.className = "bo-chall-manage"; manage.textContent = "Manage";
-      manage.onclick = function () { openManageChallenge(cid); };
-      head.appendChild(manage);
-      card.appendChild(head);
+
+      var em = document.createElement("span"); em.className = "bo-chall-emoji"; em.textContent = challEmoji(cid);
+      card.appendChild(em);
+
+      var main = document.createElement("div"); main.className = "bo-chall-main";
+      var nm = document.createElement("div"); nm.className = "bo-chall-name"; nm.textContent = challName(cid);
       var ow = document.createElement("div"); ow.className = "bo-chall-owners";
-      ow.textContent = owners.length ? ("Owners: " + owners.join(", ")) : "No owners";
-      card.appendChild(ow);
-      if (pc) { var p = document.createElement("div"); p.className = "bo-chall-pending"; p.textContent = pc + " pending request" + (pc === 1 ? "" : "s"); card.appendChild(p); }
+      ow.textContent = members + " member" + (members === 1 ? "" : "s") + " · " + (owners.length ? ("Owners: " + owners.join(", ")) : "No owners");
+      main.appendChild(nm); main.appendChild(ow);
+      card.appendChild(main);
+
+      var right = document.createElement("div"); right.className = "bo-chall-right";
+      var edit = document.createElement("button");
+      edit.className = "cr-edit"; edit.setAttribute("aria-label", "Manage challenge");
+      edit.title = pc ? ("Manage · " + pc + " pending request" + (pc === 1 ? "" : "s")) : "Manage challenge";
+      edit.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>' +
+        (pc ? '<span class="cr-reqdot">' + (pc > 9 ? "9+" : pc) + '</span>' : '');
+      edit.onclick = function () { openManageChallenge(cid); };
+      right.appendChild(edit);
+      card.appendChild(right);
+
       el.appendChild(card);
     });
   }
@@ -2756,7 +2910,8 @@
   function renderManage(cid) {
     var body = document.getElementById("manageBody");
     if (!body) return;
-    document.getElementById("manageTitle").textContent = challEmoji(cid) + " " + challName(cid);
+    document.getElementById("manageIco").textContent = challEmoji(cid);
+    document.getElementById("manageTitle").textContent = challName(cid);
     var isAdm = meIsAdmin();
     var rename = document.getElementById("manageRename");
     rename.style.display = (isAdm || iOwn(cid)) ? "" : "none";
@@ -2770,6 +2925,7 @@
     else { pend.forEach(function (h) { body.appendChild(buildApproveRow(cid, h)); }); }
 
     var mm = membersByCid[cid] || {};
+    var ownerCount = ownersOf(cid).length;
     var approved = Object.keys(mm).filter(function (h) { return mm[h].status === "approved"; }).sort();
     var mh = document.createElement("div"); mh.className = "mg-section-h";
     mh.textContent = "Members" + (approved.length ? " · " + approved.length : "");
@@ -2788,9 +2944,11 @@
         toggle.textContent = isOwner ? "Owner" : "Make owner";
         toggle.onclick = function () { setOwnerRole(cid, h, !isOwner); };
         row.appendChild(toggle);
-        var del = document.createElement("button"); del.className = "mg-del"; del.title = "Remove from challenge"; del.textContent = "×";
-        del.onclick = function () { removeFromChallenge(cid, h); };
-        row.appendChild(del);
+        if (!(isOwner && ownerCount <= 1)) {
+          var del = document.createElement("button"); del.className = "mg-del icon-del"; del.title = "Remove from challenge"; del.innerHTML = TRASH_SVG;
+          del.onclick = function () { removeFromChallenge(cid, h); };
+          row.appendChild(del);
+        }
       }
       body.appendChild(row);
     });
@@ -2806,6 +2964,8 @@
   }
   function removeFromChallenge(cid, h) {
     if (!meIsAdmin()) return;
+    var cur = (membersByCid[cid] || {})[h] || {};
+    if (cur.role === "owner" && ownersOf(cid).length <= 1) { showToast("Can't remove the last owner"); return; }
     showConfirm({ title: "Remove " + h + "?", msg: "They'll be removed from " + challName(cid) + ". Their logged entries stay.", ok: "Remove" }, function () {
       if (!requireConnection()) return;
       Store.removeMember(cid, h)
@@ -2815,7 +2975,7 @@
   }
   document.getElementById("boClose").onclick = closeBackoffice;
   document.getElementById("boCreateChall").onclick = function () { openChallModal("create"); };
-  document.getElementById("manageClose").onclick = closeManageModal;
+  document.getElementById("manageX").onclick = closeManageModal;
   document.getElementById("manageModal").onclick = function (e) { if (e.target === this) closeManageModal(); };
   document.getElementById("manageRename").onclick = function () { var cid = manageCid; closeManageModal(); openChallModal("edit", cid); };
 
@@ -3044,7 +3204,152 @@
     };
   })();
 
-  // ---- Theme + settings menu ----
+  // ---- Demo Store (localhost only) ------------------------------------------
+  // Self-contained in-memory backend, used ONLY when served from localhost, so the
+  // app can be run and clicked through with no Firebase / App Check. Seeds role-named
+  // demo users (User / Admin / Owner / AdminOwner + a Pending request) and a month of
+  // minutes across two challenges. Same public interface as the Firestore Store above,
+  // so every screen exercises the real render code unchanged. Cannot ship to prod:
+  // GitHub Pages is never localhost, and IS_DEMO gates the swap below.
+  var DemoStore = (function () {
+    function findEntry(id) { for (var i = 0; i < entriesAll.length; i++) { if (entriesAll[i].id === id) return entriesAll[i]; } return null; }
+    function challTabActive() { var el = document.getElementById("tab-challenges"); return el && el.classList.contains("active"); }
+    function boActive() { var el = document.getElementById("backofficeView"); return el && el.classList.contains("show"); }
+    function refreshEntries() {
+      state.entries = entriesAll.filter(function (e) { return (e.cid || FOUNDING_CID) === activeCid(); });
+      renderAll();
+    }
+    function refreshCid() {
+      renderAll(); renderChallChip();
+      if (challTabActive()) renderChallenges();
+      if (boActive()) renderBackoffice();
+      if (manageCid && document.getElementById("manageModal").classList.contains("show")) renderManage(manageCid);
+      updateAdminBadge();
+    }
+    function mk(handle, role, status, ts) { return { handle: handle, role: role, status: status, ts: ts }; }
+
+    function seed() {
+      // Role-named logins so you can sign in as each access level to test the UI.
+      cache.members = ["AdminOwner", "Owner", "Admin", "User", "Pending", "Rookie"];
+      cache.admins = ["AdminOwner", "Admin"]; // global admins (Backoffice access)
+
+      challMeta = {};
+      challMeta[FOUNDING_CID] = { name: FOUNDING_NAME, emoji: FOUNDING_EMOJI, color: "", owner: "AdminOwner", createdTs: 1 };
+      challMeta["sidequest"] = { name: "Step Sprint", emoji: "👟", color: "", owner: "Owner", createdTs: 2 };
+      challMeta["readathon"] = { name: "Read-a-thon", emoji: "📚", color: "", owner: "Rookie", createdTs: 3 };
+
+      membersByCid = {};
+      membersByCid[FOUNDING_CID] = {
+        AdminOwner: mk("AdminOwner", "owner", "approved", 0),
+        Owner: mk("Owner", "owner", "approved", 1),      // 2 owners -> last-owner guard not tripped
+        Admin: mk("Admin", "member", "approved", 2),
+        User: mk("User", "member", "approved", 3),
+        Rookie: mk("Rookie", "member", "approved", 4),
+        Pending: mk("Pending", "member", "pending", 5)   // shows approval flow + cog/tab badge
+      };
+      membersByCid["sidequest"] = {
+        Owner: mk("Owner", "owner", "approved", 0),
+        User: mk("User", "member", "approved", 1),
+        AdminOwner: mk("AdminOwner", "member", "approved", 2)
+      };
+      membersByCid["readathon"] = {                       // most logins aren't in this -> Discover / Request to join
+        Rookie: mk("Rookie", "owner", "approved", 0),
+        Pending: mk("Pending", "member", "approved", 1)
+      };
+
+      roundsByCid = {};
+      roundsByCid[FOUNDING_CID] = { "2026-08": { locked: false, participants: ["AdminOwner", "Owner", "Admin", "User", "Rookie"] } };
+      roundsByCid["sidequest"] = { "2026-08": { locked: false, participants: ["Owner", "User", "AdminOwner"] } };
+      challengesCache = {};
+
+      var e = [];
+      function add(who, cid, ym, mins) { mins.forEach(function (m, i) { if (m > 0) e.push({ id: uid(), who: who, date: ym + "-" + pad(i + 1), mins: m, note: "", cid: cid, _hadCid: true }); }); }
+      add("AdminOwner", FOUNDING_CID, "2026-08", [192, 299, 90, 69, 120, 156]);
+      add("Owner", FOUNDING_CID, "2026-08", [0, 106, 73, 69, 0, 31]);
+      add("Admin", FOUNDING_CID, "2026-08", [90, 233, 110, 60, 137, 0]);
+      add("User", FOUNDING_CID, "2026-08", [0, 0, 35, 70, 90, 0]);
+      add("Rookie", FOUNDING_CID, "2026-08", [0, 31, 0, 0, 0, 120]);
+      add("Owner", "sidequest", "2026-08", [45, 0, 60, 0, 30, 0]);
+      add("User", "sidequest", "2026-08", [0, 20, 0, 50, 0, 0]);
+      add("AdminOwner", "sidequest", "2026-08", [15, 0, 0, 0, 0, 40]);
+      entriesAll = e;
+
+      migratedV2 = true; rosterLoaded = true; netReady = true;
+    }
+
+    return {
+      init: function () {},
+      start: function () {
+        seed();
+        refreshEntries();
+        renderChallChip();
+        var saved = localStorage.getItem(SESSION_KEY);
+        if (saved && resolveName(saved)) doLogin(resolveName(saved));
+      },
+      checkMigration: function () {},
+      addEntry: function (obj) {
+        var id = obj.id || uid();
+        entriesAll.push({ id: id, who: obj.who, date: obj.date, mins: obj.mins, note: obj.note || "", cid: obj.cid || activeCid(), _hadCid: true });
+        refreshEntries();
+        return Promise.resolve(id);
+      },
+      updateEntry: function (id, fields) {
+        var en = findEntry(id); if (en) { Object.keys(fields).forEach(function (k) { en[k] = fields[k]; }); }
+        refreshEntries();
+        return Promise.resolve();
+      },
+      deleteEntry: function (id) {
+        entriesAll = entriesAll.filter(function (e) { return e.id !== id; });
+        refreshEntries();
+        return Promise.resolve();
+      },
+      putEntry: function (obj) {
+        var en = findEntry(obj.id);
+        if (en) { en.who = obj.who; en.date = obj.date; en.mins = obj.mins; en.note = obj.note || ""; en.cid = obj.cid || FOUNDING_CID; }
+        else { entriesAll.push({ id: obj.id, who: obj.who, date: obj.date, mins: obj.mins, note: obj.note || "", cid: obj.cid || FOUNDING_CID, _hadCid: true }); }
+        refreshEntries();
+        return Promise.resolve();
+      },
+      saveRoster: function () { rosterLoaded = true; renderAll(); if (boActive()) renderBackoffice(); return Promise.resolve(); },
+      saveRound: function (cid, key, data) {
+        roundsByCid[cid] = roundsByCid[cid] || {};
+        roundsByCid[cid][key] = { locked: !!data.locked, participants: data.participants || [] };
+        refreshCid();
+        return Promise.resolve();
+      },
+      requestJoin: function (cid) {
+        membersByCid[cid] = membersByCid[cid] || {};
+        membersByCid[cid][state.me] = mk(state.me, "member", "pending", Date.now());
+        refreshCid();
+        return Promise.resolve();
+      },
+      setMember: function (cid, handle, data) {
+        var v = data || {};
+        membersByCid[cid] = membersByCid[cid] || {};
+        membersByCid[cid][handle] = mk(v.handle || handle, v.role || "member", v.status || "approved", v.ts || 0);
+        refreshCid();
+        return Promise.resolve();
+      },
+      removeMember: function (cid, handle) {
+        if (membersByCid[cid]) delete membersByCid[cid][handle];
+        refreshCid();
+        return Promise.resolve();
+      },
+      createChallenge: function (cid, name, emoji) {
+        challMeta[cid] = { name: name, emoji: emoji || "🔥", color: "", owner: state.me, createdTs: Date.now() };
+        membersByCid[cid] = {}; membersByCid[cid][state.me] = mk(state.me, "owner", "approved", 0);
+        refreshCid();
+        return Promise.resolve();
+      },
+      renameChallenge: function (cid, data) {
+        if (challMeta[cid]) { if (data.name != null) challMeta[cid].name = data.name; if (data.emoji != null) challMeta[cid].emoji = data.emoji; }
+        refreshCid();
+        return Promise.resolve();
+      }
+    };
+  })();
+  if (IS_DEMO) Store = DemoStore;
+
   var THEME_KEY = "minutes-theme";
   function currentTheme() {
     return (document.documentElement.getAttribute("data-theme") === "light") ? "light" : "dark";
@@ -3172,7 +3477,9 @@
     appId: "1:41683816465:web:6abdac5887b6d9830da1b0"
   };
 
-  try {
+  // Skip Firebase entirely on localhost - the in-app DemoStore handles data there.
+  const DEMO = location.hostname === "localhost" || location.hostname === "127.0.0.1";
+  if (!DEMO) try {
     const app = initializeApp(firebaseConfig);
     // App Check - verifies requests come from this app (reCAPTCHA v3).
     // Wrapped so local file:// use still works while enforcement is off.

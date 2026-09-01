@@ -73,15 +73,21 @@
        syncPeek reproduces this, so the peeking sheet follows automatically. */
     --l1-scale: .9; --l1-lift: 1px;
     --l1-drop: calc(var(--sat) + var(--l1-lift));
-    /* The pushed-back layer used to be dimmed and rounded, which is what made it
-       read as a separate darkened card floating on the page. Without the dim it
-       keeps the challenges view's own background, so the sheet rises over the page
-       you came from rather than over a scaled-down picture of it, and the shrink
-       carries the depth on its own. The radius goes with it: with the layer and the
-       body painting the same var(--bg) there is no edge left for it to round.
-       Both are tokens so the card look is exactly one line away again:
-         --l1-dim: brightness(.55) saturate(.9);  --l1-radius: 20px; */
-    --l1-dim: none; --l1-radius: 0px;
+    /* The push-back's dim, as the scrim's alpha rather than a filter on the layer.
+       A filter stops at the layer's own box, and in l1 the layer has dropped by the
+       inset, so the strip it uncovered stayed at full brightness and the dim ended
+       in a hard line across the screen right under the island. The scrim spans the
+       whole stage and sits under the sheet, so one value dims the card, the strip
+       above it and anything else behind the sheet, with no seam.
+       Compositing black at alpha a over a colour gives c x (1 - a), so this is the
+       exact equivalent of the filter it replaces: .28 here == brightness(.72).
+       Lighter than the .45 (brightness .55) it used to be, because with no radius
+       the dim is the only depth cue and a heavy value at full-screen width reads as
+       a grey slab rather than shade, especially in the light theme where anything
+       past ~.2 turns the background visibly grey instead of dim.
+       Both are tokens so the old card look is exactly one line away:
+         --l1-dim: .45;  --l1-radius: 20px; */
+    --l1-dim: .28; --l1-radius: 0px;
     /* identity + status colors (shared across themes) */
     --accent: #7c5cff;
     --accent-2: #34d399;
@@ -1074,7 +1080,7 @@
      D screen px, while the old `scale(s) translateY(L)` moved it by L x s and made
      every number in here a pre-scale quantity you had to divide back out. With the
      origin at the top edge: y' = D + y x s. */
-  #app.l1 .layer-base { transform: translateY(var(--l1-drop)) scale(var(--l1-scale)); filter: var(--l1-dim); border-radius: var(--l1-radius); }
+  #app.l1 .layer-base { transform: translateY(var(--l1-drop)) scale(var(--l1-scale)); border-radius: var(--l1-radius); }
   /* The other half of the push-back: the card's top edge falls by the whole inset,
      and the content inside rides back up by the same amount, so what the eye sees
      is the card retracting from under the cutout while its contents hold still.
@@ -1096,9 +1102,14 @@
      slice through it. Scrolling stays, the bar is just not painted. */
   .base-wrap, .sheet-body { scrollbar-width: none; }
   .base-wrap::-webkit-scrollbar, .sheet-body::-webkit-scrollbar { width: 0; height: 0; }
+  /* Two jobs in one element: it takes the tap that dismisses the sheet, and it is
+     the push-back's dim (see --l1-dim). It spans the whole stage and sits below the
+     sheet, so the dim reaches the strip above the dropped card as well as the card
+     itself. The alpha is constant and the opacity is what animates, on the layer's
+     own duration so the dim and the drop arrive together. */
   .scrim {
-    position: absolute; inset: 0; z-index: 2; background: rgba(0,0,0,.001);
-    opacity: 0; pointer-events: none; transition: opacity .4s ease;
+    position: absolute; inset: 0; z-index: 2; background: rgba(0,0,0,var(--l1-dim));
+    opacity: 0; pointer-events: none; transition: opacity .42s ease;
   }
   #app.l1 .scrim { opacity: 1; pointer-events: auto; }
   /* The peek is not decorative: the sheet stops just below the greeting row so the

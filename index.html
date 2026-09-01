@@ -73,6 +73,15 @@
        syncPeek reproduces this, so the peeking sheet follows automatically. */
     --l1-scale: .9; --l1-lift: 1px;
     --l1-drop: calc(var(--sat) + var(--l1-lift));
+    /* The pushed-back layer used to be dimmed and rounded, which is what made it
+       read as a separate darkened card floating on the page. Without the dim it
+       keeps the challenges view's own background, so the sheet rises over the page
+       you came from rather than over a scaled-down picture of it, and the shrink
+       carries the depth on its own. The radius goes with it: with the layer and the
+       body painting the same var(--bg) there is no edge left for it to round.
+       Both are tokens so the card look is exactly one line away again:
+         --l1-dim: brightness(.55) saturate(.9);  --l1-radius: 20px; */
+    --l1-dim: none; --l1-radius: 0px;
     /* identity + status colors (shared across themes) */
     --accent: #7c5cff;
     --accent-2: #34d399;
@@ -1065,7 +1074,7 @@
      D screen px, while the old `scale(s) translateY(L)` moved it by L x s and made
      every number in here a pre-scale quantity you had to divide back out. With the
      origin at the top edge: y' = D + y x s. */
-  #app.l1 .layer-base { transform: translateY(var(--l1-drop)) scale(var(--l1-scale)); filter: brightness(.55) saturate(.9); border-radius: 20px; }
+  #app.l1 .layer-base { transform: translateY(var(--l1-drop)) scale(var(--l1-scale)); filter: var(--l1-dim); border-radius: var(--l1-radius); }
   /* The other half of the push-back: the card's top edge falls by the whole inset,
      and the content inside rides back up by the same amount, so what the eye sees
      is the card retracting from under the cutout while its contents hold still.

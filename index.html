@@ -48,6 +48,12 @@
        that column's position depends on the sheet's own border, which pop widens.
        Both are declared once here so the modal and the sheet cannot drift apart. */
     --frame-w: 480px; --sheet-bw: 1px; --sheet-pad: 16px;
+    /* The status-bar / Dynamic Island inset, as one token rather than a bare env()
+       repeated at every use. Tokenised because it decides where the base layer
+       STARTS, not just how much padding its content carries, and because a bare
+       env() is always 0 in a test browser: overriding --sat is the only way to
+       render an island phone anywhere but an island phone. */
+    --sat: env(safe-area-inset-top);
     /* How far the layer underneath is pushed back while a sheet is open. */
     --l1-scale: .9; --l1-lift: 14px;
     /* identity + status colors (shared across themes) */
@@ -243,10 +249,10 @@
     color: var(--text);
     min-height: 100vh;
   }
-  .wrap { max-width: var(--frame-w); margin: 0 auto; padding: calc(20px + env(safe-area-inset-top)) var(--sheet-pad) 0; }
+  .wrap { max-width: var(--frame-w); margin: 0 auto; padding: calc(20px + var(--sat)) var(--sheet-pad) 0; }
 
   /* Pull-to-refresh (standalone PWA loses the native one) */
-  #ptr { position: fixed; top: calc(env(safe-area-inset-top) + 6px); left: 0; right: 0; display: flex; justify-content: center; pointer-events: none; z-index: 60; transform: translateY(-48px); opacity: 0; will-change: transform, opacity; }
+  #ptr { position: fixed; top: calc(var(--sat) + 6px); left: 0; right: 0; display: flex; justify-content: center; pointer-events: none; z-index: 60; transform: translateY(-48px); opacity: 0; will-change: transform, opacity; }
   #ptr .ptr-spinner { width: 26px; height: 26px; border-radius: 50%; border: 2.5px solid var(--border-2); border-top-color: var(--accent); box-sizing: border-box; transition: transform .15s ease; }
   #ptr.ready .ptr-spinner { transform: scale(1.15); border-color: var(--accent); border-top-color: var(--accent); }
   #ptr.spin .ptr-spinner { animation: ptrspin .7s linear infinite; }
@@ -296,7 +302,7 @@
   /* While the backoffice is open, hide the tab content and bottom nav so it owns the page. */
   #app.bo-active > .wrap { display: none; }
   #app.bo-active { padding-bottom: 0; }
-  .bo-topbar { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 12px; padding: calc(14px + env(safe-area-inset-top)) 18px 14px; background: var(--card); border-bottom: 1px solid var(--border); }
+  .bo-topbar { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 12px; padding: calc(14px + var(--sat)) 18px 14px; background: var(--card); border-bottom: 1px solid var(--border); }
   .bo-title { font-size: 17px; font-weight: 800; letter-spacing: .2px; }
   .bo-close { margin-left: auto; width: 36px; height: 36px; border-radius: var(--r-sm); border: 1px solid var(--border-2); background: var(--card-2); color: var(--text); font-size: 22px; line-height: 1; cursor: pointer; }
   .bo-body { max-width: 560px; margin: 0 auto; padding: 16px; }
@@ -1017,8 +1023,16 @@
   @media (min-width: 640px) {
     #app { left: 50%; right: auto; transform: translateX(-50%); width: var(--frame-w); max-width: 100%; margin: 0; min-height: 0; }
   }
+  /* The layer starts BELOW the status bar inset, and the strip above it is left to
+     the page background. The inset used to be paid by .wrap's padding, which put it
+     INSIDE the layer, so the pushed-back card began at the very top of the screen
+     and carried ~71px of empty space above the greeting. In a browser tab that is
+     invisible (the inset is 0), but installed as a PWA on an island phone the card
+     read as absurdly tall with a dead band across its head. Paying the inset out
+     here instead costs the same pixels and puts the card's top edge where the eye
+     expects it: just above the greeting, with the island on plain background. */
   .layer-base {
-    position: absolute; inset: 0; z-index: 1;
+    position: absolute; inset: 0; top: var(--sat); z-index: 1;
     display: flex; flex-direction: column; background: var(--bg);
     transform-origin: 50% 0; will-change: transform;
     transition: transform .42s cubic-bezier(.32,.72,0,1), filter .42s ease, border-radius .42s ease;
@@ -1030,7 +1044,10 @@
   /* .wrap carries `margin: 0 auto` from the old document-flow layout. As a
      column flex item that auto margin stops it stretching, so it shrank to
      fit-content and the whole base layer lost ~44px of width. */
-  .base-wrap { flex: 1; min-height: 0; width: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 18px; }
+  /* The layer itself now sits below the inset, so the wrap must NOT charge for it a
+     second time. Login still uses the plain .wrap, and it is full-screen, so the
+     inset stays in the shared rule and is cancelled here. */
+  .base-wrap { flex: 1; min-height: 0; width: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-top: 20px; padding-bottom: 18px; }
   /* The pop shadow sits in the right margin, so a classic scrollbar gutter would
      slice through it. Scrolling stays, the bar is just not painted. */
   .base-wrap, .sheet-body { scrollbar-width: none; }
@@ -2426,7 +2443,7 @@
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
   var NAV_KEY = "minutes-nav";
-  var VERSION = "14.2";
+  var VERSION = "14.3";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -3765,19 +3782,27 @@
      through the offset chain rather than a client rect on purpose: an open sheet
      scales the layer underneath (scale(.9) translateY(14px)) and a scrolled hub
      moves it, and a rect folds both into the answer, so the sheet would come to rest
-     somewhere slightly different depending on what it was doing when it measured. */
+     somewhere slightly different depending on what it was doing when it measured.
+
+     The chain stops at .layer-base, not at #app, because the layer's own offset is
+     the status-bar inset and that sits OUTSIDE the transform: the scale applies to
+     the layer's contents, not to where the layer begins. Folding the inset into the
+     scaled term shortened the peek by inset x (1 - scale), which on an island phone
+     is ~6px of the greeting row quietly disappearing under the sheet. */
   var PEEK_GAP = 9;
   function syncPeek() {
     var app = document.getElementById("app");
     var wrap = document.getElementById("baseWrap");
     var head = wrap && wrap.querySelector("header");
     if (!app || !head || !head.offsetHeight) return;   // not painted yet; a later frame lands it
+    var layer = app.querySelector(".layer-base") || app;
     var top = 0, n = head;
-    while (n && n !== app) { top += n.offsetTop; n = n.offsetParent; }
+    while (n && n !== layer && n !== app) { top += n.offsetTop; n = n.offsetParent; }
+    var inset = layer === app ? 0 : layer.offsetTop;
     var cs = getComputedStyle(document.documentElement);
     var scale = parseFloat(cs.getPropertyValue("--l1-scale")) || 1;
     var lift = parseFloat(cs.getPropertyValue("--l1-lift")) || 0;
-    var seen = (top + head.offsetHeight + lift) * scale;   // where the eye finds the row
+    var seen = inset + (top + head.offsetHeight + lift) * scale;   // where the eye finds the row
     app.style.setProperty("--peek", Math.round(seen + PEEK_GAP) + "px");
   }
   window.__minutesPeek = syncPeek;

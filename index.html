@@ -764,6 +764,16 @@
   .msg .m-ic { width: 15px; height: 15px; flex: 0 0 auto; margin-top: 1px;
     fill: currentColor; stroke: none; }
   .msg .m-tx { flex: 1 1 auto; min-width: 0; }
+  /* A message that names an action has to hand over the control for it. "Reconnect"
+     was previously an instruction with no handle anywhere on the signed-in screen:
+     the only real recovery is a fresh load, which until now was reachable only from
+     the login screen's Retry button. Small inline control, so it takes the pill. */
+  .msg .m-act { flex: 0 0 auto; align-self: center; margin-left: 2px;
+    border: 1px solid color-mix(in srgb, var(--f) 35%, transparent);
+    background: transparent; color: var(--f); border-radius: var(--r-pill);
+    padding: 4px 11px; font: inherit; font-size: 12px; font-weight: 700;
+    line-height: 1.2; white-space: nowrap; cursor: pointer; }
+  .msg .m-act:hover { background: color-mix(in srgb, var(--f) 12%, transparent); }
   .msg--quiet:not(:empty) { margin: 2px 0 6px; }
   .msg--boxed:not(:empty) { background: var(--b); border: 1px solid var(--o);
     border-radius: var(--r-md); padding: 11px 13px; margin-bottom: 12px; }
@@ -837,6 +847,15 @@
     animation: echoIn .28s cubic-bezier(.4,0,.2,1); }
   @keyframes echoIn { from { background: transparent; } }
   @media (prefers-reduced-motion: reduce) { .entry.echo { animation: none; } }
+
+  /* "Saved here, not on the server yet". Deliberately a quiet dot rather than a
+     badge or a word: the row IS saved from the user's point of view, so this marks
+     a detail about where, it does not raise an alarm. Takes the warn ink because
+     that is the same vocabulary the offline banner uses. */
+  .ent-sync { width: 6px; height: 6px; border-radius: 50%; background: var(--w-fg);
+    margin-right: 8px; flex: none; animation: syncPulse 1.8s ease-in-out infinite; }
+  @keyframes syncPulse { 0%, 100% { opacity: .35; } 50% { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .ent-sync { animation: none; opacity: .75; } }
 
   /* Confirm modal */
   /* The overlay spans the viewport, not the frame, so it needs both: the padding
@@ -1979,6 +1998,7 @@
                   <template x-if="r.tag"><span class="det tag" x-text="r.tag"></span></template>
                 </div>
                 <div style="display:flex;align-items:center">
+                  <template x-if="r.pending"><span class="ent-sync" title="Saved on this device, waiting to sync"></span></template>
                   <span class="mins" x-text="r.mins"></span>
                   <button class="edit" title="Edit" @click="$store.s.act.editEntry(r.raw)">
                     <svg class="ic" aria-hidden="true"><use href="#i-pencil"/></svg>
@@ -2008,6 +2028,7 @@
                         <div class="entry" :data-id="r.id">
                           <div class="meta"><span class="who" x-text="r.date"></span></div>
                           <div style="display:flex;align-items:center">
+                            <template x-if="r.pending"><span class="ent-sync" title="Saved on this device, waiting to sync"></span></template>
                             <span class="mins" x-text="r.mins"></span>
                             <button class="edit" title="Edit" @click="$store.s.act.editEntry(r.raw)">
                               <svg class="ic" aria-hidden="true"><use href="#i-pencil"/></svg>
@@ -2386,8 +2407,9 @@
   var SESSION_KEY = "minutes_session_v3";
   var ACTIVECID_KEY = "minutes_active_cid";
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
+  var CHALL_CACHE_KEY = "minutes_chall_v1";
   var NAV_KEY = "minutes-nav";
-  var VERSION = "13.7";
+  var VERSION = "14.0";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -2830,6 +2852,7 @@
     var mine = myEntries().filter(function (e) { return e.date.indexOf(mk) === 0; });
     function row(e, hideTag) {
       return { id: e.id, raw: e, date: niceDate(e.date), mins: e.mins + "m",
+               pending: !!e._pending,
                tag: (!hideTag && e.note) ? capTag(e.note) : "" };
     }
     if (!mine.length) {
@@ -3377,7 +3400,24 @@
   var entriesNetReady = false;
   function requireConnection() {
     if (netReady) return true;
-    showToast("Not connected. Your change wasn't saved.", "danger");
+    // Admin actions are deliberately NOT queued. Approving a request, editing the
+    // roster or renaming a challenge offline is a decision taken against data that
+    // may already have moved on, and Firestore's last-write-wins would happily
+    // replay it over the newer state. So this is refused rather than deferred.
+    // No button: reconnecting is automatic now (see scheduleRetry).
+    showToast("Not connected. This one needs a live connection, try again in a moment.", "warn");
+    scheduleRetry();
+    return false;
+  }
+
+  // Entry writes are the opposite case: they are the user's own minutes, they conflict
+  // with nothing, and they go into Firestore's durable offline queue. So they are not
+  // gated at all - unless this device could not give us that queue, in which case the
+  // old refusal is still the honest answer instead of a promise we can't keep.
+  function canQueueWrites() { return netReady || Store.durable(); }
+  function requireEntryWrite() {
+    if (canQueueWrites()) return true;
+    showToast("Not connected, and this device can't store changes offline.", "danger");
     return false;
   }
 
@@ -3402,6 +3442,23 @@
     } catch (e) {}
     return false;
   }
+
+  // Challenge metadata cache: same reasoning as the roster above, for the same reason.
+  // A challenge's name and emoji are pure display data that only Firestore holds, so with
+  // no snapshot the header falls back to the raw cid and the user sees "founding" instead
+  // of their challenge name. Persisting the last-known meta keeps the app reading correctly
+  // while it is offline or while a suspended socket is still catching up.
+  function persistChallCache() {
+    try { localStorage.setItem(CHALL_CACHE_KEY, JSON.stringify(challMeta)); } catch (e) {}
+  }
+  function hydrateChallCache() {
+    if (IS_DEMO) return false;
+    try {
+      var cm = JSON.parse(localStorage.getItem(CHALL_CACHE_KEY) || "null");
+      if (cm && typeof cm === "object" && Object.keys(cm).length) { challMeta = cm; return true; }
+    } catch (e) {}
+    return false;
+  }
   // Login connection recovery (first run on a device, no cached roster yet).
   // Name-only auth has a hard dependency on the server roster: with nothing cached there's
   // nothing local to check a name against, so login can't proceed until Firestore answers
@@ -3420,7 +3477,10 @@
     if (on) setMsg("loginErr", "");
   }
   function reloadToReconnect() {
-    setLoginConnecting(true, "Reconnecting…");
+    // Reachable from the signed-in screens now, where the login status row is not
+    // mounted, so it has to be able to announce itself either way.
+    if (state && state.me) showToast("Reconnecting…", "info");
+    else setLoginConnecting(true, "Reconnecting…");
     setTimeout(function () { location.reload(); }, 250);
   }
   // Auto-reload at most twice per session, so a genuinely offline device can't loop; the
@@ -3432,6 +3492,37 @@
     try { sessionStorage.setItem("minutes_reconnect", String(n + 1)); } catch (e) {}
     reloadToReconnect();
     return true;
+  }
+
+  // ---- Reconnect: automatic ------------------------------------------------
+  // Asking the user to press a button to reconnect is asking them to do the app's job.
+  // Firestore re-establishes its own socket, but one that died while the device was
+  // asleep can sit wedged, and a bare enableNetwork() on a client that still believes
+  // it is enabled does nothing. disableNetwork -> enableNetwork forces a fresh attempt.
+  // Backed off so a genuinely offline device isn't spinning the radio every 4 seconds.
+  var RETRY_MS = [4000, 8000, 15000, 30000, 60000];
+  var retryStep = 0, retryTimer = 0;
+  function nudgeConnection() {
+    var fb = window.__FB;
+    if (!fb || !fb.disableNetwork || !fb.enableNetwork) return Promise.resolve();
+    return fb.disableNetwork(fb.db)
+             .then(function () { return fb.enableNetwork(fb.db); })
+             .catch(function () {});
+  }
+  function stopRetry() {
+    retryStep = 0;
+    if (retryTimer) { clearTimeout(retryTimer); retryTimer = 0; }
+  }
+  function scheduleRetry() {
+    if (retryTimer || netReady) return;
+    var wait = RETRY_MS[Math.min(retryStep, RETRY_MS.length - 1)];
+    retryStep++;
+    retryTimer = setTimeout(function () {
+      retryTimer = 0;
+      if (netReady) { retryStep = 0; return; }
+      nudgeConnection();
+      scheduleRetry();
+    }, wait);
   }
 
   function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
@@ -3545,9 +3636,28 @@
   (function () {
     var retry = document.getElementById("loginRetry");
     if (retry) retry.onclick = function () { reloadToReconnect(); };
-    // Network came back after a wedged/offline first launch: nudge a fresh connection.
     window.addEventListener("online", function () {
-      if (!netReady && !rosterLoaded && !state.me) autoReloadOnce();
+      stopRetry();
+      renderSync();
+      nudgeConnection();
+      // A first-ever launch with no cached roster is the one case that genuinely
+      // cannot proceed in place: name-only auth has nothing local to check a name
+      // against, so the server has to answer once. That case still earns a reload
+      // if the nudge doesn't take. Everything else now recovers where it stands,
+      // and a signed-in user keeps logging into the offline queue meanwhile.
+      if (!netReady && !rosterLoaded && !state.me) {
+        setTimeout(function () {
+          if (!netReady && !rosterLoaded && !state.me) autoReloadOnce();
+        }, 6000);
+      } else scheduleRetry();
+    });
+    window.addEventListener("offline", function () { renderSync(); scheduleRetry(); });
+    // Coming back to a suspended tab is the other moment the socket is typically
+    // stale, and it fires no online event because the network never technically left.
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState !== "visible") return;
+      renderSync();
+      if (!netReady) { stopRetry(); nudgeConnection(); scheduleRetry(); }
     });
   })();
   document.getElementById("loginName").addEventListener("keydown", function (e) {
@@ -3852,7 +3962,7 @@
     save.disabled = true;
     if (challMode === "edit" && challEditCid) {
       var cid = challEditCid;
-      if (challMeta[cid]) { challMeta[cid].name = name; challMeta[cid].emoji = emoji; }
+      if (challMeta[cid]) { challMeta[cid].name = name; challMeta[cid].emoji = emoji; persistChallCache(); }
       renderChallenges(); renderChallChip();
       Store.renameChallenge(cid, { name: name, emoji: emoji }).then(function () {
         hideChallModal(); showToast("Challenge updated", "success");
@@ -4831,7 +4941,7 @@
   // Clearing is setMsg(el, ""), which empties the node so the :empty rules
   // collapse it completely: no box, no border, no margin.
   var MSG_ICON = { info: "i-info", success: "i-ok", warn: "i-warn", danger: "i-alert" };
-  function setMsg(el, text, tone) {
+  function setMsg(el, text, tone, action) {
     if (typeof el === "string") el = document.getElementById(el);
     if (!el) return;
     if (!text) { el.textContent = ""; return; }
@@ -4843,6 +4953,17 @@
     // textContent on the span, not innerHTML on the parent: these messages
     // interpolate member and challenge names.
     el.lastChild.textContent = text;
+    // An optional {label, fn}. Built as a real element rather than markup for the
+    // same reason as above, and appended after the text so m-tx stays lastChild
+    // for the line that fills it.
+    if (action && action.label && action.fn) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "m-act";
+      b.textContent = action.label;
+      b.onclick = action.fn;
+      el.appendChild(b);
+    }
   }
 
   // ---- Feedback: transient ------------------------------------------------
@@ -4859,22 +4980,28 @@
   var POP_MS = { success: 2500, info: 3000, warn: 4500, danger: 0 };
   var UNDO_MS = 5000;
   var toastTimer = null, toastUndoFn = null;
-  function showToast(msg, tone, onUndo) {
+  // The third argument is either an undo function (the long-standing shape) or an
+  // explicit { label, fn } for any other recovery. An undo is time-boxed because it
+  // reverses something that already happened; a recovery is not, so it keeps the
+  // tone's own lifetime and a danger recovery stays until it is dealt with.
+  function showToast(msg, tone, action) {
     var t = document.getElementById("toast");
     if (!MSG_ICON[tone]) tone = "info";
+    var isUndo = typeof action === "function";
+    var fn = isUndo ? action : (action && action.fn) || null;
     document.getElementById("toastMsg").textContent = msg;
     document.getElementById("toastIco").setAttribute("href", "#" + MSG_ICON[tone]);
     t.classList.remove("t-info", "t-success", "t-warn", "t-danger");
     t.classList.add("t-" + tone);
-    toastUndoFn = onUndo || null;
+    toastUndoFn = fn;
     var act = document.getElementById("toastUndo");
     // A failure that cannot be retried still has to be dismissable, otherwise a
     // sticky message with no control is a dead end.
-    act.textContent = onUndo ? "Undo" : "Dismiss";
-    act.style.display = (onUndo || !POP_MS[tone]) ? "" : "none";
+    act.textContent = fn ? (isUndo ? "Undo" : action.label) : "Dismiss";
+    act.style.display = (fn || !POP_MS[tone]) ? "" : "none";
     t.classList.add("show");
 
-    var ms = onUndo ? UNDO_MS : POP_MS[tone];
+    var ms = isUndo ? UNDO_MS : POP_MS[tone];
     var bar = document.getElementById("toastBar");
     bar.style.display = ms ? "" : "none";
     if (toastTimer) { clearTimeout(toastTimer); toastTimer = null; }
@@ -4929,19 +5056,49 @@
     showToast(msg, "success", undoFn);
   }
 
-  // ---- Ambient: offline ----
+  // ---- Ambient: connection and sync ---------------------------------------
   // Being offline is a state, not an event, so it gets a banner that lives exactly
   // as long as it is true instead of a one-shot message that scrolls away while the
   // problem is still there.
-  function setOffline(off) {
+  //
+  // It is no longer a dead end either. Entry writes go into Firestore's durable
+  // offline queue, so the honest banner reports what is actually happening (your
+  // minutes are saved on this device, they will sync) instead of warning that
+  // nothing will save and handing over a button the app should be pressing itself.
+  var pendingOps = 0;    // writes issued this session, still awaiting a server ack
+  var cachePending = 0;  // entry docs the local cache flags as unsynced. This is the
+                         // one that survives a reload; pendingOps does not.
+  function unsyncedCount() { return Math.max(pendingOps, cachePending); }
+  function offlineNow() { return !netReady || navigator.onLine === false; }
+
+  function renderSync() {
+    var off = offlineNow(), n = unsyncedCount();
+    var text = "", tone = "warn";
+    if (off && !Store.durable()) {
+      // No durable queue on this device (private browsing, storage-blocked webview).
+      // Promising a later sync would be a lie, so the old warning is still the true one.
+      text = "Not connected. Changes won't save.";
+    } else if (off && n) {
+      text = "Offline. " + n + " change" + (n === 1 ? "" : "s") + " saved on this device, syncing when you're back.";
+    } else if (off) {
+      text = "Offline. You can keep logging, your minutes save on this device.";
+    } else if (n) {
+      text = "Syncing " + n + " change" + (n === 1 ? "" : "s") + "…";
+      tone = "info";
+    }
     // Two mount points, one state: the base screen and the challenge sheet are
-    // separate layers, and a condition that blocks saving has to be visible from
+    // separate layers, and a condition this relevant has to be visible from
     // whichever one you are standing on.
     var slots = document.querySelectorAll(".amb");
-    Array.prototype.forEach.call(slots, function (s) {
-      if (off) setMsg(s, "Not connected. Changes won't save until you reconnect.", "warn");
-      else setMsg(s, "");
-    });
+    Array.prototype.forEach.call(slots, function (s) { setMsg(s, text, tone); });
+  }
+  // The name every existing caller and the test bridge already use. Connection state
+  // is owned by netReady, so flipping it here keeps the banner and the write gates
+  // reading from one fact instead of two that can disagree.
+  function setOffline(off) {
+    netReady = !off;
+    if (!off) { stopRetry(); if (Store.flushPending) Store.flushPending(); }
+    renderSync();
   }
 
   // ---- Themed confirm modal ----
@@ -5015,7 +5172,7 @@
 
     var prevMins = ent.mins, prevNote = ent.note, id = ent.id;
     if (newMins === prevMins && sameTag(newTag, prevNote)) { hideEdit(); return; }
-    if (!requireConnection()) return;
+    if (!requireEntryWrite()) return;
 
     // if the new tag collides with another same-day entry, merge into it so the
     // "one entry per day+tag" invariant holds and per-tag breakdowns stay clean
@@ -5044,7 +5201,7 @@
     writePromise.then(function () {
       saveBtn.disabled = false; saveBtn.textContent = "Save";
       hideEdit();
-      showToast("Saved", "success", undoFn);
+      showToast(offlineNow() ? "Saved · syncs when you're back" : "Saved", "success", undoFn);
     }).catch(function (err) {
       console.error("Edit save failed:", err);
       saveBtn.disabled = false; saveBtn.textContent = "Save";
@@ -5060,7 +5217,7 @@
     hideEdit();
     showConfirm({ title: "Delete entry?", msg: niceDate(removed.date) + " · " + removed.mins + " min" + (removed.note ? " · " + capTag(removed.note) : ""), ok: "Delete" }, function () {
       Store.deleteEntry(removed.id).then(function () {
-        showToast("Entry deleted", "info", function () { Store.putEntry(removed).catch(warnSaveFail); });
+        showToast(offlineNow() ? "Entry deleted · syncs when you're back" : "Entry deleted", "info", function () { Store.putEntry(removed).catch(warnSaveFail); });
       }).catch(function (err) {
         console.error("Delete failed:", err);
         showToast("Couldn't delete. Check your connection and try again.", "danger");
@@ -5180,7 +5337,7 @@
       updateLogGate();
       return;
     }
-    if (!requireConnection()) return;
+    if (!requireEntryWrite()) return;
 
     // fold into the same day's entry only when the tag matches; different tags stay
     // separate so per-tag breakdowns can be built later
@@ -5222,7 +5379,10 @@
       minsInput.value = ""; noteInput.value = "";
       addBtn.disabled = false; addBtn.textContent = "Add entry";
       hideAdd();
-      announceSaved("Added " + mins + " min · " + niceDate(date), undoFn, savedId);
+      // Offline the save is real but local, and this pill is the thing the user is
+      // actually looking at in that moment, so it carries the caveat rather than
+      // relying on them noticing the banner behind the modal that just closed.
+      announceSaved("Added " + mins + " min · " + (offlineNow() ? "syncs when you're back" : niceDate(date)), undoFn, savedId);
     }).catch(function (err) {
       console.error("Save failed:", err);
       addBtn.disabled = false; addBtn.textContent = "Add entry";
@@ -5496,6 +5656,47 @@
     function challengesTabActive() { var el = document.getElementById("tab-challenges"); return el && el.classList.contains("active"); }
     function adminTabActive() { return !!document.getElementById("backofficeView") && document.getElementById("backofficeView").classList.contains("show"); }
 
+    // ---- Write acknowledgement ------------------------------------------------
+    // Firestore resolves a write promise only when the SERVER acknowledges it, so
+    // while offline that promise never settles at all. The local cache has already
+    // accepted the write, and the snapshot listener has already painted it, by the
+    // time setDoc returns - so the UI has to confirm on THAT. Waiting for a round
+    // trip that may not happen for hours is not a confirmation, it is a hang, and
+    // it is what would have left the button stuck on "Saving…" forever.
+    //
+    // Online we still wait briefly for the real ack, so a genuine refusal (rules,
+    // App Check) surfaces as a failed save exactly as it did before.
+    var LOCAL_ACK_MS = 1500;
+    function track(p) {
+      pendingOps++; renderSync();
+      var done = function () { pendingOps--; renderSync(); };
+      return p.then(function (v) { done(); return v; },
+                    function (e) { done(); throw e; });
+    }
+    function settle(p, value) {
+      var tracked = track(p);
+      var confirmed = false;
+      // A queued write that comes back rejected will never land. If we already told
+      // the user it was saved, the retraction has to come from here. Registered
+      // before the race below, so when a rejection beats the confirmation this is
+      // still quiet and the caller's own catch reports it instead.
+      tracked.catch(function (e) {
+        console.error("Write rejected:", e);
+        if (confirmed) showToast("A change couldn't be saved to the server.", "danger");
+      });
+      if (offlineNow()) { confirmed = true; return Promise.resolve(value); }
+      return new Promise(function (resolve, reject) {
+        var settled = false;
+        tracked.then(function () { if (!settled) { settled = true; resolve(value); } },
+                     function (e) { if (!settled) { settled = true; reject(e); } });
+        setTimeout(function () {
+          if (settled) return;
+          settled = true; confirmed = true;
+          resolve(value);
+        }, LOCAL_ACK_MS);
+      });
+    }
+
     function applyActiveEntries() {
       var cid = activeCid();
       state.entries = entriesAll.filter(function (e) { return (e.cid || "") === cid; });
@@ -5525,12 +5726,17 @@
       fb.onSnapshot(fb.collection(fb.db, "challenges", cid, "members"), function (snap) {
         var m = {};
         snap.forEach(function (d) { var v = d.data() || {}; m[d.id] = { handle: v.handle || d.id, role: v.role || "member", status: v.status || "approved", ts: v.ts || 0 }; });
+        // Same guard as the challenges listener: an empty roster from cache is "not loaded",
+        // not "everyone left". Accepting it would drop the user's own membership and flip
+        // their role and admin badge for as long as the connection was down.
+        if (!snap.size && snap.metadata.fromCache && membersByCid[cid] && Object.keys(membersByCid[cid]).length) return;
         membersByCid[cid] = m;
         onCidData();
       }, function (err) { console.error("members listener (" + cid + "):", err); });
       fb.onSnapshot(fb.collection(fb.db, "challenges", cid, "rounds"), function (snap) {
         var r = {};
         snap.forEach(function (d) { var v = d.data() || {}; r[d.id] = roundSavePayload(roundFlagsFromData(v), v.participants || []); });
+        if (!snap.size && snap.metadata.fromCache && roundsByCid[cid] && Object.keys(roundsByCid[cid]).length) return;
         roundsByCid[cid] = r;
         onCidData();
       }, function (err) { console.error("rounds listener (" + cid + "):", err); });
@@ -5545,11 +5751,29 @@
     }
 
     function fbStart() {
-      fb.onSnapshot(fb.collection(fb.db, "entries"), function (snap) {
+      // includeMetadataChanges: without it the listener does not re-fire when a
+      // queued write is finally acknowledged, so the per-row "waiting to sync"
+      // markers would never clear.
+      fb.onSnapshot(fb.collection(fb.db, "entries"), { includeMetadataChanges: true }, function (snap) {
         if (!snap.metadata.fromCache) { netReady = true; entriesNetReady = true; setOffline(false); }
-        var arr = [];
-        snap.forEach(function (d) { var v = d.data(); arr.push({ id: d.id, who: v.who, date: v.date, mins: v.mins, note: v.note || "", cid: v.cid || "", _hadCid: v.cid != null }); });
+        var arr = [], pend = 0;
+        snap.forEach(function (d) {
+          var v = d.data();
+          // hasPendingWrites is Firestore's own answer to "is this row still only on
+          // this device", and unlike a counter of our own it survives a reload with
+          // the queue it describes.
+          var waiting = !!d.metadata.hasPendingWrites;
+          if (waiting) pend++;
+          arr.push({ id: d.id, who: v.who, date: v.date, mins: v.mins, note: v.note || "", cid: v.cid || "", _hadCid: v.cid != null, _pending: waiting });
+        });
+        cachePending = pend;
+        // No "ignore an empty cache result" guard here, unlike the challenges, members and
+        // rounds listeners below. Entries are the one collection a user can legitimately
+        // empty while offline (delete your last entry), and that has to show at once.
+        // Those other collections are all connection-gated, so an offline empty is always
+        // a cold cache and never a real deletion.
         entriesAll = arr;
+        renderSync();
         applyActiveEntries();
       }, function (err) { console.error("entries listener:", err); });
 
@@ -5571,7 +5795,13 @@
           var v = d.data() || {};
           meta[d.id] = { name: v.name || "", emoji: v.emoji || "", color: v.color || "", owner: v.owner || "", createdTs: v.createdTs || 0 };
         });
+        // An empty result served from cache means the cache has nothing to say yet, not
+        // that every challenge was deleted. Trusting it is what renamed the header to the
+        // raw cid ("founding") mid-session whenever the connection dropped. A server
+        // confirmed empty result is a real deletion, so that one is still allowed through.
+        if (!Object.keys(meta).length && snap.metadata.fromCache && Object.keys(challMeta).length) return;
         challMeta = meta;
+        persistChallCache();
         Object.keys(challMeta).forEach(subscribeCid);
         renderAll();
         renderChallChip();
@@ -5583,18 +5813,21 @@
     return {
       init: function (f) { fb = f; },
       start: function () { if (fb) fbStart(); },
+      // Whether this device can hold writes offline (persistent IndexedDB cache).
+      // False on a storage-blocked browser, where offline writes must stay refused.
+      durable: function () { return !!(fb && fb.durable); },
       addEntry: function (obj) {
         var id = obj.id || uid();
-        return fb.setDoc(fb.doc(fb.db, "entries", id), { who: obj.who, date: obj.date, mins: obj.mins, note: obj.note || "", cid: obj.cid || activeCid() }).then(function () { return id; });
+        return settle(fb.setDoc(fb.doc(fb.db, "entries", id), { who: obj.who, date: obj.date, mins: obj.mins, note: obj.note || "", cid: obj.cid || activeCid() }), id);
       },
       updateEntry: function (id, fields) {
-        return fb.updateDoc(fb.doc(fb.db, "entries", id), fields);
+        return settle(fb.updateDoc(fb.doc(fb.db, "entries", id), fields));
       },
       deleteEntry: function (id) {
-        return fb.deleteDoc(fb.doc(fb.db, "entries", id));
+        return settle(fb.deleteDoc(fb.doc(fb.db, "entries", id)));
       },
       putEntry: function (obj) {
-        return fb.setDoc(fb.doc(fb.db, "entries", obj.id), { who: obj.who, date: obj.date, mins: obj.mins, note: obj.note || "", cid: obj.cid || activeCid() });
+        return settle(fb.setDoc(fb.doc(fb.db, "entries", obj.id), { who: obj.who, date: obj.date, mins: obj.mins, note: obj.note || "", cid: obj.cid || activeCid() }));
       },
       saveRoster: function () {
         return fb.setDoc(fb.doc(fb.db, "meta", "roster"), { members: cache.members, admins: cache.admins });
@@ -5645,7 +5878,11 @@
     function challTabActive() { var el = document.getElementById("tab-challenges"); return el && el.classList.contains("active"); }
     function boActive() { var el = document.getElementById("backofficeView"); return el && el.classList.contains("show"); }
     function refreshEntries() {
+      // Mirrors the Firestore listener: the unsynced count is derived from the rows
+      // themselves, so the banner and the row dots can never disagree.
+      cachePending = entriesAll.filter(function (e) { return e._pending; }).length;
       state.entries = entriesAll.filter(function (e) { return (e.cid || "") === activeCid(); });
+      renderSync();
       renderAll();
     }
     function refreshCid() {
@@ -5743,14 +5980,24 @@
         var saved = localStorage.getItem(SESSION_KEY);
         if (saved && resolveName(saved)) doLogin(resolveName(saved));
       },
+      // The demo backend is in-memory and always accepts, so it is trivially durable.
+      durable: function () { return true; },
+      // Firestore flushes its own queue on reconnect; the demo has to be told. This is
+      // what makes localhost a faithful simulator of the offline path rather than a
+      // surface that silently never has anything pending.
+      flushPending: function () {
+        var any = false;
+        entriesAll.forEach(function (e) { if (e._pending) { delete e._pending; any = true; } });
+        if (any) refreshEntries();
+      },
       addEntry: function (obj) {
         var id = obj.id || uid();
-        entriesAll.push({ id: id, who: obj.who, date: obj.date, mins: obj.mins, note: obj.note || "", cid: obj.cid || activeCid(), _hadCid: true });
+        entriesAll.push({ id: id, who: obj.who, date: obj.date, mins: obj.mins, note: obj.note || "", cid: obj.cid || activeCid(), _hadCid: true, _pending: offlineNow() });
         refreshEntries();
         return Promise.resolve(id);
       },
       updateEntry: function (id, fields) {
-        var en = findEntry(id); if (en) { Object.keys(fields).forEach(function (k) { en[k] = fields[k]; }); }
+        var en = findEntry(id); if (en) { Object.keys(fields).forEach(function (k) { en[k] = fields[k]; }); if (offlineNow()) en._pending = true; }
         refreshEntries();
         return Promise.resolve();
       },
@@ -5761,8 +6008,8 @@
       },
       putEntry: function (obj) {
         var en = findEntry(obj.id);
-        if (en) { en.who = obj.who; en.date = obj.date; en.mins = obj.mins; en.note = obj.note || ""; en.cid = obj.cid || activeCid(); }
-        else { entriesAll.push({ id: obj.id, who: obj.who, date: obj.date, mins: obj.mins, note: obj.note || "", cid: obj.cid || activeCid(), _hadCid: true }); }
+        if (en) { en.who = obj.who; en.date = obj.date; en.mins = obj.mins; en.note = obj.note || ""; en.cid = obj.cid || activeCid(); if (offlineNow()) en._pending = true; }
+        else { entriesAll.push({ id: obj.id, who: obj.who, date: obj.date, mins: obj.mins, note: obj.note || "", cid: obj.cid || activeCid(), _hadCid: true, _pending: offlineNow() }); }
         refreshEntries();
         return Promise.resolve();
       },
@@ -6303,16 +6550,27 @@
     window.__minutesRefresh = function () { try { renderAll(); } catch (e) {} };
     // Same bridge pattern, for the feedback surfaces. The app body is an IIFE, so
     // without this there is no handle for the harness (or the console) to drive a
-    // failure or an offline state that the happy path never produces.
-    window.__minutesFeedback = { toast: showToast, msg: setMsg, offline: setOffline };
+    // failure or an offline state that the happy path never produces. `sync` drives
+    // the queued-write count, which in production only Firestore's own metadata
+    // produces and no local run can otherwise reach.
+    window.__minutesFeedback = {
+      toast: showToast, msg: setMsg, offline: setOffline,
+      sync: function (n) { cachePending = n | 0; renderSync(); },
+      pendingCount: unsyncedCount,
+      nudge: nudgeConnection
+    };
     // Third bridge, same reason. The pull-to-refresh script called activeScroller()
     // and sheetOpen() directly, which are private to this IIFE, so every touch in
     // the installed app threw ReferenceError and the gesture never ran at all.
     window.__minutesLayer = { scroller: activeScroller, sheetOpen: sheetOpen };
     if (window.__FB) Store.init(window.__FB);
     Store.start();
-    // If we never receive real server data, warn once (viewing works, saving is blocked).
-    setTimeout(function () { setOffline(!netReady); }, 5000);
+    // If we never receive real server data, say so. Viewing works, entry writes go to
+    // the offline queue, and the retry ladder starts trying to get us back.
+    setTimeout(function () {
+      renderSync();
+      if (!netReady) scheduleRetry();
+    }, 5000);
     // First-run wedge: no cache, no server, not logged in. Surface a passive, self-healing
     // connecting state (spinner + Retry) instead of a silent login screen the user is stuck
     // on. It clears itself the moment the roster snapshot lands.
@@ -6323,6 +6581,12 @@
     // session (and typed name) resolve immediately - even if the live snapshot is slow or
     // the realtime socket came back stale after suspend. The server snapshot refreshes this.
     hydrateRosterCache();
+    // Same for challenge names/emoji, so the header reads correctly from the first frame
+    // instead of briefly (or, while offline, indefinitely) showing the raw cid. The repaint
+    // matters: Alpine has already painted by now, and with no connection there is no
+    // snapshot coming to trigger a second one, so without this the cache would be loaded
+    // and still not shown.
+    if (hydrateChallCache()) renderChallChip();
     var saved = localStorage.getItem(SESSION_KEY);
     if (saved && resolveName(saved)) doLogin(resolveName(saved));
     // Release the boot gate now that visibility is decided (restored -> app, else login).
@@ -6353,7 +6617,9 @@ ${r?'Expression: "'+r+`"
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js";
-  import { getFirestore, collection, onSnapshot, setDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
+           enableNetwork, disableNetwork,
+           collection, onSnapshot, setDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyAqaZ5b4txwYn1Ts57rwvGE3jRUWS9GDxA",
@@ -6378,8 +6644,30 @@ ${r?'Expression: "'+r+`"
     } catch (ac) {
       console.warn("App Check init skipped:", ac);
     }
-    const db = getFirestore(app);
-    window.__FB = { db, collection, onSnapshot, setDoc, updateDoc, deleteDoc, doc };
+    // Persistent (IndexedDB) cache, not the default memory one. This is what makes
+    // Firestore's own offline write queue DURABLE: a write made with no connection is
+    // held on the device, survives a reload / tab close / the OS evicting the PWA, and
+    // is flushed automatically once the socket is back. With the memory cache that
+    // queue lived in RAM, so it could not be promised to the user and every write had
+    // to be blocked while offline instead.
+    //
+    // Multi-tab manager because the app is a normal web page too: the single-tab
+    // manager lets only ONE tab own persistence and the others fall back silently.
+    let db, durable = true;
+    try {
+      db = initializeFirestore(app, {
+        localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+      });
+    } catch (pe) {
+      // Private browsing, a storage-blocked webview, or an ancient browser. Viewing and
+      // online writes still work; `durable` tells the app it may NOT promise offline
+      // saves, so it keeps gating writes rather than losing them.
+      console.warn("Persistent cache unavailable - offline writes disabled:", pe);
+      db = getFirestore(app);
+      durable = false;
+    }
+    window.__FB = { db, durable, collection, onSnapshot, setDoc, updateDoc, deleteDoc, doc,
+                    enableNetwork, disableNetwork };
   } catch (e) {
     console.error("Firebase init failed - falling back to local storage:", e);
   }

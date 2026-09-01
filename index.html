@@ -48,6 +48,8 @@
        that column's position depends on the sheet's own border, which pop widens.
        Both are declared once here so the modal and the sheet cannot drift apart. */
     --frame-w: 480px; --sheet-bw: 1px; --sheet-pad: 16px;
+    /* How far the layer underneath is pushed back while a sheet is open. */
+    --l1-scale: .9; --l1-lift: 14px;
     /* identity + status colors (shared across themes) */
     --accent: #7c5cff;
     --accent-2: #34d399;
@@ -696,6 +698,9 @@
   .rh-wheel { margin: 9px calc(-1 * var(--sheet-pad)) 0; }
   .odo-wrap { overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory;
     scrollbar-width: none; -ms-overflow-style: none; overscroll-behavior-x: contain;
+    /* The chrome around it takes every touch so the sheet can be dragged away from
+       its own header. The wheel has to claim its own axis back or it stops panning. */
+    touch-action: pan-x;
     -webkit-mask-image: linear-gradient(to right, transparent 0, #000 17%, #000 83%, transparent 100%);
     mask-image: linear-gradient(to right, transparent 0, #000 17%, #000 83%, transparent 100%); }
   .odo-wrap::-webkit-scrollbar { display: none; }
@@ -1001,7 +1006,10 @@
     transform-origin: 50% 0; will-change: transform;
     transition: transform .42s cubic-bezier(.32,.72,0,1), filter .42s ease, border-radius .42s ease;
   }
-  #app.l1 .layer-base { transform: scale(.9) translateY(14px); filter: brightness(.55) saturate(.9); border-radius: 20px; }
+  /* The push-back is tokenised because syncPeek has to reproduce it in JS: the sheet
+     rests below the greeting row as the eye sees it, and the eye sees the row after
+     this transform. transform-origin is the top, so y' = (y + lift) * scale. */
+  #app.l1 .layer-base { transform: scale(var(--l1-scale)) translateY(var(--l1-lift)); filter: brightness(.55) saturate(.9); border-radius: 20px; }
   /* .wrap carries `margin: 0 auto` from the old document-flow layout. As a
      column flex item that auto margin stops it stretching, so it shrank to
      fit-content and the whole base layer lost ~44px of width. */
@@ -1015,8 +1023,14 @@
     opacity: 0; pointer-events: none; transition: opacity .4s ease;
   }
   #app.l1 .scrim { opacity: 1; pointer-events: auto; }
+  /* The peek is not decorative: the sheet stops just below the greeting row so the
+     layer underneath reads as a page you came from rather than a sliced-off header.
+     A percentage cannot do that, because the row's height moves with the safe area,
+     the theme and the type, so --peek is measured at runtime by syncPeek and the 6%
+     here is only what holds until the first painted frame. */
   .sheet {
-    position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; height: 94%;
+    position: absolute; left: 0; right: 0; bottom: 0; z-index: 3;
+    height: calc(100% - var(--peek, 6%));
     background: var(--bg); border: var(--sheet-bw) solid var(--border-2); border-bottom: none;
     border-radius: 26px 26px 0 0; box-shadow: var(--shadow-sheet);
     display: flex; flex-direction: column; overflow: hidden;
@@ -1024,7 +1038,12 @@
     transition: transform .46s cubic-bezier(.32,.72,0,1);
   }
   #app.l1 .sheet { transform: translateY(0); }
-  .grab { flex: 0 0 auto; padding: 9px 0 5px; display: flex; justify-content: center; cursor: pointer;
+  /* A dragged sheet has to track the finger exactly, so the open/close easing is
+     suspended for the length of the gesture and restored on release, which is
+     what lets the release animate from wherever the finger left it. */
+  .sheet.dragging { transition: none; }
+  .grab { flex: 0 0 auto; padding: 9px 0 5px; display: flex; justify-content: center; cursor: grab;
+    touch-action: none;
     background: var(--card); border-radius: 25px 25px 0 0; }
   .grab-bar { display: block; width: 40px; height: 5px; border-radius: var(--r-pill); background: var(--border-2); }
   /* The chrome is a pinned surface, not part of the page. Everything that stays
@@ -1035,6 +1054,7 @@
      drop shadow, so the boundary is drawn: an accent rule on top of it was the tab
      baseline, and with no tabs to seat it is just a stripe. */
   .sheet-chrome { flex: 0 0 auto; padding: 0 var(--sheet-pad) 10px; background: var(--card);
+    touch-action: none;
     box-shadow: var(--head-shadow); position: relative; z-index: 2; }
   /* The floating add button sits over the tail of the scroll, so the last row needs
      to be able to clear it: 16 gap + 56 button + 24 the padding it already had. */
@@ -2367,7 +2387,7 @@
   var ACTIVECID_KEY = "minutes_active_cid";
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var NAV_KEY = "minutes-nav";
-  var VERSION = "13.5";
+  var VERSION = "13.7";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -2461,23 +2481,40 @@
   // Per-round guards: legacy rounds only had `locked` (which closed both joining and logging).
   // We now split that into independent joinOpen/logOpen flags; a legacy round with no explicit
   // flags maps to joinOpen = logOpen = !locked, so old data keeps working unchanged.
+  //
+  // These are TRI-STATE: true, false, or null for "nobody has decided". The null matters,
+  // because logging derives its default from the calendar (a future round is closed until
+  // its month arrives). Collapsing null to that derived default on the way IN meant the
+  // derived value got written back out as though an owner had chosen it: pre-opening JOINING
+  // on next month persisted logOpen:false, and that stale false then outlived the month
+  // becoming current, so the round stayed locked and read as finished forever.
   function roundFlagsFromData(d) {
     d = d || {};
-    var locked = d.locked;
-    return {
-      joinOpen: typeof d.joinOpen === "boolean" ? d.joinOpen : (typeof locked === "boolean" ? !locked : true),
-      logOpen:  typeof d.logOpen  === "boolean" ? d.logOpen  : (typeof locked === "boolean" ? !locked : true)
-    };
+    function tri(v, legacy) {
+      if (typeof v === "boolean") return v;
+      if (typeof legacy === "boolean") return !legacy;
+      return null;   // undecided, so the reader derives it
+    }
+    return { joinOpen: tri(d.joinOpen, d.locked), logOpen: tri(d.logOpen, d.locked) };
   }
-  function roundJoinOpen(key) { var r = activeRounds()[key]; return r ? roundFlagsFromData(r).joinOpen : true; }
+  // Only ever write what was actually decided; an undecided flag stays absent.
+  function roundSavePayload(f, participants) {
+    var out = { participants: participants };
+    if (f.joinOpen !== null) out.joinOpen = f.joinOpen;
+    if (f.logOpen !== null) { out.logOpen = f.logOpen; out.locked = !f.logOpen; }
+    return out;
+  }
+  function roundJoinOpen(key) {
+    var f = roundFlagsFromData(activeRounds()[key]);
+    return f.joinOpen === null ? true : f.joinOpen;
+  }
   // Logging defaults to open, EXCEPT for an upcoming (future) round which stays closed until the
   // month is live or the owner explicitly opens it. Explicit/legacy saved flags always win.
   function isFutureMonthKey(key) { return keyToDate(key).getTime() > firstOfMonth(new Date()).getTime(); }
   function roundLogOpen(key)  {
-    var r = activeRounds()[key];
-    if (r && typeof r.logOpen === "boolean") return r.logOpen;
-    if (r && typeof r.locked  === "boolean") return !r.locked;
-    return !isFutureMonthKey(key);
+    var f = roundFlagsFromData(activeRounds()[key]);
+    if (f.logOpen !== null) return f.logOpen;   // an owner decided; that always wins
+    return !isFutureMonthKey(key);              // otherwise the calendar decides
   }
   // Back-compat alias: "locked" now specifically means this round's logging is closed.
   function roundLocked(key)   { return !roundLogOpen(key); }
@@ -3000,10 +3037,15 @@
     this.rev; this.viewMonth; this.me; this.activeCid;
     var shown = state.viewMonth, list = viewableMonthKeys();
     var curKey = monthKeyOf(shown), todayKey = monthKeyOf(new Date());
-    var rn = roundNumberOf(shown), live = isRoundLive(curKey);
+    var rn = roundNumberOf(shown);
     // Three states, one pill: live, finished, and not started yet. A round that
     // never opened has no number, so it says so rather than dropping the pill.
-    var cls = rn < 1 ? "" : live ? "live" : curKey > todayKey ? "" : "done";
+    // The colour tracks the CALENDAR, not the logging lock. It used to read
+    // isRoundLive(), which folds the lock in, so a current month whose logging was
+    // closed was painted the same gold as a finished round and the open round looked
+    // over. An owner pausing logging is not a round ending: that state has its own
+    // padlock in the Leaderboard header and its own toggle in the roster editor.
+    var cls = rn < 1 ? "" : curKey === todayKey ? "live" : curKey > todayKey ? "" : "done";
     function cell(k, ghost) {
       return { key: k, name: keyToDate(k).toLocaleString(undefined, { month: "long" }),
                on: !ghost && k === curKey, ghost: ghost };
@@ -3234,8 +3276,12 @@
     setRoundGuard: function (ev, kind, want) {
       var key = monthKeyOf(state.viewMonth);
       var parts = participantsFor(state.viewMonth);
-      var jOpen = roundJoinOpen(key), lOpen = roundLogOpen(key);
-      var cur = kind === "join" ? jOpen : lOpen;
+      // The OTHER flag is carried through raw. Reading it back through
+      // roundJoinOpen/roundLogOpen would resolve an undecided flag to its derived
+      // default and then persist that, which is how pre-opening joining on next
+      // month used to bake in logOpen:false for good.
+      var raw = roundFlagsFromData(activeRounds()[key]);
+      var cur = kind === "join" ? roundJoinOpen(key) : roundLogOpen(key);
       if (want === cur) return;
       if (!requireConnection()) return;
       var tog = ev && ev.currentTarget && ev.currentTarget.closest(".gtog");
@@ -3257,9 +3303,9 @@
       paint(want);                 // flip the persistent element -> CSS slides the thumb
       // Let the slide play before the snapshot re-render lands.
       setTimeout(function () {
-        Store.saveRound(activeCid(), key, kind === "join"
-          ? { joinOpen: want, logOpen: lOpen, participants: parts }
-          : { joinOpen: jOpen, logOpen: want, participants: parts })
+        Store.saveRound(activeCid(), key, roundSavePayload(kind === "join"
+          ? { joinOpen: want, logOpen: raw.logOpen }
+          : { joinOpen: raw.joinOpen, logOpen: want }, parts))
           .then(function () { done(); showToast("Round updated", "success"); })
           .catch(function (e) { console.error(e); done(); paint(cur); showToast("Couldn't update round", "danger"); });
       }, 260);
@@ -3426,10 +3472,19 @@
       if (last === "you") return "you";
       return "stats";
     }
-    // No approved membership known. If data hasn't loaded yet, resume optimistically;
-    // once loaded, an unapproved user belongs on the hub.
+    // No approved membership known. Before the data lands, resume the layer the user
+    // actually left rather than the optimistic default. The boot pass runs against an
+    // empty membersByCid (the per-challenge subcollections are not cached, only the
+    // roster is), so guessing "stats" here is what re-opened the active challenge on
+    // every refresh, even right after a deliberate close.
     var loaded = rosterLoaded && Object.keys(membersByCid).length > 0;
-    return loaded ? "challenges" : "stats";
+    if (!loaded) {
+      var pre = null;
+      try { pre = localStorage.getItem(NAV_KEY); } catch (e) {}
+      if (pre === "challenges" || pre === "you") return pre;
+      return "stats";
+    }
+    return "challenges";
   }
 
   function doLogin(name) {
@@ -3450,11 +3505,17 @@
     refreshAdminAccess();
     state.viewMonth = keyToDate(defaultViewKey());
     var land = landingTab();   // read first: switchTab writes NAV_KEY, which this reads
+    restoringNav = true;       // and the restore itself must not overwrite that intent
     switchTab("challenges");
     switchTab(land);
+    restoringNav = false;
     renderChallChip();
     renderAll();
     scrollActiveTop();
+    // The greeting row only has a height once Alpine has actually revealed #app,
+    // which happens after this tick, so the measurement waits for a painted frame.
+    // The second frame catches the case where web fonts land between the two.
+    requestAnimationFrame(function () { syncPeek(); requestAnimationFrame(syncPeek); });
   }
 
   function doLogout() {
@@ -3504,7 +3565,16 @@
   // Where the user actually was, so a refresh resumes there instead of always
   // forcing the challenge sheet open. switchTab is the only way a layer changes,
   // so recording it there covers the chevron, the grabber, the scrim and browser back.
-  function rememberNav(v) { try { localStorage.setItem(NAV_KEY, v); } catch (e) {} }
+  /* NAV_KEY records where the user CHOSE to be. Restoring a session is not a choice,
+     so it must not write: doLogin runs twice in production (an optimistic pass at
+     boot, then again once the roster is authoritative), and the first pass persisting
+     its guess is what silently erased a deliberate "challenges" and dropped the user
+     back into the challenge on every refresh. */
+  var restoringNav = false;
+  function rememberNav(v) {
+    if (restoringNav) return;
+    try { localStorage.setItem(NAV_KEY, v); } catch (e) {}
+  }
   // The page no longer scrolls: each layer owns a scroller, so anything that used to
   // call window.scrollTo has to target the one that is actually on screen.
   function activeScroller() {
@@ -3562,6 +3632,33 @@
     var bw = document.getElementById("baseWrap"); if (bw) bw.scrollTop = 0;
   }
 
+  /* The sheet stops just below the greeting row, so the peek shows a whole header
+     instead of slicing one in half. The row's height moves with the safe area, the
+     theme and the name in it, so it is measured rather than guessed. It is measured
+     through the offset chain rather than a client rect on purpose: an open sheet
+     scales the layer underneath (scale(.9) translateY(14px)) and a scrolled hub
+     moves it, and a rect folds both into the answer, so the sheet would come to rest
+     somewhere slightly different depending on what it was doing when it measured. */
+  var PEEK_GAP = 9;
+  function syncPeek() {
+    var app = document.getElementById("app");
+    var wrap = document.getElementById("baseWrap");
+    var head = wrap && wrap.querySelector("header");
+    if (!app || !head || !head.offsetHeight) return;   // not painted yet; a later frame lands it
+    var top = 0, n = head;
+    while (n && n !== app) { top += n.offsetTop; n = n.offsetParent; }
+    var cs = getComputedStyle(document.documentElement);
+    var scale = parseFloat(cs.getPropertyValue("--l1-scale")) || 1;
+    var lift = parseFloat(cs.getPropertyValue("--l1-lift")) || 0;
+    var seen = (top + head.offsetHeight + lift) * scale;   // where the eye finds the row
+    app.style.setProperty("--peek", Math.round(seen + PEEK_GAP) + "px");
+  }
+  window.__minutesPeek = syncPeek;
+  window.addEventListener("resize", syncPeek);
+  window.addEventListener("orientationchange", function () {
+    requestAnimationFrame(function () { syncPeek(); requestAnimationFrame(syncPeek); });
+  });
+
   (function () {
     var close = function () { switchTab("challenges"); };
     ["statsBack", "youBack", "scrim", "grab"].forEach(function (id) {
@@ -3569,6 +3666,83 @@
     });
     var yb = document.getElementById("youBtn");
     if (yb) yb.onclick = function () { switchTab("you"); };
+
+    // ---- drag the sheet away ----
+    // The grab bar has looked draggable since it was drawn and has only ever
+    // answered to a tap, so the affordance was lying. The gesture is claimed on the
+    // sheet's own chrome (the bar and the title row) rather than anywhere on the
+    // sheet, because the month wheel is a horizontal scroller and the body is the
+    // pull-to-refresh surface; both keep the gesture they already own.
+    var sheet = document.getElementById("sheet");
+    if (!sheet) return;
+    var DISMISS = 108;   // travel that reads as "put it away"
+    var FLICK = 0.5;     // px/ms, so a short fast throw closes it too
+    var SLOP = 6;        // the jitter of a tap is not a drag
+    var RUBBER = 0.3;    // upward travel resists: the sheet is already home
+
+    var pid = null, y0 = 0, x0 = 0, dy = 0, t0 = 0, claimed = false, swallow = false;
+
+    function fromChrome(t) {
+      if (!t || !t.closest) return false;
+      return !!(t.closest(".grab") || t.closest(".sheet-chrome"));
+    }
+    function draw(y) { sheet.style.transform = y ? ("translateY(" + y + "px)") : ""; }
+    function release() {
+      claimed = false; pid = null;
+      sheet.classList.remove("dragging");
+    }
+
+    sheet.addEventListener("pointerdown", function (e) {
+      swallow = false;
+      if (pid !== null || e.button > 0 || !sheetOpen() || !fromChrome(e.target)) return;
+      pid = e.pointerId; y0 = e.clientY; x0 = e.clientX; t0 = e.timeStamp; dy = 0; claimed = false;
+    });
+
+    sheet.addEventListener("pointermove", function (e) {
+      if (e.pointerId !== pid) return;
+      var ay = e.clientY - y0, ax = e.clientX - x0;
+      if (!claimed) {
+        if (Math.abs(ay) < SLOP && Math.abs(ax) < SLOP) return;
+        // A sideways start belongs to the month wheel, which sits in this same
+        // chrome and keeps horizontal panning through touch-action. Letting the
+        // pointer go here is what stops a wheel spin from also dragging the sheet.
+        if (Math.abs(ax) > Math.abs(ay)) { pid = null; return; }
+        claimed = true;
+        sheet.classList.add("dragging");
+        if (sheet.setPointerCapture) { try { sheet.setPointerCapture(pid); } catch (err) {} }
+      }
+      dy = ay > 0 ? ay : ay * RUBBER;
+      draw(dy);
+    });
+
+    sheet.addEventListener("pointerup", function (e) {
+      if (e.pointerId !== pid) return;
+      var was = claimed, travel = dy;
+      var vy = travel / Math.max(1, e.timeStamp - t0);
+      release();
+      if (!was) return;
+      // a claimed drag must not also fire the grab bar's click
+      swallow = true;
+      // clearing the inline transform in the same task as the close lets the
+      // sheet animate from where the finger left it to off-screen, rather than
+      // snapping home first
+      draw(0);
+      if (travel > DISMISS || (travel > 24 && vy > FLICK)) close();
+    });
+
+    sheet.addEventListener("pointercancel", function (e) {
+      if (e.pointerId !== pid) return;
+      var was = claimed;
+      release();
+      if (was) draw(0);
+    });
+
+    sheet.addEventListener("click", function (e) {
+      if (!swallow) return;
+      swallow = false;
+      e.stopPropagation();
+      e.preventDefault();
+    }, true);
   })();
 
 
@@ -5103,9 +5277,9 @@
     var rounds = roundsByCid[cid];
     var prev = rounds.hasOwnProperty(key) ? rounds[key] : null;
     var f = roundFlagsFromData(prev);
-    rounds[key] = { joinOpen: f.joinOpen, logOpen: f.logOpen, locked: !f.logOpen, participants: newList.slice() };
+    rounds[key] = roundSavePayload(f, newList.slice());
     renderAll();
-    return Store.saveRound(cid, key, { joinOpen: f.joinOpen, logOpen: f.logOpen, participants: newList }).catch(function (err) {
+    return Store.saveRound(cid, key, roundSavePayload(f, newList)).catch(function (err) {
       console.error("Round save failed:", err);
       if (prev === null) delete rounds[key]; else rounds[key] = prev;
       renderAll();
@@ -5356,7 +5530,7 @@
       }, function (err) { console.error("members listener (" + cid + "):", err); });
       fb.onSnapshot(fb.collection(fb.db, "challenges", cid, "rounds"), function (snap) {
         var r = {};
-        snap.forEach(function (d) { var v = d.data() || {}; var f = roundFlagsFromData(v); r[d.id] = { joinOpen: f.joinOpen, logOpen: f.logOpen, locked: !f.logOpen, participants: v.participants || [] }; });
+        snap.forEach(function (d) { var v = d.data() || {}; r[d.id] = roundSavePayload(roundFlagsFromData(v), v.participants || []); });
         roundsByCid[cid] = r;
         onCidData();
       }, function (err) { console.error("rounds listener (" + cid + "):", err); });
@@ -5428,7 +5602,7 @@
       // Round metadata (joining/logging guards + participants) for the active challenge.
       saveRound: function (cid, key, data) {
         var f = roundFlagsFromData(data);
-        return fb.setDoc(fb.doc(fb.db, "challenges", cid, "rounds", key), { joinOpen: f.joinOpen, logOpen: f.logOpen, locked: !f.logOpen, participants: data.participants || [] });
+        return fb.setDoc(fb.doc(fb.db, "challenges", cid, "rounds", key), roundSavePayload(f, data.participants || []));
       },
       // Membership writes (approval flow).
       requestJoin: function (cid) {
@@ -5595,7 +5769,7 @@
       saveRoster: function () { rosterLoaded = true; renderAll(); if (boActive()) renderBackoffice(); return Promise.resolve(); },
       saveRound: function (cid, key, data) {
         roundsByCid[cid] = roundsByCid[cid] || {};
-        roundsByCid[cid][key] = (function () { var f = roundFlagsFromData(data); return { joinOpen: f.joinOpen, logOpen: f.logOpen, locked: !f.logOpen, participants: data.participants || [] }; })();
+        roundsByCid[cid][key] = roundSavePayload(roundFlagsFromData(data), data.participants || []);
         refreshCid();
         return Promise.resolve();
       },
@@ -6131,6 +6305,10 @@
     // without this there is no handle for the harness (or the console) to drive a
     // failure or an offline state that the happy path never produces.
     window.__minutesFeedback = { toast: showToast, msg: setMsg, offline: setOffline };
+    // Third bridge, same reason. The pull-to-refresh script called activeScroller()
+    // and sheetOpen() directly, which are private to this IIFE, so every touch in
+    // the installed app threw ReferenceError and the gesture never ran at all.
+    window.__minutesLayer = { scroller: activeScroller, sheetOpen: sheetOpen };
     if (window.__FB) Store.init(window.__FB);
     Store.start();
     // If we never receive real server data, warn once (viewing works, saving is blocked).
@@ -6220,16 +6398,45 @@ ${r?'Expression: "'+r+`"
     if (!standalone) { var p = document.getElementById("ptr"); if (p) p.style.display = "none"; return; }
     var ptr = document.getElementById("ptr");
     if (!ptr) return;
-    var content = Array.prototype.slice.call(document.querySelectorAll(".wrap"));
-    var startY = 0, pulling = false, dist = 0;
+    // The pull has to move whatever layer the gesture is actually happening on.
+    // .wrap is the base layer, which is BEHIND an open sheet and invisible while
+    // it is open, so pulling inside a challenge moved something nobody could see
+    // and the gesture looked dead.
+    var wraps = Array.prototype.slice.call(document.querySelectorAll(".wrap"));
+    var sheetEl = document.getElementById("sheet");
+    var content = wraps;
+    // Resolved per gesture, never cached: this script parses before the app has
+    // booted, so the bridge does not exist yet at this point.
+    function sheetIsOpen() {
+      var l = window.__minutesLayer;
+      return !!(l && l.sheetOpen && l.sheetOpen());
+    }
+    function pickLayer() {
+      content = (sheetEl && sheetIsOpen()) ? [sheetEl] : wraps;
+    }
+    var startY = 0, pulling = false, dist = 0, clearTimer = 0;
     var THRESH = 95, MAX = 150, REST = 22, RESIST = 0.5;
 
-    function atTop() { var s = activeScroller(); return s ? s.scrollTop <= 0 : true; }
+    function atTop() {
+      var l = window.__minutesLayer;
+      var s = (l && l.scroller) ? l.scroller() : null;
+      return s ? s.scrollTop <= 0 : true;
+    }
     function setContentY(y, anim) {
+      clearTimeout(clearTimer);
       content.forEach(function (el) {
         el.style.transition = anim ? "transform .25s ease" : "none";
         el.style.transform = y ? ("translateY(" + y + "px)") : "";
       });
+      if (!y) {
+        // The sheet owns a transform and an easing of its own for opening and
+        // closing, so the pull has to hand both back once it has settled instead
+        // of leaving .25s ease pinned inline over the .46s open curve.
+        var els = content.slice();
+        clearTimer = setTimeout(function () {
+          els.forEach(function (el) { el.style.transition = ""; el.style.transform = ""; });
+        }, anim ? 280 : 0);
+      }
     }
     function reset() {
       ptr.style.transition = "transform .2s, opacity .2s";
@@ -6241,6 +6448,12 @@ ${r?'Expression: "'+r+`"
 
     window.addEventListener("touchstart", function (e) {
       if (e.touches.length !== 1 || !atTop()) { pulling = false; return; }
+      // The sheet's own chrome is a drag handle, so a pull that starts there is a
+      // dismiss, not a refresh. Without this both gestures run at once and the
+      // sheet gets translated twice.
+      var t = e.target;
+      if (t && t.closest && t.closest(".grab, .sheet-chrome")) { pulling = false; return; }
+      pickLayer();
       startY = e.touches[0].clientY; pulling = true; dist = 0;
     }, { passive: true });
 

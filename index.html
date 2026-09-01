@@ -680,11 +680,9 @@
   .rh-back:active { background: var(--accent); border-color: var(--accent); color: #fff; }
   .rh-emoji { font-size: 24px; line-height: 1; flex: 0 0 auto; }
   .rh-name { font-size: 24px; font-weight: 700; letter-spacing: -.5px; color: var(--text); line-height: 1.15; min-width: 0; overflow-wrap: anywhere; }
-  .rh-nest { display: flex; align-items: center; gap: 10px; margin: 9px 0 0 7px; }
-  .rh-lock { flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; width: 25px; height: 25px; border-radius: 7px; }
-  .rh-lock svg { width: 15px; height: 15px; }
-  .rh-lock.open { color: var(--live-fg); background: var(--tint-live); }
-  .rh-lock.closed { color: var(--danger); background: var(--tint-danger); }
+  /* .rh-nest was the second row of the You header, holding the account subline and,
+     before that, an .rh-lock badge. Identity moved into the You page's own profile
+     block and the lock badge is long gone, so both rules went with them. */
   /* ---- Month wheel ----
      A horizontal rail of months, centred on the round being viewed. Scroll
      position is the input, state.viewMonth is the output.
@@ -1145,7 +1143,6 @@
   #youHead { display: none; }
   #sheet[data-mode="you"] #chalHead { display: none; }
   #sheet[data-mode="you"] #youHead { display: block; }
-  #youHead .rh-nest { gap: 0; margin-top: 6px; }
 
   /* ======================================================================
      CARD SYSTEM -- layout (grouped | separate) x depth (soft | pop)
@@ -1594,7 +1591,19 @@
   /* ======================================================================
      YOU / settings page
      ====================================================================== */
-  .you-sub { display: block; font-size: 12.5px; color: var(--muted); font-weight: 600; margin-top: 2px; }
+  /* The account identity block. It is the page's own first row rather than part of
+     the sheet header, because the header is a fixed cost paid on every scroll and
+     this is read once. 64px is sized for a photo, not for an initial: the circle is
+     already the right shape and place for one, so adding it later is a swap of the
+     span's contents, not a layout. */
+  .prof { display: flex; align-items: center; gap: 14px; }
+  .prof-av { width: 64px; height: 64px; border-radius: 50%; flex: 0 0 auto; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 27px; font-weight: 800; letter-spacing: -.5px; color: #fff; }
+  .prof-meta { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .prof-name { font-size: 22px; font-weight: 700; letter-spacing: -.5px; color: var(--text);
+    line-height: 1.15; overflow-wrap: anywhere; }
+  .prof-sub { font-size: 13px; font-weight: 600; color: var(--muted); }
   /* Headings label the card directly below them, so they have to share its left
      edge. The 4px horizontal padding indented every heading in the app past its
      own section, breaking the left edge down the whole page. --muted-2 is the
@@ -1807,11 +1816,7 @@
       <div class="round-head" id="youHead">
         <div class="rh-title">
           <button class="rh-back" id="youBack" aria-label="Back to challenges" title="Back to challenges"><svg class="ic" aria-hidden="true"><use href="#i-caret-left"/></svg></button>
-          <span class="dot lg" id="youAvatar" x-text="$store.s.you.initial" :style="'background:' + $store.s.you.color"></span>
-          <span class="rh-name" id="youName" x-text="$store.s.you.name">You</span>
-        </div>
-        <div class="rh-nest">
-          <span class="you-sub" id="youSub" x-text="$store.s.you.sub">Your account</span>
+          <span class="rh-name">Account</span>
         </div>
       </div>
     </div>
@@ -2044,6 +2049,18 @@
       </div>
       </section>
       <section class="tab-panel" id="tab-you" :class="{ active: $store.s.sheet === 'you' }">
+      <!-- Identity used to live in the sheet header, which repeated the avatar and
+           name already showing through the peek above it. The header now says only
+           where you are; who you are is the first thing IN the page, at a size that
+           can hold a real photo once there is one to hold. -->
+      <div class="prof" id="youProfile">
+        <span class="prof-av" id="youAvatar" x-text="$store.s.you.initial"
+              :style="'background:' + $store.s.you.color">?</span>
+        <span class="prof-meta">
+          <span class="prof-name" id="youName" x-text="$store.s.you.name">You</span>
+          <span class="prof-sub" id="youSub" x-text="$store.s.you.sub">Your account</span>
+        </span>
+      </div>
       <div class="slabel">Appearance</div>
       <div class="sgroup">
         <div class="srow">
@@ -2409,7 +2426,7 @@
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
   var NAV_KEY = "minutes-nav";
-  var VERSION = "14.0";
+  var VERSION = "14.2";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -5071,8 +5088,24 @@
   function unsyncedCount() { return Math.max(pendingOps, cachePending); }
   function offlineNow() { return !netReady || navigator.onLine === false; }
 
+  // Every reload starts with netReady false, and Firestore answers from its local
+  // cache before it answers from the server, so the first snapshot of a perfectly
+  // healthy launch arrives with netReady still false. The banner was reading that as
+  // offline, which is why a refresh always flashed "Offline" for the second or two
+  // before the server replied. Being offline is a conclusion, not a starting position:
+  // it is only true once we have actually tried and failed, so the banner waits for
+  // that verdict. netSettled is the verdict: the first server snapshot delivers it, and
+  // the startup timer delivers it anyway so a genuinely unreachable server still gets
+  // reported. A device that says it has no network is not a guess, so it skips the wait.
+  // Only the BANNER waits. offlineNow() stays literal, because the write path uses it to
+  // decide what a save may promise, and that must never be optimistic.
+  var netSettled = false;
+  function bannerOffline() {
+    return navigator.onLine === false || (offlineNow() && netSettled);
+  }
+
   function renderSync() {
-    var off = offlineNow(), n = unsyncedCount();
+    var off = bannerOffline(), n = unsyncedCount();
     var text = "", tone = "warn";
     if (off && !Store.durable()) {
       // No durable queue on this device (private browsing, storage-blocked webview).
@@ -5097,6 +5130,10 @@
   // reading from one fact instead of two that can disagree.
   function setOffline(off) {
     netReady = !off;
+    // Either way this is a definite answer about the connection, so the banner no
+    // longer has to hold its tongue: a server snapshot proves we are on, and an
+    // explicit setOffline(true) is a caller stating we are off.
+    netSettled = true;
     if (!off) { stopRetry(); if (Store.flushPending) Store.flushPending(); }
     renderSync();
   }
@@ -6557,7 +6594,12 @@
       toast: showToast, msg: setMsg, offline: setOffline,
       sync: function (n) { cachePending = n | 0; renderSync(); },
       pendingCount: unsyncedCount,
-      nudge: nudgeConnection
+      nudge: nudgeConnection,
+      // The moment a reload actually passes through: the local cache has answered, the
+      // server has not, and no verdict on the connection exists yet. Nothing in a demo
+      // run reaches it, because DemoStore declares itself online on the first tick.
+      unsettled: function () { netReady = false; netSettled = false; renderSync(); },
+      settled: function () { return netSettled; }
     };
     // Third bridge, same reason. The pull-to-refresh script called activeScroller()
     // and sheetOpen() directly, which are private to this IIFE, so every touch in
@@ -6565,9 +6607,12 @@
     window.__minutesLayer = { scroller: activeScroller, sheetOpen: sheetOpen };
     if (window.__FB) Store.init(window.__FB);
     Store.start();
-    // If we never receive real server data, say so. Viewing works, entry writes go to
-    // the offline queue, and the retry ladder starts trying to get us back.
+    // If we never receive real server data, say so. This is also the deadline the
+    // banner has been waiting on: up to here a silent connection is still "asking",
+    // past here it is "failed", and only now may it be announced. Viewing works,
+    // entry writes go to the offline queue, and the retry ladder starts trying.
     setTimeout(function () {
+      netSettled = true;
       renderSync();
       if (!netReady) scheduleRetry();
     }, 5000);

@@ -54,8 +54,25 @@
        env() is always 0 in a test browser: overriding --sat is the only way to
        render an island phone anywhere but an island phone. */
     --sat: env(safe-area-inset-top);
-    /* How far the layer underneath is pushed back while a sheet is open. */
-    --l1-scale: .9; --l1-lift: 14px;
+    /* Where the layer underneath comes to rest while a sheet is open.
+       It lands on safe-area-inset-top, which is the only device-correct place to
+       put it: the web exposes no cutout geometry, so any "leave N px below the
+       island" rule has to hardcode a per-phone constant, and that constant is not
+       even stable in sign. A notch is cut FROM the top edge with nothing above it,
+       while the Dynamic Island floats ~11px below the edge. Apple already folded
+       the right clearance into the inset (pill ends ~48, inset runs to ~59), so
+       sitting on the inset yields ~11px below an island and ~17px below a notch,
+       correct on both without detecting either.
+       --l1-lift is the one knob on top of that: screen px of extra air below the
+       cutout, 1px here to make the island read as a round 12. It is a post-scale
+       length because the drop is applied BEFORE the scale (see the l1 rule), so
+       what you type is what you get, at any inset.
+       The card STARTS full-bleed at y=0 and travels this whole distance, which is
+       what makes the push-back read as a push rather than a shrink. On a phone
+       with no inset there is nothing to travel, and it degrades to a plain scale.
+       syncPeek reproduces this, so the peeking sheet follows automatically. */
+    --l1-scale: .9; --l1-lift: 1px;
+    --l1-drop: calc(var(--sat) + var(--l1-lift));
     /* identity + status colors (shared across themes) */
     --accent: #7c5cff;
     --accent-2: #34d399;
@@ -1023,31 +1040,49 @@
   @media (min-width: 640px) {
     #app { left: 50%; right: auto; transform: translateX(-50%); width: var(--frame-w); max-width: 100%; margin: 0; min-height: 0; }
   }
-  /* The layer starts BELOW the status bar inset, and the strip above it is left to
-     the page background. The inset used to be paid by .wrap's padding, which put it
-     INSIDE the layer, so the pushed-back card began at the very top of the screen
-     and carried ~71px of empty space above the greeting. In a browser tab that is
-     invisible (the inset is 0), but installed as a PWA on an island phone the card
-     read as absurdly tall with a dead band across its head. Paying the inset out
-     here instead costs the same pixels and puts the card's top edge where the eye
-     expects it: just above the greeting, with the island on plain background. */
+  /* The layer is full-bleed to the top edge of the screen and pays the status-bar
+     inset as its own PADDING, so at rest the content still starts below the island
+     while the layer's box reaches y=0. At rest that is invisible: the layer and the
+     body paint the same var(--bg) in every theme, so there is nothing to see in the
+     strip. It matters only when a sheet opens, because it is the distance the card
+     has to fall (see #app.l1 .layer-base).
+     The inset must not end up as a dead band INSIDE the pushed-back card, which is
+     what it was before the layer was moved off it: ~71px of empty space above the
+     greeting, invisible in a browser tab and absurd installed on an island phone.
+     #app.l1 .base-wrap cancels it instead, so the padding is spent while the card
+     is flat and reclaimed the moment it is pushed back. */
   .layer-base {
-    position: absolute; inset: 0; top: var(--sat); z-index: 1;
+    position: absolute; inset: 0; z-index: 1; padding-top: var(--sat);
     display: flex; flex-direction: column; background: var(--bg);
     transform-origin: 50% 0; will-change: transform;
     transition: transform .42s cubic-bezier(.32,.72,0,1), filter .42s ease, border-radius .42s ease;
   }
   /* The push-back is tokenised because syncPeek has to reproduce it in JS: the sheet
      rests below the greeting row as the eye sees it, and the eye sees the row after
-     this transform. transform-origin is the top, so y' = (y + lift) * scale. */
-  #app.l1 .layer-base { transform: scale(var(--l1-scale)) translateY(var(--l1-lift)); filter: brightness(.55) saturate(.9); border-radius: 20px; }
+     this transform.
+     The drop is written BEFORE the scale on purpose. Transform functions apply
+     right to left, so `translateY(D) scale(s)` puts the card's top edge at exactly
+     D screen px, while the old `scale(s) translateY(L)` moved it by L x s and made
+     every number in here a pre-scale quantity you had to divide back out. With the
+     origin at the top edge: y' = D + y x s. */
+  #app.l1 .layer-base { transform: translateY(var(--l1-drop)) scale(var(--l1-scale)); filter: brightness(.55) saturate(.9); border-radius: 20px; }
+  /* The other half of the push-back: the card's top edge falls by the whole inset,
+     and the content inside rides back up by the same amount, so what the eye sees
+     is the card retracting from under the cutout while its contents hold still.
+     Same duration and same easing as the layer, which is what makes the two cancel
+     exactly at every frame rather than only at the ends.
+     It is a transform and not a padding or margin change on purpose: .base-wrap is
+     the scroller, and animating its box would resize the scroll range mid-gesture
+     and yank the scroll position of anyone sitting at the bottom of a long list. */
+  #app.l1 .base-wrap { transform: translateY(calc(-1 * var(--sat))); }
   /* .wrap carries `margin: 0 auto` from the old document-flow layout. As a
      column flex item that auto margin stops it stretching, so it shrank to
      fit-content and the whole base layer lost ~44px of width. */
   /* The layer itself now sits below the inset, so the wrap must NOT charge for it a
      second time. Login still uses the plain .wrap, and it is full-screen, so the
      inset stays in the shared rule and is cancelled here. */
-  .base-wrap { flex: 1; min-height: 0; width: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-top: 20px; padding-bottom: 18px; }
+  .base-wrap { flex: 1; min-height: 0; width: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-top: 20px; padding-bottom: 18px;
+    will-change: transform; transition: transform .42s cubic-bezier(.32,.72,0,1); }
   /* The pop shadow sits in the right margin, so a classic scrollbar gutter would
      slice through it. Scrolling stays, the bar is just not painted. */
   .base-wrap, .sheet-body { scrollbar-width: none; }
@@ -2443,7 +2478,7 @@
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
   var NAV_KEY = "minutes-nav";
-  var VERSION = "14.3";
+  var VERSION = "14.4";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -3780,14 +3815,15 @@
      instead of slicing one in half. The row's height moves with the safe area, the
      theme and the name in it, so it is measured rather than guessed. It is measured
      through the offset chain rather than a client rect on purpose: an open sheet
-     scales the layer underneath (scale(.9) translateY(14px)) and a scrolled hub
-     moves it, and a rect folds both into the answer, so the sheet would come to rest
-     somewhere slightly different depending on what it was doing when it measured.
+     transforms the layer underneath and a scrolled hub moves it, and a rect folds
+     both into the answer, so the sheet would come to rest somewhere slightly
+     different depending on what it was doing when it measured.
 
-     The chain stops at .layer-base, not at #app, because the layer's own offset is
-     the status-bar inset and that sits OUTSIDE the transform: the scale applies to
-     the layer's contents, not to where the layer begins. Folding the inset into the
-     scaled term shortened the peek by inset x (1 - scale), which on an island phone
+     The inset is the layer's own top padding, so the offset chain already contains
+     it, and it has to come back OUT of the scaled term: in l1 the wrap is translated
+     up by exactly the inset (that is what holds the content still while the card
+     edge glides down), and the drop puts it back unscaled. Leaving it inside the
+     scaled term shortens the peek by inset x (1 - scale), which on an island phone
      is ~6px of the greeting row quietly disappearing under the sheet. */
   var PEEK_GAP = 9;
   function syncPeek() {
@@ -3798,11 +3834,11 @@
     var layer = app.querySelector(".layer-base") || app;
     var top = 0, n = head;
     while (n && n !== layer && n !== app) { top += n.offsetTop; n = n.offsetParent; }
-    var inset = layer === app ? 0 : layer.offsetTop;
+    var sat = layer === app ? 0 : (parseFloat(getComputedStyle(layer).paddingTop) || 0);
     var cs = getComputedStyle(document.documentElement);
     var scale = parseFloat(cs.getPropertyValue("--l1-scale")) || 1;
     var lift = parseFloat(cs.getPropertyValue("--l1-lift")) || 0;
-    var seen = inset + (top + head.offsetHeight + lift) * scale;   // where the eye finds the row
+    var seen = (sat + lift) + (top - sat + head.offsetHeight) * scale;   // where the eye finds the row
     app.style.setProperty("--peek", Math.round(seen + PEEK_GAP) + "px");
   }
   window.__minutesPeek = syncPeek;

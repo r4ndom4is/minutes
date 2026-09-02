@@ -309,6 +309,40 @@
   .login-status { align-items: center; justify-content: center; gap: 8px; color: var(--muted); font-size: 13px; margin: 4px 0 8px; }
   .login-spin { width: 15px; height: 15px; border-radius: 50%; border: 2px solid var(--border-2); border-top-color: var(--accent); box-sizing: border-box; animation: ptrspin .7s linear infinite; flex: 0 0 auto; }
   .btn.btn-ghost { background: transparent; color: var(--accent); border: 1px solid var(--border); }
+  /* OAuth sign-in button. Full-width block shape (12px), matching the "large action"
+     half of the two-shapes button system; the pill is reserved for small inline actions. */
+  .btn.btn-oauth { display: flex; align-items: center; justify-content: center; gap: 10px; background: var(--card-2); color: var(--text); border: 1px solid var(--border-2); font-weight: 600; }
+  .btn.btn-oauth svg { width: 18px; height: 18px; flex: 0 0 auto; }
+  .login-or { display: flex; align-items: center; gap: 10px; margin: 18px 0 10px; color: var(--muted); font-size: 12px; }
+  .login-or::before, .login-or::after { content: ""; height: 1px; background: var(--border); flex: 1; }
+  .login-who { color: var(--muted); font-size: 13px; margin: 10px 0 2px; }
+  .login-hint { color: var(--muted); font-size: 12px; margin: 8px 0 0; line-height: 1.45; }
+
+  /* ---- Handle claim (Phase 3) ---- */
+  .claim { margin-top: 12px; text-align: left; }
+  .claim-q { font-size: 13px; font-weight: 600; margin: 0 0 8px; }
+  .claim-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .claim-chip { border: 1px solid var(--line); background: transparent; color: var(--text);
+    border-radius: 999px; padding: 7px 14px; font-size: 13px; font-weight: 600;
+    cursor: pointer; font-family: inherit; }
+  .claim-chip[aria-pressed="true"] { border-color: var(--accent); color: var(--accent);
+    box-shadow: inset 0 0 0 1px var(--accent); }
+  .claim-note { color: var(--muted); font-size: 12px; margin: 8px 0 0; line-height: 1.45; }
+  .claim-pending { border: 1px solid var(--line); border-radius: 12px; padding: 14px;
+    font-size: 13px; line-height: 1.45; margin-top: 12px; text-align: left; }
+  .cw-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .cw-sub { color: var(--muted); font-size: 12.5px; line-height: 1.5; margin: 0 0 12px; }
+  .cw-stage { position: relative; border-radius: 10px; overflow: hidden;
+    background: var(--bg); border: 1px solid var(--line); }
+  .cw-stage canvas { display: block; width: 100%; height: 132px; touch-action: manipulation; }
+  .cw-overlay { position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 2px; cursor: pointer;
+    background: color-mix(in srgb, var(--bg) 72%, transparent); text-align: center; }
+  .cw-overlay strong { font-size: 13px; font-weight: 700; }
+  .cw-overlay span { font-size: 11.5px; color: var(--muted); }
+  .cw-foot { display: flex; align-items: baseline; justify-content: space-between;
+    gap: 8px; margin-top: 8px; font-size: 11.5px; color: var(--muted); }
+  .cw-foot b { color: var(--text); font-variant-numeric: tabular-nums; }
 
   /* ---- App ---- */
   /* #app is shown by x-show once Alpine boots; [x-cloak] covers the pre-init frame.
@@ -584,6 +618,15 @@
   .lb-tagname { font-weight: 600; font-size: 14px; }
   .lb-tagmeta { font-size: 12px; color: var(--muted); font-weight: 600; margin-left: 6px; font-variant-numeric: tabular-nums; }
   .lb-tagmins { font-size: 13px; color: var(--muted); font-weight: 600; width: 50px; text-align: right; font-variant-numeric: tabular-nums; }
+  /* Round total. This deliberately rebuilds a member row's right side, chevron
+     included and merely made invisible, so the sum lands in the same 66px tabular
+     column as every member total. Aligning it with a hardcoded offset instead would
+     silently drift the day the chevron or the .lb-right gap changes. */
+  .lb-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+             padding: 13px 14px; background: var(--card-2); border-top: 1px solid var(--border); }
+  .lb-footlbl { display: block; font-size: 12px; font-weight: 800; letter-spacing: .72px;
+                text-transform: uppercase; color: var(--muted); }
+  .lb-foot .lb-chev { visibility: hidden; }
 
   .seg { display: flex; background: var(--card-2); border-radius: var(--r-md); padding: 4px; margin-bottom: 16px; }
   .seg button { flex: 1; padding: 9px; border: none; background: none; color: var(--muted); font-weight: 700; font-size: 14px; border-radius: 9px; cursor: pointer; }
@@ -1023,6 +1066,30 @@
   .approve-row .ar-deny { background: var(--card-2); color: var(--text); border: 1px solid var(--border-2); }
   .approve-group { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; padding: 12px 0 4px; }
   .approve-group:first-child { padding-top: 2px; }
+  /* Name-claim rows reuse .approve-row, but the email is the whole basis for the
+     decision, so the handle and address stack instead of sitting on one line. */
+  .approve-row .ar-who { flex: 1; min-width: 0; }
+  .approve-row .ar-who .ar-name { flex: none; }
+  .approve-row .ar-sub { font-size: 11.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* Account-linking nudge - a dismissible banner at the top of each layer. The
+     action runs in place: nobody gets logged out to link an account. Kept on the
+     neutral card surface with the app's left accent rail rather than the tinted
+     tile look, so it doesn't compete with the join tile it can sit next to. */
+  .nudge { display: flex; align-items: center; gap: 12px; margin: 0 0 12px;
+    background: var(--card); border: 1px solid var(--border);
+    box-shadow: inset 3px 0 0 var(--accent);
+    border-radius: var(--r-xl); padding: 12px 14px 12px 17px; }
+  .nudge-tx { flex: 1; min-width: 0; }
+  .nudge-title { font-weight: 800; font-size: 14px; letter-spacing: -.2px; }
+  .nudge-sub { color: var(--muted); font-size: 12.5px; line-height: 1.4; margin-top: 2px; }
+  .nudge-btn { flex: 0 0 auto; background: var(--accent); color: #fff; border: none;
+    border-radius: var(--r-pill); font-weight: 800; font-size: 13px; padding: 9px 16px; cursor: pointer; }
+  .nudge-btn:disabled { background: var(--border-2); color: var(--muted); cursor: default; }
+  .nudge-x { flex: 0 0 auto; width: 28px; height: 28px; border: none; background: transparent;
+    color: var(--muted); border-radius: var(--r-sm); display: inline-flex; align-items: center;
+    justify-content: center; cursor: pointer; }
+  .nudge-x svg { width: 14px; height: 14px; }
   .guard-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
   .guard-row + .guard-row { margin-top: 10px; }
   /* Every other group lets its heading own the heading-to-content gap. Without
@@ -1398,13 +1465,17 @@
   .sect > .card, .sect > .sgroup { margin-bottom: 0; }
   .sect > .sub-note { padding: 0; margin: -4px 0 8px; }
   .sect-plain { padding-top: 22px; }
-  /* a section label that also carries a control (e.g. Edit participants).
+  /* a section label that also carries a control (e.g. Leave).
      This was a stale copy of the old .slabel padding (20px 4px 8px), so it kept
-     the 4px indent and sat 2px off. .ch-title is pinned to 26px (the Edit button
-     height) so the row no longer changes height when Edit is hidden for
-     non-owners; 17 + the 5px centring offset lands the ink at 22px like every
-     other section heading, in every role. */
-  .card-head { padding: 17px 0 8px; }
+     the 4px indent and sat 2px off. .ch-title is pinned to 26px (the button
+     height) so the row no longer changes height when the button is hidden for
+     non-owners, and the label's 16px of ink is centred in it, which leaves 5px of
+     slack at BOTH ends. The top was already compensated (17 + 5 = 22, matching
+     every other section heading); the bottom was not, so this heading floated 13px
+     above its card where every other one sits 8px above, and the label read as
+     belonging to the gap rather than to the card under it. 3 + 5 = 8 fixes it, and
+     the box then measures 46px exactly like a plain .slabel. */
+  .card-head { padding: 17px 0 3px; }
   .card-head .slabel { padding: 0; }
 
   /* Lists that ARE the card system: grouped means the section card is the
@@ -1756,12 +1827,57 @@
     <div class="login-card">
       <div class="logo"><svg viewBox="0 0 100 100" aria-label="Minutes" role="img"><defs><linearGradient id="loginmark" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8f72ff"/><stop offset="1" stop-color="#6b4bff"/></linearGradient></defs><path d="M54.24 18.28 A32 32 0 1 1 24.58 30.56" fill="none" stroke="url(#loginmark)" stroke-width="8.5" stroke-linecap="round"/><path d="M38 58 V42 L50 53 L62 42 V58" fill="none" stroke="url(#loginmark)" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
       <h1>Minutes</h1>
-      <p>Enter your name to open your tracker</p>
-      <input type="text" id="loginName" placeholder="Your name" autocomplete="off" autocapitalize="words" />
+      <p id="loginSub">Sign in to open your tracker</p>
       <div class="msg msg--quiet" id="loginErr" aria-live="polite"></div>
       <div class="login-status" id="loginStatus" style="display:none"><span class="login-spin"></span><span id="loginStatusText">Connecting to the server…</span></div>
-      <button class="btn" id="loginBtn">Continue</button>
       <button class="btn btn-ghost" id="loginRetry" style="display:none">Retry connection</button>
+      <div class="login-who" id="authWho" style="display:none"></div>
+      <button class="btn btn-oauth" id="googleBtn">
+        <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+        </svg>
+        <span id="googleBtnLabel">Continue with Google</span>
+      </button>
+      <div class="msg msg--quiet" id="authErr" aria-live="polite"></div>
+
+      <!-- Handle claim: shown only once signed in with no identity bound yet. -->
+      <div class="claim" id="claimBox" style="display:none">
+        <div class="claim-q" id="claimQ">Which name is yours?</div>
+        <div class="claim-list" id="claimList"></div>
+        <button class="btn" id="claimBtn" disabled>Claim this name</button>
+        <div class="msg msg--quiet" id="claimErr" aria-live="polite"></div>
+        <p class="claim-note" id="claimNote">This links the name to your Google account, so you never have to type it again.</p>
+      </div>
+
+      <div class="claim-pending" id="claimPending" style="display:none" aria-live="polite">
+        <div class="cw-title" id="cwTitle">You are in the queue</div>
+        <p class="cw-sub" id="cwSub"></p>
+        <div class="cw-stage">
+          <canvas id="cwCanvas"></canvas>
+          <div class="cw-overlay" id="cwOverlay">
+            <strong id="cwOverlayTitle">Kill some minutes?</strong>
+            <span id="cwOverlayHint">Tap or press space to jump</span>
+          </div>
+        </div>
+        <div class="cw-foot">
+          <span>Minutes survived: <b id="cwScore">0</b></span>
+          <span>Best: <b id="cwBest">0</b></span>
+        </div>
+      </div>
+
+      <!-- Signed in with Google and a name already bound, but the app session
+           has ended (deliberate log out, or cleared in another tab). Without
+           this the card would render completely empty with no way back in,
+           because the typed-name fallback is gone. -->
+      <div class="claim" id="claimResume" style="display:none">
+        <button class="btn" id="resumeBtn">Continue as <span id="resumeName"></span></button>
+        <p class="claim-note">Not you? Log out above to use a different account.</p>
+      </div>
+
+      <p class="login-hint" id="authHint">Your Google account is your login. Nothing else to remember.</p>
     </div>
     <div class="ver-tag"></div>
   </div>
@@ -1787,6 +1903,23 @@
     </header>
 
     <div class="msg msg--banner amb" role="status" aria-live="polite"></div>
+
+    <!-- Account-linking nudge. Deliberately a banner, not a gate: the user stays
+         where they are and the claim runs in place. Dismissing snoozes it rather
+         than killing it, because Phase 4 turns claiming from optional into required. -->
+    <template x-if="$store.s.claimNudge.show">
+      <div class="nudge">
+        <div class="nudge-tx">
+          <div class="nudge-title" x-text="$store.s.claimNudge.title"></div>
+          <div class="nudge-sub" x-text="$store.s.claimNudge.sub"></div>
+        </div>
+        <button class="nudge-btn" x-show="!$store.s.claimNudge.waiting"
+                :disabled="$store.s.claimNudge.busy"
+                @click="$store.s.act.claimConnect()"
+                x-text="$store.s.claimNudge.cta"></button>
+        <button class="nudge-x" aria-label="Dismiss" @click="$store.s.act.claimSnooze()"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
+      </div>
+    </template>
 
     <section class="tab-panel active" id="tab-challenges">
       <template x-for="sec in $store.s.challSections" :key="sec.id">
@@ -1894,6 +2027,25 @@
     </div>
     <div class="sheet-body" id="sheetBody">
       <div class="msg msg--banner amb" role="status" aria-live="polite"></div>
+
+      <!-- Second copy of the nudge. The base layer's banner is behind this sheet,
+           and an approved member lands straight in here, so a single banner on the
+           base layer would be invisible to exactly the people who need it. Mirrors
+           how .amb is duplicated per layer. -->
+      <template x-if="$store.s.claimNudge.show">
+        <div class="nudge">
+          <div class="nudge-tx">
+            <div class="nudge-title" x-text="$store.s.claimNudge.title"></div>
+            <div class="nudge-sub" x-text="$store.s.claimNudge.sub"></div>
+          </div>
+          <button class="nudge-btn" x-show="!$store.s.claimNudge.waiting"
+                  :disabled="$store.s.claimNudge.busy"
+                  @click="$store.s.act.claimConnect()"
+                  x-text="$store.s.claimNudge.cta"></button>
+          <button class="nudge-x" aria-label="Dismiss" @click="$store.s.act.claimSnooze()"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
+        </div>
+      </template>
+
       <section class="tab-panel" id="tab-stats" :class="{ active: $store.s.sheet !== 'you' }">
       <div class="statsblock" id="statsblockView">
         <template x-if="$store.s.statsBlock.mode === 'winner'">
@@ -2010,6 +2162,13 @@
                 </div>
               </div>
             </template>
+            <div class="lb-foot" x-show="$store.s.board.total">
+              <span class="lb-left"><span class="lb-footlbl" x-text="$store.s.board.totalLabel"></span></span>
+              <span class="lb-right">
+                <span class="lb-total" x-text="$store.s.board.total"></span>
+                <span class="lb-chev" aria-hidden="true"><svg class="ic"><use href="#i-caret-right"/></svg></span>
+              </span>
+            </div>
           </div>
           <div id="participantEdit" x-show="$store.s.board.editing">
             <div class="pe-sub">Round controls</div>
@@ -2401,6 +2560,23 @@
           </template>
         </div></div>
       </div>
+      <div class="sect" id="claimApprovalsCard" x-show="$store.s.claimApprovals.total">
+        <div class="slabel" x-text="$store.s.claimApprovals.title">Name claims</div>
+        <div class="card"><div id="claimApprovalList">
+          <template x-for="r in $store.s.claimApprovals.rows" :key="r.handle">
+            <div class="approve-row">
+              <span class="dot" :style="'background:' + r.color" x-text="r.initial"></span>
+              <div class="ar-who">
+                <div class="ar-name" x-text="r.name"></div>
+                <div class="ar-sub" x-text="r.email"></div>
+              </div>
+              <button class="ar-btn ar-approve" @click="$store.s.act.approveClaim($event, r.handle)">Approve</button>
+              <button class="ar-btn ar-deny" @click="$store.s.act.rejectClaim($event, r.handle)">Reject</button>
+            </div>
+          </template>
+        </div></div>
+        <p class="claim-note">Approving binds that Google account to the name permanently. Only approve an address you recognise.</p>
+      </div>
       <div class="sect">
         <div class="slabel">Challenges</div>
         <div class="card"><div id="boChallList">
@@ -2498,7 +2674,7 @@
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
   var NAV_KEY = "minutes-nav";
-  var VERSION = "14.4";
+  var VERSION = "14.5";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -2858,7 +3034,15 @@
   state.tagRev = 0;           // tag inputs are DOM fields; this ticks their chip views
   state.editTagRev = 0;
   state.manageCid = null;
+  state.claimRev = 0;         // identity/claim data ticks (see the Claims module)
   function bump() { state.rev++; }
+
+  // The Claims module owns the identity data but is invisible to the store, so it
+  // announces changes and the store re-reads through window.__CLAIMS.
+  window.addEventListener("minutes-claims", function () {
+    state.claimRev++;
+    updateAdminBadge();
+  });
 
   // Registered before Alpine is loaded (the library tag sits after this script),
   // so this listener is always in place when Alpine fires alpine:init on start.
@@ -3018,7 +3202,7 @@
                               : "Joining closed. Members can't join or leave this round" },
       leave: (!canAdminEdit && canSelfToggle && roundJoinOpen(mk) && isParticipant(state.me, mk)),
       editTab: { show: canAdminEdit && rn >= 1, editing: editing },
-      editing: editing, mode: "board", seg: { show: false }, rows: [], empty: ""
+      editing: editing, mode: "board", seg: { show: false }, rows: [], empty: "", total: "", totalLabel: ""
     };
     if (rn < 1) { out.mode = "prestart"; out.lock.show = false; out.editTab.show = false; out.leave = false;
                   out.empty = "Before the challenge started. No standings yet."; return out; }
@@ -3075,6 +3259,15 @@
         })
       };
     });
+    // Sums the same arr the rows are built from, so the total always agrees with what
+    // is on screen: it follows the Today/month segment and counts only participants of
+    // this round, rather than re-deriving from state.entries.
+    // The label names that range for the same reason. This row is a metric sitting
+    // under a control that changes which entries it counts, so a fixed "Total logged"
+    // would show today's sum in the language of the whole round: the reader has no way
+    // to tell a quiet day from a quiet month without first looking up at the segment.
+    out.total = arr.reduce(function (s, r) { return s + r.mins; }, 0) + "m";
+    out.totalLabel = range === "today" ? "Today total" : (monthName + " total");
     return out;
   });
 
@@ -3293,6 +3486,30 @@
 
   function approveRowModel(h) { return { name: h, initial: h.charAt(0).toUpperCase(), color: colorFor(h) }; }
 
+  // Name-claim review queue. The rows come from the Claims module, whose listener
+  // doubles as the admin capability check: a non-admin gets an empty list because
+  // the rules refuse the subscription, so this section never renders for them.
+  view("claimApprovals", function () {
+    this.rev; this.me; this.claimRev;
+    var C = window.__CLAIMS;
+    var rows = (C && C.pending) ? C.pending() : [];
+    return {
+      total: rows.length,
+      title: "Name claims \u00B7 " + rows.length,
+      rows: rows.map(function (r) {
+        return { handle: r.handle, name: r.name, email: r.email,
+          initial: String(r.name || "?").charAt(0).toUpperCase(), color: colorFor(r.name) };
+      })
+    };
+  });
+
+  // In-app prompt for a user who has never linked a Google account to their name.
+  view("claimNudge", function () {
+    this.rev; this.me; this.signedIn; this.claimRev;
+    var C = window.__CLAIMS;
+    return (C && C.nudge) ? C.nudge() : { show: false };
+  });
+
   view("boChallenges", function () {
     this.rev; this.me;
     var cids = Object.keys(challMeta).sort(function (a, b) { return challName(a).localeCompare(challName(b)); });
@@ -3450,6 +3667,28 @@
       Store.removeMember(cid, h)
         .then(function () { showToast(h + " denied", "info"); })
         .catch(function (e) { console.error(e); Array.prototype.forEach.call(bs, function (b) { b.disabled = false; }); showToast("Couldn't deny", "danger"); });
+    },
+    // ---- name claims (Phase 3) ----
+    claimConnect: function () { if (window.__CLAIMS && window.__CLAIMS.connect) window.__CLAIMS.connect(); },
+    claimSnooze: function () { if (window.__CLAIMS && window.__CLAIMS.snooze) window.__CLAIMS.snooze(); },
+    approveClaim: function (ev, handle) {
+      if (!requireConnection()) return;
+      var row = ev && ev.currentTarget && ev.currentTarget.parentNode;
+      var bs = row ? row.querySelectorAll("button") : [];
+      Array.prototype.forEach.call(bs, function (b) { b.disabled = true; });
+      window.__CLAIMS.approve(handle)
+        .then(function () { showToast(handle + " approved", "success"); })
+        .catch(function (e) { console.error(e); Array.prototype.forEach.call(bs, function (b) { b.disabled = false; }); showToast("Couldn't approve", "danger"); });
+    },
+    // Rejecting leaves the requester back on the waiting screen with nothing, so
+    // it asks first.
+    rejectClaim: function (ev, handle) {
+      if (!requireConnection()) return;
+      showConfirm({ title: "Reject this claim?", msg: "They can ask again. Nothing else changes.", ok: "Reject" }, function () {
+        window.__CLAIMS.reject(handle)
+          .then(function () { showToast("Claim rejected", "info"); })
+          .catch(function (e) { console.error(e); showToast("Couldn't reject", "danger"); });
+      });
     },
     toggleMemberAdmin: function (name) { toggleAdmin(name); },
     removeMember: function (name) {
@@ -3704,24 +3943,835 @@
     localStorage.removeItem(NAV_KEY);   // the next person to sign in gets the default landing
     closeBackoffice();
     state.signedIn = false;
-    document.getElementById("loginName").value = "";
     setMsg("loginErr", "");
+    // One logout, like every other app that signs in with Google. This ends the
+    // Firebase session too, so "Log out" actually means logged out instead of
+    // leaving a one-tap way straight back in. Note this does NOT touch the user's
+    // Google account, which stays signed in for Gmail and everything else; no web
+    // app can or should sign you out of Google globally.
+    //
+    // The repaint is left to the auth event on purpose. Rendering here as well
+    // would briefly paint the "Continue as X" resume panel, because for the ~90ms
+    // until signOut settles the user still looks signed in with no app session.
+    var repaint = function () {
+      if (window.__CLAIMS && window.__CLAIMS.render) window.__CLAIMS.render();
+    };
+    if (window.__AUTH && window.__AUTH.signOut) {
+      window.__AUTH.signOut().catch(function (e) {
+        console.error("sign-out:", e);
+        repaint();   // the auth event never came, so the card still needs painting
+      });
+    } else {
+      repaint();
+    }
   }
 
-  document.getElementById("loginBtn").onclick = function () {
-    var raw = document.getElementById("loginName").value.trim();
-    var direct = resolveName(raw);
-    if (direct) { doLogin(direct); return; }
-    if (!rosterLoaded && raw) {
-      // A name was entered but there's no roster to check it against - the first-ever
-      // connection is still pending or wedged. Show the self-healing connecting state
-      // (with Retry) instead of a dead error; it clears automatically once data lands.
-      setLoginConnecting(true, "Connecting to the server…");
-      return;
+  // --- Google sign-in (Phase 2) ------------------------------------------------
+  // Additive and non-enforcing: this records WHO is signed in, it does not yet decide
+  // app identity. The typed handle still does that. Keeping the two separate for one
+  // release means the OAuth plumbing gets proven in production before any identity
+  // logic is built on top of it, and nothing breaks for users who never sign in.
+  (function () {
+    var btn = document.getElementById("googleBtn");
+    var label = document.getElementById("googleBtnLabel");
+    var who = document.getElementById("authWho");
+    var hint = document.getElementById("authHint");
+    if (!btn || !label || !who) return;
+
+    // Auth failures here are nearly always one of a few config gaps, and the raw
+    // Firebase codes point at nothing obvious. Name the actual fix instead.
+    function errText(e) {
+      var code = (e && e.code) || "";
+      if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") return "";
+      if (code === "auth/popup-blocked") return "Your browser blocked the sign-in popup. Allow popups for this site and try again.";
+      if (code === "auth/unauthorized-domain") return "This domain isn't on the Firebase authorized list yet.";
+      if (code === "auth/operation-not-allowed") return "Google sign-in isn't enabled for this project yet.";
+      if (code === "auth/network-request-failed") return "Couldn't reach the sign-in service. Check your connection.";
+      if (code === "auth/internal-error") return "Sign-in was rejected. The API key may not allow the auth domain.";
+      return "Couldn't sign in. Please try again.";
     }
-    setLoginConnecting(false);
-    setMsg("loginErr", "Name not recognised. Ask the admin to add you.");
-  };
+
+    function render(u) {
+      if (u) {
+        who.textContent = "Signed in as " + (u.email || u.name || "your Google account");
+        who.style.display = "block";
+        label.textContent = "Log out";
+        btn.dataset.mode = "out";
+        if (hint) hint.style.display = "none";
+      } else {
+        who.style.display = "none";
+        // Don't leave the previous account's email sitting in the DOM after sign-out.
+        who.textContent = "";
+        label.textContent = "Continue with Google";
+        btn.dataset.mode = "in";
+        if (hint) hint.style.display = "";
+      }
+      setMsg("authErr", "");
+    }
+
+    btn.onclick = function () {
+      if (!window.__AUTH || !window.__AUTH.ready) {
+        setMsg("authErr", "Sign-in isn't available right now.");
+        return;
+      }
+      var signingOut = btn.dataset.mode === "out";
+      btn.disabled = true;
+      setMsg("authErr", "");
+      var p = signingOut ? window.__AUTH.signOut() : window.__AUTH.signInGoogle();
+      p.catch(function (e) {
+        console.error(signingOut ? "Google sign-out:" : "Google sign-in:", e);
+        setMsg("authErr", errText(e));
+      }).finally(function () {
+        btn.disabled = false;
+      });
+    };
+
+    window.addEventListener("minutes-auth", function (ev) { render(ev.detail); });
+    // The auth module may have resolved before this script ran, so don't rely on the
+    // event alone for the initial paint.
+    if (window.__AUTH && window.__AUTH.user) render(window.__AUTH.user);
+  })();
+
+  // --- Waiting-room mini game --------------------------------------------------
+  // Shown while a claim sits with an admin. An original endless runner, deliberately
+  // tiny: the player is the Minutes mark hopping over tally bars, and the score is
+  // counted in "minutes survived" so the joke lands with the rest of the app.
+  // It only animates while the pending panel is on screen.
+  var WaitGame = (function () {
+    var cv = document.getElementById("cwCanvas");
+    var overlay = document.getElementById("cwOverlay");
+    var oTitle = document.getElementById("cwOverlayTitle");
+    var oHint = document.getElementById("cwOverlayHint");
+    var scoreEl = document.getElementById("cwScore");
+    var bestEl = document.getElementById("cwBest");
+    if (!cv || !overlay) return { mount: function () {}, stop: function () {} };
+
+    var BEST_KEY = "minutes_wait_best";
+    var ctx = cv.getContext("2d");
+    var raf = null, live = false, playing = false, dead = false;
+    var W = 0, H = 0, ground = 0;
+    var py, vy, dist, spd, bars, last, best = 0;
+    var col = {};
+
+    try { best = parseInt(localStorage.getItem(BEST_KEY), 10) || 0; } catch (e) {}
+
+    function readColors() {
+      var s = getComputedStyle(document.documentElement);
+      col.accent = s.getPropertyValue("--accent").trim() || "#6b4bff";
+      col.line = s.getPropertyValue("--line").trim() || "#e5e7eb";
+      col.muted = s.getPropertyValue("--muted").trim() || "#9ca3af";
+      col.text = s.getPropertyValue("--text").trim() || "#111827";
+    }
+
+    function size() {
+      var dpr = Math.min(window.devicePixelRatio || 1, 2);
+      var w = cv.clientWidth || 300;
+      var h = cv.clientHeight || 132;
+      W = w; H = h;
+      cv.width = Math.round(w * dpr);
+      cv.height = Math.round(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ground = H - 26;
+    }
+
+    function reset() {
+      py = 0; vy = 0; dist = 0; spd = 150; bars = []; dead = false;
+      spawn(W + 40);
+    }
+
+    function spawn(x) {
+      // Keep gaps comfortably clearable at the current speed.
+      var gap = 150 + Math.random() * 130 + spd * 0.25;
+      bars.push({ x: x, h: 12 + Math.random() * 16, w: 5 + Math.random() * 4 });
+      if (bars.length < 4) spawn(x + gap);
+    }
+
+    function jump() {
+      if (!live) return;
+      if (dead) { reset(); playing = true; hideOverlay(); return; }
+      if (!playing) { playing = true; hideOverlay(); return; }
+      if (py <= 0.5) vy = 300;
+    }
+
+    function hideOverlay() { overlay.style.display = "none"; }
+    function showOverlay(t, h) {
+      oTitle.textContent = t; oHint.textContent = h;
+      overlay.style.display = "flex";
+    }
+
+    function step(dt) {
+      if (!playing || dead) return;
+      dist += spd * dt;
+      spd = 150 + Math.min(dist / 24, 160);
+
+      vy -= 900 * dt;
+      py += vy * dt;
+      if (py < 0) { py = 0; vy = 0; }
+
+      var i, b, hit = false;
+      for (i = bars.length - 1; i >= 0; i--) {
+        b = bars[i];
+        b.x -= spd * dt;
+        // Player box is 18 wide at x=26; forgiving by a couple of px on each side.
+        if (b.x < 26 + 16 && b.x + b.w > 26 + 2 && py < b.h - 2) hit = true;
+        if (b.x + b.w < -20) bars.splice(i, 1);
+      }
+      if (!bars.length || bars[bars.length - 1].x < W - 150) {
+        spawn(W + 20 + Math.random() * 80);
+      }
+      if (hit) {
+        dead = true; playing = false;
+        var mins = Math.floor(dist / 40);
+        if (mins > best) {
+          best = mins;
+          try { localStorage.setItem(BEST_KEY, String(best)); } catch (e) {}
+        }
+        showOverlay("Caught by a tally bar", "Tap to try again");
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+
+      ctx.strokeStyle = col.line;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, ground + 0.5);
+      ctx.lineTo(W, ground + 0.5);
+      ctx.stroke();
+
+      ctx.fillStyle = col.muted;
+      for (var i = 0; i < bars.length; i++) {
+        var b = bars[i];
+        ctx.fillRect(b.x, ground - b.h, b.w, b.h);
+      }
+
+      var x = 26, y = ground - 18 - py;
+      ctx.fillStyle = col.accent;
+      roundRect(x, y, 18, 18, 5);
+      ctx.fill();
+      ctx.fillStyle = "#fff";
+      ctx.font = "700 11px ui-sans-serif, system-ui, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("M", x + 9, y + 10);
+
+      scoreEl.textContent = String(Math.floor(dist / 40));
+      bestEl.textContent = String(best);
+    }
+
+    function roundRect(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    function frame(t) {
+      if (!live) return;
+      var dt = last ? Math.min((t - last) / 1000, 0.05) : 0;
+      last = t;
+      step(dt);
+      draw();
+      raf = requestAnimationFrame(frame);
+    }
+
+    function onKey(e) {
+      if (!live) return;
+      if (e.key === " " || e.code === "Space" || e.key === "ArrowUp") {
+        e.preventDefault();
+        jump();
+      }
+    }
+
+    cv.addEventListener("pointerdown", function (e) { e.preventDefault(); jump(); });
+    overlay.addEventListener("pointerdown", function (e) { e.preventDefault(); jump(); });
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("resize", function () { if (live) { size(); } });
+    document.addEventListener("visibilitychange", function () {
+      // Don't run the loop in a hidden tab, and don't let dt spike on return.
+      if (document.visibilityState === "visible" && live && !raf) {
+        last = 0; raf = requestAnimationFrame(frame);
+      } else if (document.visibilityState !== "visible" && raf) {
+        cancelAnimationFrame(raf); raf = null;
+      }
+    });
+
+    return {
+      mount: function () {
+        if (live) return;
+        live = true;
+        readColors();
+        size();
+        reset();
+        playing = false;
+        showOverlay("Kill some minutes?", "Tap or press space to jump");
+        bestEl.textContent = String(best);
+        last = 0;
+        raf = requestAnimationFrame(frame);
+      },
+      stop: function () {
+        live = false; playing = false;
+        if (raf) { cancelAnimationFrame(raf); raf = null; }
+      }
+    };
+  })();
+
+
+  // Binds a Google uid to an app handle, mirroring firestore.phase3.rules:
+  //   1. the handle is pre-seeded with this exact verified email -> instant claim
+  //   2. anything else -> a claimRequests doc for an admin to approve
+  //
+  // Still deliberately non-enforcing. Every path here is skippable: the typed-name
+  // login keeps working, so a user who ignores this loses nothing until Phase 4.
+  // The payoff for claiming is that sign-in then logs you straight in by name.
+  var Claims = (function () {
+    var REQ_KEY = "minutes_claim_req";   // handle this device last asked for
+    var box     = document.getElementById("claimBox");
+    var listEl  = document.getElementById("claimList");
+    var btn     = document.getElementById("claimBtn");
+    var qEl     = document.getElementById("claimQ");
+    var noteEl  = document.getElementById("claimNote");
+    var pendEl  = document.getElementById("claimPending");
+    var resEl   = document.getElementById("claimResume");
+    var resBtn  = document.getElementById("resumeBtn");
+    var resName = document.getElementById("resumeName");
+    if (!box || !listEl || !btn) return { render: function () {} };
+
+    var idents = {};        // lower(handle) -> { handle, uid, ts, via }
+    var identsLoaded = false;
+    var reqs = {};          // lower(handle) -> { handle, uid, email, ts }  (admins only)
+    var reqsLive = false;   // true once the admin-only listener has actually attached
+    var picked = null;
+    var busy = false;
+    var wantConnect = false;   // banner tapped before the Google popup came back
+    var autoLoggedIn = false;
+    var subscribed = false;
+    var reqSubscribed = false;
+
+    // Anything the app's Alpine store renders from this module has to announce
+    // itself: the store cannot see module-local variables, so it ticks a revision
+    // on this event and re-reads through window.__CLAIMS.
+    function emit() { window.dispatchEvent(new Event("minutes-claims")); }
+
+    // Dismissing the nudge snoozes it rather than killing it. Phase 4 makes
+    // claiming mandatory, so a permanent "never show again" would just turn into
+    // a lockout later.
+    var NUDGE_KEY = "minutes_claim_snooze";
+    var SNOOZE_MS = 3 * 24 * 60 * 60 * 1000;
+    function snoozed() {
+      try { return Date.now() < Number(localStorage.getItem(NUDGE_KEY) || 0); }
+      catch (e) { return false; }
+    }
+
+    function me() { return (window.__AUTH && window.__AUTH.user) || null; }
+    function low(h) { return String(h || "").trim().toLowerCase(); }
+
+    // In DEMO there is no Firestore, so the whole flow runs against an in-memory
+    // stand-in. It exists so the UI and both branches are exercisable on the dev
+    // server; production always takes the real path below.
+    //
+    // seeds mirrors claimSeeds/{handle} = { email }. "*" means "any signed-in
+    // address", which is a local convenience so both branches stay clickable
+    // without knowing which Google account you happen to be using. Bind a real
+    // address with __CLAIMS.demoSeed("AdminOwner", "you@gmail.com") to exercise
+    // the actual email comparison the rules perform.
+    var demo = {
+      idents: {},
+      reqs: {},
+      // adminowner is bound to Rando's real address so the seeded fast path is
+      // exercised end to end locally, including the email comparison. The other
+      // two are wildcards so the flow stays clickable from any Google account.
+      seeds: { adminowner: "maisrando@gmail.com", user: "*", owner: "*" }
+    };
+
+    // Mirrors the auto-claim condition in firestore.phase3.rules: the handle must
+    // be seeded, the address must match exactly, and the address must be verified.
+    function demoSeedMatches(handle, u) {
+      var want = demo.seeds[low(handle)];
+      if (!want) return false;
+      if (u.emailVerified === false) return false;
+      if (want === "*") return true;
+      return low(want) === low(u.email);
+    }
+
+    function usingDemo() { return !window.__FB; }
+
+    function myHandle() {
+      var u = me();
+      if (!u) return null;
+      for (var k in idents) if (idents[k].uid === u.uid) return idents[k].handle;
+      return null;
+    }
+
+    function unclaimed() {
+      var taken = idents;
+      return members().filter(function (h) { return !taken[low(h)]; });
+    }
+
+    // ---- backend ------------------------------------------------------------
+
+    function watch() {
+      if (subscribed) return;
+      subscribed = true;
+      if (usingDemo()) { idents = demo.idents; identsLoaded = true; emit(); render(); return; }
+      var fb = window.__FB;
+      try {
+        fb.onSnapshot(fb.collection(fb.db, "identities"), function (snap) {
+          var next = {};
+          snap.forEach(function (d) {
+            var v = d.data() || {};
+            next[d.id] = { handle: v.handle || d.id, uid: v.uid || "", ts: v.ts || 0, via: v.via || "" };
+          });
+          idents = next;
+          identsLoaded = true;
+          emit();
+          render();
+        }, function (e) {
+          console.warn("identities listener:", e);
+          identsLoaded = true;
+          emit();
+          render();
+        });
+      } catch (e) {
+        console.warn("identities subscribe failed:", e);
+        identsLoaded = true;
+      }
+    }
+
+    // claimRequests can only be listed by an admin, so attaching this listener IS
+    // the capability check. A non-admin's subscription is rejected by the rules and
+    // the approvals section simply never appears for them - no separate role lookup,
+    // and no chance of the UI and the rules disagreeing.
+    function watchRequests() {
+      if (reqSubscribed) return;
+      if (usingDemo()) { reqSubscribed = true; reqs = demo.reqs; reqsLive = true; emit(); return; }
+      if (!me() || !window.__FB) return;   // the rules need a token before this can succeed
+      reqSubscribed = true;
+      var fb = window.__FB;
+      try {
+        fb.onSnapshot(fb.collection(fb.db, "claimRequests"), function (snap) {
+          var next = {};
+          snap.forEach(function (d) { next[d.id] = d.data() || {}; });
+          reqs = next;
+          reqsLive = true;
+          emit();
+        }, function () {
+          // Expected for everyone who is not an admin. Not an error worth logging.
+          reqs = {};
+          reqsLive = false;
+          emit();
+        });
+      } catch (e) { reqsLive = false; }
+    }
+
+    // Rows for the backoffice review queue, oldest request first.
+    function pendingList() {
+      if (!reqsLive) return [];
+      return Object.keys(reqs).map(function (k) {
+        var r = reqs[k] || {};
+        return { handle: k, name: r.handle || k, email: r.email || "", uid: r.uid || "", ts: r.ts || 0 };
+      }).sort(function (a, b) { return (a.ts || 0) - (b.ts || 0); });
+    }
+
+    function claimDoc(handle) {
+      var u = me();
+      return { handle: handle, uid: u.uid, ts: Date.now(), via: "email" };
+    }
+
+    function tryClaim(handle) {
+      var u = me();
+      if (usingDemo()) {
+        return new Promise(function (res, rej) {
+          setTimeout(function () {
+            if (demoSeedMatches(handle, u)) { demo.idents[low(handle)] = claimDoc(handle); res(); }
+            else rej({ code: "permission-denied" });
+          }, 250);
+        });
+      }
+      var fb = window.__FB;
+      return fb.setDoc(fb.doc(fb.db, "identities", low(handle)), claimDoc(handle));
+    }
+
+    function fileRequest(handle) {
+      var u = me();
+      var payload = { handle: handle, uid: u.uid, email: u.email || "", ts: Date.now() };
+      if (usingDemo()) {
+        return new Promise(function (res) {
+          setTimeout(function () { demo.reqs[low(handle)] = payload; res(); }, 200);
+        });
+      }
+      var fb = window.__FB;
+      return fb.setDoc(fb.doc(fb.db, "claimRequests", low(handle)), payload);
+    }
+
+    // Reads back only the request this device filed. A non-admin cannot list the
+    // collection (the rules forbid it), but may read their own doc by id.
+    function readRequest(handle) {
+      if (usingDemo()) return Promise.resolve(demo.reqs[low(handle)] || null);
+      var fb = window.__FB;
+      if (!fb.getDoc) return Promise.resolve(null);
+      return fb.getDoc(fb.doc(fb.db, "claimRequests", low(handle))).then(function (s) {
+        return s.exists() ? s.data() : null;
+      }).catch(function () { return null; });
+    }
+
+    // ---- ui -----------------------------------------------------------------
+
+    function hideAll() {
+      box.style.display = "none";
+      pendEl.style.display = "none";
+      if (resEl) resEl.style.display = "none";
+      var sub = document.getElementById("loginSub");
+      if (sub) sub.textContent = "Sign in to open your tracker";
+      WaitGame.stop();
+    }
+
+    // Signed in, name already bound, but no app session. Offer the one tap back
+    // in rather than rendering an empty card.
+    function showResume(handle) {
+      if (!resEl) return;
+      box.style.display = "none";
+      pendEl.style.display = "none";
+      WaitGame.stop();
+      if (resName) resName.textContent = handle;
+      var sub = document.getElementById("loginSub");
+      if (sub) sub.textContent = "Welcome back";
+      resEl.style.display = "block";
+    }
+
+    function showPending(handle) {
+      box.style.display = "none";
+      pendEl.style.display = "block";
+      var sub = document.getElementById("cwSub");
+      if (sub) {
+        sub.textContent = "An admin has to approve \u201C" + handle + "\u201D before you can log " +
+          "anything. They have been sent the request. Nothing else for you to do.";
+      }
+      WaitGame.mount();
+    }
+
+    function paintChips() {
+      var names = unclaimed();
+      listEl.innerHTML = "";
+      if (!names.length) {
+        qEl.textContent = rosterLoaded ? "No unclaimed names left." : "Loading names\u2026";
+        btn.disabled = true;
+        noteEl.style.display = "none";
+        return;
+      }
+      qEl.textContent = "Which name is yours?";
+      noteEl.style.display = "";
+      names.forEach(function (h) {
+        var c = document.createElement("button");
+        c.type = "button";
+        c.className = "claim-chip";
+        c.textContent = h;
+        c.setAttribute("aria-pressed", picked === h ? "true" : "false");
+        c.onclick = function () {
+          picked = (picked === h) ? null : h;
+          setMsg("claimErr", "");
+          paintChips();
+        };
+        listEl.appendChild(c);
+      });
+      btn.disabled = !picked || busy;
+      btn.textContent = busy ? "Claiming\u2026"
+        : (picked ? "Claim \u201C" + picked + "\u201D" : "Claim this name");
+    }
+
+    // ---- in-app nudge -------------------------------------------------------
+    // For someone already using the app under a typed name who has never linked a
+    // Google account. The convention is a dismissible banner that performs the
+    // action in place, not a forced sign-out, so nobody loses their session over it.
+
+    function nudge() {
+      var h = state.me;
+      if (!state.signedIn || !h) return { show: false };
+      if (!identsLoaded) return { show: false };
+      if (idents[low(h)]) return { show: false };      // this name is already bound
+      var u = me();
+      if (u && myHandle()) return { show: false };     // this account owns another name
+      if (snoozed()) return { show: false };
+
+      var asked = null;
+      try { asked = localStorage.getItem(REQ_KEY); } catch (e) {}
+      if (asked && asked === low(h)) {
+        return { show: true, waiting: true, busy: false,
+          title: "Waiting for approval",
+          sub: "An admin has to confirm that " + h + " is you. Nothing else to do.",
+          cta: "" };
+      }
+      return { show: true, waiting: false, busy: busy,
+        title: "Link your Google account",
+        sub: "Keeps the name " + h + " yours, and signs you in automatically next time.",
+        cta: busy ? "Linking\u2026" : "Link account" };
+    }
+
+    function snooze() {
+      try { localStorage.setItem(NUDGE_KEY, String(Date.now() + SNOOZE_MS)); } catch (e) {}
+      emit();
+    }
+
+    // The in-app half of the claim flow. The app already knows which name this user
+    // is, so there is nothing to pick: try the seeded fast path, fall back to filing
+    // a request. Exactly the two branches the login-screen chip picker takes.
+    function connect() {
+      var h = state.me;
+      if (!h || busy) return;
+      var u = me();
+      if (!u) {
+        // Sign in first, then resume automatically when the popup returns.
+        wantConnect = true;
+        if (window.__AUTH && window.__AUTH.signInGoogle) window.__AUTH.signInGoogle();
+        else showToast("Sign-in is unavailable right now", "danger");
+        return;
+      }
+      wantConnect = false;
+      var bound = myHandle();
+      if (bound) { showToast("That Google account is already linked to " + bound, "danger"); return; }
+
+      busy = true;
+      emit();
+      tryClaim(h).then(function () {
+        busy = false;
+        if (usingDemo()) idents = demo.idents;
+        try { localStorage.removeItem(REQ_KEY); } catch (e) {}
+        emit();
+        render();
+        showToast(h + " is now linked to your Google account", "success");
+      }).catch(function (e) {
+        var code = (e && e.code) || "";
+        if (code === "permission-denied" || code === "PERMISSION_DENIED") {
+          fileRequest(h).then(function () {
+            busy = false;
+            try { localStorage.setItem(REQ_KEY, low(h)); } catch (x) {}
+            emit();
+            showToast("Request sent. An admin will confirm it.", "info");
+          }).catch(function (e2) {
+            busy = false; emit();
+            console.error("claim request failed:", e2);
+            showToast("Couldn't send the request", "danger");
+          });
+        } else {
+          busy = false; emit();
+          console.error("claim failed:", e);
+          showToast("Couldn't link that name", "danger");
+        }
+      });
+    }
+
+    function render() {
+      var u = me();
+      if (!u) { picked = null; autoLoggedIn = false; hideAll(); emit(); return; }
+
+      watch();
+      watchRequests();
+
+      // Resuming the banner's flow after the Google popup returned.
+      if (wantConnect && identsLoaded) { connect(); }
+
+      // Already bound: skip the whole prompt and sign the user straight in.
+      var mine = myHandle();
+      if (mine) {
+        if (state.signedIn) { hideAll(); return; }
+        // The latch stops a deliberate log out from being undone instantly.
+        if (!autoLoggedIn) {
+          autoLoggedIn = true;
+          hideAll();
+          doLogin(mine);
+          return;
+        }
+        // Logged out of the app but still signed in to Google. hideAll() here
+        // would leave a card with nothing on it and, with the typed-name field
+        // gone, no way back in at all.
+        showResume(mine);
+        return;
+      }
+
+      if (!identsLoaded) { hideAll(); return; }
+
+      // A request filed from this device is still outstanding.
+      var asked = null;
+      try { asked = localStorage.getItem(REQ_KEY); } catch (e) {}
+      if (asked) {
+        readRequest(asked).then(function (r) {
+          if (r && r.uid === u.uid) showPending(r.handle || asked);
+          else {
+            try { localStorage.removeItem(REQ_KEY); } catch (e) {}
+            box.style.display = "block";
+            paintChips();
+          }
+        });
+        return;
+      }
+
+      pendEl.style.display = "none";
+      box.style.display = "block";
+      paintChips();
+    }
+
+    btn.onclick = function () {
+      if (!picked || busy) return;
+      var handle = picked;
+      busy = true;
+      setMsg("claimErr", "");
+      paintChips();
+
+      tryClaim(handle).then(function () {
+        busy = false;
+        // The listener will repaint and auto-login; in demo there is no listener.
+        if (usingDemo()) { idents = demo.idents; }
+        emit();
+        render();
+        if (!state.signedIn) doLogin(handle);
+      }).catch(function (e) {
+        // Denied means "no seed, or the seed is a different address" - which is the
+        // normal case for anyone whose email the admin didn't have. Fall back to a
+        // request rather than presenting it as an error.
+        var code = (e && e.code) || "";
+        if (code === "permission-denied" || code === "PERMISSION_DENIED") {
+          fileRequest(handle).then(function () {
+            busy = false;
+            try { localStorage.setItem(REQ_KEY, low(handle)); } catch (x) {}
+            emit();
+            showPending(handle);
+          }).catch(function (e2) {
+            busy = false;
+            console.error("claim request failed:", e2);
+            setMsg("claimErr", "Couldn't send the request. Please try again.");
+            paintChips();
+          });
+        } else {
+          busy = false;
+          console.error("claim failed:", e);
+          setMsg("claimErr", "Couldn't claim that name. Please try again.");
+          paintChips();
+        }
+      });
+    };
+
+    if (resBtn) {
+      resBtn.onclick = function () {
+        var mine = myHandle();
+        if (mine) { hideAll(); doLogin(mine); }
+      };
+    }
+
+    window.addEventListener("minutes-auth", function () { render(); });
+    window.addEventListener("minutes-roster", function () { if (me()) render(); else emit(); });
+    window.addEventListener("minutes-fb-ready", function () { boot(); if (me()) render(); });
+
+    // identities is world-readable, so subscribe as soon as a backend exists rather
+    // than waiting for a Google sign-in. The in-app nudge has to know whether the
+    // current name is already claimed before anyone has touched the auth button.
+    function boot() { watch(); }
+    if (window.__FB) boot();
+
+    return {
+      render: render,
+      // In-app claim surface (the nudge banner reads these through window.__CLAIMS).
+      nudge: nudge,
+      connect: connect,
+      snooze: snooze,
+      // Rows for the backoffice review queue. Empty for anyone the rules will not
+      // let list claimRequests, which is what keeps the section admin-only.
+      pending: pendingList,
+      list: function () {
+        if (usingDemo()) return Promise.resolve(demo.reqs);
+        var fb = window.__FB;
+        return new Promise(function (res, rej) {
+          var un = fb.onSnapshot(fb.collection(fb.db, "claimRequests"), function (snap) {
+            var out = {};
+            snap.forEach(function (d) { out[d.id] = d.data(); });
+            try { un(); } catch (e) {}
+            res(out);
+          }, rej);
+        });
+      },
+      approve: function (handle, uid) {
+        var h = low(handle);
+        if (usingDemo()) {
+          return new Promise(function (res, rej) {
+            setTimeout(function () {
+              var r = demo.reqs[h];
+              if (!r && !uid) { rej(new Error("No request for " + handle)); return; }
+              demo.idents[h] = {
+                handle: (r && r.handle) || handle,
+                uid: uid || r.uid, ts: Date.now(), via: "admin"
+              };
+              delete demo.reqs[h];
+              emit();
+              render();
+              res();
+            }, 200);
+          });
+        }
+        var fb = window.__FB;
+        return fb.getDoc(fb.doc(fb.db, "claimRequests", h)).then(function (s) {
+          if (!s.exists() && !uid) throw new Error("No request for " + handle);
+          var r = s.exists() ? s.data() : null;
+          return fb.setDoc(fb.doc(fb.db, "identities", h), {
+            handle: (r && r.handle) || handle,
+            uid: uid || r.uid,
+            ts: Date.now(),
+            via: "admin"
+          });
+        }).then(function () {
+          return fb.deleteDoc(fb.doc(fb.db, "claimRequests", h));
+        });
+      },
+      reject: function (handle) {
+        if (usingDemo()) {
+          delete demo.reqs[low(handle)];
+          emit();
+          render();
+          return Promise.resolve();
+        }
+        var fb = window.__FB;
+        return fb.deleteDoc(fb.doc(fb.db, "claimRequests", low(handle)));
+      },
+      // DEMO-only. Stands in for writing claimSeeds/{handle} = { email } in the
+      // console, so the seeded auto-claim path is testable on the dev server.
+      // Pass no email to use the signed-in address.
+      demoSeed: function (handle, email) {
+        if (!usingDemo()) return Promise.reject(new Error("demoSeed is dev-server only"));
+        var u = me();
+        var addr = email || (u && u.email);
+        if (!addr) return Promise.reject(new Error("Sign in first, or pass an email"));
+        demo.seeds[low(handle)] = addr;
+        delete demo.reqs[low(handle)];   // a seeded handle no longer needs approval
+        emit();
+        render();
+        return Promise.resolve(low(handle) + " -> " + addr);
+      },
+      // DEMO-only. Clears claims, requests and any extra seeds for a fresh run.
+      demoReset: function () {
+        if (!usingDemo()) return Promise.reject(new Error("demoReset is dev-server only"));
+        // Clear in place. watch() aliases `idents` to demo.idents once, so
+        // reassigning here would leave the module reading a detached object.
+        for (var a in demo.idents) delete demo.idents[a];
+        for (var b in demo.reqs) delete demo.reqs[b];
+        demo.seeds = { user: "*", owner: "*" };
+        try { localStorage.removeItem(REQ_KEY); } catch (e) {}
+        try { localStorage.removeItem(NUDGE_KEY); } catch (e) {}
+        emit();
+        render();
+        return Promise.resolve("demo claim state cleared");
+      },
+      demoState: function () {
+        return { seeds: demo.seeds, idents: demo.idents, reqs: demo.reqs };
+      }
+    };
+  })();
+  window.__CLAIMS = Claims;
+
+  // The typed-name login is gone: a Google account plus a claimed handle is the only
+  // way in now. The connection-health UI stays, because a wedged first connection is
+  // still possible and the claim chips need the roster before they can render.
   (function () {
     var retry = document.getElementById("loginRetry");
     if (retry) retry.onclick = function () { reloadToReconnect(); };
@@ -3749,9 +4799,6 @@
       if (!netReady) { stopRetry(); nudgeConnection(); scheduleRetry(); }
     });
   })();
-  document.getElementById("loginName").addEventListener("keydown", function (e) {
-    if (e.key === "Enter") document.getElementById("loginBtn").click();
-  });
 
   // ---- Shell: base layer + challenge sheet ----
   // switchTab stays the single navigation entry point so every existing caller keeps
@@ -5672,8 +6719,13 @@
 
   // Live pending-request count badge on the header account button — shown to anyone who
   // can approve (challenge owners + global admins); scoped to their approvable challenges.
+  // Name claims ride the same badge: they land in the same backoffice the badge points at.
+  function claimPendingCount() {
+    var C = window.__CLAIMS;
+    return (C && C.pending) ? C.pending().length : 0;
+  }
   function updateAdminBadge() {
-    var n = pendingCount();
+    var n = pendingCount() + claimPendingCount();
     var b = document.getElementById("pendingBadge");
     if (!b) return;
     if (n > 0) { b.textContent = n > 9 ? "9+" : String(n); b.hidden = false; }
@@ -5825,6 +6877,7 @@
       if (a && a.length) cache.admins = a;
       rosterLoaded = true;
       persistRosterCache();
+      try { window.dispatchEvent(new Event("minutes-roster")); } catch (e) {}
       try { sessionStorage.removeItem("minutes_reconnect"); } catch (e) {}
       setLoginConnecting(false);
       renderAll();
@@ -6087,6 +7140,7 @@
       entriesAll = e;
 
       rosterLoaded = true; netReady = true; entriesNetReady = true; setOffline(false);
+      try { window.dispatchEvent(new Event("minutes-roster")); } catch (e) {}
     }
 
     return {
@@ -6743,9 +7797,11 @@ ${r?'Expression: "'+r+`"
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, signOut,
+           onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
            enableNetwork, disableNetwork,
-           collection, onSnapshot, setDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+           collection, onSnapshot, setDoc, updateDoc, deleteDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyAqaZ5b4txwYn1Ts57rwvGE3jRUWS9GDxA",
@@ -6756,10 +7812,66 @@ ${r?'Expression: "'+r+`"
     appId: "1:41683816465:web:6abdac5887b6d9830da1b0"
   };
 
-  // Skip Firebase entirely on localhost - the in-app DemoStore handles data there.
+  // Skip Firestore on localhost - the in-app DemoStore handles data there.
   const DEMO = location.hostname === "localhost" || location.hostname === "127.0.0.1";
-  if (!DEMO) try {
-    const app = initializeApp(firebaseConfig);
+
+  // Auth is initialized in BOTH demo and production, unlike Firestore. Sign-in has to
+  // be exercisable on the dev server, and it is safe there: authenticating creates a
+  // session but touches no data, because DemoStore still owns every read and write
+  // locally. `localhost` is already an authorized domain in Firebase.
+  let fbApp = null;
+  try {
+    fbApp = initializeApp(firebaseConfig);
+  } catch (e) {
+    console.error("Firebase app init failed:", e);
+  }
+
+  if (fbApp) try {
+    const auth = getAuth(fbApp);
+    window.__AUTH = {
+      ready: true,
+      user: null,
+      signInGoogle: function () {
+        var p = new GoogleAuthProvider();
+        // Without this, a browser with exactly one Google account signs straight
+        // back in with no prompt, so logging out looks like it did nothing and
+        // switching accounts is impossible. Costs one tap, buys a real logout.
+        p.setCustomParameters({ prompt: "select_account" });
+        return signInWithPopup(auth, p);
+      },
+      // onAuthStateChanged only fires on an actual transition, so if the UI ever
+      // drifts out of sync with real auth state (stale __AUTH.user, session cleared
+      // in another tab, revoked token) signing out would resolve silently and leave
+      // the button dead. Settle the state here too; a duplicate event is harmless
+      // because every listener treats null as "signed out".
+      signOut: function () {
+        return signOut(auth).then(function () {
+          if (window.__AUTH.user) {
+            window.__AUTH.user = null;
+            window.dispatchEvent(new CustomEvent("minutes-auth", { detail: null }));
+          }
+        });
+      }
+    };
+    // Phase 2 is deliberately non-enforcing: the signed-in user is recorded and shown,
+    // but app identity is still the typed handle. The uid becomes the identity only
+    // once the claim flow (identities/{handle}) lands.
+    onAuthStateChanged(auth, function (u) {
+      window.__AUTH.user = u ? {
+        uid: u.uid,
+        email: u.email || "",
+        emailVerified: !!u.emailVerified,
+        name: u.displayName || "",
+        photo: u.photoURL || ""
+      } : null;
+      window.dispatchEvent(new CustomEvent("minutes-auth", { detail: window.__AUTH.user }));
+    });
+  } catch (ae) {
+    console.warn("Auth init skipped:", ae);
+  }
+
+  if (!DEMO && fbApp) try {
+    const app = fbApp;
     // App Check - verifies requests come from this app (reCAPTCHA v3).
     // Wrapped so local file:// use still works while enforcement is off.
     try {
@@ -6792,7 +7904,7 @@ ${r?'Expression: "'+r+`"
       db = getFirestore(app);
       durable = false;
     }
-    window.__FB = { db, durable, collection, onSnapshot, setDoc, updateDoc, deleteDoc, doc,
+    window.__FB = { db, durable, collection, onSnapshot, setDoc, updateDoc, deleteDoc, doc, getDoc,
                     enableNetwork, disableNetwork };
   } catch (e) {
     console.error("Firebase init failed - falling back to local storage:", e);

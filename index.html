@@ -292,18 +292,25 @@
 
   /* ---- Login ---- */
   [x-cloak] { display: none !important; }
+  /* .wrap is a flex item here, and its `margin: 0 auto` makes it shrink-to-fit on the
+     cross axis instead of stretching. Without an explicit width the card ends up as
+     wide as its longest unbreakable line, so wording changes silently resize it. */
   #login { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; }
+  #login .wrap { width: 100%; }
   /* Boot gate: avoid a login-screen flash on reload when a session is saved. */
   html.has-session #login { display: none !important; }
   html.has-session #app { display: block !important; }
-  .login-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--r-xl); padding: 26px 22px; text-align: center; }
-  .login-card .logo { font-size: 40px; margin-bottom: 14px; line-height: 0; }
-  .login-card .logo svg { width: 168px; height: 168px; display: inline-block; vertical-align: middle; }
-  .login-card h1 { font-size: 24px; margin: 0 0 4px; letter-spacing: -0.5px; }
-  .login-card p { color: var(--muted); font-size: 14px; margin: 0 0 20px; }
+  .login-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--r-xl); padding: 34px 22px 26px; text-align: center; }
+  .login-card .logo { font-size: 40px; margin-bottom: 22px; line-height: 0; }
+  .login-card .logo svg { width: 100px; height: 100px; display: inline-block; vertical-align: middle; }
+  .login-card h1 { font-size: 25px; margin: 0 0 5px; letter-spacing: -0.5px; }
+  .login-card p { color: var(--muted); font-size: 14px; margin: 0 0 24px; }
+  /* This rule now matches exactly one element, #claimNewName, since every other input
+     lives in #app. Left-aligned to match the label above and the helper below it;
+     centring was a leftover from the old fully-centred name-only login card. */
   .login-card input {
     width: 100%; padding: 15px; border-radius: var(--r-md); border: 1px solid var(--border-2);
-    background: var(--card-2); color: var(--text); font-size: 16px; outline: none; text-align: center; margin-bottom: 12px;
+    background: var(--card-2); color: var(--text); font-size: 16px; outline: none; text-align: left; margin-bottom: 12px;
   }
   .login-card input:focus { border-color: var(--accent); }
   .login-status { align-items: center; justify-content: center; gap: 8px; color: var(--muted); font-size: 13px; margin: 4px 0 8px; }
@@ -316,24 +323,79 @@
   .login-or { display: flex; align-items: center; gap: 10px; margin: 18px 0 10px; color: var(--muted); font-size: 12px; }
   .login-or::before, .login-or::after { content: ""; height: 1px; background: var(--border); flex: 1; }
   .login-who { color: var(--muted); font-size: 13px; margin: 10px 0 2px; }
-  .login-hint { color: var(--muted); font-size: 12px; margin: 8px 0 0; line-height: 1.45; }
+  /* `.login-card p` is more specific than `.login-hint`, so this has to be scoped to
+     the card or its margins are silently dropped. */
+  .login-card p.login-hint { color: var(--muted); font-size: 12px; margin: 14px auto 0; line-height: 1.5; max-width: 220px; }
 
   /* ---- Handle claim (Phase 3) ---- */
   .claim { margin-top: 12px; text-align: left; }
   .claim-q { font-size: 13px; font-weight: 600; margin: 0 0 8px; }
-  .claim-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
-  .claim-chip { border: 1px solid var(--line); background: transparent; color: var(--text);
-    border-radius: 999px; padding: 7px 14px; font-size: 13px; font-weight: 600;
-    cursor: pointer; font-family: inherit; }
-  .claim-chip[aria-pressed="true"] { border-color: var(--accent); color: var(--accent);
-    box-shadow: inset 0 0 0 1px var(--accent); }
   .claim-note { color: var(--muted); font-size: 12px; margin: 8px 0 0; line-height: 1.45; }
-  .claim-pending { border: 1px solid var(--line); border-radius: 12px; padding: 14px;
+
+  /* ---- Onboarding. The claim card is the first real screen a new person sees, so
+     it gets treated as a moment rather than a stray input. While it is up the login
+     card switches modes: the OAuth button has already flipped to "Log out" by then,
+     and leaving it in place makes the most prominent action on screen the wrong one.
+     Hidden via a class so the auth module's inline styles can't fight it. ---- */
+  .login-card.onb #googleBtn,
+  .login-card.onb #authWho,
+  .login-card.onb #authHint { display: none !important; }
+  .onb-in { animation: onbIn .32s cubic-bezier(.2,.7,.3,1) both; }
+  @keyframes onbIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  .onb-hero { display: flex; align-items: center; gap: 10px; padding: 10px;
+    border: 1px solid var(--border); background: var(--card-2);
+    border-radius: var(--r-md); margin-bottom: 14px; }
+  .onb-av { width: 38px; height: 38px; border-radius: 50%; flex: 0 0 auto; overflow: hidden;
+    display: flex; align-items: center; justify-content: center; color: #fff;
+    font-weight: 800; font-size: 16px; background: var(--accent); }
+  .onb-av img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .onb-id { min-width: 0; }
+  .onb-id b { display: block; font-size: 13px; font-weight: 700; line-height: 1.3;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .onb-id span { display: block; color: var(--muted); font-size: 11.5px; line-height: 1.35;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* Scoped to the card for the same reason as .login-hint: bare `.onb-help` loses to
+     `.login-card p`, which silently forced this to 14px and a 24px bottom margin. */
+  .login-card p.onb-help { color: var(--muted); font-size: 11.5px; line-height: 1.45; margin: 0 0 22px; }
+  .login-card.onb .claim .field { margin-bottom: 0; }
+  .login-card.onb .claim .field input { margin-bottom: 6px; }
+
+  /* Three-beat progress. Its real job is to tell someone that an approval step is
+     coming BEFORE they hit it, so the waiting room isn't a surprise. */
+  .onb-steps { display: flex; gap: 6px; margin: 14px 0 0; }
+  .onb-step { flex: 1; min-width: 0; text-align: center; }
+  .onb-step i { display: block; height: 3px; border-radius: var(--r-pill);
+    background: var(--border-2); margin-bottom: 6px; }
+  .onb-step span { display: block; font-size: 10.5px; line-height: 1.3; color: var(--muted);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .onb-step.done i { background: color-mix(in srgb, var(--accent) 45%, transparent); }
+  .onb-step.now i { background: var(--accent); }
+  .onb-step.now span { color: var(--text); font-weight: 700; }
+  /* All three beats land together on approval, so the strip reads as finished
+     rather than leaving the last bar half-lit on the way out. */
+  .onb-steps.all-done .onb-step i { background: var(--accent); }
+  .onb-steps.all-done .onb-step span { color: var(--text); }
+
+  .onb-alt { display: none; width: 100%; margin: 12px 0 0; padding: 0; border: 0;
+    background: none; color: var(--muted); font-size: 12px; text-align: center;
+    text-decoration: underline; cursor: pointer; font-family: inherit; }
+  .login-card.onb .onb-alt { display: block; }
+  .onb-alt:hover { color: var(--text); }
+  /* The landing is a handoff, not a decision point: offering an account switch
+     one second before the app opens is both wrong and a way to break the
+     transition mid-flight. */
+  .login-card.landing .onb-alt { display: none; }
+
+  /* --line does not exist. These three read as a hairline in light mode only by
+     luck: an undefined custom property falls back to currentColor, which is
+     --text, so in dark mode the border was a near-white outline. */
+  .claim-pending { border: 1px solid var(--border); border-radius: 12px; padding: 14px;
     font-size: 13px; line-height: 1.45; margin-top: 12px; text-align: left; }
   .cw-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
   .cw-sub { color: var(--muted); font-size: 12.5px; line-height: 1.5; margin: 0 0 12px; }
   .cw-stage { position: relative; border-radius: 10px; overflow: hidden;
-    background: var(--bg); border: 1px solid var(--line); }
+    background: var(--bg); border: 1px solid var(--border); }
   .cw-stage canvas { display: block; width: 100%; height: 132px; touch-action: manipulation; }
   .cw-overlay { position: absolute; inset: 0; display: flex; flex-direction: column;
     align-items: center; justify-content: center; gap: 2px; cursor: pointer;
@@ -343,6 +405,19 @@
   .cw-foot { display: flex; align-items: baseline; justify-content: space-between;
     gap: 8px; margin-top: 8px; font-size: 11.5px; color: var(--muted); }
   .cw-foot b { color: var(--text); font-variant-numeric: tabular-nums; }
+
+  /* The approval landing. Sized to the game stage it replaces (132px + the foot
+     row) so the card holds its height instead of collapsing under the cursor at
+     the exact moment we want the eye to settle. */
+  .cw-done { display: none; flex-direction: column; align-items: center;
+    justify-content: center; gap: 10px; min-height: 154px; border-radius: 10px;
+    background: var(--bg); border: 1px solid var(--border); text-align: center; }
+  .cw-tick { width: 46px; height: 46px; border-radius: 50%; background: var(--accent);
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    font-size: 24px; line-height: 1; animation: cwPop .32s cubic-bezier(.2,.9,.3,1.3) both; }
+  .cw-done b { font-size: 15px; }
+  @keyframes cwPop { from { transform: scale(.3); opacity: 0 } to { transform: scale(1); opacity: 1 } }
+  @media (prefers-reduced-motion: reduce) { .cw-tick { animation: none } }
 
   /* ---- App ---- */
   /* #app is shown by x-show once Alpine boots; [x-cloak] covers the pre-init frame.
@@ -875,6 +950,14 @@
   .blank--lg .b-t { font-size: 17px; }
   .blank--lg .b-s { font-size: 13.5px; }
 
+  /* First-run replacement for the "My challenges" empty state. That blank reports
+     an absence, which is the wrong register for someone who just got approved.
+     Deliberately no accent rail: the app already spends that signal on "active
+     challenge" and "your own row", and a third meaning would blunt all three. */
+  .onb-welcome { text-align: left; padding: 16px 14px; }
+  .onb-welcome b { display: block; font-size: 15px; margin-bottom: 4px; }
+  .onb-welcome p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
+
   /* ---- Transient feedback -------------------------------------------------
      Reports the result of an action, so it is anchored to the action rather
      than to the viewport. The old bar was full width at bottom:22px, which is
@@ -1071,6 +1154,12 @@
   .approve-row .ar-who { flex: 1; min-width: 0; }
   .approve-row .ar-who .ar-name { flex: none; }
   .approve-row .ar-sub { font-size: 11.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* Marks a claim for a name that is not on the roster, i.e. a genuine stranger
+     rather than a member asking for their own name back. */
+  .approve-row .ar-tag { margin-left: 6px; padding: 1px 6px; border-radius: 999px;
+    font-size: 10px; font-weight: 700; letter-spacing: .02em; text-transform: uppercase;
+    color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent);
+    vertical-align: middle; }
 
   /* Account-linking nudge - a dismissible banner at the top of each layer. The
      action runs in place: nobody gets logged out to link an account. Kept on the
@@ -1825,7 +1914,7 @@
 <div id="login" x-show="!$store.s.signedIn" x-cloak>
   <div class="wrap">
     <div class="login-card">
-      <div class="logo"><svg viewBox="0 0 100 100" aria-label="Minutes" role="img"><defs><linearGradient id="loginmark" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8f72ff"/><stop offset="1" stop-color="#6b4bff"/></linearGradient></defs><path d="M54.24 18.28 A32 32 0 1 1 24.58 30.56" fill="none" stroke="url(#loginmark)" stroke-width="8.5" stroke-linecap="round"/><path d="M38 58 V42 L50 53 L62 42 V58" fill="none" stroke="url(#loginmark)" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="logo"><svg viewBox="12 12 76 76" aria-label="Minutes" role="img"><defs><linearGradient id="loginmark" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8f72ff"/><stop offset="1" stop-color="#6b4bff"/></linearGradient></defs><path d="M54.24 18.28 A32 32 0 1 1 24.58 30.56" fill="none" stroke="url(#loginmark)" stroke-width="8.5" stroke-linecap="round"/><path d="M38 58 V42 L50 53 L62 42 V58" fill="none" stroke="url(#loginmark)" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
       <h1>Minutes</h1>
       <p id="loginSub">Sign in to open your tracker</p>
       <div class="msg msg--quiet" id="loginErr" aria-live="polite"></div>
@@ -1843,30 +1932,63 @@
       </button>
       <div class="msg msg--quiet" id="authErr" aria-live="polite"></div>
 
-      <!-- Handle claim: shown only once signed in with no identity bound yet. -->
-      <div class="claim" id="claimBox" style="display:none">
-        <div class="claim-q" id="claimQ">Which name is yours?</div>
-        <div class="claim-list" id="claimList"></div>
-        <button class="btn" id="claimBtn" disabled>Claim this name</button>
+      <!-- Handle claim. Only reached when the silent email match found nothing, so
+           whoever sees this could not be identified from their address: a member on
+           a different Google account, or a genuine newcomer. Either way an admin
+           approves. The roster is deliberately NOT listed here, because that would
+           show every member's name to anyone who signs in. -->
+      <div class="claim onb-in" id="claimBox" style="display:none">
+        <div class="onb-hero">
+          <div class="onb-av" id="onbAv">?</div>
+          <div class="onb-id">
+            <b id="onbName">Welcome</b>
+            <span id="onbMail"></span>
+          </div>
+        </div>
+        <div class="claim-q" id="claimQ">What should we call you?</div>
+        <div class="field">
+          <input type="text" id="claimNewName" placeholder="e.g. Morgan" autocomplete="off"
+                 autocapitalize="words" maxlength="24" />
+        </div>
+        <p class="onb-help">This is the name your minutes are logged under.</p>
+        <button class="btn" id="claimBtn" disabled>Continue</button>
         <div class="msg msg--quiet" id="claimErr" aria-live="polite"></div>
-        <p class="claim-note" id="claimNote">This links the name to your Google account, so you never have to type it again.</p>
+        <div class="onb-steps">
+          <div class="onb-step done"><i></i><span>Signed in</span></div>
+          <div class="onb-step now"><i></i><span>Your name</span></div>
+          <div class="onb-step"><i></i><span>Admin approves</span></div>
+        </div>
       </div>
 
       <div class="claim-pending" id="claimPending" style="display:none" aria-live="polite">
         <div class="cw-title" id="cwTitle">You are in the queue</div>
         <p class="cw-sub" id="cwSub"></p>
-        <div class="cw-stage">
+        <div class="cw-stage" id="cwStage">
           <canvas id="cwCanvas"></canvas>
           <div class="cw-overlay" id="cwOverlay">
             <strong id="cwOverlayTitle">Kill some minutes?</strong>
             <span id="cwOverlayHint">Tap or press space to jump</span>
           </div>
         </div>
-        <div class="cw-foot">
+        <div class="cw-done" id="cwDone">
+          <span class="cw-tick" aria-hidden="true">&#10003;</span>
+          <b id="cwDoneTx">You are in</b>
+        </div>
+        <div class="cw-foot" id="cwFoot">
           <span>Minutes survived: <b id="cwScore">0</b></span>
           <span>Best: <b id="cwBest">0</b></span>
         </div>
+        <div class="onb-steps" id="onbStepsPend">
+          <div class="onb-step done"><i></i><span>Signed in</span></div>
+          <div class="onb-step done"><i></i><span>Your name</span></div>
+          <div class="onb-step now"><i></i><span id="onbStep3">Admin approves</span></div>
+        </div>
       </div>
+
+      <!-- Shared by the name card and the waiting room. Onboarding mode hides the
+           OAuth button, so without this someone who queued on the wrong Google
+           account would have no way out of the flow at all. -->
+      <button type="button" class="onb-alt" id="onbSwitch">Not you? Use a different account</button>
 
       <!-- Signed in with Google and a name already bound, but the app session
            has ended (deliberate log out, or cleared in another tab). Without
@@ -1892,7 +2014,8 @@
     <header>
       <div class="greet">
         <div class="greet-text">
-          <h1>Hi, <span id="meName">you</span> 👋</h1>
+          <h1><span x-text="$store.s.hello.word"></span>, <span id="meName"
+              x-text="$store.s.hello.name"></span> <span x-text="$store.s.hello.emoji"></span></h1>
           <div class="sub" id="tabSub">Your challenges</div>
         </div>
       </div>
@@ -1933,7 +2056,13 @@
                  in the DOM as the wrapper's first child, which is exactly why those
                  rules use `.chall-row + .chall-row` and never :first-child. -->
             <div :id="sec.listId">
-            <template x-if="!sec.rows.length"><div class="blank" x-text="sec.empty"></div></template>
+            <template x-if="!sec.rows.length && sec.welcome">
+              <div class="onb-welcome">
+                <b x-text="sec.welcome.title"></b>
+                <p x-text="sec.welcome.body"></p>
+              </div>
+            </template>
+            <template x-if="!sec.rows.length && !sec.welcome"><div class="blank" x-text="sec.empty"></div></template>
             <template x-for="c in sec.rows" :key="c.cid">
               <div class="chall-row"
                    :class="{ 'active-cid': c.active, 'tappable': c.approved }"
@@ -2567,7 +2696,7 @@
             <div class="approve-row">
               <span class="dot" :style="'background:' + r.color" x-text="r.initial"></span>
               <div class="ar-who">
-                <div class="ar-name" x-text="r.name"></div>
+                <div class="ar-name"><span x-text="r.name"></span><span class="ar-tag" x-show="r.isNew">new</span></div>
                 <div class="ar-sub" x-text="r.email"></div>
               </div>
               <button class="ar-btn ar-approve" @click="$store.s.act.approveClaim($event, r.handle)">Approve</button>
@@ -2674,7 +2803,7 @@
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
   var NAV_KEY = "minutes-nav";
-  var VERSION = "14.5";
+  var VERSION = "15.1";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -3035,7 +3164,61 @@
   state.editTagRev = 0;
   state.manageCid = null;
   state.claimRev = 0;         // identity/claim data ticks (see the Claims module)
+  // Ticks only when the greeting's time-of-day bucket actually changes, so a page
+  // left open overnight still reads correctly without re-rendering every minute.
+  state.hourRev = 0;
+  // Latched once we have SEEN the user in a challenge. Without the latch the
+  // first-run greeting would return every time someone left their last challenge.
+  state.welcomed = false;
   function bump() { state.rev++; }
+
+  var WELCOME_KEY = "minutes_welcomed_v1";
+
+  // Time-of-day greeting for the app header. Clipped forms ("Morning, Rando")
+  // rather than "Good morning": warmer, and short enough that a long name never
+  // pushes the h1 into ellipsis. Night is the exception, because "Night, Rando"
+  // is a goodbye in English, not a greeting.
+  function dayPart() {
+    var h = new Date().getHours();
+    if (h < 5)  return { key: "night",   word: "Still up",  emoji: "\uD83C\uDF19" };
+    if (h < 12) return { key: "morning", word: "Morning",   emoji: "\uD83C\uDF05" };
+    if (h < 18) return { key: "day",     word: "Afternoon", emoji: "\u2600\uFE0F" };
+    if (h < 22) return { key: "evening", word: "Evening",   emoji: "\uD83C\uDF06" };
+    return { key: "night", word: "Still up", emoji: "\uD83C\uDF19" };
+  }
+  var lastPart = dayPart().key;
+  setInterval(function () {
+    var k = dayPart().key;
+    if (k !== lastPart) { lastPart = k; state.hourRev++; }
+  }, 60000);
+
+  // How many challenges the user is in, pending included: a join that is waiting
+  // on an admin still means they are past the "you have nothing yet" moment.
+  function myChallCount() {
+    return Object.keys(challMeta).filter(function (c) {
+      var s = myStatus(c);
+      return s === "approved" || s === "pending";
+    }).length;
+  }
+
+  // First run is derived, not remembered, so it is automatically correct for the
+  // people already using the app: they are all in a challenge, so they latch on
+  // their first render after this ships and never see the newcomer copy.
+  // Gated on membership actually having loaded, otherwise every cold start would
+  // flash "Welcome" at an existing user during the empty first frame.
+  function firstRun() {
+    if (!state.signedIn || state.welcomed) return false;
+    if (!(rosterLoaded && Object.keys(membersByCid).length > 0)) return false;
+    if (myChallCount() > 0) { markWelcomed(); return false; }
+    return true;
+  }
+
+  // Called from inside a view getter, so the store write is deferred; the
+  // localStorage write is not reactive and is safe to do inline.
+  function markWelcomed() {
+    try { localStorage.setItem(WELCOME_KEY, String(state.me || "").toLowerCase()); } catch (e) {}
+    setTimeout(function () { state.welcomed = true; }, 0);
+  }
 
   // The Claims module owns the identity data but is invisible to the store, so it
   // announces changes and the store re-reads through window.__CLAIMS.
@@ -3067,6 +3250,17 @@
   }
 
   view("canCreate", function () { this.rev; this.me; return meIsAdmin(); });
+
+  // Header greeting. Newcomers get welcomed by name for their first session; from
+  // the second visit on it is the time of day, so the header stops being a
+  // constant and starts being a small sign of life.
+  view("hello", function () {
+    this.rev; this.me; this.signedIn; this.welcomed; this.hourRev;
+    var name = state.me || "you";
+    if (firstRun()) return { word: "Welcome", name: name, emoji: "\uD83D\uDC4B" };
+    var p = dayPart();
+    return { word: p.word, name: name, emoji: p.emoji };
+  });
   view("chall", function () {
     this.rev; this.activeCid;
     var cid = activeCid();
@@ -3076,7 +3270,7 @@
   // Challenges screen: both lists come from one section list so the row markup
   // is written once rather than duplicated per list.
   view("challSections", function () {
-    this.rev; this.me; this.activeCid;
+    this.rev; this.me; this.activeCid; this.welcomed; this.signedIn;
     var cids = Object.keys(challMeta).sort(function (a, b) {
       return (challMeta[a].createdTs || 0) - (challMeta[b].createdTs || 0);
     });
@@ -3110,6 +3304,13 @@
     });
     return [
       { id: "mine", listId: "myChallList", label: "My challenges", note: "", rows: mine,
+        // A newcomer's very first screen. The plain empty state reads as a
+        // shortfall, which is the wrong note straight after being approved.
+        welcome: (!mine.length && firstRun())
+          ? { title: "You are all set.",
+              body: "Pick a challenge from Discover below. An admin waves you in, "
+                  + "then you can start logging minutes." }
+          : null,
         empty: "You haven't joined a challenge yet. Pick one from Discover below." },
       { id: "disc", listId: "discoverList", label: "Discover", rows: disc,
         note: "Public challenges you can join. Joining needs an admin's OK.",
@@ -3497,7 +3698,7 @@
       total: rows.length,
       title: "Name claims \u00B7 " + rows.length,
       rows: rows.map(function (r) {
-        return { handle: r.handle, name: r.name, email: r.email,
+        return { handle: r.handle, name: r.name, email: r.email, isNew: r.isNew,
           initial: String(r.name || "?").charAt(0).toUpperCase(), color: colorFor(r.name) };
       })
     };
@@ -3916,7 +4117,11 @@
     state.viewMonth = firstOfMonth(new Date());
     localStorage.setItem(SESSION_KEY, name);
     state.signedIn = true;
-    document.getElementById("meName").textContent = name;
+    // The greeting is a view now (see the "hello" view model), so the only thing
+    // read here is whether this device has already welcomed this handle.
+    var seen = "";
+    try { seen = localStorage.getItem(WELCOME_KEY) || ""; } catch (e) {}
+    state.welcomed = seen === String(name).toLowerCase();
     var av = document.getElementById("headAvatar");
     av.textContent = name.charAt(0).toUpperCase();
     av.style.background = colorFor(name);
@@ -4231,7 +4436,6 @@
   var Claims = (function () {
     var REQ_KEY = "minutes_claim_req";   // handle this device last asked for
     var box     = document.getElementById("claimBox");
-    var listEl  = document.getElementById("claimList");
     var btn     = document.getElementById("claimBtn");
     var qEl     = document.getElementById("claimQ");
     var noteEl  = document.getElementById("claimNote");
@@ -4239,18 +4443,28 @@
     var resEl   = document.getElementById("claimResume");
     var resBtn  = document.getElementById("resumeBtn");
     var resName = document.getElementById("resumeName");
-    if (!box || !listEl || !btn) return { render: function () {} };
+    var newEl   = document.getElementById("claimNewName");
+    var cardEl  = document.querySelector(".login-card");
+    var avEl    = document.getElementById("onbAv");
+    var onbName = document.getElementById("onbName");
+    var onbMail = document.getElementById("onbMail");
+    var switchEl = document.getElementById("onbSwitch");
+    if (!box || !btn || !newEl) return { render: function () {} };
 
     var idents = {};        // lower(handle) -> { handle, uid, ts, via }
     var identsLoaded = false;
     var reqs = {};          // lower(handle) -> { handle, uid, email, ts }  (admins only)
     var reqsLive = false;   // true once the admin-only listener has actually attached
-    var picked = null;
     var busy = false;
     var wantConnect = false;   // banner tapped before the Google popup came back
     var autoLoggedIn = false;
     var subscribed = false;
     var reqSubscribed = false;
+    var sweptUid = null;    // uid the silent email match has already been run for
+    var sweeping = false;
+    var lastUid = null;
+    var prefilled = false;
+    var badPhoto = "";      // photo url that already failed to load, so we stop retrying
 
     // Anything the app's Alpine store renders from this module has to announce
     // itself: the store cannot see module-local variables, so it ticks a revision
@@ -4287,6 +4501,28 @@
       // two are wildcards so the flow stays clickable from any Google account.
       seeds: { adminowner: "maisrando@gmail.com", user: "*", owner: "*" }
     };
+
+    // DEMO-only rehearsal switches, for walking the flow by hand on the dev server:
+    //   ?onboard        arrive as a stranger: no seeds, so the next Google sign-in
+    //                   cannot be matched by email and gets the full name flow
+    //   ?onboard=admin  arrive as an admin with somebody waiting in the queue
+    // Without these the wildcard seeds above silently bind you to a handle and the
+    // onboarding is unreachable locally. Keyed off IS_DEMO (hostname), not
+    // usingDemo(), because __FB is set by a module script that may not have run yet.
+    var onboardArg = location.search.match(/[?&]onboard(?:=([^&]*))?/);
+    if (onboardArg && IS_DEMO) {
+      if ((onboardArg[1] || "") === "admin") {
+        demo.seeds = { adminowner: "*" };     // any account you sign in with
+        demo.reqs["kaisa"] = {
+          handle: "Kaisa", uid: "demo-kaisa-uid",
+          email: "kaisa.lepp@gmail.com", ts: Date.now()
+        };
+      } else {
+        demo.seeds = {};
+      }
+      try { localStorage.removeItem(SESSION_KEY); } catch (e) {}
+      try { localStorage.removeItem("minutes_claim_req"); } catch (e) {}
+    }
 
     // Mirrors the auto-claim condition in firestore.phase3.rules: the handle must
     // be seeded, the address must match exactly, and the address must be verified.
@@ -4371,33 +4607,121 @@
     // Rows for the backoffice review queue, oldest request first.
     function pendingList() {
       if (!reqsLive) return [];
+      var known = {};
+      members().forEach(function (n) { known[low(n)] = true; });
       return Object.keys(reqs).map(function (k) {
         var r = reqs[k] || {};
-        return { handle: k, name: r.handle || k, email: r.email || "", uid: r.uid || "", ts: r.ts || 0 };
+        return { handle: k, name: r.handle || k, email: r.email || "", uid: r.uid || "",
+                 ts: r.ts || 0, isNew: !known[k] };
       }).sort(function (a, b) { return (a.ts || 0) - (b.ts || 0); });
     }
 
-    function claimDoc(handle) {
+    // Validates a proposed name. Mirrors the roster editor's rule so the two ways a
+    // name can enter the system agree. An UNCLAIMED roster name is allowed through
+    // on purpose: that is exactly how a member whose address was never seeded asks
+    // for their own name back. It still goes to an admin, who sees the address.
+    function checkNewName(name) {
+      if (!name) return "Enter a name.";
+      if (!/^[A-Za-z][A-Za-z0-9 _-]{0,23}$/.test(name)) {
+        return "Use letters/numbers, 1-24 chars, starting with a letter.";
+      }
+      if (idents[low(name)]) return "That name is already taken.";
+      return "";
+    }
+
+    // Google's profile name is the best guess we have at what someone wants to be
+    // called, so the field is pre-filled and they only have to confirm. First word
+    // only: names sit on a leaderboard, where "Rando Mais" is noise.
+    function suggestedName() {
       var u = me();
+      if (!u) return "";
+      // The auth module publishes Google's display name as `name` (it maps
+      // u.displayName -> name). Reading only displayName here silently fell back to
+      // the email local part for every real account, which looked correct for
+      // addresses like jaan.tamm@ and wrong for everyone else.
+      var raw = String(u.name || u.displayName || "").trim();
+
+      if (!raw && u.email) raw = String(u.email).split("@")[0];
+      var first = (raw.split(/[\s.]+/)[0] || "").replace(/[^A-Za-z0-9_-]/g, "").slice(0, 24);
+      if (!first || !/^[A-Za-z]/.test(first)) return "";
+      return first.charAt(0).toUpperCase() + first.slice(1);
+    }
+
+    // A newcomer is not in meta/roster, so binding the identity alone would approve
+    // someone who then appears nowhere: the leaderboard, participants and challenge
+    // membership all read the roster. Added first so that by the time the identity
+    // lands on their device and logs them in, the roster already knows them.
+    function addToRoster(name) {
+      if (!name) return Promise.resolve();
+      if (members().some(function (n) { return low(n) === low(name); })) return Promise.resolve();
+      cache.members = members().concat([name]);
+      return Store.saveRoster();
+    }
+
+    // Takes the user tryClaim already validated rather than re-reading me(). The
+    // demo path builds this inside a timer, by which point the user may have signed
+    // out, and a fresh read would be null even though the attempt began valid.
+    function claimDoc(handle, u) {
+      u = u || me();
       return { handle: handle, uid: u.uid, ts: Date.now(), via: "email" };
     }
 
     function tryClaim(handle) {
       var u = me();
+      // The sweep is sequential and every attempt is a round trip, so the user can
+      // sign out between two of them. Without this the next attempt dereferences a
+      // null user: claimDoc() would throw synchronously, escaping the rejection
+      // handler in step() entirely, because tryClaim never returns a promise to
+      // reject. Signing out mid-claim is not an error worth reporting, so callers
+      // treat this code as "stop quietly".
+      if (!u) return Promise.reject({ code: "signed-out" });
       if (usingDemo()) {
         return new Promise(function (res, rej) {
           setTimeout(function () {
-            if (demoSeedMatches(handle, u)) { demo.idents[low(handle)] = claimDoc(handle); res(); }
+            if (demoSeedMatches(handle, u)) { demo.idents[low(handle)] = claimDoc(handle, u); res(); }
             else rej({ code: "permission-denied" });
           }, 250);
         });
       }
       var fb = window.__FB;
-      return fb.setDoc(fb.doc(fb.db, "identities", low(handle)), claimDoc(handle));
+      return fb.setDoc(fb.doc(fb.db, "identities", low(handle)), claimDoc(handle, u));
+    }
+
+    // Silent email match. The rules compare our verified email against claimSeeds,
+    // but no client may read that collection, so the app cannot ask "which name is
+    // mine?" and has to find out by attempting the claim. Deliberately SEQUENTIAL
+    // with an early exit: firing these in parallel would bind every matching handle
+    // at once, and one person must end up with one name. Reasonable only because the
+    // roster is small and seeds exist purely for the migration: once everyone has
+    // claimed, delete claimSeeds and this goes with it. Failure is never fatal, it
+    // just means we fall through to asking for a name.
+    function sweep() {
+      var u = me();
+      if (!u || sweeping || sweptUid === u.uid) return Promise.resolve(false);
+      var names = unclaimed();
+      sweeping = true;
+      var i = 0;
+      function done(hit) {
+        sweeping = false;
+        sweptUid = u.uid;
+        if (hit && usingDemo()) idents = demo.idents;
+        if (hit) emit();
+        return hit;
+      }
+      function step() {
+        if (i >= names.length) return Promise.resolve(done(false));
+        // Signed out while we were walking the list: stop rather than burning
+        // through the remaining names on an identity that no longer exists.
+        if (!me()) return Promise.resolve(done(false));
+        var h = names[i++];
+        return tryClaim(h).then(function () { return done(true); }, function () { return step(); });
+      }
+      return step();
     }
 
     function fileRequest(handle) {
       var u = me();
+      if (!u) return Promise.reject({ code: "signed-out" });
       var payload = { handle: handle, uid: u.uid, email: u.email || "", ts: Date.now() };
       if (usingDemo()) {
         return new Promise(function (res) {
@@ -4421,10 +4745,19 @@
 
     // ---- ui -----------------------------------------------------------------
 
+    // Onboarding mode swaps the login card over to the "finish setting up" screen.
+    // Done with a class rather than inline styles because the auth module writes
+    // inline display on the same elements whenever an auth event fires.
+    function onbMode(on) {
+      if (cardEl) cardEl.classList.toggle("onb", !!on);
+    }
+
     function hideAll() {
       box.style.display = "none";
       pendEl.style.display = "none";
       if (resEl) resEl.style.display = "none";
+      onbMode(false);
+      if (cardEl) cardEl.classList.remove("landing");
       var sub = document.getElementById("loginSub");
       if (sub) sub.textContent = "Sign in to open your tracker";
       WaitGame.stop();
@@ -4436,6 +4769,7 @@
       if (!resEl) return;
       box.style.display = "none";
       pendEl.style.display = "none";
+      onbMode(false);
       WaitGame.stop();
       if (resName) resName.textContent = handle;
       var sub = document.getElementById("loginSub");
@@ -4446,41 +4780,139 @@
     function showPending(handle) {
       box.style.display = "none";
       pendEl.style.display = "block";
-      var sub = document.getElementById("cwSub");
-      if (sub) {
-        sub.textContent = "An admin has to approve \u201C" + handle + "\u201D before you can log " +
+      onbMode(true);
+      var sub = document.getElementById("loginSub");
+      if (sub) sub.textContent = "Almost there";
+      var cw = document.getElementById("cwSub");
+      if (cw) {
+        cw.textContent = "An admin has to approve \u201C" + handle + "\u201D before you can log " +
           "anything. They have been sent the request. Nothing else for you to do.";
       }
+      // Undo a previous approval landing, in case this device queues a second
+      // name in the same page load after switching Google accounts.
+      var st = document.getElementById("cwStage");
+      var dn = document.getElementById("cwDone");
+      var ft = document.getElementById("cwFoot");
+      var strip = document.getElementById("onbStepsPend");
+      var s3 = document.getElementById("onbStep3");
+      var title = document.getElementById("cwTitle");
+      if (st) st.style.display = "";
+      if (ft) ft.style.display = "";
+      if (dn) dn.style.display = "none";
+      if (strip) strip.classList.remove("all-done");
+      if (s3) s3.textContent = "Admin approves";
+      if (title) title.textContent = "You are in the queue";
+      if (cardEl) cardEl.classList.remove("landing");
       WaitGame.mount();
     }
 
-    function paintChips() {
-      var names = unclaimed();
-      listEl.innerHTML = "";
-      if (!names.length) {
-        qEl.textContent = rosterLoaded ? "No unclaimed names left." : "Loading names\u2026";
-        btn.disabled = true;
-        noteEl.style.display = "none";
-        return;
-      }
-      qEl.textContent = "Which name is yours?";
-      noteEl.style.display = "";
-      names.forEach(function (h) {
-        var c = document.createElement("button");
-        c.type = "button";
-        c.className = "claim-chip";
-        c.textContent = h;
-        c.setAttribute("aria-pressed", picked === h ? "true" : "false");
-        c.onclick = function () {
-          picked = (picked === h) ? null : h;
-          setMsg("claimErr", "");
-          paintChips();
+    // The approval landing. The strip promised three beats and the third one used
+    // to be destroyed mid-animation, so the payoff of the whole flow was a screen
+    // that silently became a different screen. This lands the beat, then leaves.
+    var landing = false;
+    var landTimer = null;
+    function cancelLanding() {
+      if (landTimer) { clearTimeout(landTimer); landTimer = null; }
+      landing = false;
+    }
+    function approveMoment(handle) {
+      if (landing) return;
+      landing = true;
+      WaitGame.stop();
+      var st = document.getElementById("cwStage");
+      var dn = document.getElementById("cwDone");
+      var ft = document.getElementById("cwFoot");
+      var tx = document.getElementById("cwDoneTx");
+      var strip = document.getElementById("onbStepsPend");
+      var s3 = document.getElementById("onbStep3");
+      var sub = document.getElementById("loginSub");
+      var title = document.getElementById("cwTitle");
+      var cw = document.getElementById("cwSub");
+      if (st) st.style.display = "none";
+      if (ft) ft.style.display = "none";
+      if (dn) dn.style.display = "flex";
+      if (tx) tx.textContent = "You are in, " + handle;
+      if (strip) strip.classList.add("all-done");
+      if (s3) s3.textContent = "Approved";
+      if (sub) sub.textContent = "All done";
+      if (title) title.textContent = "Approved";
+      if (cw) cw.textContent = "An admin waved you through. Opening your tracker.";
+      if (cardEl) cardEl.classList.add("landing");
+      // Signing out mid-hold must not drag them into the app afterwards, so the
+      // timer is cancellable and re-checks that the account is still there.
+      landTimer = setTimeout(function () {
+        landTimer = null;
+        landing = false;
+        if (!me()) { hideAll(); return; }
+        hideAll();
+        doLogin(handle);
+      }, 1500);
+    }
+
+    function showClaim() {
+      pendEl.style.display = "none";
+      if (resEl) resEl.style.display = "none";
+      onbMode(true);
+      var sub = document.getElementById("loginSub");
+      if (sub) sub.textContent = "Nice to meet you";
+      box.style.display = "block";
+      paintChips();
+    }
+
+    // The hero identifies the Google account they arrived on. Without it the only
+    // clue was the "Signed in as" line that onboarding mode hides, and someone with
+    // two Google accounts had no way to tell which one they landed on.
+    function paintHero() {
+      var u = me() || {};
+      if (onbMail) onbMail.textContent = u.email || "";
+      if (onbName) onbName.textContent = (newEl.value.trim() || u.name || "Welcome");
+      if (!avEl) return;
+      var photo = u.photo || "";
+      if (photo && photo !== badPhoto && avEl.dataset.photo !== photo) {
+        avEl.dataset.photo = photo;
+        avEl.innerHTML = "";
+        var img = new Image();
+        img.alt = "";
+        img.referrerPolicy = "no-referrer";   // Google 403s the photo without this
+        // Falls back to the initial rather than leaving a broken image in the hero.
+        // The url is remembered as bad, otherwise every keystroke repaints the hero
+        // and refetches a photo that has already failed once.
+        img.onerror = function () {
+          badPhoto = photo;
+          avEl.dataset.photo = "";
+          avEl.innerHTML = "";
+          paintInitial();
         };
-        listEl.appendChild(c);
-      });
-      btn.disabled = !picked || busy;
-      btn.textContent = busy ? "Claiming\u2026"
-        : (picked ? "Claim \u201C" + picked + "\u201D" : "Claim this name");
+        img.src = photo;
+        avEl.appendChild(img);
+      } else if (!photo || photo === badPhoto) {
+        paintInitial();
+      }
+    }
+
+    function paintInitial() {
+      if (!avEl || avEl.dataset.photo) return;
+      var u = me() || {};
+      var src = newEl.value.trim() || u.name || u.email || "?";
+      avEl.textContent = src.charAt(0).toUpperCase();
+    }
+
+    // Signing out or switching accounts has to drop the previous person's photo,
+    // otherwise the img element stays in the hero for whoever arrives next.
+    function resetHero() {
+      if (!avEl) return;
+      avEl.dataset.photo = "";
+      avEl.textContent = "?";
+      badPhoto = "";
+    }
+
+    function paintChips() {
+      if (!prefilled) { prefilled = true; newEl.value = suggestedName(); }
+      qEl.textContent = "What should we call you?";
+      if (noteEl) noteEl.style.display = "";
+      btn.textContent = busy ? "Sending\u2026" : "Continue";
+      btn.disabled = busy || !newEl.value.trim();
+      paintHero();
     }
 
     // ---- in-app nudge -------------------------------------------------------
@@ -4545,6 +4977,7 @@
         showToast(h + " is now linked to your Google account", "success");
       }).catch(function (e) {
         var code = (e && e.code) || "";
+        if (code === "signed-out") { busy = false; emit(); return; }
         if (code === "permission-denied" || code === "PERMISSION_DENIED") {
           fileRequest(h).then(function () {
             busy = false;
@@ -4553,6 +4986,7 @@
             showToast("Request sent. An admin will confirm it.", "info");
           }).catch(function (e2) {
             busy = false; emit();
+            if (((e2 && e2.code) || "") === "signed-out") return;
             console.error("claim request failed:", e2);
             showToast("Couldn't send the request", "danger");
           });
@@ -4566,10 +5000,31 @@
 
     function render() {
       var u = me();
-      if (!u) { picked = null; autoLoggedIn = false; hideAll(); emit(); return; }
+      if (!u) {
+        autoLoggedIn = false; prefilled = false; newEl.value = "";
+        cancelLanding();
+        resetHero();
+        hideAll(); emit(); return;
+      }
+
+      // A different account is a different person, so nothing typed for the previous
+      // one should survive into their card.
+      if (u.uid !== lastUid) {
+        lastUid = u.uid;
+        prefilled = false;
+        newEl.value = "";
+        resetHero();
+        setMsg("claimErr", "");
+      }
 
       watch();
       watchRequests();
+
+      // The approval landing owns the card until its hold finishes. Without this
+      // the very snapshot that triggered it would re-enter below, find
+      // autoLoggedIn already latched and no app session yet, and paint the resume
+      // button straight over the tick.
+      if (landing) { emit(); return; }
 
       // Resuming the banner's flow after the Google popup returned.
       if (wantConnect && identsLoaded) { connect(); }
@@ -4581,6 +5036,9 @@
         // The latch stops a deliberate log out from being undone instantly.
         if (!autoLoggedIn) {
           autoLoggedIn = true;
+          // Arriving here straight off the waiting room means an admin just
+          // approved them while they watched. Land the third beat first.
+          if (pendEl.style.display === "block") { approveMoment(mine); return; }
           hideAll();
           doLogin(mine);
           return;
@@ -4592,7 +5050,7 @@
         return;
       }
 
-      if (!identsLoaded) { hideAll(); return; }
+      if (!identsLoaded || !rosterLoaded) { hideAll(); return; }
 
       // A request filed from this device is still outstanding.
       var asked = null;
@@ -4602,25 +5060,39 @@
           if (r && r.uid === u.uid) showPending(r.handle || asked);
           else {
             try { localStorage.removeItem(REQ_KEY); } catch (e) {}
-            box.style.display = "block";
-            paintChips();
+            showClaim();
           }
         });
         return;
       }
 
+      // Nobody has been identified from their email yet on this account. Try that
+      // silently before asking for anything; the card stays hidden meanwhile so a
+      // seeded member never sees it at all. Re-render either way: on a hit the
+      // branch above logs them in, on a miss we fall through and ask for a name.
+      if (sweptUid !== u.uid) {
+        if (!sweeping) sweep().then(function () { render(); });
+        hideAll();
+        return;
+      }
+
       pendEl.style.display = "none";
-      box.style.display = "block";
-      paintChips();
+      showClaim();
     }
 
     btn.onclick = function () {
-      if (!picked || busy) return;
-      var handle = picked;
+      if (busy) return;
+      var handle = newEl.value.trim();
+      var bad = checkNewName(handle);
+      if (bad) { setMsg("claimErr", bad); return; }
       busy = true;
       setMsg("claimErr", "");
       paintChips();
 
+      // Still goes through tryClaim first. The silent match has already run, so this
+      // will normally be denied and fall through to a request, but keeping one path
+      // means a name that does turn out to be seeded resolves instantly instead of
+      // pointlessly waiting for an admin.
       tryClaim(handle).then(function () {
         busy = false;
         // The listener will repaint and auto-login; in demo there is no listener.
@@ -4633,6 +5105,7 @@
         // normal case for anyone whose email the admin didn't have. Fall back to a
         // request rather than presenting it as an error.
         var code = (e && e.code) || "";
+        if (code === "signed-out") { busy = false; emit(); return; }
         if (code === "permission-denied" || code === "PERMISSION_DENIED") {
           fileRequest(handle).then(function () {
             busy = false;
@@ -4641,6 +5114,7 @@
             showPending(handle);
           }).catch(function (e2) {
             busy = false;
+            if (((e2 && e2.code) || "") === "signed-out") { emit(); return; }
             console.error("claim request failed:", e2);
             setMsg("claimErr", "Couldn't send the request. Please try again.");
             paintChips();
@@ -4654,10 +5128,26 @@
       });
     };
 
+    newEl.addEventListener("input", function () { setMsg("claimErr", ""); paintChips(); });
+    newEl.addEventListener("keydown", function (e) { if (e.key === "Enter") btn.click(); });
+
     if (resBtn) {
       resBtn.onclick = function () {
         var mine = myHandle();
         if (mine) { hideAll(); doLogin(mine); }
+      };
+    }
+
+    // Onboarding hides the OAuth button, which is also the only way out if someone
+    // signed in with the wrong Google account. This puts that escape hatch back,
+    // quietly, so it can't compete with Continue for attention.
+    if (switchEl) {
+      switchEl.onclick = function () {
+        if (!window.__AUTH || !window.__AUTH.signOut) return;
+        switchEl.disabled = true;
+        window.__AUTH.signOut().catch(function (e) {
+          console.error("Switch account:", e);
+        }).finally(function () { switchEl.disabled = false; });
       };
     }
 
@@ -4699,8 +5189,10 @@
             setTimeout(function () {
               var r = demo.reqs[h];
               if (!r && !uid) { rej(new Error("No request for " + handle)); return; }
+              var display = (r && r.handle) || handle;
+              addToRoster(display);
               demo.idents[h] = {
-                handle: (r && r.handle) || handle,
+                handle: display,
                 uid: uid || r.uid, ts: Date.now(), via: "admin"
               };
               delete demo.reqs[h];
@@ -4714,11 +5206,15 @@
         return fb.getDoc(fb.doc(fb.db, "claimRequests", h)).then(function (s) {
           if (!s.exists() && !uid) throw new Error("No request for " + handle);
           var r = s.exists() ? s.data() : null;
-          return fb.setDoc(fb.doc(fb.db, "identities", h), {
-            handle: (r && r.handle) || handle,
-            uid: uid || r.uid,
-            ts: Date.now(),
-            via: "admin"
+          var display = (r && r.handle) || handle;
+          var who = uid || r.uid;
+          // Roster first: the identity write is what logs the requester in on their
+          // own device, so if it landed first they could arrive before the roster
+          // knew about them and show up nowhere.
+          return addToRoster(display).then(function () {
+            return fb.setDoc(fb.doc(fb.db, "identities", h), {
+              handle: display, uid: who, ts: Date.now(), via: "admin"
+            });
           });
         }).then(function () {
           return fb.deleteDoc(fb.doc(fb.db, "claimRequests", h));

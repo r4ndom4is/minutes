@@ -717,11 +717,31 @@
   /* #app is shown by x-show once Alpine boots; [x-cloak] covers the pre-init frame.
      A CSS display:none here would win, because x-show reveals by clearing the
      INLINE display, which then falls back to whatever the stylesheet says. */
-  header { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-lg); margin-bottom: var(--sp-3xl); }
+  /* The avatar aligns to the TOP of the greeting, not to the middle of the whole
+     text block. With a 28px title over a subtitle that can run to two lines, a
+     centred avatar drifts down beside the subtitle and stops reading as a pair
+     with the name. */
+  header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sp-lg); margin-bottom: var(--sp-3xl); }
   header .greet { display: flex; align-items: center; gap: var(--sp-md); flex: 1 1 auto; min-width: 0; }
   header .greet-text { min-width: 0; }
-  header h1 { font-size: var(--fs-2xl); margin: 0; letter-spacing: var(--ls-tight); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  header .sub { font-size: var(--fs-2xs); color: var(--muted); }
+  /* The greeting is the largest type in the app and should be unambiguous about
+     it. At --fs-2xl it was 22px, the same size as a card name and 2px off the
+     sheet header's 24px: three top-level titles at one volume, which reads as
+     an accident rather than a hierarchy. At --fs-4xl it is plainly first.
+     Tight tracking because display type wants it and body type does not.
+
+     It WRAPS rather than truncating. At this size "Still up, Christopher" does
+     not fit beside the avatar, and ellipsing a person's own name is the one
+     outcome worth spending a second line to avoid. */
+  header h1 { font-size: var(--fs-4xl); font-weight: var(--fw-black); margin: 0;
+              letter-spacing: var(--ls-tight); line-height: var(--lh-tight);
+              overflow-wrap: anywhere; }
+  /* The subtitle states two facts rather than labelling the page. It wraps,
+     because "Three challenges running. You are leading this month." will not
+     fit one line on a narrow phone and truncating a sentence is worse than
+     running it to two lines. */
+  header .sub { font-size: var(--fs-2xs); color: var(--muted); line-height: var(--lh-normal);
+                margin-top: var(--sp-3xs); }
   /* ---- ICON BUTTONS ARE CIRCLES ------------------------------------------
      Every icon button in the app is a circle with a soft fill and no border.
      The design language this app follows states it outright: compose every CTA
@@ -771,6 +791,15 @@
   /* ---- Avatar (unified): circular initial. Color set inline via colorFor(). ---- */
   .dot { width: 26px; height: 26px; border-radius: 50%; flex: 0 0 auto; display: flex; align-items: center; justify-content: center; font-size: var(--fs-2xs); font-weight: var(--fw-black); color: #fff; }
   .dot.sm { width: 22px; height: 22px; font-size: var(--fs-3xs); }
+  /* A photo fills the circle rather than sitting inside it. Both avatar sizes
+     take the same treatment so one cached image serves both. The inset hairline
+     is doing real work and is not decoration: a photograph brings its own
+     arbitrary edge colour, and without a rim a light one bleeds into the light
+     canvas and a dark one into the dark. */
+  .dot.lg, .prof-av { background-size: cover; background-position: center; }
+  .dot.lg[data-photo], .prof-av[data-photo] {
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,.14);
+  }
   .dot.lg { width: 36px; height: 36px; font-size: var(--fs-lg); }
   .mg-row:last-child { border-bottom: none; }
   .mg-name { flex: 1; min-width: 0; font-weight: var(--fw-sm-bold); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -2441,8 +2470,8 @@
       <div class="greet">
         <div class="greet-text">
           <h1><span x-text="$store.s.hello.word"></span>, <span id="meName"
-              x-text="$store.s.hello.name"></span> <span x-text="$store.s.hello.emoji"></span></h1>
-          <div class="sub" id="tabSub">Your challenges</div>
+              x-text="$store.s.hello.name"></span></h1>
+          <div class="sub" id="tabSub" x-text="$store.s.hello.sub"></div>
         </div>
       </div>
       <button class="head-you" id="youBtn" aria-label="Your account" title="Your account">
@@ -2852,8 +2881,10 @@
            where you are; who you are is the first thing IN the page, at a size that
            can hold a real photo once there is one to hold. -->
       <div class="prof" id="youProfile">
-        <span class="prof-av" id="youAvatar" x-text="$store.s.you.initial"
-              :style="'background:' + $store.s.you.color">?</span>
+        <!-- No :style binding here. Alpine writing the `background` shorthand on
+             every render resets background-image, which is where the photo
+             lives, so the avatar is painted imperatively by paintAvatar(). -->
+        <span class="prof-av" id="youAvatar" x-text="$store.s.you.initial">?</span>
         <span class="prof-meta">
           <span class="prof-name" id="youName" x-text="$store.s.you.name">You</span>
           <span class="prof-sub" id="youSub" x-text="$store.s.you.sub">Your account</span>
@@ -2869,6 +2900,24 @@
           <div class="seg3" id="setTheme">
             <button type="button" data-theme-choice="light">Light</button>
             <button type="button" data-theme-choice="dark">Dark</button>
+          </div>
+        </div>
+        <!-- Only shown once there is a photo to choose. A Photo/Letter toggle
+             for somebody with no linked Google account is a control that cannot
+             do anything, which is worse than no control.
+
+             It sits AFTER Theme rather than first because x-show hides a row
+             without removing it, so as the first child it still counted as a
+             sibling and handed the Theme row a `.srow + .srow` border it should
+             not have had. Second, it is invisible when hidden in every sense. -->
+        <div class="srow" id="avatarRow" x-show="$store.s.you.hasPhoto">
+          <span class="smeta">
+            <span class="sname">Your picture</span>
+            <span class="ssub">Google photo, or your initial</span>
+          </span>
+          <div class="seg3" id="setAvatar">
+            <button type="button" data-avatar-choice="photo">Photo</button>
+            <button type="button" data-avatar-choice="letter">Letter</button>
           </div>
         </div>
         <!-- Cards through Palette are still an in-progress design surface, not
@@ -3712,12 +3761,47 @@
   // Header greeting. Newcomers get welcomed by name for their first session; from
   // the second visit on it is the time of day, so the header stops being a
   // constant and starts being a small sign of life.
+  //
+  // The subtitle used to be the static label "Your challenges", which named the
+  // page you were already looking at and repeated the section heading 100px
+  // below it. It states the two facts worth knowing at a glance instead: how
+  // many challenges are live, and whether you are winning one of them.
+  //
+  // There is no emoji. It was decoration doing no work, and it did not survive
+  // contact with a real phone: the U+FE0E flattening that works in Chromium is
+  // ignored by iOS Safari, so the greeting rendered a full-colour sunrise tile.
+  var COUNTS = ["No", "One", "Two", "Three", "Four", "Five",
+                "Six", "Seven", "Eight", "Nine"];
+  var ORDINALS = ["", "first", "second", "third", "fourth", "fifth",
+                  "sixth", "seventh", "eighth", "ninth", "tenth"];
+  function ordinal(n) {
+    return ORDINALS[n] || ("#" + n);
+  }
   view("hello", function () {
-    this.rev; this.me; this.signedIn; this.welcomed; this.hourRev;
+    this.rev; this.me; this.signedIn; this.welcomed; this.hourRev; this.activeCid;
     var name = state.me || "you";
-    if (firstRun()) return { word: "Welcome", name: name, emoji: "\uD83D\uDC4B\uFE0E" };
-    var p = dayPart();
-    return { word: p.word, name: name, emoji: p.emoji };
+    var word = firstRun() ? "Welcome" : dayPart().word;
+
+    var joined = Object.keys(challMeta).filter(function (c) {
+      return myStatus(c) === "approved";
+    });
+    if (!joined.length) {
+      return { word: word, name: name, sub: "Pick a challenge below to get going." };
+    }
+    // Standing is quoted from the active challenge, which is the one pinned to
+    // the top of the list. Naming no challenge keeps the line short; quoting a
+    // rank across several at once would be meaningless.
+    var cid = joined.indexOf(activeCid()) >= 0 ? activeCid() : joined[0];
+    var st = challStanding(cid);
+    var count = joined.length === 1
+      ? "One challenge running."
+      : (COUNTS[joined.length] || joined.length) + " challenges running.";
+    var tail;
+    if (!st || !st.anyMins) tail = "Nobody has logged anything yet.";
+    else if (!st.mins) tail = "You are yet to log a minute.";
+    else if (st.leading) tail = "You are leading this month.";
+    else tail = "You are " + ordinal(st.rank) + " this month.";
+    return { word: word, name: name, sub: count + " " + tail };
   });
   view("chall", function () {
     this.rev; this.me; this.activeCid;
@@ -4075,6 +4159,8 @@
       name: name,
       initial: (state.me || "?").charAt(0).toUpperCase(),
       color: colorFor(state.me || ""),
+      // Drives whether the Photo/Letter choice is offered at all.
+      hasPhoto: hasAvatarPhoto(),
       sub: mine === 1 ? "In 1 challenge" : "In " + mine + " challenges",
       canAdmin: meIsAdmin()
     };
@@ -4589,6 +4675,106 @@
     return "challenges";
   }
 
+  // ---- Avatar painting ------------------------------------------------------
+  // Two places show "you": the header button and the You page. Both were built
+  // as a circle holding an initial, and both were always meant to hold the
+  // Google photo once there was one. This is that swap, in one place, because
+  // the photo carries edge cases not worth discovering twice:
+  //
+  //   - Google 403s the image without referrerpolicy=no-referrer.
+  //   - A photo can fail (revoked, deleted, offline). It falls back to the
+  //     initial rather than leaving a broken image, and the failed URL is
+  //     remembered so a repaint cannot refetch it on a loop.
+  //   - Signing out has to drop the previous person's face.
+  //
+  // The URL is asked for at 128px wherever it lands, so the 36px header and the
+  // 64px You circle share one cached image and both stay sharp on a 3x screen.
+  var badAvatarPhoto = "";
+  // Photo or initial. Some people would rather not have their face in an app,
+  // and the choice costs nothing to honour. Stored like the theme: a plain
+  // local preference, no account round-trip, so it survives a reload and stays
+  // on this device.
+  var AVATAR_KEY = "minutes-avatar";
+  function currentAvatarStyle() {
+    var v = "";
+    try { v = localStorage.getItem(AVATAR_KEY) || ""; } catch (e) {}
+    return v === "letter" ? "letter" : "photo";     // photo is the default
+  }
+  function applyAvatarStyle(choice, persist) {
+    var c = (choice === "letter") ? "letter" : "photo";
+    if (persist) { try { localStorage.setItem(AVATAR_KEY, c); } catch (e) {} }
+    paintAvatars();
+    syncAvatarSeg();
+  }
+  function syncAvatarSeg() {
+    var cur = currentAvatarStyle();
+    document.querySelectorAll("#setAvatar button").forEach(function (b) {
+      b.classList.toggle("on", b.getAttribute("data-avatar-choice") === cur);
+    });
+  }
+  // Whether a photo is available at all, which decides if the choice is even
+  // offered. Reads auth directly rather than the preference.
+  function hasAvatarPhoto() {
+    var u = (window.__AUTH && window.__AUTH.user) || null;
+    var p = (u && u.photo) || "";
+    return !!p && p !== badAvatarPhoto;
+  }
+  function avatarPhotoUrl() {
+    if (currentAvatarStyle() === "letter") return "";
+    var u = (window.__AUTH && window.__AUTH.user) || null;
+    var p = (u && u.photo) || "";
+    if (!p || p === badAvatarPhoto) return "";
+    return /=s\d+/.test(p) ? p.replace(/=s\d+(-c)?/, "=s128-c") : p;
+  }
+  function paintAvatar(el, name) {
+    if (!el) return;
+    var initial = String(name || "?").charAt(0).toUpperCase();
+    var url = avatarPhotoUrl();
+    function fallback() {
+      // Removed, not blanked: [data-photo] matches an empty attribute too, and
+      // the ringed style would survive the photo it was meant to ring.
+      delete el.dataset.photo;
+      el.style.backgroundImage = "";
+      el.style.color = "";
+      if (el.textContent !== initial && !el.hasAttribute("x-text")) el.textContent = initial;
+      el.style.backgroundColor = colorFor(name || "");
+    }
+    if (!url) { fallback(); return; }
+    if (el.dataset.photo === url) return;      // already showing this face
+    // The photo lands as a BACKGROUND, not an appended <img>. The You page's
+    // circle is x-text bound, so a child element would be wiped on the next
+    // Alpine pass; a background survives it, and the initial underneath is
+    // simply made transparent. Preloading through an Image is what buys back
+    // the error handling that background-image does not have.
+    var probe = new Image();
+    probe.referrerPolicy = "no-referrer";
+    probe.onload = function () {
+      el.dataset.photo = url;
+      el.style.backgroundImage = 'url("' + url + '")';
+      el.style.backgroundColor = "";
+      el.style.color = "transparent";
+    };
+    probe.onerror = function () {
+      badAvatarPhoto = ((window.__AUTH && window.__AUTH.user) || {}).photo || "";
+      fallback();
+    };
+    probe.src = url;
+  }
+  function paintAvatars() {
+    var n = state.me || "";
+    paintAvatar(document.getElementById("headAvatar"), n);
+    paintAvatar(document.getElementById("youAvatar"), n);
+  }
+  // Auth resolves asynchronously, so at sign-in time there is usually no photo
+  // yet. Without this the avatar would stay an initial for the whole session
+  // and only show a face after some unrelated re-render. bump() re-runs the
+  // `you` view so the Photo/Letter row appears the moment a photo exists.
+  window.addEventListener("minutes-auth", function () {
+    paintAvatars();
+    syncAvatarSeg();
+    if (typeof bump === "function") bump();
+  });
+
   function doLogin(name) {
     state.me = name;
     // reset per-user view state so nothing leaks between sessions on a shared device
@@ -4604,9 +4790,11 @@
     var seen = "";
     try { seen = localStorage.getItem(WELCOME_KEY) || ""; } catch (e) {}
     state.welcomed = seen === String(name).toLowerCase();
-    var av = document.getElementById("headAvatar");
-    av.textContent = name.charAt(0).toUpperCase();
-    av.style.background = colorFor(name);
+    // Both avatars, not just the header. The You circle used to get its colour
+    // from an Alpine :style binding, which had to go because it reset the
+    // background-image the photo lives in; painting one and not the other left
+    // that circle transparent with white text on it.
+    paintAvatars();
     setDate(todayStr());
     refreshAdminAccess();
     state.viewMonth = keyToDate(defaultViewKey());
@@ -8690,6 +8878,12 @@
     document.querySelectorAll("#setContrast button").forEach(function (b) {
       b.addEventListener("click", function () { applyContrast(b.getAttribute("data-contrast"), true); });
     });
+    document.querySelectorAll("#setAvatar button").forEach(function (b) {
+      b.addEventListener("click", function () {
+        applyAvatarStyle(b.getAttribute("data-avatar-choice"), true);
+      });
+    });
+    syncAvatarSeg();
     var ml = document.getElementById("youLogout");
     if (ml) ml.addEventListener("click", function () { doLogout(); });
     var mbo = document.getElementById("youBackoffice");

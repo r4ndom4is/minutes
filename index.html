@@ -259,7 +259,8 @@
     --fs-2xl: 22px;   /* was 20 / 22 / 23 */
     --fs-3xl: 24px;   /* was 24 / 25 / 26 */
     --fs-4xl: 28px;   /* was 27 / 28 / 30 */
-    --fs-5xl: 40px;
+    --fs-5xl: 36px;   /* the challenge card's minute count */
+    --fs-6xl: 40px;   /* display: the sign-in wordmark, and nothing else */
     /* ---- WEIGHT ------------------------------------------------------------
        The app was already disciplined here: 600 / 700 / 800 carry almost
        everything. Tokenised anyway, because a typeface change is the moment
@@ -497,6 +498,19 @@
        active one rather than as a second magic number. Both then move together
        if the card height is ever retuned. */
     --chall-wm-sm: calc(var(--chall-wm) * 0.79);
+    /* Every glyph in the watermark slot is cap-height except "+", which is a
+       maths symbol drawn on the maths axis: measured in Inter 800 it paints 84
+       units of ink against a digit's 122, so it appeared 31% short and floating.
+       1.525 is 122/80, the ink-height parity, and it is a property of the
+       TYPEFACE at a given weight, so it lives here with the other derived numbers
+       rather than inline beside the rule that needs it. Re-derive if the face or
+       the plus's weight ever changes:
+         ctx.measureText(ch).actualBoundingBoxAscent + ...Descent, for "8" at 800
+         and "+" at the weight the slot actually uses.
+       Declared as finished sizes rather than a bare ratio because every
+       font-size in the app resolves to a single var() by contract. */
+    --chall-wm-plus:    calc(var(--chall-wm) * 1.525);
+    --chall-wm-plus-sm: calc(var(--chall-wm-sm) * 1.525);
   }
   [data-theme="light"] {
     color-scheme: light;
@@ -589,16 +603,42 @@
   /* .wrap is a flex item here, and its `margin: 0 auto` makes it shrink-to-fit on the
      cross axis instead of stretching. Without an explicit width the card ends up as
      wide as its longest unbreakable line, so wording changes silently resize it. */
-  #login { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; }
-  #login .wrap { width: 100%; }
+  /* The login screen is not a card. A card separates content from OTHER
+     content, and this page has nothing else on it, so the border and panel were
+     boxing in the one thing you came for and stranding it at the top of an
+     otherwise empty screen. It uses the whole screen instead: the identity
+     block sits in the middle of the available space and the action sits where a
+     thumb is.
+
+     100dvh, not 100vh: on mobile Safari 100vh is the tallest the viewport ever
+     gets, so the action would sit under the address bar until you scrolled. */
+  #login { min-height: 100dvh; display: flex; flex-direction: column; }
+  #login .wrap { width: 100%; flex: 1; display: flex; flex-direction: column; }
   /* Boot gate: avoid a login-screen flash on reload when a session is saved. */
   html.has-session #login { display: none !important; }
   html.has-session #app { display: block !important; }
-  .login-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--r-xl); padding: var(--sp-6xl) var(--sp-4xl) var(--sp-5xl); text-align: center; }
-  .login-card .logo { font-size: var(--fs-5xl); margin-bottom: var(--sp-4xl); line-height: var(--lh-flush); }
-  .login-card .logo svg { width: 100px; height: 100px; display: inline-block; vertical-align: middle; }
-  .login-card h1 { font-size: var(--fs-3xl); margin: 0 0 var(--sp-xs); letter-spacing: var(--ls-tight); }
-  .login-card p { color: var(--muted); font-size: var(--fs-sm); margin: 0 0 var(--sp-5xl); }
+  .login-card { flex: 1; display: flex; flex-direction: column; text-align: center;
+    background: none; border: none; padding: var(--sp-6xl) 0 var(--sp-4xl); }
+  /* Takes the slack, so the identity block is centred in whatever is left after
+     the action below it. During onboarding the claim card grows and this simply
+     yields, which is why it is flex rather than a fixed height. */
+  .login-lead { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; }
+  /* Flat, single colour, and small. It was a 100px purple GRADIENT, the only
+     gradient in the app, sitting directly above the word "Minutes" set at
+     display size: two logos of the same thing stacked, one of them off-language.
+     The wordmark is the logo; this is a mark beside it, not a second one. */
+  .login-card .logo { margin-bottom: var(--sp-2xl); line-height: var(--lh-flush); color: var(--accent); }
+  .login-card .logo svg { width: 52px; height: 52px; display: inline-block; vertical-align: middle; }
+  /* The sign-in screen is the only poster in the app: one word on an empty page,
+     no data, no task. That is where the display rung of the ramp belongs, and
+     28px on a one-word wordmark was leaving it unused. --fs-6xl is the top of
+     the ramp; if this stops using it, delete the rung rather than orphan it. */
+  .login-card h1 { font-size: var(--fs-6xl); font-weight: var(--fw-black); margin: 0 0 var(--sp-md);
+    letter-spacing: var(--ls-tight); line-height: var(--lh-tight); }
+  /* Says what Minutes IS. It used to say "Sign in to open your tracker", which
+     is an instruction to someone who has not been told what they are opening. */
+  .login-card p { color: var(--muted); font-size: var(--fs-sm); line-height: var(--lh-relaxed);
+    margin: 0 auto var(--sp-5xl); max-width: 30ch; }
   /* This rule now matches exactly one element, #claimNewName, since every other input
      lives in #app. Left-aligned to match the label above and the helper below it;
      centring was a leftover from the old fully-centred name-only login card. */
@@ -610,10 +650,26 @@
   .login-status { align-items: center; justify-content: center; gap: var(--sp-sm); color: var(--muted); font-size: var(--fs-xs); margin: var(--sp-2xs) 0 var(--sp-sm); }
   .login-spin { width: 15px; height: 15px; border-radius: 50%; border: 2px solid var(--border-2); border-top-color: var(--accent); box-sizing: border-box; animation: ptrspin .7s linear infinite; flex: 0 0 auto; }
   .btn.btn-ghost { background: transparent; color: var(--accent); border: 1px solid var(--border); }
-  /* OAuth sign-in button. Full-width block shape (12px), matching the "large action"
-     half of the two-shapes button system; the pill is reserved for small inline actions. */
-  .btn.btn-oauth { display: flex; align-items: center; justify-content: center; gap: var(--sp-md); background: var(--card-2); color: var(--text); border: 1px solid var(--border-2); font-weight: var(--fw-sm-bold); }
-  .btn.btn-oauth svg { width: 18px; height: 18px; flex: 0 0 auto; }
+  /* The only action on the screen, so it is the PRIMARY shape: a filled pill, not
+     the pale bordered box it was. That box read as a secondary option next to
+     nothing at all. The Google mark stays because it is a promise about which
+     account system you are about to meet, not decoration. */
+  .btn.btn-oauth { display: flex; align-items: center; justify-content: center; gap: var(--sp-md);
+    background: var(--text); color: var(--bg); border: none; border-radius: var(--r-pill);
+    font-weight: var(--fw-bold); font-size: var(--fs-md); padding: var(--sp-xl) var(--sp-2xl); }
+  .btn.btn-oauth svg { width: 18px; height: 18px; flex: 0 0 auto;
+    background: #fff; border-radius: var(--r-pill); padding: var(--sp-3xs); box-sizing: content-box; }
+  /* Signing OUT is an escape hatch, not the thing you came to do, so it drops to
+     a secondary shape. Rendering it as the same filled hero pill made the most
+     prominent action on the screen the one nobody arrived for. The white plate
+     behind the Google mark goes with it: on a transparent button it reads as a
+     sticker rather than as part of the control. */
+  .btn.btn-oauth[data-mode="out"] { background: none; color: var(--text);
+    box-shadow: inset 0 0 0 1px var(--border-2); font-weight: var(--fw-sm-bold); font-size: var(--fs-sm); }
+  /* Full ink and full opacity on purpose. The outline, the smaller size and the
+     lighter weight already say "secondary"; reaching for grey and .8 opacity on
+     top of that is three devices doing one job, and both are budgeted. */
+  .btn.btn-oauth[data-mode="out"] svg { background: none; padding: 0; }
   .login-or { display: flex; align-items: center; gap: var(--sp-md); margin: var(--sp-3xl) 0 var(--sp-md); color: var(--muted); font-size: var(--fs-2xs); }
   .login-or::before, .login-or::after { content: ""; height: 1px; background: var(--border); flex: 1; }
   .login-who { color: var(--muted); font-size: var(--fs-xs); margin: var(--sp-md) 0 var(--sp-3xs); }
@@ -634,6 +690,24 @@
   .login-card.onb #googleBtn,
   .login-card.onb #authWho,
   .login-card.onb #authHint { display: none !important; }
+  /* Past the door, the hero stops being a pitch and becomes a header. The lead
+     block is the entire content of the sign-in screen and earns display size
+     there; on the name step and in the waiting room it sits above a real task,
+     and 52px of mark plus 28px of wordmark plus a two-line sales sentence was
+     pushing that task into the bottom third of the screen. The sentence goes
+     entirely: it argues the case for signing in to somebody who already has. */
+  .login-card.onb .login-lead { flex: 0 0 auto; padding-top: var(--sp-3xl); }
+  .login-card.onb .logo { margin-bottom: var(--sp-md); }
+  .login-card.onb .logo svg { width: 32px; height: 32px; }
+  .login-card.onb h1 { font-size: var(--fs-xl); margin-bottom: var(--sp-5xl); }
+  .login-card.onb #loginSub { display: none; }
+  /* No flex tricks on .claim / .claim-pending: those two are shown by JS setting
+     an inline `display: block`, which beats any stylesheet display and silently
+     leaves flex-direction and margin-top:auto doing nothing. Anything relying on
+     their inner layout has to be reachable without changing their display.
+     They keep their natural height, so the bordered waiting-room box stays the
+     size of its contents instead of stretching into a tall empty frame, and the
+     slack falls above .onb-alt at the bottom of the card. */
   .onb-in { animation: onbIn .32s cubic-bezier(.2,.7,.3,1) both; }
   @keyframes onbIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
@@ -1529,7 +1603,7 @@
     padding: var(--sp-3xl) var(--sp-xl);
   }
   .chall-row {
-    position: relative; overflow: hidden; display: block;
+    position: relative; overflow: hidden; display: flex; flex-direction: column;
     padding: var(--sp-3xl); border: none; border-radius: var(--r-2xl);
     background: var(--pa, var(--card)); color: var(--pa-ink);
   }
@@ -1547,6 +1621,13 @@
      so it reads as the card's own number. Sized from the card's height by
      --chall-wm so it cannot grow out of the card.
      aria-hidden in the markup: it repeats the round the kicker already states. */
+  /* Whatever sits here is a CHARACTER, never an icon. The slot is right-anchored
+     and typographic: a glyph brings a baseline, side bearings and the same stroke
+     weight as the digits, so it lands where a digit lands. An icon has none of
+     that and fills its whole box, so the plus icon measured 21px wider than a
+     digit at the same size and hung that far further left. Its text equivalent
+     is +3px. If this ever needs a symbol the font does not have, size it to a
+     digit's ADVANCE (.576em here), not to a fraction of the em. */
   .chall-row .cr-wm {
     position: absolute; right: var(--sp-3xl);
     bottom: calc(var(--sp-5xl) * -1 - var(--sp-2xs));
@@ -1554,12 +1635,48 @@
     letter-spacing: var(--ls-numeral); color: rgba(0,0,0,.05); pointer-events: none;
     user-select: none; font-variant-numeric: tabular-nums;
   }
+  /* "+" is a MATHS symbol: it is drawn on the maths axis, not the cap height, so
+     at the slot's size it paints far less ink than a digit and its ink bottom
+     floats ABOVE the baseline. Every other glyph here is cap-height, so the plus
+     alone read as small and floating. I had measured the slot's WIDTH to death
+     and never once measured its height.
+
+     Three corrections, all measured rather than dialled in:
+
+     WEIGHT  the slot is --fw-black, which on a shape this large made the plus a
+             heavy slab beside the fine strokes of a numeral. Dropping to
+             --fw-sm-bold thins the strokes; the plus's overall SPAN barely moves
+             (ink width stays ~122 at every weight on the ramp), but its ink
+             HEIGHT does, which is why the scale token is tied to the weight.
+     SIZE    x1.525 is 122/80: ink-height parity with a digit at this weight.
+     PLACE   a plus tall enough to match a digit is necessarily WIDER than one, so
+             the two cannot align on both edges. Aligning the RIGHT edges, which
+             the slot's right anchor does by default, pushed it 18.5px further
+             left than any numeral. It is aligned near its LEFT edge instead and
+             allowed to run off the right; the watermark already bleeds off the
+             BOTTOM of every card, so this is the same device on a second edge and
+             overflow: hidden on .chall-row crops it cleanly.
+
+     The y offset drops its ink bottom onto the digit's. Both offsets are em, so
+     one pair serves the resting and active sizes alike.
+     "?" needs none of this: it measures 120/2 exactly like a digit. */
+  .chall-row .cr-wm[data-wm="+"] {
+    font-size: var(--chall-wm-plus-sm);
+    font-weight: var(--fw-sm-bold);
+    transform: translate(.11em, .0486em);
+  }
+  .chall-row.active-cid .cr-wm[data-wm="+"] {
+    font-size: var(--chall-wm-plus);
+  }
+  /* Same alpha as every other card. The active card's marker is SCALE, and it
+     already carries a bigger numeral; darkening the ink as well made its
+     watermark a second, competing signal and pulled the eye to the background of
+     the one card whose foreground matters most. */
   .chall-row.active-cid .cr-wm {
     font-size: var(--chall-wm); bottom: calc(var(--sp-6xl) * -1 - var(--sp-2xs));
-    color: rgba(0,0,0,.15);
   }
 
-  .chall-row .cr-main { position: relative; }
+  .chall-row .cr-main { position: relative; flex: 1; display: flex; flex-direction: column; }
   /* Every text run on the card pins its own line-height. Leaving them at
      `normal` let the browser add 20-50% leading and the resting card came out
      134px against the mock's 117, which quietly ate most of the size difference
@@ -1571,9 +1688,16 @@
     color: var(--pa-ink); opacity: .6;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
+  /* margin-bottom: auto makes the name absorb whatever height the card has spare,
+     so the footer rests on the bottom edge of EVERY card. Without it the active
+     card, which is the only one with a min-height, laid its content out from the
+     top and left the slack underneath, so its pill and minutes floated in the
+     middle of the card while every resting card had them at the foot. The
+     footer's own margin-top survives as the minimum gap, because a fixed margin
+     is honoured before free space is handed to the auto one. */
   .chall-row .cr-name {
     font-weight: var(--fw-bold); font-size: var(--fs-2xl); letter-spacing: var(--ls-tight);
-    line-height: var(--lh-tight); margin-top: var(--sp-sm);
+    line-height: var(--lh-tight); margin-top: var(--sp-sm); margin-bottom: auto;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   /* Footer: standing on the left, the round's minutes on the right. The two are
@@ -1584,11 +1708,23 @@
     gap: var(--sp-md); margin-top: var(--sp-2xl); min-width: 0;
   }
   .chall-row .cr-sub {
-    font-size: var(--fs-4xl); font-weight: var(--fw-bold); letter-spacing: var(--ls-tight);
+    display: inline-flex; align-items: baseline; gap: var(--sp-2xs);
+    font-size: var(--fs-5xl); font-weight: var(--fw-bold); letter-spacing: var(--ls-tight);
     line-height: var(--lh-none); color: var(--pa-ink); margin: 0;
     font-variant-numeric: tabular-nums; white-space: nowrap;
   }
-  .chall-row .cr-sub i { font-style: normal; font-size: var(--fs-lg); font-weight: var(--fw-md); opacity: .55; }
+  /* The number carries the "these are minutes" job on its own now. A clock icon
+     sat here for a while; removing it without growing the number left the count
+     only 6px clear of the challenge name, so neither read as the card's subject.
+     The unit stays at --fs-lg rather than scaling with the number, which is what
+     makes the gap between them a hierarchy instead of two sizes of the same thing.
+     "You" takes the slot the clock vacated and answers a real question: the card's
+     kicker is about the GROUP ("5 members") while this number is only ever yours,
+     and nothing said so. One shared rule with the unit, so the number ends up
+     bracketed by two qualifiers of equal weight, and so this costs nothing against
+     the opacity budget. */
+  .chall-row .cr-sub i,
+  .chall-row .cr-sub .cr-you { font-style: normal; font-size: var(--fs-lg); font-weight: var(--fw-md); opacity: .55; }
   /* Standing pills sit ON the pastel, so they cannot use the app's tint tokens,
      which are all tuned against the dark page. A wash of the card's own ink is
      the only thing guaranteed to read on all six pastels at once. */
@@ -1728,7 +1864,8 @@
   /* The layer itself now sits below the inset, so the wrap must NOT charge for it a
      second time. Login still uses the plain .wrap, and it is full-screen, so the
      inset stays in the shared rule and is cancelled here. */
-  .base-wrap { flex: 1; min-height: 0; width: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-top: var(--sp-4xl); padding-bottom: var(--sp-3xl);
+  .base-wrap { flex: 1; min-height: 0; width: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-top: var(--sp-4xl);
+    padding-bottom: calc(var(--sp-2xl) + var(--fab-size) + var(--sp-5xl));
     will-change: transform; transition: transform .42s cubic-bezier(.32,.72,0,1); }
   /* The pop shadow sits in the right margin, so a classic scrollbar gutter would
      slice through it. Scrolling stays, the bar is just not painted. */
@@ -1807,9 +1944,12 @@
      2px of that back because its border sits inside the border-box. Get this wrong
      and pop's collapsed icon sits 2px right of centre.
      --fab-label-w is the only value JS supplies, because it is the only one that
-     depends on the word rather than on the design. It is depth independent. */
+     depends on the word rather than on the design. It is depth independent.
+     The fallback must cover the WIDEST label in the app ("Challenge", 73.3px),
+     not the narrowest: it is what the pill wears for the frame or two before the
+     shell can measure, and a fallback sized for a short word clips a long one. */
   .fab { position: absolute; right: 16px; bottom: 16px; z-index: 4;
-    --fab-bd: 0px; --fab-label-w: 27px;
+    --fab-bd: 0px; --fab-label-w: 74px;
     width: calc(15px + var(--fab-bd) + var(--fab-ic) + 8px + var(--fab-label-w) + 18px);
     height: var(--fab-size); border-radius: 999px; border: none; cursor: pointer;
     background: var(--accent); color: #fff; overflow: hidden;
@@ -2012,7 +2152,6 @@
   .sect { margin-bottom: 0; }
   .sect > .card, .sect > .sgroup { margin-bottom: 0; }
   .sect > .sub-note { padding: 0; margin: calc(-1 * var(--sp-2xs)) 0 var(--sp-sm); }
-  .sect-plain { padding-top: var(--sp-4xl); }
   /* a section label that also carries a control (e.g. Leave).
      This was a stale copy of the old .slabel padding (20px 4px 8px), so it kept
      the 4px indent and sat 2px off. .ch-title is pinned to 26px (the button
@@ -2369,9 +2508,11 @@
 <div id="login" x-show="!$store.s.signedIn" x-cloak>
   <div class="wrap">
     <div class="login-card">
-      <div class="logo"><svg viewBox="12 12 76 76" aria-label="Minutes" role="img"><defs><linearGradient id="loginmark" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8f72ff"/><stop offset="1" stop-color="#6b4bff"/></linearGradient></defs><path d="M54.24 18.28 A32 32 0 1 1 24.58 30.56" fill="none" stroke="url(#loginmark)" stroke-width="8.5" stroke-linecap="round"/><path d="M38 58 V42 L50 53 L62 42 V58" fill="none" stroke="url(#loginmark)" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-      <h1>Minutes</h1>
-      <p id="loginSub">Sign in to open your tracker</p>
+      <div class="login-lead">
+        <div class="logo"><svg viewBox="12 12 76 76" aria-label="Minutes" role="img"><path d="M54.24 18.28 A32 32 0 1 1 24.58 30.56" fill="none" stroke="currentColor" stroke-width="8.5" stroke-linecap="round"/><path d="M38 58 V42 L50 53 L62 42 V58" fill="none" stroke="currentColor" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <h1>Minutes</h1>
+        <p id="loginSub">Log your minutes and see where you stand against everyone else this month.</p>
+      </div>
       <div class="msg msg--quiet" id="loginErr" aria-live="polite"></div>
       <div class="login-status" id="loginStatus" style="display:none"><span class="login-spin"></span><span id="loginStatusText">Connecting to the server…</span></div>
       <button class="btn btn-ghost" id="loginRetry" style="display:none">Retry connection</button>
@@ -2411,7 +2552,7 @@
         <div class="onb-steps">
           <div class="onb-step done"><i></i><span>Signed in</span></div>
           <div class="onb-step now"><i></i><span>Your name</span></div>
-          <div class="onb-step"><i></i><span>Admin approves</span></div>
+          <div class="onb-step"><i></i><span>Approval</span></div>
         </div>
       </div>
 
@@ -2421,7 +2562,7 @@
         <div class="cw-stage" id="cwStage">
           <canvas id="cwCanvas"></canvas>
           <div class="cw-overlay" id="cwOverlay">
-            <strong id="cwOverlayTitle">Kill some minutes?</strong>
+            <strong id="cwOverlayTitle">Pass the time?</strong>
             <span id="cwOverlayHint">Tap or press space to jump</span>
           </div>
         </div>
@@ -2436,7 +2577,7 @@
         <div class="onb-steps" id="onbStepsPend">
           <div class="onb-step done"><i></i><span>Signed in</span></div>
           <div class="onb-step done"><i></i><span>Your name</span></div>
-          <div class="onb-step now"><i></i><span id="onbStep3">Admin approves</span></div>
+          <div class="onb-step now"><i></i><span id="onbStep3">Approval</span></div>
         </div>
       </div>
 
@@ -2526,9 +2667,10 @@
                    @click="c.approved && $store.s.act.openChallenge(c.cid)"
                    @keydown.enter.prevent="c.approved && $store.s.act.openChallenge(c.cid)"
                    @keydown.space.prevent="c.approved && $store.s.act.openChallenge(c.cid)">
-                <!-- The round number as the card's watermark. aria-hidden because
-                     the kicker beside it already says "Round N" in words. -->
-                <div class="cr-wm" aria-hidden="true" x-text="c.round"></div>
+                <!-- Your standing in this challenge, as the card's watermark.
+                     aria-hidden because the pill beside it already says it in
+                     words ("Leading", "#2 of 5", "New round", "Requested"). -->
+                <div class="cr-wm" aria-hidden="true" :data-wm="c.wm" x-text="c.wm"></div>
                 <div class="cr-main">
                   <div class="cr-meta" x-text="c.meta"></div>
                   <div class="cr-name" x-text="c.name"></div>
@@ -2545,7 +2687,9 @@
                       </template>
                     </div>
                     <template x-if="c.total">
-                      <div class="cr-sub"><span x-text="c.total"></span><i>m</i></div>
+                      <div class="cr-sub">
+                        <span class="cr-you">You</span><span x-text="c.total"></span><i>min</i>
+                      </div>
                     </template>
                   </div>
                 </div>
@@ -2554,16 +2698,22 @@
           </div>
         </div>
       </template>
-      <div class="sect sect-plain">
-        <button class="btn ghost"
-                :disabled="!$store.s.canCreate"
-                @click="$store.s.act.newChallenge()"
-                x-text="$store.s.canCreate ? '+ Create a challenge' : 'Create a challenge \u00b7 admins only'"></button>
-      </div>
     </section>
 
       <div class="ver-tag"></div>
     </div>
+    <!-- Deliberately a sibling of #baseWrap, not a child. .base-wrap is the
+         scroller AND carries will-change: transform, so a button inside it would
+         either scroll away with the list or have its fixed positioning trapped by
+         the layer. As a child of .layer-base it pins to the viewport and still
+         rides the push-back when a sheet opens, which is what should happen to a
+         control that belongs to the hub.
+         Admin-only, and absent rather than disabled: a control nobody outside a
+         minority can ever use should not occupy the loudest slot on the screen
+         for everybody else. -->
+    <button class="fab" id="fabNew" x-show="$store.s.canCreate" x-cloak
+            aria-label="Add challenge" title="Add challenge"
+            @click="$store.s.act.newChallenge()"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg><span class="fab-label" aria-hidden="true">Challenge</span></button>
   </div>
 
   <div class="scrim" id="scrim"></div>
@@ -3012,7 +3162,7 @@
       </div>
       </section>
     </div>
-    <button class="fab" id="fabAdd" aria-label="Log your time" title="Log your time"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg><span class="fab-label" aria-hidden="true">Log</span></button>
+    <button class="fab" id="fabAdd" aria-label="Add minutes" title="Add minutes"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg><span class="fab-label" aria-hidden="true">Minutes</span></button>
   </div>
 
   <div class="pop-dock" id="popDock">
@@ -3839,10 +3989,31 @@
       }
       return {
         cid: cid, name: challName(cid),
-        // `round` is the bare number for the card's watermark; `meta` keeps the
-        // sentence form for the kicker line. Both come from one call.
-        round: challRoundNumber(cid), pastel: challPastel(cid), color: challColor(cid),
-        // The pending count rides the kicker line rather than a badge on a
+        // The watermark is YOUR STANDING, so it only ever shows a rank numeral or
+        // an invitation. It used to show the round, which was the card's biggest
+        // element while saying nothing about you, and read as a score.
+        //
+        // A text "+" and "?" rather than icons. The slot is typographic and an
+        // icon is a different kind of object in it: no baseline, no side bearings,
+        // its own stroke logic, and it fills its whole box where a digit fills
+        // only part of its advance. At .74em the plus icon measured 21px wider
+        // than a digit and, on a right-anchored container, hung that far further
+        // left. The characters measure +3px and -11px against a digit.
+        //
+        //   not joined   +     an invitation
+        //   requested    ?     whether you are in is genuinely unknown
+        //   joined       (nothing) the round simply has not started; the pill
+        //                already says "New round", and a mark here would have to
+        //                stand for "no rank yet", which is not a question
+        //   ranked       the rank numeral
+        //
+        // Rank needs somebody to have logged: everyone is rank 1 in a round nobody
+        // has started, so it cannot stand in for the joined-but-unstarted case.
+        wm: (st && st.anyMins) ? String(st.rank)
+            : status === "pending" ? "?"
+            : st ? ""
+            : "+",
+        pastel: challPastel(cid), color: challColor(cid),        // The pending count rides the kicker line rather than a badge on a
         // floating control. It is the card's metadata row, so it aligns with
         // something instead of hovering, and it survives the gear moving into
         // the sheet header where managing a challenge actually belongs.
@@ -5083,7 +5254,7 @@
         size();
         reset();
         playing = false;
-        showOverlay("Kill some minutes?", "Tap or press space to jump");
+        showOverlay("Pass the time?", "Tap or press space to jump");
         bestEl.textContent = String(best);
         last = 0;
         raf = requestAnimationFrame(frame);
@@ -5429,7 +5600,9 @@
       onbMode(false);
       if (cardEl) cardEl.classList.remove("landing");
       var sub = document.getElementById("loginSub");
-      if (sub) sub.textContent = "Sign in to open your tracker";
+      // The pitch, not an instruction. Someone arriving here has not been told
+      // what Minutes is, and "sign in to open your tracker" does not tell them.
+      if (sub) sub.textContent = "Log your minutes and see where you stand against everyone else this month.";
       WaitGame.stop();
     }
 
@@ -5455,8 +5628,8 @@
       if (sub) sub.textContent = "Almost there";
       var cw = document.getElementById("cwSub");
       if (cw) {
-        cw.textContent = "An admin has to approve \u201C" + handle + "\u201D before you can log " +
-          "anything. They have been sent the request. Nothing else for you to do.";
+        cw.textContent = "Someone needs to wave \u201C" + handle + "\u201D through before you " +
+          "can log minutes. The request has been sent, so there is nothing else for you to do.";
       }
       // Undo a previous approval landing, in case this device queues a second
       // name in the same page load after switching Google accounts.
@@ -5470,7 +5643,7 @@
       if (ft) ft.style.display = "";
       if (dn) dn.style.display = "none";
       if (strip) strip.classList.remove("all-done");
-      if (s3) s3.textContent = "Admin approves";
+      if (s3) s3.textContent = "Approval";
       if (title) title.textContent = "You are in the queue";
       if (cardEl) cardEl.classList.remove("landing");
       WaitGame.mount();
@@ -5503,10 +5676,10 @@
       if (dn) dn.style.display = "flex";
       if (tx) tx.textContent = "You are in, " + handle;
       if (strip) strip.classList.add("all-done");
-      if (s3) s3.textContent = "Approved";
+      if (s3) s3.textContent = "You are in";
       if (sub) sub.textContent = "All done";
-      if (title) title.textContent = "Approved";
-      if (cw) cw.textContent = "An admin waved you through. Opening your tracker.";
+      if (title) title.textContent = "You are in";
+      if (cw) cw.textContent = "Opening your tracker.";
       if (cardEl) cardEl.classList.add("landing");
       // Signing out mid-hold must not drag them into the app afterwards, so the
       // timer is cancellable and re-checks that the account is still there.
@@ -5600,7 +5773,16 @@
       // "this account already owns another name" test below runs against a
       // null user, passes, and the banner renders for a frame or two before
       // auth lands and takes it away again. That is the flash on refresh.
-      if (window.__AUTH && !window.__AUTH.resolved) return { show: false };
+      //
+      // The absent case has to be treated as unresolved, not as resolved.
+      // 30-firebase.js ships inside <script type="module">, which is deferred, so
+      // it runs AFTER every classic script and after Alpine has started: at first
+      // paint window.__AUTH does not exist yet. The earlier `__AUTH && !resolved`
+      // form short-circuited to false there and let the banner through, which is
+      // why the flash survived that fix. If auth never arrives at all the banner
+      // stays hidden, which is correct rather than unfortunate: linking needs
+      // __AUTH.signInGoogle, so without it there is nothing to offer.
+      if (!window.__AUTH || !window.__AUTH.resolved) return { show: false };
       if (idents[low(h)]) return { show: false };      // this name is already bound
       var u = me();
       if (u && myHandle()) return { show: false };     // this account owns another name
@@ -5996,7 +6178,15 @@
   }
   // The page no longer scrolls: each layer owns a scroller, so anything that used to
   // call window.scrollTo has to target the one that is actually on screen.
+  // The backoffice counts. It is a position:fixed, inset:0, own-overflow layer at
+  // z-index 40, so while it is open it IS the scroller, and reporting #baseWrap
+  // instead reports a scrollTop that belongs to a list nobody can see. Pull to
+  // refresh asks this function whether it is at the top, so a stale 0 from the
+  // hidden hub made it start a pull in the middle of the backoffice, call
+  // preventDefault on the move, and kill that layer's scrolling outright.
   function activeScroller() {
+    var bo = document.getElementById("backofficeView");
+    if (bo && bo.classList.contains("show")) return bo;
     return document.getElementById(sheetOpen() ? "sheetBody" : "baseWrap");
   }
   function scrollActiveTop() { var s = activeScroller(); if (s) s.scrollTop = 0; syncFabTuck(); }
@@ -6007,25 +6197,34 @@
   // month would otherwise re-extend it on every upward flick. The two thresholds
   // are hysteresis, so a list that sits a pixel either side of the line cannot
   // flutter between the two states.
-  var FAB_TUCK_AT = 28, FAB_SHOW_AT = 6, fabLabelSized = false;
+  var FAB_TUCK_AT = 28, FAB_SHOW_AT = 6;
+  // Each FAB tucks against its OWN scroller: the sheet's Log button reads
+  // #sheetBody, the hub's New button reads #baseWrap. Sizing is tracked per FAB
+  // rather than by a single flag, because a label can only be measured once its
+  // layer has geometry and the two layers get laid out at different moments.
+  var FAB_PAIRS = [["fabAdd", "sheetBody"], ["fabNew", "baseWrap"]];
+  var fabSized = {};
   function syncFabTuck() {
-    var fab = document.getElementById("fabAdd");
-    var sb = document.getElementById("sheetBody");
-    if (!fab || !sb) return;
-    // The extended width is pure CSS except for the word itself, which only the
-    // renderer can measure, and the renderer cannot measure it until the sheet has
-    // been laid out. So it is done here, on the first call that has geometry, not
-    // at init where it silently read 0 and left the CSS fallback in place.
-    // flex: 0 0 auto means this stays the natural width even once the pill has
-    // collapsed and is clipping it.
-    if (!fabLabelSized) {
-      var label = fab.querySelector(".fab-label");
-      var lw = label ? label.getBoundingClientRect().width : 0;
-      if (lw) { fab.style.setProperty("--fab-label-w", lw.toFixed(2) + "px"); fabLabelSized = true; }
+    for (var i = 0; i < FAB_PAIRS.length; i++) {
+      var id = FAB_PAIRS[i][0];
+      var fab = document.getElementById(id);
+      var sb = document.getElementById(FAB_PAIRS[i][1]);
+      if (!fab || !sb) continue;
+      // The extended width is pure CSS except for the word itself, which only the
+      // renderer can measure, and it cannot measure it until the layer has been laid
+      // out. So it is done here, on the first call that has geometry, not at init
+      // where it silently read 0 and left the CSS fallback in place.
+      // flex: 0 0 auto means this stays the natural width even once the pill has
+      // collapsed and is clipping it.
+      if (!fabSized[id]) {
+        var label = fab.querySelector(".fab-label");
+        var lw = label ? label.getBoundingClientRect().width : 0;
+        if (lw) { fab.style.setProperty("--fab-label-w", lw.toFixed(2) + "px"); fabSized[id] = true; }
+      }
+      var y = sb.scrollTop;
+      if (y > FAB_TUCK_AT) fab.classList.add("tucked");
+      else if (y < FAB_SHOW_AT) fab.classList.remove("tucked");
     }
-    var y = sb.scrollTop;
-    if (y > FAB_TUCK_AT) fab.classList.add("tucked");
-    else if (y < FAB_SHOW_AT) fab.classList.remove("tucked");
   }
 
   function setSheetView(v) {
@@ -6086,6 +6285,16 @@
   window.addEventListener("orientationchange", function () {
     requestAnimationFrame(function () { syncPeek(); requestAnimationFrame(syncPeek); });
   });
+
+  (function () {
+    var bw = document.getElementById("baseWrap"); if (!bw) return;
+    var queued = false;
+    bw.addEventListener("scroll", function () {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(function () { queued = false; syncFabTuck(); });
+    }, { passive: true });
+  })();
 
   (function () {
     var close = function () { switchTab("challenges"); };
@@ -6207,7 +6416,12 @@
     membersByCid[cid][state.me] = { handle: state.me, role: "member", status: "pending", ts: Date.now() };
     renderChallenges();
     Store.requestJoin(cid).then(function () {
-      showToast("Request sent to " + challName(cid) + "'s admins", "success");
+      // Not "admins". canApprove(cid) is `meIsAdmin() || iOwn(cid)`, so the person
+      // who created the challenge can wave you in without being an admin at all,
+      // and for most challenges that is exactly who does it. This is the same
+      // wording the Discover note uses, so the promise made before the tap and the
+      // confirmation after it agree.
+      showToast("Request sent. Whoever runs it will let you in.", "success");
     }).catch(function (err) {
       console.error("requestJoin failed:", err);
       if (membersByCid[cid]) delete membersByCid[cid][state.me];
@@ -9171,6 +9385,7 @@ ${r?'Expression: "'+r+`"
     // and the gesture looked dead.
     var wraps = Array.prototype.slice.call(document.querySelectorAll(".wrap"));
     var sheetEl = document.getElementById("sheet");
+    var boEl = document.getElementById("backofficeView");
     var content = wraps;
     // Resolved per gesture, never cached: this script parses before the app has
     // booted, so the bridge does not exist yet at this point.
@@ -9178,8 +9393,14 @@ ${r?'Expression: "'+r+`"
       var l = window.__minutesLayer;
       return !!(l && l.sheetOpen && l.sheetOpen());
     }
+    function boIsOpen() { return !!(boEl && boEl.classList.contains("show")); }
     function pickLayer() {
-      content = (sheetEl && sheetIsOpen()) ? [sheetEl] : wraps;
+      // Same reasoning as the sheet: the backoffice sits above everything at
+      // z-index 40, so pulling while it is open has to move the backoffice. Moving
+      // .wrap there translates the hub, which is completely hidden behind it.
+      content = boIsOpen() ? [boEl]
+              : (sheetEl && sheetIsOpen()) ? [sheetEl]
+              : wraps;
     }
     var startY = 0, pulling = false, dist = 0, clearTimer = 0;
     var THRESH = 95, MAX = 150, REST = 22, RESIST = 0.5;
@@ -9206,6 +9427,12 @@ ${r?'Expression: "'+r+`"
       }
     }
     function reset() {
+      // dist has to die here too. touchend decides whether to refresh by reading
+      // dist, so without this a pull past the threshold that the user then drags
+      // back UP to cancel still fires on release: touchmove's dy <= 0 branch calls
+      // reset(), which hides the spinner, but the stale dist then triggers a
+      // refresh and the spinner reappears on its own.
+      dist = 0;
       ptr.style.transition = "transform .2s, opacity .2s";
       ptr.style.transform = "translateY(-48px)";
       ptr.style.opacity = "0";
@@ -9250,6 +9477,19 @@ ${r?'Expression: "'+r+`"
         setContentY(REST + 24, true); // hold the page down while it spins
         softRefresh();
       } else { reset(); }
+    }, { passive: true });
+
+    // touchend is NOT guaranteed. iOS cancels a touch whenever the system takes
+    // the gesture over: an edge swipe, a second finger, a call banner, the app
+    // being backgrounded mid-drag. Without this the pull simply stops being told
+    // it ended, so `pulling` stays true and, worse, the last setContentY leaves
+    // `transform: translateY(Npx)` and `transition: none` pinned inline on the
+    // layer for good. The surface is left shifted and feels frozen, and nothing
+    // short of a reload puts it back. This is the half-pull that gets stuck.
+    window.addEventListener("touchcancel", function () {
+      if (!pulling) return;
+      pulling = false;
+      reset();
     }, { passive: true });
 
     // Data is live via Firestore snapshots, so a full page reload is unnecessary and causes

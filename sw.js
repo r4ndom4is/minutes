@@ -5,7 +5,7 @@
    - Query-string requests (the pull-to-refresh version poll): network only.
    - Other same-origin static assets (icons, manifest, svg): cache-first.
    - Cross-origin (Firebase, gstatic, reCAPTCHA): passthrough, never cached. */
-var CACHE = "minutes-v11";  // bumped whenever the cached shell changes; verify-update.py reads this name
+var CACHE = "minutes-v12";  // bumped whenever the cached shell changes; verify-update.py reads this name
 var CORE = [
   "./",
   "./index.html",
@@ -15,7 +15,12 @@ var CORE = [
   "./icons/icon.svg",
   "./icons/favicon.svg",
   "./icons/apple-touch-icon.png",
-  "./icons/favicon-32.png"
+  "./icons/favicon-32.png",
+  // Precached on install so an offline first launch still gets the typeface
+  // rather than silently falling back to the platform font. Same-origin static
+  // assets are cache-first below, but that only helps AFTER a successful fetch.
+  "./fonts/inter-latin.woff2",
+  "./fonts/inter-latin-ext.woff2"
 ];
 
 self.addEventListener("install", function (e) {

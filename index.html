@@ -491,6 +491,14 @@
     --pa-mint:  #c8e6cd; --pa-coral: #f3c9b6; --pa-lime: #dceeb1;
     --pa-lilac: #c5b0f4; --pa-cream: #f4ecd6; --pa-pink: #efd4d4;
     --pa-ink: #14162b;
+    /* Semantic tints for use ON a pastel. The round pill in the challenge sheet's
+       header carries live/done state, and --tint-live / --done-fg are tuned
+       against the PAGE: in dark mode --live-fg is #7ff0c8, a pale mint that all
+       but disappears on lime. A pastel is a light surface in both themes, so
+       like --pa-ink these are fixed at their light-theme values rather than
+       following the page. Same reasoning, same place in the file. */
+    --pa-live-bg: rgba(52,211,153,0.16); --pa-live-fg: #0f9268;
+    --pa-done-bg: rgba(214,158,0,0.16);  --pa-done-fg: #8a6600;
     --chall-card-h: 145px;
     --chall-wm: calc((var(--chall-card-h) - 4px) / 0.8712);
     /* The resting cards are shorter than the active one and have no fixed
@@ -1285,10 +1293,48 @@
   .rh-manage:hover { background: var(--border); color: var(--text); }
   .rh-manage:active { background: var(--accent); color: #fff; }
   .rh-back:active { background: var(--accent); color: #fff; }
-  /* The challenge's identity in the sheet header. It used to be the emoji;
-     it is the card's own colour now, so the header and the card agree. */
-  .rh-dot { width: 22px; height: 22px; flex: 0 0 auto; border-radius: var(--r-pill);
-            background: var(--sw); box-shadow: 0 0 0 1px rgba(0,0,0,.18) inset; }
+  /* The challenge's identity used to be a 22px dot beside the name, which was a
+     second, smaller statement of something the header can simply BE. The whole
+     chrome now carries the challenge's colour, so opening a card continues that
+     card rather than dropping you onto a neutral surface.
+
+     Only in stats mode: the You sheet has no challenge, and --pa would be stale
+     from whichever challenge was open last.
+
+     Everything inside has to switch to the card's ink, because the pastels are
+     light in both themes while --text is light in dark mode and would vanish.
+     This is the same problem the card solved, so it takes the same answer: ink
+     is --pa-ink, and the controls sit on a wash of that ink rather than on the
+     app's surface tokens, which are all tuned against the page and not against
+     six pastels. */
+  #sheet[data-mode="stats"] .sheet-chrome {
+    background: var(--pa, var(--card)); color: var(--pa-ink);
+    border-bottom-color: rgba(0,0,0,.10);
+  }
+  #sheet[data-mode="stats"] .rh-name { color: var(--pa-ink); }
+  #sheet[data-mode="stats"] .rh-back,
+  #sheet[data-mode="stats"] .rh-manage {
+    background: rgba(0,0,0,.07); color: var(--pa-ink); box-shadow: none;
+  }
+  #sheet[data-mode="stats"] .rh-back:hover,
+  #sheet[data-mode="stats"] .rh-manage:hover { background: rgba(0,0,0,.13); color: var(--pa-ink); }
+  #sheet[data-mode="stats"] .odo-m { color: rgba(20,22,43,.5); }
+  #sheet[data-mode="stats"] .odo-i[aria-current] .odo-m { color: var(--pa-ink); }
+  #sheet[data-mode="stats"] .odo-cap { color: rgba(20,22,43,.55); }
+  /* The neutral pill is the only one that has to move: live and done carry
+     semantic tints that must keep reading as live and done on any ground. */
+  #sheet[data-mode="stats"] .r-pill:not(.live):not(.done) {
+    background: rgba(0,0,0,.07); color: rgba(20,22,43,.62);
+  }
+  #sheet[data-mode="stats"] .r-pill.live { background: var(--pa-live-bg); color: var(--pa-live-fg); }
+  #sheet[data-mode="stats"] .r-pill.done { background: var(--pa-done-bg); color: var(--pa-done-fg); }
+  /* The grab bar sits on the sheet's own surface directly above the chrome, so
+     leaving it neutral put a white band across the top of a coloured header.
+     It takes the pastel too, which makes the sheet's whole top edge the
+     challenge's colour and reads as the card continuing rather than as a
+     coloured strip inside a neutral sheet. */
+  #sheet[data-mode="stats"] .grab { background: var(--pa, var(--card)); }
+  #sheet[data-mode="stats"] .grab-bar { background: rgba(20,22,43,.22); }
   .rh-name { font-size: var(--fs-3xl); font-weight: var(--fw-bold); letter-spacing: var(--ls-tight); color: var(--text); line-height: var(--lh-tight); min-width: 0; overflow-wrap: anywhere; }
   /* .rh-nest was the second row of the You header, holding the account subline and,
      before that, an .rh-lock badge. Identity moved into the You page's own profile
@@ -2719,13 +2765,13 @@
   <div class="scrim" id="scrim"></div>
 
   <!-- LEVEL 1 -- challenge sheet: leaderboard + log -->
-  <div class="sheet" id="sheet" :data-mode="$store.s.sheet === 'you' ? 'you' : 'stats'">
+  <div class="sheet" id="sheet" :data-mode="$store.s.sheet === 'you' ? 'you' : 'stats'"
+       :style="'--pa:' + $store.s.chall.pastel">
     <div class="grab" id="grab"><span class="grab-bar"></span></div>
     <div class="sheet-chrome">
       <div class="round-head" id="chalHead">
         <div class="rh-title">
           <button class="rh-back" id="statsBack" aria-label="Back to challenges" title="Back to challenges"><svg class="ic" aria-hidden="true"><use href="#i-caret-left"/></svg></button>
-          <span class="rh-dot" id="ccDot" aria-hidden="true" :style="'--sw:' + $store.s.chall.pastel"></span>
           <span class="rh-name" id="ccName" x-text="$store.s.chall.name">Challenge</span>
           <!-- Managing a challenge belongs in the challenge's own header, next
                to its name, not on the browse card. Here it lines up with the
@@ -3444,7 +3490,7 @@
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
   var NAV_KEY = "minutes-nav";
-  var VERSION = "15.1";
+  var VERSION = "15.2";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -3971,10 +4017,12 @@
   // is written once rather than duplicated per list.
   view("challSections", function () {
     this.rev; this.me; this.activeCid; this.welcomed; this.signedIn;
+    // Oldest first, and only ever this one key. The ACTIVE challenge is hoisted
+    // to the top of its list by CSS (`.chall-row.active-cid { order: -1 }`)
+    // rather than by sorting, so nothing here needs to know about it.
     var cids = Object.keys(challMeta).sort(function (a, b) {
       return (challMeta[a].createdTs || 0) - (challMeta[b].createdTs || 0);
-    });
-    var act = activeCid(), admin = meIsAdmin();
+    });    var act = activeCid(), admin = meIsAdmin();
     function row(cid) {
       var status = myStatus(cid), approved = status === "approved";
       var n = approvedHandles(cid).length;
@@ -4035,6 +4083,13 @@
       var s = myStatus(c);
       (s === "approved" || s === "pending" ? mine : disc).push(row(c));
     });
+    // "My challenges" holds two different kinds of card: ones you are IN, and one
+    // you have merely asked to join. Sorted purely by creation date a request for
+    // an old challenge landed above challenges you actually compete in, so the
+    // list opened on a card with no standing, no minutes and nothing to tap.
+    // Requests sink to the bottom; the sort is stable, so within each group the
+    // creation order below is untouched.
+    mine.sort(function (a, b) { return (a.pending ? 1 : 0) - (b.pending ? 1 : 0); });
     return [
       { id: "mine", listId: "myChallList", label: "My challenges", note: "", rows: mine,
         // A newcomer's very first screen. The plain empty state reads as a
@@ -6386,8 +6441,10 @@
   // ---- Challenges page + switcher ----
   function renderChallChip() { bump(); }   // sheet header is bound, see #ccDot/#ccName
 
-  function switchChallenge(cid) {
-    if (cid === activeCid()) { switchTab("stats"); return; }
+  // Make `cid` the active challenge WITHOUT navigating to it. Creating a
+  // challenge needs the state change but must stay on the hub, so the new card
+  // can be seen landing at the top rather than the user being thrown into it.
+  function setActiveChallenge(cid) {
     state.activeCid = cid;
     try { localStorage.setItem(ACTIVECID_KEY, cid); } catch (e) {}
     // reset per-challenge view state
@@ -6398,6 +6455,11 @@
     state.viewMonth = keyToDate(defaultViewKey());
     renderChallChip();
     renderAll();
+  }
+
+  function switchChallenge(cid) {
+    if (cid === activeCid()) { switchTab("stats"); return; }
+    setActiveChallenge(cid);
     switchTab("stats");
   }
 
@@ -6548,17 +6610,26 @@
       }).catch(function (e2) { console.error("renameChallenge failed:", e2); save.disabled = false; setMsg(err, "Couldn't save. Try again."); });
     } else {
       var ncid = genCid(name);
+      var prevActive = activeCid();
       challMeta[ncid] = { name: name, color: color, owner: state.me, createdTs: Date.now() };
       if (!membersByCid[ncid]) membersByCid[ncid] = {};
       membersByCid[ncid][state.me] = { handle: state.me, role: "owner", status: "approved", ts: 0 };
-      renderChallenges();
+      // The list sorts by createdTs ASCENDING, so a brand new challenge would
+      // otherwise appear at the very bottom, furthest from the "+" that was just
+      // tapped. Making it ACTIVE puts it on top for free: .chall-row.active-cid
+      // already carries `order: -1`. Scrolling back up matters as much as the
+      // sort, because on a long list the top of the list is off screen.
+      setActiveChallenge(ncid);
+      scrollActiveTop();
       Store.createChallenge(ncid, name, color).then(function () {
         hideChallModal(); showToast('"' + name + '" created', "success");
       }).catch(function (e2) {
         console.error("createChallenge failed:", e2);
         save.disabled = false; setMsg(err, "Couldn't create. Try again.");
         delete challMeta[ncid]; if (membersByCid[ncid]) delete membersByCid[ncid][state.me];
-        renderChallenges();
+        // Hand the active card back, or the failed creation leaves the hub
+        // pointing at a challenge that no longer exists.
+        setActiveChallenge(prevActive);
       });
     }
   }
@@ -8097,6 +8168,17 @@
   // to the strip's edit tab, and the two never show for the same person.
   // #editParticipants (the Leave pill) is bound in the markup.
 
+  // Join a specific month's round, rather than whichever month the sheet happens
+  // to be viewing. The add-entry modal can hold a date in a different month from
+  // state.viewMonth, so toggleSelfParticipation() is the wrong tool there.
+  function joinRoundKey(key) {
+    if (isParticipant(state.me, key)) return;
+    if (!roundJoinOpen(key)) { showToast("Joining is closed for this round.", "warn"); return; }
+    commitChallenge(key, participantsFor(keyToDate(key)).concat([state.me]));
+    // commitChallenge -> renderAll -> updateLogGate, so the note and the Save
+    // button both settle on their own. Nothing here has to close the modal.
+  }
+
   // Show/hide the Log-tab block when the signed-in user isn't in the selected date's challenge.
   function updateLogGate() {
     if (!state.me) return;
@@ -8105,14 +8187,23 @@
     var note = document.getElementById("logBlockNote");
     var btn = document.getElementById("addBtn");
     var mName = new Date(+mk.slice(0, 4), (+mk.slice(5, 7)) - 1, 1).toLocaleString(undefined, { month: "long" });
-    var msg = null;
+    var msg = null, action = null;
     if (dateVal < iso(logWindowStart())) msg = mName + " is closed for logging. You can only log the current and previous month.";
-    else if (!isParticipant(state.me, mk)) msg = mk === monthKeyOf(new Date())
-      ? "You're not in " + mName + "'s challenge. Tap Join on the Challenges tab to take part and log."
-        : "You're not in " + mName + "'s challenge, so you can't log for it. Ask whoever runs it to add you.";
+    else if (!isParticipant(state.me, mk)) {
+      // Being outside the round is the one blocked state the user can clear
+      // themselves, so it gets a button instead of an instruction. It used to
+      // read "Tap Join on the Challenges tab", which meant closing the modal,
+      // going somewhere else, coming back and re-entering the minutes.
+      if (roundJoinOpen(mk)) {
+        msg = "You haven't joined " + mName + "'s round yet.";
+        action = { label: "Join " + mName, fn: function () { joinRoundKey(mk); } };
+      } else {
+        msg = "You're not in " + mName + "'s round, so you can't log for it. Ask whoever runs it to add you.";
+      }
+    }
     else if (roundLocked(mk)) msg = mName + "'s round is locked, so logging is closed.";
     if (msg) {
-      setMsg(note, msg);
+      setMsg(note, msg, "warn", action);
       btn.disabled = true;
     } else {
       setMsg(note, "");

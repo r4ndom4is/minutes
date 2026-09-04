@@ -1333,8 +1333,37 @@
      It takes the pastel too, which makes the sheet's whole top edge the
      challenge's colour and reads as the card continuing rather than as a
      coloured strip inside a neutral sheet. */
-  #sheet[data-mode="stats"] .grab { background: var(--pa, var(--card)); }
+  /* Radius removed, not matched. .grab carried its own 25px corner to sit inside
+     the sheet's 26px one, which stacks two curves a pixel apart and leaves a
+     sliver of the sheet's own --bg showing between them: pale in light mode,
+     which is the arc that survived fixing the top edge. .sheet already has
+     overflow: hidden, so a square corner here is clipped to exactly the sheet's
+     inner curve and the pastel fills it with no seam and nothing to keep in
+     sync. */
+  #sheet[data-mode="stats"] .grab { background: var(--pa, var(--card)); border-radius: 0; }
   #sheet[data-mode="stats"] .grab-bar { background: rgba(20,22,43,.22); }
+  /* .sheet draws a 1px --border-2 hairline all the way round, and that colour is
+     tuned against the PAGE. With a pastel painted inside it, the LIGHT theme's
+     #dfe2ee traced a near-white outline around the header, which is the reported
+     "slight white border".
+     Measured, because the composite is not obvious: a border with alpha sits on
+     the element's OWN background, so ink at .10 over light --bg came out
+     (221,222,228), still near-white, while the same value over dark --bg came out
+     (11,11,17) and erased the sheet's edge entirely. Light wants a DARKER border
+     and dark wants a LIGHTER one; they cannot share a value.
+     So only the top edge is shared, taking the pastel itself, and the sides are
+     left to each theme: dark keeps --border-2, which already reads as a dark line
+     on the pastel and a light one on the page, and light gets an ink wash. */
+  #sheet[data-mode="stats"] { border-top-color: var(--pa, var(--border-2)); }
+  [data-theme="light"] #sheet[data-mode="stats"] {
+    /* .30 is derived, not dialled: ink (20,22,43) at that alpha over light --bg
+       (244,245,250) composites to (177,178,188), which is the dimmed backdrop
+       the sheet sits on (173,174,177). The edge therefore disappears into the
+       page instead of drawing a pale line against the colour. The WIDTH has to
+       stay: 11-modals.css derives its padding from --sheet-bw. */
+    border-left-color: rgba(20,22,43,.30);
+    border-right-color: rgba(20,22,43,.30);
+  }
   .rh-name { font-size: var(--fs-3xl); font-weight: var(--fw-bold); letter-spacing: var(--ls-tight); color: var(--text); line-height: var(--lh-tight); min-width: 0; overflow-wrap: anywhere; }
   /* .rh-nest was the second row of the You header, holding the account subline and,
      before that, an .rh-lock badge. Identity moved into the You page's own profile
@@ -6439,7 +6468,7 @@
 
 
   // ---- Challenges page + switcher ----
-  function renderChallChip() { bump(); }   // sheet header is bound, see #ccDot/#ccName
+  function renderChallChip() { bump(); }   // sheet header is bound, see #ccName and #sheet's --pa
 
   // Make `cid` the active challenge WITHOUT navigating to it. Creating a
   // challenge needs the state change but must stay on the hub, so the new card

@@ -914,8 +914,6 @@
   .lb-lock svg { width: 14px; height: 14px; }
   .lb-lock.open { color: var(--live-fg); background: var(--tint-live); }
   .lb-lock.closed { color: var(--danger); background: var(--tint-danger); }
-  .edit-btn { background: var(--card-2); border: 1px solid var(--border-2); color: var(--muted); font-size: var(--fs-3xs); font-weight: var(--fw-bold); text-transform: uppercase; letter-spacing: var(--ls-wider); padding: var(--sp-xs) var(--sp-lg); border-radius: var(--r-xs); cursor: pointer; }
-  .edit-btn.on { background: var(--accent); border-color: var(--accent); color: #fff; }
 
   /* Participant editor
      One two-level rhythm runs the whole panel: 20px opens a section, 8px binds
@@ -1278,18 +1276,24 @@
      first card. Change one of the three and the two gaps stop matching. */
   .round-head { margin: var(--sp-3xs) 0 var(--sp-md); }
   .rh-title { display: flex; align-items: center; gap: var(--sp-sm); }
-  .rh-back { flex: 0 0 auto; width: 36px; height: 36px; margin-right: var(--sp-hair); border-radius: var(--r-pill); border: none; background: var(--card-2); color: var(--text); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: background .15s ease, color .15s ease; }
+  /* 44px, the top of the icon-button range in docs/design.md. At 36 the gear read
+     as an afterthought on a header that had just become a full-bleed colour
+     panel, and it is now the ONLY way into everything that governs the
+     challenge, so it should look like it. The back button matches: the design
+     doc calls these two a matched pair at each end of one row, and a pair that
+     differs by 8px is not a pair. */
+  .rh-back { flex: 0 0 auto; width: 44px; height: 44px; margin-right: var(--sp-hair); border-radius: var(--r-pill); border: none; background: var(--card-2); color: var(--text); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: background .15s ease, color .15s ease; }
   .rh-back:hover { background: var(--border); }
   /* The manage control. Deliberately the same object as .rh-back, mirrored to
      the other end of the row: same 36px circle, same surface, same ink. The
      header is the one place in the app where a per-challenge control lines up
      with anything, which is why it moved here off the card. */
   .rh-manage { flex: 0 0 auto; position: relative; margin-left: auto;
-               width: 36px; height: 36px; border-radius: var(--r-pill); border: none;
+               width: 44px; height: 44px; border-radius: var(--r-pill); border: none;
                background: var(--card-2); color: var(--muted);
                display: inline-flex; align-items: center; justify-content: center;
                cursor: pointer; transition: background .15s ease, color .15s ease; }
-  .rh-manage svg { width: 18px; height: 18px; display: block; }
+  .rh-manage svg { width: 22px; height: 22px; display: block; }
   .rh-manage:hover { background: var(--border); color: var(--text); }
   .rh-manage:active { background: var(--accent); color: #fff; }
   .rh-back:active { background: var(--accent); color: #fff; }
@@ -2100,7 +2104,6 @@
   html[data-depth="soft"] .quick button,
   html[data-depth="soft"] .stepper .step,
   html[data-depth="soft"] .dp-trigger,
-  html[data-depth="soft"] .edit-btn,
   html[data-depth="soft"] .cr-edit,
   html[data-depth="soft"] .cr-act,
   html[data-depth="soft"] .cal-nav,
@@ -2178,7 +2181,6 @@
     border: 2px solid var(--ink); box-shadow: var(--pop-sm) var(--pop-sm) 0 var(--pop-ink);
   }
 
-  html[data-depth="pop"] .edit-btn,
   html[data-depth="pop"] .cr-edit,
   html[data-depth="pop"] .cr-act,
   html[data-depth="pop"] .cal-nav,
@@ -2270,13 +2272,10 @@
     border: 2px solid var(--ink); border-radius: var(--r-md);
     box-shadow: var(--pop) var(--pop) 0 var(--pop-ink); margin-right: var(--pop);
   }
-  /* A flush list card holding nothing would paint as a bare 2px line. The tab
-     strip is chrome, not content, so it must not count as "something inside". */
-  .card.list-card:not(:has(> *:not(:empty):not(.list-tabs))) { display: none; }
-  /* Symmetric inset. The 4px top was sized for a bare control sitting under the
-     tab strip; the panel now opens on a section heading, which needs the same
-     breathing room as the other three sides. */
-  .card.list-card #participantEdit { padding: var(--sp-xl); }
+  /* A flush list card holding nothing would paint as a bare 2px line. With the
+     tab strip moved OUT of the card there is no chrome left inside to discount,
+     so this is now simply "empty means gone". */
+  .card.list-card:not(:has(> *:not(:empty))) { display: none; }
   .card.list-card .blank { padding: var(--sp-3xl) var(--sp-xl); }
   /* "separate" strips the wrapper card, so every row draws its own surface. The
      empty state is the only row there is, so it has to draw one too — otherwise
@@ -2298,196 +2297,57 @@
      no accent: a filled purple pill then only ever means "go somewhere",
      never "filter this", which is what separates it from the page switcher.
      ---------------------------------------------------------------------- */
-  .list-tabs { display: flex; background: var(--card-2); border-bottom: 1px solid var(--border); }
-  .list-tabs button {
-    flex: 1; padding: var(--sp-lg) var(--sp-sm); border: none; background: none; font-family: inherit;
-    font-size: var(--fs-sm); font-weight: var(--fw-bold); color: var(--muted); cursor: pointer;
-  }
-  /* The divider's width comes out of the padding. These are flex: 1 with a 0 basis,
-     so each half's base size is its padding plus border and the border is added on
-     top rather than absorbed: uncompensated, the second half ran 1px wider in soft
-     and 2px in pop (measured 169 against 171). */
-  .list-tabs button + button { border-left: 1px solid var(--border); padding-left: var(--sp-xs); }
-  .list-tabs button.active { background: var(--card); color: var(--text); font-weight: var(--fw-black); }
-  /* Same folder tab as the page switcher: both top corners share one radius, matched
-     to the corner of whatever container clips the outer one.
-     The divider next to the active half is dropped because the colour change
-     already draws that edge, and a hairline curving around a corner reads as a
-     crack rather than a division. */
-  .list-tabs button.active,
-  .list-tabs button.active + button { border-left-color: transparent; }
-  /* Nested corners have to share a centre or the two arcs read as different curves.
-     A tab's corner centre sits at (its own top) + (its radius) = border width + radius,
-     and the card's arc centre sits at its outer radius, so the two line up only when
-     radius = outer radius - border width, the card's inner radius. Soft has always
-     done this (16 - 1 = 15). Pop must too: 12 - 2 = 10, which also lands the tab's
-     ink exactly where the card's ink stops, 10 continuing outward to 12. */
-  html[data-layout="b"] .list-tabs button.active {
-    border-radius: calc(var(--r-xl) - 1px) calc(var(--r-xl) - 1px) 0 0;
-  }
-  html[data-layout="b"][data-depth="pop"] .list-tabs button.active {
-    border-radius: calc(var(--r-md) - 2px) calc(var(--r-md) - 2px) 0 0;
-  }
-  .list-tabs button:disabled { opacity: .4; cursor: default; }
-  .list-tabs .seg-count { margin-left: var(--sp-xs); font-weight: var(--fw-bold); opacity: .6; font-variant-numeric: tabular-nums; }
-  html[data-depth="pop"] .list-tabs { border-bottom: 2px solid var(--ink); }
-  html[data-depth="pop"] .list-tabs button + button { border-left: 2px solid var(--ink); padding-left: var(--sp-xs); }
-  /* Repeated for pop: the rule above re-declares the whole border shorthand at a
-     higher specificity than the transparent rule further up, which put the 2px ink
-     divider straight back across the active tab's rounded corner and filled the
-     curve in. Same intent, restated where it can win. */
-  html[data-depth="pop"] .list-tabs button.active,
-  html[data-depth="pop"] .list-tabs button.active + button { border-left-color: transparent; }
-  /* The active half drops the divider entirely rather than making it transparent. A
-     transparent border still occupies its 2px and paints the tab's own background, so
-     it showed as a white sliver against the inactive half and pushed the inset line
-     that draws the boundary 2px to the right of the actual edge. The width moves back
-     into the padding so both halves stay the same size. */
-  html[data-depth="pop"] .list-tabs button.active { border-left-width: 0; padding-left: var(--sp-sm); }
-  /* grouped + soft: cover the hairline under the active half so it joins the
-     rows. Pop keeps its divider, because a broken 2px ink line reads as a gap. */
-  html[data-layout="b"][data-depth="soft"] .list-tabs button.active { box-shadow: 0 1px 0 var(--card); }
-  /* Same folder-tab detour the page switcher uses, applied here. The boundary runs up
-     the active half's inner side as an inset shadow, which respects border-radius and
-     so follows the rounded corner round onto the card's top border.
-
-     The active half then covers the strip's baseline beneath itself so it reads as
-     open at the bottom and merges with the rows. That cover is offset 2px towards the
-     outer edge rather than sitting square, so it stops short of the inner edge and
-     lets the baseline show through for exactly the width of the vertical line. Square,
-     the two strokes met corner to corner with a white notch between them and never
-     actually joined. Shadows rather than borders throughout, because a border on a
-     flex: 1 button with a 0 basis changes its size and pushes the label off the other
-     half's baseline.
-
-     The second half is matched with :not(:first-child), not :last-child. The swoop and
-     the pencil stay in the DOM when they are hidden, so :last-child never matched any
-     tab and the Month half went unstyled in every role, not just for admins. */
-  html[data-layout="b"][data-depth="pop"] .list-tabs button.active:first-child {
-    box-shadow: inset -2px 0 0 var(--ink), -2px 2px 0 var(--card);
-  }
-  html[data-layout="b"][data-depth="pop"] .list-tabs button.active:not(:first-child) {
-    box-shadow: inset 2px 0 0 var(--ink), 2px 2px 0 var(--card);
-  }
-
-  /* separate: there is no card to cap, so the strip becomes a card of its own
-     and joins the row stack. */
-  html[data-layout="c"] .list-card { display: flex; flex-direction: column; gap: var(--gap); }
-  html[data-layout="c"][data-depth="pop"] .list-card { gap: calc(var(--gap) + var(--pop)); }
-  html[data-layout="c"] .list-tabs {
-    border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden;
-  }
-  /* Separate layout: the strip is a standalone card with all four corners rounded,
-     so the active tab matches on all four rather than only the top pair. */
-  html[data-layout="c"] .list-tabs button.active {
-    border-radius: calc(var(--r-lg) - 1px);
-  }
-  html[data-layout="c"][data-depth="soft"] .list-tabs { box-shadow: var(--elev-sm); }
-  html[data-layout="c"][data-depth="pop"] .list-tabs {
-    border: 2px solid var(--ink); border-radius: var(--r-md);
-    box-shadow: var(--pop) var(--pop) 0 var(--pop-ink); margin-right: var(--pop);
-  }
-  html[data-layout="c"][data-depth="pop"] .list-tabs button.active {
-    border-radius: calc(var(--r-md) - 2px);
-  }
-
   /* ----------------------------------------------------------------------
-     ROSTER EDIT TAB -- opening the roster editor changes what the card shows,
-     exactly like Today and Month, so it belongs in the strip rather than as a
-     pill floating above it. It is not a filter though, so it must not look
-     like its siblings: the track's fill stops short and flares outward into
-     an accent tint patch. The colour is what says "different kind of thing",
-     which is why the shape can stay a plain flush tab.
+     LIST TABS -- text and a rule, not a segmented control.
 
-     Open, the patch drops to the card colour and keeps the accent glyph, so
-     it becomes a folder tab merging into the editor below, same language as
-     an active filter. The fillet turns over with it: concave when closed,
-     flaring out into the tint; convex when open, rounding down and away so
-     the card runs uninterrupted into the panel. Left concave while open, the
-     fill juts right at the baseline and cuts a notch into the editor.
+     This replaced 190 lines whose subject was not tabs at all: folder-corner
+     radius maths for two layouts times two depths, transparent-border width
+     compensation, a "swoop" fillet, and :has() rules to stop two arcs stacking
+     into a doubled edge. Every one of those existed to make a rounded-rectangle
+     tab sit convincingly on a card.
+
+     docs/design.md: hierarchy comes from weight and size, not from lines, boxes
+     or tint; anything you can act on is a pill or a circle, never a rounded
+     rectangle. A tab strip is neither, so it stops pretending to be a control
+     and becomes what it actually is -- a line of headings, one of which is
+     current. The underline is the one line kept, because marking the current
+     item is work no fill can do without drawing a box.
+
+     They now sit ABOVE the card rather than inside it, which is what removes
+     the corner problem at the source: nothing has to negotiate with the card's
+     radius any more.
      ---------------------------------------------------------------------- */
-  .seg-swoop { flex: 0 0 18px; align-self: stretch; position: relative; background: var(--tint-accent); pointer-events: none; }
-  .seg-swoop::after {
-    content: ''; position: absolute; inset: 0;
-    background: var(--card-2); border-top-right-radius: 18px;
+  .ltabs { display: flex; align-items: baseline; gap: var(--sp-4xl);
+    padding: var(--sp-xs) 0 var(--sp-lg); }
+  .ltabs button {
+    position: relative; border: none; background: none; padding: 0 0 var(--sp-sm);
+    font-family: inherit; font-size: var(--fs-xl); font-weight: var(--fw-sm-bold);
+    letter-spacing: var(--ls-tight); line-height: var(--lh-tight);
+    color: var(--muted); cursor: pointer;
+    /* inline-block, not inline-flex. A flex container BLOCKIFIES its children, so
+       the count span became a block and innerText read "August\n5/5" - the label
+       and the count on separate lines to anything reading the DOM, while looking
+       identical on screen. Inline children keep one text run and sit on the
+       shared baseline for free. */
+    display: inline-block; white-space: nowrap;
   }
-  /* `.list-tabs button` is (0,1,1) and outranks a bare `.t-edit`, taking the
-     flex, the padding and the colour with it -- uncompensated the pencil
-     stretches to an equal third and repaints in --muted. Restated with the
-     track in the selector so these hold. */
-  .list-tabs .t-edit {
-    flex: 0 0 52px; padding: 0; align-self: stretch; border: none; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    color: var(--accent); background: var(--tint-accent);
+  /* Weight AND colour move together. Weight alone is the house rule, but these
+     sit on the page rather than on a card, and at --fs-xl one step of Inter is
+     too fine a change to carry a selection on its own. */
+  .ltabs button.active { color: var(--text); font-weight: var(--fw-black); }
+  /* The rule is the width of the label, so it reads as underlining a word rather
+     than as a segment of a track. 2px because 1px reads as a hairline border,
+     which is the thing being replaced. */
+  .ltabs button.active::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
+    background: var(--text); border-radius: var(--r-pill);
   }
-  .list-tabs .t-edit .ic { width: 17px; height: 17px; }
-  /* When the last filter is the active one its fill is --card, not the track, so
-     the fillet has to ramp that instead. Left alone, the tab's own rounded top
-     corner and the fillet stack up as two curves with a band of track colour
-     caught between them, which reads as a doubled edge. Zero the tab's corner
-     and hand its fill to the fillet: one curve, one continuous ramp into the
-     tint. The baseline cover comes along for the same reason it does when the
-     tab is open -- the fill reaches the bottom edge across the full 18px. */
-  html[data-layout="b"] .list-tabs.has-edit button.active:has(+ .seg-swoop) {
-    border-top-right-radius: 0;
-  }
-  html[data-layout="b"] .list-tabs.has-edit button.active:has(+ .seg-swoop) + .seg-swoop::after {
-    background: var(--card);
-  }
-  html[data-layout="b"][data-depth="soft"] .list-tabs.has-edit button.active:has(+ .seg-swoop) + .seg-swoop { box-shadow: 0 1px 0 var(--card); }
-  html[data-layout="b"][data-depth="pop"] .list-tabs.has-edit button.active:has(+ .seg-swoop) + .seg-swoop { box-shadow: 0 2px 0 var(--card); }
-  /* The open half does not stop at its own right edge: the fillet carries the fill on
-     to meet the pencil, so that is where the region's right edge actually runs.
-     An inset shadow, not borders, and here that is the whole point. Its thickness is
-     the offset projected onto the edge normal, so it is a full 2px down the straight
-     right side and fades to nothing exactly where the arc turns horizontal -- which is
-     where it would otherwise stack under the card's own 2px top border and read as a
-     4px band. Measured: the active tab's left corner already behaves this way, so this
-     matches it. (The open editor's ramp needs real borders instead, because there the
-     arc has to MEET the baseline rather than fade into an existing line.)
-     `bottom: -2px` for the same reason it is on the open editor's fillet: the ::after
-     stops at the strip's content box while the strip's baseline is the border below it,
-     so without it the vertical stroke and the pencil's baseline meet corner to corner
-     and leave a 2x2 notch. */
-  html[data-layout="b"][data-depth="pop"] .list-tabs.has-edit button.active:has(+ .seg-swoop) + .seg-swoop::after {
-    bottom: -2px;
-    box-shadow: inset -2px 0 0 var(--ink);
-  }
-  .list-tabs .t-edit.editing { background: var(--card); color: var(--accent); }
-  .list-tabs:has(.t-edit.editing) .seg-swoop { background: var(--card); }
-  .list-tabs:has(.t-edit.editing) .seg-swoop::after {
-    border-top-right-radius: 0; border-bottom-right-radius: 18px;
-  }
-  /* The same baseline cover the active filter tabs use, so the open tab and
-     its ramp join the editor rather than sitting above a hairline. Pop's line
-     is 2px, so the cover has to be too or the ink shows through. */
-  html[data-layout="b"][data-depth="soft"] .list-tabs:has(.t-edit.editing) .seg-swoop,
-  html[data-layout="b"][data-depth="soft"] .list-tabs .t-edit.editing { box-shadow: 0 1px 0 var(--card); }
-  html[data-layout="b"][data-depth="pop"] .list-tabs:has(.t-edit.editing) .seg-swoop,
-  html[data-layout="b"][data-depth="pop"] .list-tabs .t-edit.editing { box-shadow: 0 2px 0 var(--card); }
-  /* Pop draws an edge wherever the open region meets the track, and the open editor's
-     edge is the ramp itself: straight down the swoop's right side, then round the
-     concave arc to the baseline. The fillet is the ::after, so the stroke goes on the
-     ::after as right + bottom borders. Both are needed: a single side leaves the arc
-     half drawn, since a rounded corner is shared between the two borders that meet
-     there. Borders rather than an inset shadow because an offset inset thins to nothing
-     where the arc turns, and a spread ring would also stroke the left edge, which sits
-     in the middle of the track and must stay invisible. The bottom edge left of the arc
-     is zero-length (an 18px radius on an 18px box), so border-bottom only ever paints
-     the curve. box-sizing is restated because the global border-box rule does not reach
-     pseudo-elements, and content-box would push the fillet 2px wider than the swoop. */
-  html[data-layout="b"][data-depth="pop"] .list-tabs:has(.t-edit.editing) .seg-swoop::after {
-    box-sizing: border-box;
-    bottom: -2px;
-    border-right: 2px solid var(--ink);
-    border-bottom: 2px solid var(--ink);
-  }
-  /* separate: the strip is a standalone card with nothing below it to merge
-     into, so the fillet has no baseline to run into and the tab rounds on all
-     four corners like its siblings. */
-  html[data-layout="c"] .seg-swoop { display: none; }
-  html[data-layout="c"] .list-tabs .t-edit.editing { border-radius: calc(var(--r-lg) - 1px); }
-  html[data-layout="c"][data-depth="pop"] .list-tabs .t-edit.editing { border-radius: calc(var(--r-md) - 2px); }
+  .ltabs button:disabled { opacity: .4; cursor: default; }
+  .ltabs button:disabled.active::after { background: var(--muted); }
+  /* The count is a fact about the tab, not part of its name, so it keeps the
+     muted colour and the lighter weight in both states. */
+  .ltabs .ltabs-n { font-size: var(--fs-sm); font-weight: var(--fw-sm-bold); color: var(--muted); margin-left: var(--sp-xs); }
+
 
   /* ======================================================================
      YOU / settings page
@@ -2806,7 +2666,7 @@
                to its name, not on the browse card. Here it lines up with the
                back button on the same row and takes ordinary app-surface ink
                instead of being tuned for six pastels. -->
-          <template x-if="$store.s.chall.canManage">
+          <template x-if="$store.s.chall.canOpenMenu">
             <button class="rh-manage" id="chalManage" aria-label="Manage challenge"
                     :title="$store.s.chall.manageTitle"
                     @click="$store.s.act.manage($store.s.chall.cid)">
@@ -2934,26 +2794,24 @@
           <div class="ch-title"><div class="slabel">Leaderboard &amp; Members</div><span class="lb-lock" id="rosterLock" role="img"
                 x-show="$store.s.board.lock.show" :class="$store.s.board.lock.open ? 'open' : 'closed'"
                 :title="$store.s.board.lock.title" :aria-label="$store.s.board.lock.title"><svg class="ic" aria-hidden="true"><use :href="$store.s.board.lock.open ? '#i-lock-open' : '#i-lock'"/></svg></span></div>
-          <button class="edit-btn on" id="editParticipants" x-show="$store.s.board.leave"
-                  @click="$store.s.act.leaveRound()">Leave</button>
+        </div>
+        <!-- Text and a rule, above the card rather than inside it. Leaving and
+             editing the roster both moved into the gear's menu: they change the
+             CHALLENGE, while these two only change which slice of it you are
+             looking at, and mixing the two kinds in one strip is what made the
+             old control need a differently-shaped third tab. -->
+        <div class="ltabs" id="seg" x-show="$store.s.board.seg.show">
+          <button data-range="today" :class="{ active: $store.s.board.seg.range === 'today' }"
+                  :disabled="$store.s.board.seg.disabled || $store.s.board.seg.todayOff"
+                  @click="$store.s.act.setRange('today')">Today <span class="ltabs-n" x-show="$store.s.board.seg.todayCount" x-text="$store.s.board.seg.todayCount"></span></button>
+          <button data-range="month" :class="{ active: $store.s.board.seg.range === 'month' }"
+                  :disabled="$store.s.board.seg.disabled"
+                  @click="$store.s.act.setRange('month')"><span x-text="$store.s.board.seg.monthName"></span> <span class="ltabs-n" x-show="$store.s.board.seg.monthCount" x-text="$store.s.board.seg.monthCount"></span></button>
         </div>
         <div class="card list-card">
-          <div class="list-tabs" id="seg" x-show="$store.s.board.seg.show" :class="{ 'has-edit': $store.s.board.editTab.show }">
-            <button data-range="today" :class="{ active: !$store.s.board.editing && $store.s.board.seg.range === 'today' }"
-                    :disabled="$store.s.board.seg.disabled || $store.s.board.seg.todayOff"
-                    @click="$store.s.act.setRange('today')">Today <span class="seg-count" x-show="$store.s.board.seg.todayCount" x-text="$store.s.board.seg.todayCount"></span></button>
-            <button data-range="month" :class="{ active: !$store.s.board.editing && $store.s.board.seg.range === 'month' }"
-                    :disabled="$store.s.board.seg.disabled"
-                    @click="$store.s.act.setRange('month')"><span x-text="$store.s.board.seg.monthName"></span> <span class="seg-count" x-show="$store.s.board.seg.monthCount" x-text="$store.s.board.seg.monthCount"></span></button>
-            <div class="seg-swoop" id="segSwoop" x-show="$store.s.board.editTab.show"></div>
-            <button class="t-edit" id="rosterEditTab" x-show="$store.s.board.editTab.show"
-                    :class="{ editing: $store.s.board.editTab.editing }"
-                    :title="$store.s.board.editTab.editing ? 'Close roster editor' : 'Edit roster'"
-                    :aria-label="$store.s.board.editTab.editing ? 'Close roster editor' : 'Edit roster'"
-                    :aria-expanded="$store.s.board.editTab.editing ? 'true' : 'false'"
-                    @click="$store.s.act.toggleEditing()"><svg class="ic" aria-hidden="true"><use :href="$store.s.board.editTab.editing ? '#i-x' : '#i-pencil'"/></svg></button>
-          </div>
-          <div id="leaderboard" x-show="!$store.s.board.editing">
+          <!-- No `editing` gate any more: the roster editor moved into the gear's
+               modal, so the board is the only thing this card ever shows. -->
+          <div id="leaderboard">
             <template x-if="$store.s.board.empty">
               <div class="blank" x-html="$store.s.board.empty"></div>
             </template>
@@ -2991,59 +2849,18 @@
               </span>
             </div>
           </div>
-          <div id="participantEdit" x-show="$store.s.board.editing">
-            <div class="pe-sub">Round controls</div>
-            <template x-for="g in $store.s.participantEditor.guards" :key="g.kind">
-              <div class="guard-row">
-                <div class="guard-lbl" x-text="g.label"></div>
-                <template x-if="g.noteText">
-                  <div class="gtog-note" :class="{ 'is-closed': g.noteClosed }" :aria-label="g.label + ': ' + g.noteText"><span x-html="g.noteIcon"></span><span x-text="g.noteText"></span></div>
-                </template>
-                <template x-if="!g.noteText">
-                  <div class="gtog" role="switch" :aria-label="g.label" :aria-checked="g.open ? 'true' : 'false'" :class="{ 'is-open': g.open, 'is-closed': !g.open }">
-                    <span class="gtog-thumb"></span>
-                    <button type="button" class="gtog-opt" data-g="closed" @click="$store.s.act.setRoundGuard($event, g.kind, false)">Closed</button>
-                    <button type="button" class="gtog-opt" data-g="open" @click="$store.s.act.setRoundGuard($event, g.kind, true)">Open</button>
-                  </div>
-                </template>
-              </div>
-            </template>
-
-            <div class="pe-sub" x-text="'In ' + $store.s.participantEditor.monthName"></div>
-            <template x-if="!$store.s.participantEditor.current.length"><div class="blank blank--sm">No one yet. Add people below.</div></template>
-            <template x-for="p in $store.s.participantEditor.current" :key="p.name">
-              <div class="pe-row">
-                <span class="dot sm" :style="'background:' + p.color" x-text="p.initial"></span>
-                <span class="nm" x-text="p.name"></span><button class="rm icon-del" title="Remove" @click="$store.s.act.removeParticipant(p.name)"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg></button>
-              </div>
-            </template>
-
-            <div class="pe-sub">Add existing members</div>
-            <template x-if="!$store.s.participantEditor.others.length"><div class="blank blank--sm">Everyone is already in.</div></template>
-            <template x-if="$store.s.participantEditor.others.length">
-              <div class="pe-chips">
-                <template x-for="m in $store.s.participantEditor.others" :key="m">
-                  <button type="button" class="pe-chip" @click="$store.s.act.addExistingParticipant(m)" x-text="'+ ' + m"></button>
-                </template>
-              </div>
-            </template>
-
-            <div class="pe-sub">Add someone new</div>
-            <div class="pe-add"><input type="text" id="peNewName" placeholder="New name" autocomplete="off" autocapitalize="words" @keydown.enter="$store.s.act.addNewParticipant()" /><button type="button" id="peNewBtn" @click="$store.s.act.addNewParticipant()">Add</button></div>
-            <div class="msg msg--quiet" id="peErr" aria-live="polite"></div>
-          </div>
         </div>
       </div>
 
       <div class="sect">
         <div class="slabel">Your entries</div>
+        <div class="ltabs" id="entriesSeg">
+          <button type="button" data-egroup="date" :class="{ active: $store.s.entriesGroup !== 'category' }"
+                  @click="$store.s.act.setEntriesGroup('date')">By date</button>
+          <button type="button" data-egroup="category" :class="{ active: $store.s.entriesGroup === 'category' }"
+                  @click="$store.s.act.setEntriesGroup('category')">By category</button>
+        </div>
         <div class="card list-card">
-          <div class="list-tabs" id="entriesSeg">
-            <button type="button" data-egroup="date" :class="{ active: $store.s.entriesGroup !== 'category' }"
-                    @click="$store.s.act.setEntriesGroup('date')">By date</button>
-            <button type="button" data-egroup="category" :class="{ active: $store.s.entriesGroup === 'category' }"
-                    @click="$store.s.act.setEntriesGroup('category')">By category</button>
-          </div>
           <div id="entries">
             <template x-if="$store.s.entryView.empty">
               <div class="blank" x-text="$store.s.entryView.empty"></div>
@@ -3471,31 +3288,104 @@
       <div class="m-ico" id="manageIco" aria-hidden="true" :style="'background:' + $store.s.manage.pastel"></div>
       <div class="modal-title" id="manageTitle" x-text="$store.s.manage.title">Manage</div>
       <div id="manageBody">
-        <div class="mg-section-h" x-text="$store.s.manage.pendingTitle"></div>
-        <template x-if="$store.s.manage.noPending"><div class="blank blank--sm">None right now.</div></template>
-        <template x-for="r in $store.s.manage.pending" :key="r.name">
-          <div class="approve-row">
-            <span class="dot" :style="'background:' + r.color" x-text="r.initial"></span>
-            <span class="ar-name" x-text="r.name"></span>
-            <button class="ar-btn ar-approve" @click="$store.s.act.approveRequest($event, $store.s.manage.cid, r.name)">Approve</button>
-            <button class="ar-btn ar-deny" @click="$store.s.act.denyRequest($event, $store.s.manage.cid, r.name)">Deny</button>
+        <!-- Everything that governs this challenge now lives behind the one gear,
+             in the order you act on it: this round first, then who is waiting,
+             then who is in. Leaving and editing the roster used to be two more
+             controls competing for room in the leaderboard's header; they were
+             never about the leaderboard.
+             The round sections are scoped to the OPEN challenge: the same modal
+             opens from the Backoffice for any challenge, and the month wheel
+             only has a view of the active one. -->
+        <template x-if="$store.s.manage.isActive && $store.s.manage.canEditRound">
+          <div>
+            <div class="mg-section-h" x-text="$store.s.manage.roundName + ' round'"></div>
+            <template x-for="g in $store.s.participantEditor.guards" :key="g.kind">
+              <div class="guard-row">
+                <div class="guard-lbl" x-text="g.label"></div>
+                <template x-if="g.noteText">
+                  <div class="gtog-note" :class="{ 'is-closed': g.noteClosed }" :aria-label="g.label + ': ' + g.noteText"><span x-html="g.noteIcon"></span><span x-text="g.noteText"></span></div>
+                </template>
+                <template x-if="!g.noteText">
+                  <div class="gtog" role="switch" :aria-label="g.label" :aria-checked="g.open ? 'true' : 'false'" :class="{ 'is-open': g.open, 'is-closed': !g.open }">
+                    <span class="gtog-thumb"></span>
+                    <button type="button" class="gtog-opt" data-g="closed" @click="$store.s.act.setRoundGuard($event, g.kind, false)">Closed</button>
+                    <button type="button" class="gtog-opt" data-g="open" @click="$store.s.act.setRoundGuard($event, g.kind, true)">Open</button>
+                  </div>
+                </template>
+              </div>
+            </template>
+
+            <div class="mg-section-h" id="peInTitle" x-text="'In ' + $store.s.participantEditor.monthName"></div>
+            <div id="participantEdit">
+              <template x-if="!$store.s.participantEditor.current.length"><div class="blank blank--sm">No one yet. Add people below.</div></template>
+              <template x-for="p in $store.s.participantEditor.current" :key="p.name">
+                <div class="pe-row">
+                  <span class="dot sm" :style="'background:' + p.color" x-text="p.initial"></span>
+                  <span class="nm" x-text="p.name"></span><button class="rm icon-del" title="Remove" @click="$store.s.act.removeParticipant(p.name)"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg></button>
+                </div>
+              </template>
+
+              <div class="mg-section-h">Add existing members</div>
+              <template x-if="!$store.s.participantEditor.others.length"><div class="blank blank--sm">Everyone is already in.</div></template>
+              <template x-if="$store.s.participantEditor.others.length">
+                <div class="pe-chips">
+                  <template x-for="m in $store.s.participantEditor.others" :key="m">
+                    <button type="button" class="pe-chip" @click="$store.s.act.addExistingParticipant(m)" x-text="'+ ' + m"></button>
+                  </template>
+                </div>
+              </template>
+
+              <div class="mg-section-h">Add someone new</div>
+              <div class="pe-add"><input type="text" id="peNewName" placeholder="New name" autocomplete="off" autocapitalize="words" @keydown.enter="$store.s.act.addNewParticipant()" /><button type="button" id="peNewBtn" @click="$store.s.act.addNewParticipant()">Add</button></div>
+              <div class="msg msg--quiet" id="peErr" aria-live="polite"></div>
+            </div>
           </div>
         </template>
 
-        <div class="mg-section-h" x-text="$store.s.manage.membersTitle"></div>
-        <template x-if="$store.s.manage.noMembers"><div class="blank blank--sm">No members yet.</div></template>
-        <template x-for="m in $store.s.manage.members" :key="m.name">
-          <div class="mg-row">
-            <span class="dot" :style="'background:' + m.color" x-text="m.initial"></span>
-            <span class="mg-name" x-text="m.name"></span>
-            <span class="mg-owner-pill" x-show="m.ownerPill">Owner</span>
-            <button class="mg-btn" :class="{ on: m.owner }" x-show="m.admin" @click="$store.s.act.setOwnerRole($store.s.manage.cid, m.name, !m.owner)" x-text="m.toggleText"></button>
-            <button class="mg-del icon-del" title="Remove from challenge" x-show="m.showDel" @click="$store.s.act.removeChallengeMember($store.s.manage.cid, m.name)"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg></button>
+        <!-- Roster and queue are about OTHER people, so they belong to whoever
+             administers the challenge. A member opens this same modal to leave. -->
+        <template x-if="$store.s.manage.canAdminister">
+          <div>
+            <div class="mg-section-h" x-text="$store.s.manage.pendingTitle"></div>
+            <template x-if="$store.s.manage.noPending"><div class="blank blank--sm">None right now.</div></template>
+            <template x-for="r in $store.s.manage.pending" :key="r.name">
+              <div class="approve-row">
+                <span class="dot" :style="'background:' + r.color" x-text="r.initial"></span>
+                <span class="ar-name" x-text="r.name"></span>
+                <button class="ar-btn ar-approve" @click="$store.s.act.approveRequest($event, $store.s.manage.cid, r.name)">Approve</button>
+                <button class="ar-btn ar-deny" @click="$store.s.act.denyRequest($event, $store.s.manage.cid, r.name)">Deny</button>
+              </div>
+            </template>
+
+            <div class="mg-section-h" x-text="$store.s.manage.membersTitle"></div>
+            <template x-if="$store.s.manage.noMembers"><div class="blank blank--sm">No members yet.</div></template>
+            <template x-for="m in $store.s.manage.members" :key="m.name">
+              <div class="mg-row">
+                <span class="dot" :style="'background:' + m.color" x-text="m.initial"></span>
+                <span class="mg-name" x-text="m.name"></span>
+                <span class="mg-owner-pill" x-show="m.ownerPill">Owner</span>
+                <button class="mg-btn" :class="{ on: m.owner }" x-show="m.admin" @click="$store.s.act.setOwnerRole($store.s.manage.cid, m.name, !m.owner)" x-text="m.toggleText"></button>
+                <button class="mg-del icon-del" title="Remove from challenge" x-show="m.showDel" @click="$store.s.act.removeChallengeMember($store.s.manage.cid, m.name)"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg></button>
+              </div>
+            </template>
           </div>
+        </template>
+
+        <!-- A member with nothing to administer and no open round to leave would
+             otherwise be looking at an empty sheet and wondering what broke. -->
+        <template x-if="$store.s.manage.nothingToDo">
+          <div class="blank blank--sm" x-text="$store.s.manage.nothingNote"></div>
         </template>
       </div>
       <div class="msg msg--quiet" id="manageErr" aria-live="polite"></div>
       <div class="modal-actions">
+        <!-- Leaving is the one destructive thing here and it is a MEMBER's
+             action, not an owner's, so the two never appear together. It keeps
+             the secondary shape: the primary slot belongs to the thing you came
+             to do, never to the way out. -->
+        <button class="mbtn" id="manageLeave" x-show="$store.s.manage.isActive && $store.s.manage.canLeave"
+                @click="$store.s.act.leaveRound()"
+                x-text="'Leave ' + $store.s.manage.roundName"></button>
         <button class="mbtn primary" id="manageRename" x-show="$store.s.manage.canRename" @click="$store.s.act.openManageRename()">Edit details</button>
       </div>
     </div>
@@ -3519,7 +3409,7 @@
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
   var NAV_KEY = "minutes-nav";
-  var VERSION = "15.2";
+  var VERSION = "15.3";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -3849,7 +3739,7 @@
     if (viewableMonthKeys().indexOf(monthKeyOf(state.viewMonth)) < 0) state.viewMonth = keyToDate(defaultViewKey());
   }
 
-  var state = { me: null, entries: [], lbRange: "today", hidden: {}, viewMonth: firstOfMonth(new Date()), entriesGroup: "date", openCats: {}, editing: false, activeCid: (function () { try { return localStorage.getItem(ACTIVECID_KEY) || FOUNDING_CID; } catch (e) { return FOUNDING_CID; } })() };
+  var state = { me: null, entries: [], lbRange: "today", hidden: {}, viewMonth: firstOfMonth(new Date()), entriesGroup: "date", openCats: {}, activeCid: (function () { try { return localStorage.getItem(ACTIVECID_KEY) || FOUNDING_CID; } catch (e) { return FOUNDING_CID; } })() };
 
   // ---- Alpine reactive layer ------------------------------------------------
   // The render layer is declarative: templates in the markup read this store and
@@ -4033,13 +3923,18 @@
     var cid = activeCid();
     // The sheet header owns the manage control now, so it needs to know whether
     // this user can manage THIS challenge, and how many requests are waiting.
+    // A plain member gets the gear too: Leave used to be a button on the
+    // leaderboard and it moved in here, so gating the gear on canManage would
+    // leave members with no way out of a challenge at all. What they see INSIDE
+    // is still gated; the gear is the door, not the permission.
     var can = meIsAdmin() || iOwn(cid);
     var pend = can ? pendingFor(cid).length : 0;
     return { cid: cid, color: challColor(cid), pastel: challPastel(cid), name: challName(cid),
-             canManage: can, pendCount: pend,
+             canManage: can, canOpenMenu: can || myStatus(cid) === "approved",
+             pendCount: pend,
              pendLabel: pend > 9 ? "9+" : String(pend),
              manageTitle: pend ? ("Manage \u00b7 " + pend + " pending request" + (pend === 1 ? "" : "s"))
-                               : "Manage challenge" };
+                               : (can ? "Manage challenge" : "Challenge settings") };
   });
 
   // Challenges screen: both lists come from one section list so the row markup
@@ -4201,11 +4096,12 @@
   //
   // The old renderer MUTATED state while drawing (it reset state.editing and
   // rewrote state.lbRange). A reactive getter must never write the state it
-  // reads, so both are DERIVED here instead: state.lbRange stays the user's
-  // explicit choice and `range` is the effective one, `editing` is only true
-  // when the viewer may actually edit. Same behaviour, no write-during-read.
+  // reads, so state.lbRange stays the user's explicit choice and `range` is the
+  // effective one. Same behaviour, no write-during-read. The `editing` mode that
+  // used to live here is gone: the roster editor is a section of the manage
+  // modal now, so the board is never swapped out, only covered.
   view("board", function () {
-    this.rev; this.entries; this.viewMonth; this.me; this.activeCid; this.lbRange; this.editing; this.lbOpenRev;
+    this.rev; this.entries; this.viewMonth; this.me; this.activeCid; this.lbRange; this.lbOpenRev;
     var mk = monthKeyOf(state.viewMonth);
     var rn = roundNumberOf(state.viewMonth);
     var admin = meIsAdmin();
@@ -4213,31 +4109,17 @@
     var isCur = isCurrentMonth(state.viewMonth);
     var isFuture = state.viewMonth.getTime() > firstOfMonth(new Date()).getTime();
     var monthName = state.viewMonth.toLocaleString(undefined, { month: "long" });
-    var canAdminEdit = (admin || meOwnsActive()) && monthEditable(state.viewMonth);
     var canSelfToggle = !admin && !!state.me && (isCur || mk === nextMonthKey());
-    var editing = canAdminEdit && state.editing;
     var joinOpen = !past && roundJoinOpen(mk);
 
     var out = {
       lock: { show: rn >= 1, open: joinOpen,
               title: joinOpen ? "Joining open. Members can join or leave this round"
                               : "Joining closed. Members can't join or leave this round" },
-      leave: (!canAdminEdit && canSelfToggle && roundJoinOpen(mk) && isParticipant(state.me, mk)),
-      editTab: { show: canAdminEdit && rn >= 1, editing: editing },
-      editing: editing, mode: "board", seg: { show: false }, rows: [], empty: "", total: "", totalLabel: ""
+      mode: "board", seg: { show: false }, rows: [], empty: "", total: "", totalLabel: ""
     };
-    if (rn < 1) { out.mode = "prestart"; out.lock.show = false; out.editTab.show = false; out.leave = false;
+    if (rn < 1) { out.mode = "prestart"; out.lock.show = false;
                   out.empty = "Before the challenge started. No standings yet."; return out; }
-    if (editing) {
-      // The strip stays up while editing, so it still needs its labels: the old
-      // renderer only removed .active and set disabled, leaving the previously
-      // written text in place. Returning a bare {show,disabled} here blanked the
-      // month tab, because the template binds x-text to seg.monthName.
-      out.mode = "editing";
-      out.seg = { show: true, disabled: true, range: "", monthName: monthName,
-                  todayOff: !isCur, todayCount: "", monthCount: "" };
-      return out;
-    }
     if (!(isParticipant(state.me, mk) || admin || meOwnsActive())) {
       out.mode = "noboard";
       out.empty = past ? ("You didn\u2019t take part in " + escapeHtml(monthName) + ".")
@@ -4551,7 +4433,7 @@
   view("manage", function () {
     this.rev; this.me; this.manageCid;
     var cid = state.manageCid || manageCid;
-    if (!cid) return { cid: "", pastel: "", color: "", title: "Manage", canRename: false, pendingTitle: "Pending requests", pending: [], membersTitle: "Members", members: [], noPending: true, noMembers: true };
+    if (!cid)     return { cid: "", pastel: "", color: "", title: "Manage", canRename: false, canAdminister: false, pendingTitle: "Pending requests", pending: [], membersTitle: "Members", members: [], noPending: true, noMembers: true };
     var isAdm = meIsAdmin();
     var pend = pendingFor(cid);
     var mm = membersByCid[cid] || {};
@@ -4559,6 +4441,28 @@
     var approved = Object.keys(mm).filter(function (h) { return mm[h].status === "approved"; }).sort();
     return {
       cid: cid, pastel: challPastel(cid), color: challColor(cid), title: challName(cid), canRename: isAdm || iOwn(cid),
+      // Everything that administers OTHER people is one flag. A member can open
+      // this modal now (it is where Leave lives), and without this the roster and
+      // the pending queue would be on show to them.
+      canAdminister: isAdm || iOwn(cid),
+      // The round editor and Leave both act on the CURRENTLY OPEN challenge's
+      // round, because that is the only one the month wheel has a view of. The
+      // same modal is reachable from the Backoffice for any challenge, so those
+      // sections have to hide there rather than silently edit a different round.
+      isActive: cid === activeCid(),
+      canEditRound: (isAdm || iOwn(cid)) && monthEditable(state.viewMonth),
+      canLeave: !isAdm && !iOwn(cid) && roundJoinOpen(monthKeyOf(state.viewMonth))
+                && isParticipant(state.me, monthKeyOf(state.viewMonth)),
+      // A member's whole menu is Leave. When that is unavailable the modal would
+      // be blank, so say why instead: the two reasons are that the round is
+      // locked, or that they are not in this round to begin with.
+      nothingToDo: !(isAdm || iOwn(cid)) && !(cid === activeCid()
+                   && roundJoinOpen(monthKeyOf(state.viewMonth))
+                   && isParticipant(state.me, monthKeyOf(state.viewMonth))),
+      nothingNote: !isParticipant(state.me, monthKeyOf(state.viewMonth))
+                   ? "You're not in this round, so there's nothing to change here."
+                   : "This round is locked, so you can't leave it now.",
+      roundName: state.viewMonth.toLocaleString(undefined, { month: "long" }),
       pendingTitle: "Pending requests" + (pend.length ? " · " + pend.length : ""), noPending: !pend.length,
       pending: pend.map(approveRowModel),
       membersTitle: "Members" + (approved.length ? " · " + approved.length : ""), noMembers: !approved.length,
@@ -4590,10 +4494,6 @@
     joinTile: function () { toggleSelfParticipation(); },
     leaveRound: function () { toggleSelfParticipation(); },
     setRange: function (r) { state.lbTouched = true; state.lbRange = r; },
-    toggleEditing: function () {
-      if (!((meIsAdmin() || meOwnsActive()) && monthEditable(state.viewMonth))) return;
-      state.editing = !state.editing;
-    },
     togglePerson: function (name) { lbOpen[name] = !lbOpen[name]; state.lbOpenRev++; },
     toggleLegend: function (name) { state.hidden[name] = !state.hidden[name]; state.hiddenRev++; renderChart(); },
     setElev: function (n) { applyElev(n, true); },
@@ -4605,7 +4505,7 @@
     monthJump: function () {
       state.viewTouched = true; state.landingResolved = true;
       var k = defaultViewKey();
-      if (monthKeyOf(state.viewMonth) !== k) { state.editing = false; state.viewMonth = keyToDate(k); renderAll(); }
+      if (monthKeyOf(state.viewMonth) !== k) { state.viewMonth = keyToDate(k); renderAll(); }
     },
     editEntry: function (e) { openEditEntry(e); },
     toggleCat: function (tag, open) { state.openCats[tag] = !open; },
@@ -5033,7 +4933,7 @@
   function doLogin(name) {
     state.me = name;
     // reset per-user view state so nothing leaks between sessions on a shared device
-    state.editing = false; state.hidden = {}; state.openCats = {}; state.entriesGroup = "date"; state.lbRange = "today"; state.lbTouched = false;
+    state.hidden = {}; state.openCats = {}; state.entriesGroup = "date"; state.lbRange = "today"; state.lbTouched = false;
     // Landing is resolved lazily once entries load; reset the one-shot flags so a
     // fresh login or an auto-resume re-runs the grace-window landing.
     state.viewTouched = false; state.landingResolved = false;
@@ -6478,7 +6378,7 @@
     try { localStorage.setItem(ACTIVECID_KEY, cid); } catch (e) {}
     // reset per-challenge view state
     state.viewMonth = firstOfMonth(new Date());
-    state.editing = false; state.lbTouched = false; state.lbRange = "today";
+    state.lbTouched = false; state.lbRange = "today";
     lbOpen = {};
     state.entries = entriesAll.filter(function (e) { return cidOf(e) === cid; });
     state.viewMonth = keyToDate(defaultViewKey());
@@ -7597,7 +7497,6 @@
     if (viewableMonthKeys().indexOf(key) < 0) return false;
     if (key === monthKeyOf(state.viewMonth)) return false;
     state.viewTouched = true; state.landingResolved = true;
-    state.editing = false;
     state.viewMonth = keyToDate(key);
     if (!isCurrentMonth(state.viewMonth)) state.lbRange = "month";
     renderAll();
@@ -8063,7 +7962,7 @@
     // round than the one on screen, follow it there. Otherwise the save is confirmed
     // and nothing visibly changes.
     var landedKey = date.slice(0, 7);
-    if (landedKey !== monthKeyOf(state.viewMonth)) { state.editing = false; state.viewMonth = keyToDate(landedKey); }
+    if (landedKey !== monthKeyOf(state.viewMonth)) { state.viewMonth = keyToDate(landedKey); }
     renderAll();
 
     var addBtn = document.getElementById("addBtn");
@@ -8307,7 +8206,11 @@
   // ---- Manage one challenge (approvals for owner OR admin; roles/removal admin-only) ----
   var manageCid = null;
   function openManageChallenge(cid) {
-    if (!(meIsAdmin() || iOwn(cid))) return;
+    // Members get in too. This modal is no longer admin-only: Leave moved here
+    // from the leaderboard, so refusing a member would leave them unable to leave
+    // a challenge at all. The modal gates its own sections on canAdminister, so
+    // what a member sees is still only their own way out.
+    if (!(meIsAdmin() || iOwn(cid) || myStatus(cid) === "approved")) return;
     manageCid = cid;
     state.manageCid = cid;
     setMsg("manageErr", "");

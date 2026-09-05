@@ -1270,10 +1270,10 @@
   .rh-title { display: flex; align-items: center; gap: var(--sp-sm); }
   .timeline-head { margin: 0; }
   .timeline-toolbar { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px;
-    align-items: center; gap: var(--sp-sm); padding: var(--sp-sm) var(--sheet-pad) var(--sp-xs); }
+    align-items: center; gap: var(--sp-sm); padding: var(--sp-sm) 0 var(--sp-xs); }
   .timeline-status { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     text-align: center; font-size: var(--fs-2xs); font-weight: var(--fw-md); line-height: var(--lh-normal); }
-  .timeline-title { padding: var(--sp-md) var(--sheet-pad) var(--sp-sm); }
+  .timeline-title { padding: var(--sp-md) 0 var(--sp-sm); }
   .timeline-title .rh-name { display: block; font-size: 26px; font-weight: var(--fw-bold);
     line-height: var(--lh-tight); letter-spacing: var(--ls-tight); min-width: 0;
     overflow-wrap: anywhere; }
@@ -1328,7 +1328,6 @@
   }
   #sheet[data-mode="stats"] .rh-back:hover,
   #sheet[data-mode="stats"] .rh-manage:hover { background: rgba(0,0,0,.13); color: var(--pa-ink); }
-  #sheet[data-mode="stats"] .odo-m { color: rgba(20,22,43,.5); }
   #sheet[data-mode="stats"] .odo-m { color: transparent; }
   #sheet[data-mode="stats"] .odo-cap { color: rgba(20,22,43,.55); }
   /* The neutral pill is the only one that has to move: live and done carry
@@ -1361,8 +1360,10 @@
      its distance to the centre, which changes its size again. That feedback loop
      measured 101.5px vs 85.7px on a single month and read as visible jitter, so
      the centred month is marked by colour and scale only. */
-  .rh-wheel { margin: var(--sp-xs) calc(-1 * var(--sheet-pad)) 0; padding-top: var(--sp-sm);
-    border-top: 1px solid rgba(20,22,43,.20); background: var(--pa, var(--card)); }
+  .rh-wheel { position: relative; margin: var(--sp-xs) calc(-1 * var(--sheet-pad)) 0;
+    padding-top: 0; background: var(--pa, var(--card)); }
+  .rh-wheel::before { content: ""; position: absolute; z-index: 0; left: 0; right: 0;
+    top: 12px; height: 1px; background: rgba(20,22,43,.20); pointer-events: none; }
   .odo-wrap { overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory;
     scrollbar-width: none; -ms-overflow-style: none; overscroll-behavior-x: contain;
     /* The chrome around it takes every touch so the sheet can be dragged away from
@@ -1371,10 +1372,10 @@
     -webkit-mask-image: linear-gradient(to right, transparent 0, #000 17%, #000 83%, transparent 100%);
     mask-image: linear-gradient(to right, transparent 0, #000 17%, #000 83%, transparent 100%); }
   .odo-wrap::-webkit-scrollbar { display: none; }
-  .odo { display: flex; align-items: center; position: relative; width: max-content; padding-top: var(--sp-xs); }
+  .odo { display: flex; align-items: center; position: relative; z-index: 1; width: max-content; padding-top: 0; }
   .odo-cell { flex: 0 0 auto; display: block; border: none; background: none; font: inherit;
-    position: relative; padding: var(--sp-lg) var(--sp-xl) var(--sp-2xs); white-space: nowrap; }
-  .odo-cell::before { content: ""; position: absolute; top: var(--sp-3xs); left: 50%;
+    position: relative; padding: 24px var(--sp-xl) var(--sp-2xs); white-space: nowrap; }
+  .odo-cell::before { content: ""; position: absolute; z-index: 1; top: 9px; left: 50%;
     width: 6px; height: 6px; border-radius: var(--r-pill); background: #777;
     opacity: 0; transform: translateX(-50%); }
   .odo-i[aria-current]::before { opacity: 1; }
@@ -2134,6 +2135,7 @@
   html[data-depth="soft"] .cal-nav,
   html[data-depth="soft"] .cal-foot button,
   html[data-depth="soft"] .rh-back,
+  html[data-depth="soft"] .rh-manage,
   html[data-depth="soft"] .bo-close,
   html[data-depth="soft"] .roletoggle,
   html[data-depth="soft"] .ar-btn,
@@ -2207,6 +2209,7 @@
   html[data-depth="pop"] .cal-nav,
   html[data-depth="pop"] .cal-foot button,
   html[data-depth="pop"] .rh-back,
+  html[data-depth="pop"] .rh-manage,
   html[data-depth="pop"] .bo-close,
   html[data-depth="pop"] .roletoggle,
   html[data-depth="pop"] .ar-btn { border: 2px solid var(--ink); box-shadow: none; }
@@ -3435,7 +3438,7 @@
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
   var NAV_KEY = "minutes-nav";
-  var VERSION = "15.8";
+  var VERSION = "15.9";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no

@@ -21,6 +21,9 @@
 <meta name="apple-mobile-web-app-title" content="Minutes" />
 <script>
   (function () {
+    var localStorage = window.__MINUTES_EMULATOR &&
+      (location.hostname === "localhost" || location.hostname === "127.0.0.1")
+      ? window.sessionStorage : window.localStorage;
     try {
       var t = localStorage.getItem("minutes-theme");
       if (t !== "dark" && t !== "light") {
@@ -589,7 +592,6 @@
   #ptr.ready .ptr-spinner { transform: scale(1.15); border-color: var(--accent); border-top-color: var(--accent); }
   #ptr.spin .ptr-spinner { animation: ptrspin .7s linear infinite; }
   @keyframes ptrspin { to { transform: rotate(360deg); } }
-
   /* ---- Login ---- */
   [x-cloak] { display: none !important; }
   /* .wrap is a flex item here, and its `margin: 0 auto` makes it shrink-to-fit on the
@@ -611,6 +613,7 @@
   html.has-session #app { display: block !important; }
   .login-card { flex: 1; display: flex; flex-direction: column; text-align: center;
     background: none; border: none; padding: var(--sp-6xl) 0 var(--sp-4xl); }
+  #login button, #login input { font-family: inherit; }
   /* Takes the slack, so the identity block is centred in whatever is left after
      the action below it. During onboarding the claim card grows and this simply
      yields, which is why it is flex rather than a fixed height. */
@@ -671,7 +674,6 @@
 
   /* ---- Handle claim (Phase 3) ---- */
   .claim { margin-top: var(--sp-lg); text-align: left; }
-  .claim-q { font-size: var(--fs-xs); font-weight: var(--fw-sm-bold); margin: 0 0 var(--sp-sm); }
   .claim-note { color: var(--muted); font-size: var(--fs-2xs); margin: var(--sp-sm) 0 0; line-height: var(--lh-relaxed); }
 
   /* ---- Onboarding. The claim card is the first real screen a new person sees, so
@@ -688,57 +690,70 @@
      and 52px of mark plus 28px of wordmark plus a two-line sales sentence was
      pushing that task into the bottom third of the screen. The sentence goes
      entirely: it argues the case for signing in to somebody who already has. */
-  .login-card.onb .login-lead { flex: 0 0 auto; padding-top: var(--sp-3xl); }
-  .login-card.onb .logo { margin-bottom: var(--sp-md); }
-  .login-card.onb .logo svg { width: 32px; height: 32px; }
-  .login-card.onb h1 { font-size: var(--fs-xl); margin-bottom: var(--sp-5xl); }
+  .login-card.onb { padding-top: var(--sp-lg); }
+  .login-card.onb .login-lead { flex: 0 0 auto; flex-direction: row; align-items: center;
+    justify-content: flex-start; gap: var(--sp-sm); margin-bottom: var(--sp-3xl); }
+  .login-card.onb .logo { margin: 0; color: var(--text); }
+  .login-card.onb .logo svg { width: 26px; height: 26px; }
+  .login-card.onb h1 { font-size: var(--fs-xl); margin: 0; }
   .login-card.onb #loginSub { display: none; }
-  /* No flex tricks on .claim / .claim-pending: those two are shown by JS setting
-     an inline `display: block`, which beats any stylesheet display and silently
-     leaves flex-direction and margin-top:auto doing nothing. Anything relying on
-     their inner layout has to be reachable without changing their display.
-     They keep their natural height, so the bordered waiting-room box stays the
-     size of its contents instead of stretching into a tall empty frame, and the
-     slack falls above .onb-alt at the bottom of the card. */
+  /* Like a challenge card, onboarding owns its ink independently of page theme. */
+  .login-card .onb-card { --pa: var(--pa-lilac); background: var(--pa); color: var(--pa-ink);
+    border: none; border-radius: var(--r-2xl); padding: var(--sp-4xl); margin: 0; text-align: left; }
+  .onb-kicker { font-size: var(--fs-3xs); font-weight: var(--fw-black); line-height: var(--lh-normal);
+    letter-spacing: var(--ls-caps-lg); text-transform: uppercase; margin-bottom: var(--sp-lg); }
+  .onb-title { font-size: var(--fs-4xl); font-weight: var(--fw-bold); line-height: var(--lh-tight);
+    letter-spacing: var(--ls-tight); margin: 0 0 var(--sp-3xl); overflow-wrap: anywhere; }
+  .login-card .onb-title:focus { outline: none; }
   .onb-in { animation: onbIn .32s cubic-bezier(.2,.7,.3,1) both; }
   @keyframes onbIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
-  .onb-hero { display: flex; align-items: center; gap: var(--sp-md); padding: var(--sp-md);
-    border: 1px solid var(--border); background: var(--card-2);
-    border-radius: var(--r-md); margin-bottom: var(--sp-xl); }
-  .onb-av { width: 38px; height: 38px; border-radius: 50%; flex: 0 0 auto; overflow: hidden;
-    display: flex; align-items: center; justify-content: center; color: #fff;
-    font-weight: var(--fw-black); font-size: var(--fs-lg); background: var(--accent); }
+  .onb-hero { display: flex; align-items: center; gap: var(--sp-md); margin-bottom: var(--sp-3xl); }
+  .onb-av { width: 34px; height: 34px; border-radius: var(--r-pill); flex: 0 0 auto; overflow: hidden;
+    display: flex; align-items: center; justify-content: center; color: var(--pa-ink);
+    font-weight: var(--fw-bold); font-size: var(--fs-lg);
+    background: color-mix(in srgb, var(--pa-ink) 10%, transparent); }
   .onb-av img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .onb-id { min-width: 0; }
   .onb-id b { display: block; font-size: var(--fs-xs); font-weight: var(--fw-bold); line-height: var(--lh-normal);
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .onb-id span { display: block; color: var(--muted); font-size: var(--fs-3xs); line-height: var(--lh-normal);
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  /* Scoped to the card for the same reason as .login-hint: bare `.onb-help` loses to
-     `.login-card p`, which silently forced this to 14px and a 24px bottom margin. */
-  .login-card p.onb-help { color: var(--muted); font-size: var(--fs-3xs); line-height: var(--lh-relaxed); margin: 0 0 var(--sp-4xl); }
+  .onb-id span { display: block; font-size: var(--fs-2xs); line-height: var(--lh-relaxed);
+    overflow-wrap: anywhere; }
+  .login-card p.onb-help, .login-card p.cw-sub { color: var(--pa-ink); font-size: var(--fs-sm);
+    line-height: var(--lh-relaxed); margin: 0 0 var(--sp-3xl); max-width: none; overflow-wrap: anywhere; }
   .login-card.onb .claim .field { margin-bottom: 0; }
-  .login-card.onb .claim .field input { margin-bottom: var(--sp-xs); }
+  #login .onb-card input { margin-bottom: var(--sp-md); background: transparent; color: var(--pa-ink);
+    border: 1px solid var(--pa-ink); min-height: 48px; line-height: var(--lh-normal); box-shadow: none; }
+  #login .onb-card input::placeholder { color: var(--pa-ink); opacity: 1; }
+  #login .onb-card .btn { border-radius: var(--r-pill); background: var(--pa-ink); color: var(--pa);
+    min-height: 48px; margin: 0; line-height: var(--lh-normal); border: none; box-shadow: none; }
+  #login .onb-card .btn:disabled { opacity: 1; background: color-mix(in srgb, var(--pa-ink) 12%, var(--pa));
+    color: var(--pa-ink); cursor: default; }
+  #login .onb-card .msg { --f: var(--pa-ink); }
+  #login .onb-card .msg:not(:empty) { margin-top: var(--sp-lg); }
+  #login input:focus-visible, #login button:focus-visible, #login summary:focus-visible {
+    outline: 2px solid var(--text); outline-offset: 3px; }
+  #login .onb-card input:focus-visible, #login .onb-card button:focus-visible,
+  #login .onb-card summary:focus-visible { outline-color: var(--pa-ink); }
 
   /* Three-beat progress. Its real job is to tell someone that an approval step is
      coming BEFORE they hit it, so the waiting room isn't a surprise. */
   .onb-steps { display: flex; gap: var(--sp-xs); margin: var(--sp-xl) 0 0; }
   .onb-step { flex: 1; min-width: 0; text-align: center; }
   .onb-step i { display: block; height: 3px; border-radius: var(--r-pill);
-    background: var(--border-2); margin-bottom: var(--sp-xs); }
-  .onb-step span { display: block; font-size: var(--fs-4xs); line-height: var(--lh-normal); color: var(--muted);
+    background: color-mix(in srgb, var(--pa-ink) 18%, transparent); margin-bottom: var(--sp-xs); }
+  .onb-step span { display: block; font-size: var(--fs-3xs); line-height: var(--lh-normal);
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .onb-step.done i { background: color-mix(in srgb, var(--accent) 45%, transparent); }
-  .onb-step.now i { background: var(--accent); }
-  .onb-step.now span { color: var(--text); font-weight: var(--fw-bold); }
+  .onb-step.done i { background: var(--pa-ink); }
+  .onb-step.now i { background: var(--pa-ink); }
+  .onb-step.now span { font-weight: var(--fw-bold); }
   /* All three beats land together on approval, so the strip reads as finished
      rather than leaving the last bar half-lit on the way out. */
-  .onb-steps.all-done .onb-step i { background: var(--accent); }
-  .onb-steps.all-done .onb-step span { color: var(--text); }
+  .onb-steps.all-done .onb-step i { background: var(--pa-ink); }
 
-  .onb-alt { display: none; width: 100%; margin: var(--sp-lg) 0 0; padding: 0; border: 0;
-    background: none; color: var(--muted); font-size: var(--fs-2xs); text-align: center;
+  .onb-alt { display: none; width: 100%; margin: var(--sp-lg) 0 0; padding: var(--sp-lg); border: 0;
+    min-height: 44px; border-radius: var(--r-pill); background: none; color: var(--text);
+    font-size: var(--fs-xs); line-height: var(--lh-normal); text-align: center;
     text-decoration: underline; cursor: pointer; font-family: inherit; }
   .login-card.onb .onb-alt { display: block; }
   .onb-alt:hover { color: var(--text); }
@@ -747,38 +762,32 @@
      transition mid-flight. */
   .login-card.landing .onb-alt { display: none; }
 
-  /* --line does not exist. These three read as a hairline in light mode only by
-     luck: an undefined custom property falls back to currentColor, which is
-     --text, so in dark mode the border was a near-white outline. */
-  .claim-pending { border: 1px solid var(--border); border-radius: 12px; padding: var(--sp-xl);
-    font-size: var(--fs-xs); line-height: var(--lh-relaxed); margin-top: var(--sp-lg); text-align: left; }
-  .cw-title { font-size: var(--fs-sm); font-weight: var(--fw-bold); margin-bottom: var(--sp-2xs); }
-  .cw-sub { color: var(--muted); font-size: var(--fs-2xs); line-height: var(--lh-loose); margin: 0 0 var(--sp-lg); }
-  .cw-stage { position: relative; border-radius: 10px; overflow: hidden;
-    background: var(--bg); border: 1px solid var(--border); }
+  .cw-game { margin-top: var(--sp-3xl); }
+  .cw-game summary { min-height: 44px; padding: var(--sp-lg); border-radius: var(--r-pill);
+    font-size: var(--fs-xs); font-weight: var(--fw-sm-bold); line-height: var(--lh-loose); cursor: pointer;
+    background: color-mix(in srgb, var(--pa-ink) 8%, transparent); }
+  .cw-stage { position: relative; border-radius: var(--r-xl); overflow: hidden; margin-top: var(--sp-lg);
+    background: color-mix(in srgb, var(--pa-ink) 8%, transparent); }
   .cw-stage canvas { display: block; width: 100%; height: 132px; touch-action: manipulation; }
+  .cw-stage canvas:focus-visible { outline: 2px solid var(--pa-ink); outline-offset: -3px; }
   .cw-overlay { position: absolute; inset: 0; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; gap: var(--sp-3xs); cursor: pointer;
-    background: color-mix(in srgb, var(--bg) 72%, transparent); text-align: center; }
+    width: 100%; padding: var(--sp-lg); border: none; color: var(--pa-ink);
+    align-items: center; justify-content: center; gap: var(--sp-xs); cursor: pointer;
+    background: var(--pa); text-align: center; }
+  #login .cw-overlay:focus-visible { outline-offset: -3px; }
   .cw-overlay strong { font-size: var(--fs-xs); font-weight: var(--fw-bold); }
-  .cw-overlay span { font-size: var(--fs-3xs); color: var(--muted); }
+  .cw-overlay span { font-size: var(--fs-2xs); line-height: var(--lh-relaxed); }
   .cw-foot { display: flex; align-items: baseline; justify-content: space-between;
-    gap: var(--sp-sm); margin-top: var(--sp-sm); font-size: var(--fs-3xs); color: var(--muted); }
-  .cw-foot b { color: var(--text); font-variant-numeric: tabular-nums; }
+    gap: var(--sp-sm); margin-top: var(--sp-sm); font-size: var(--fs-3xs); }
+  .cw-foot b { font-variant-numeric: tabular-nums; }
 
-  /* The approval landing. Sized to the game stage it replaces (132px + the foot
-     row) so the card holds its height instead of collapsing under the cursor at
-     the exact moment we want the eye to settle. */
-  .cw-done { display: none; flex-direction: column; align-items: center;
-    justify-content: center; gap: var(--sp-md); min-height: 154px; border-radius: 10px;
-    background: var(--bg); border: 1px solid var(--border); text-align: center; }
-  .cw-tick { width: 46px; height: 46px; border-radius: 50%; background: var(--accent);
-    color: #fff; display: flex; align-items: center; justify-content: center;
+  .cw-done { display: none; align-items: center; gap: var(--sp-lg); padding: var(--sp-lg) 0; }
+  .cw-tick { width: 44px; height: 44px; flex: 0 0 auto; border-radius: var(--r-pill); background: var(--pa-ink);
+    color: var(--pa); display: flex; align-items: center; justify-content: center;
     font-size: var(--fs-3xl); line-height: var(--lh-none); animation: cwPop .32s cubic-bezier(.2,.9,.3,1.3) both; }
-  .cw-done b { font-size: var(--fs-md); }
+  .cw-done b { font-size: var(--fs-lg); overflow-wrap: anywhere; min-width: 0; }
   @keyframes cwPop { from { transform: scale(.3); opacity: 0 } to { transform: scale(1); opacity: 1 } }
-  @media (prefers-reduced-motion: reduce) { .cw-tick { animation: none } }
-
+  @media (prefers-reduced-motion: reduce) { .onb-in, .cw-tick { animation: none; } }
   /* ---- App ---- */
   /* #app is shown by x-show once Alpine boots; [x-cloak] covers the pre-init frame.
      A CSS display:none here would win, because x-show reveals by clearing the
@@ -1602,7 +1611,6 @@
   }
 
   header { position: relative; }
-
   /* Challenges page */
   .sub-note { color: var(--muted); font-size: var(--fs-xs); margin: calc(-1 * var(--sp-3xs)) 0 var(--sp-lg); }
   .btn.ghost { background: var(--card-2); color: var(--text); border: 1px solid var(--border-2); }
@@ -2143,7 +2151,6 @@
      overflow and leave the body exactly where it was. Measured: still 414 against the
      cards' 404 until the calc went in. */
   html[data-depth="pop"] .sect > .btn { margin-right: var(--pop); width: calc(100% - var(--pop)); }
-
   /* ---- Pop coverage: three tiers, so every surface speaks the same language.
      1. Panels  : 2px ink + the full --pop offset.
      2. Blocks  : pressable things you aim at, 2px ink + the smaller --pop-sm.
@@ -2463,52 +2470,59 @@
            a different Google account, or a genuine newcomer. Either way an admin
            approves. The roster is deliberately NOT listed here, because that would
            show every member's name to anyone who signs in. -->
-      <div class="claim onb-in" id="claimBox" style="display:none">
+      <div class="claim onb-card onb-in" id="claimBox" style="display:none">
+        <div class="onb-kicker">Your name</div>
+        <h2 class="onb-title" id="claimHeading" tabindex="-1"><label id="claimQ" for="claimNewName">What should we call you?</label></h2>
         <div class="onb-hero">
-          <div class="onb-av" id="onbAv">?</div>
+          <div class="onb-av" id="onbAv" aria-hidden="true">?</div>
           <div class="onb-id">
             <b id="onbName">Welcome</b>
             <span id="onbMail"></span>
           </div>
         </div>
-        <div class="claim-q" id="claimQ">What should we call you?</div>
         <div class="field">
           <input type="text" id="claimNewName" placeholder="e.g. Morgan" autocomplete="off"
-                 autocapitalize="words" maxlength="24" />
+                 autocapitalize="words" maxlength="24" aria-describedby="onbHelp claimErr" />
         </div>
-        <p class="onb-help">This is the name your minutes are logged under.</p>
-        <button class="btn" id="claimBtn" disabled>Continue</button>
+        <p class="onb-help" id="onbHelp">Your name on the leaderboard. We'll review it before you join a challenge.</p>
+        <button class="btn" id="claimBtn" disabled>Request approval</button>
         <div class="msg msg--quiet" id="claimErr" aria-live="polite"></div>
         <div class="onb-steps">
           <div class="onb-step done"><i></i><span>Signed in</span></div>
-          <div class="onb-step now"><i></i><span>Your name</span></div>
+          <div class="onb-step now" aria-current="step"><i></i><span>Your name</span></div>
           <div class="onb-step"><i></i><span>Approval</span></div>
         </div>
       </div>
 
-      <div class="claim-pending" id="claimPending" style="display:none" aria-live="polite">
-        <div class="cw-title" id="cwTitle">You are in the queue</div>
-        <p class="cw-sub" id="cwSub"></p>
-        <div class="cw-stage" id="cwStage">
-          <canvas id="cwCanvas"></canvas>
-          <div class="cw-overlay" id="cwOverlay">
-            <strong id="cwOverlayTitle">Pass the time?</strong>
-            <span id="cwOverlayHint">Tap or press space to jump</span>
-          </div>
+      <div class="claim-pending onb-card" id="claimPending" style="display:none">
+        <div class="onb-kicker">Name request</div>
+        <div role="status" aria-live="polite" aria-atomic="true">
+          <h2 class="onb-title" id="cwTitle" tabindex="-1">Waiting for approval</h2>
+          <p class="cw-sub" id="cwSub"></p>
         </div>
         <div class="cw-done" id="cwDone">
           <span class="cw-tick" aria-hidden="true">&#10003;</span>
-          <b id="cwDoneTx">You are in</b>
-        </div>
-        <div class="cw-foot" id="cwFoot">
-          <span>Minutes survived: <b id="cwScore">0</b></span>
-          <span>Best: <b id="cwBest">0</b></span>
+          <b id="cwDoneTx">Welcome</b>
         </div>
         <div class="onb-steps" id="onbStepsPend">
           <div class="onb-step done"><i></i><span>Signed in</span></div>
           <div class="onb-step done"><i></i><span>Your name</span></div>
-          <div class="onb-step now"><i></i><span id="onbStep3">Approval</span></div>
+          <div class="onb-step now" aria-current="step"><i></i><span id="onbStep3">Approval</span></div>
         </div>
+        <details class="cw-game" id="cwGame">
+          <summary>Play while you wait</summary>
+          <div class="cw-stage" id="cwStage">
+            <canvas id="cwCanvas" tabindex="0" aria-label="Waiting game. Press Space or Up arrow to jump over the tally bars."></canvas>
+            <button type="button" class="cw-overlay" id="cwOverlay">
+              <strong id="cwOverlayTitle">A little time to spare?</strong>
+              <span id="cwOverlayHint">Tap to play, then tap or press space to jump</span>
+            </button>
+          </div>
+          <div class="cw-foot" id="cwFoot">
+            <span>Minutes survived: <b id="cwScore">0</b></span>
+            <span>Best: <b id="cwBest">0</b></span>
+          </div>
+        </details>
       </div>
 
       <!-- Shared by the name card and the waiting room. Onboarding mode hides the
@@ -2530,7 +2544,6 @@
     <div class="ver-tag"></div>
   </div>
 </div>
-
 <!-- APP -->
 <div id="app" x-show="$store.s.signedIn" x-cloak :class="{ l1: !!$store.s.sheet }">
 
@@ -3390,6 +3403,10 @@
 <script>
 (function () {
   "use strict";
+  // Emulator tabs share backend data, not a person's local app session.
+  var localStorage = window.__MINUTES_EMULATOR &&
+    (location.hostname === "localhost" || location.hostname === "127.0.0.1")
+    ? window.sessionStorage : window.localStorage;
 
   // Real names live ONLY in Firestore (meta/roster) - never baked into the deployed
   // HTML. Since a typed name IS the login credential, hardcoding the roster here would
@@ -3404,12 +3421,13 @@
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
   var NAV_KEY = "minutes-nav";
-  var VERSION = "15.5";
+  var VERSION = "15.7";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
   // network/App Check. GitHub Pages is never localhost, so this cannot activate in prod.
-  var IS_DEMO = (location.hostname === "localhost" || location.hostname === "127.0.0.1");
+  var IS_DEMO = (location.hostname === "localhost" || location.hostname === "127.0.0.1") &&
+    !window.__MINUTES_EMULATOR;
 
   // ---- Multi-challenge model (handle-keyed; a name IS the identity) ----
   // A "challenge" is a durable, renamable unit (stable cid). Members join with admin
@@ -5065,6 +5083,7 @@
     var oHint = document.getElementById("cwOverlayHint");
     var scoreEl = document.getElementById("cwScore");
     var bestEl = document.getElementById("cwBest");
+    var gameEl = document.getElementById("cwGame");
     if (!cv || !overlay) return { mount: function () {}, stop: function () {} };
 
     var BEST_KEY = "minutes_wait_best";
@@ -5077,11 +5096,13 @@
     try { best = parseInt(localStorage.getItem(BEST_KEY), 10) || 0; } catch (e) {}
 
     function readColors() {
-      var s = getComputedStyle(document.documentElement);
-      col.accent = s.getPropertyValue("--accent").trim() || "#6b4bff";
-      col.line = s.getPropertyValue("--line").trim() || "#e5e7eb";
-      col.muted = s.getPropertyValue("--muted").trim() || "#9ca3af";
-      col.text = s.getPropertyValue("--text").trim() || "#111827";
+      var s = getComputedStyle(cv);
+      col.accent = s.getPropertyValue("--pa-ink").trim();
+      col.line = col.accent;
+      col.muted = col.accent;
+      col.text = s.getPropertyValue("--pa").trim();
+      col.font = s.getPropertyValue("--fw-bold").trim() + " " +
+        s.getPropertyValue("--fs-3xs").trim() + " " + s.fontFamily;
     }
 
     function size() {
@@ -5109,8 +5130,14 @@
 
     function jump() {
       if (!live) return;
-      if (dead) { reset(); playing = true; hideOverlay(); return; }
-      if (!playing) { playing = true; hideOverlay(); return; }
+      if (dead || !playing) {
+        if (dead) reset();
+        playing = true;
+        hideOverlay();
+        last = 0;
+        raf = requestAnimationFrame(frame);
+        return;
+      }
       if (py <= 0.5) vy = 300;
     }
 
@@ -5171,8 +5198,8 @@
       ctx.fillStyle = col.accent;
       roundRect(x, y, 18, 18, 5);
       ctx.fill();
-      ctx.fillStyle = "#fff";
-      ctx.font = "700 11px ui-sans-serif, system-ui, sans-serif";
+      ctx.fillStyle = col.text;
+      ctx.font = col.font;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText("M", x + 9, y + 10);
@@ -5192,12 +5219,13 @@
     }
 
     function frame(t) {
+      raf = null;
       if (!live) return;
       var dt = last ? Math.min((t - last) / 1000, 0.05) : 0;
       last = t;
       step(dt);
       draw();
-      raf = requestAnimationFrame(frame);
+      if (playing && !dead) raf = requestAnimationFrame(frame);
     }
 
     function onKey(e) {
@@ -5208,13 +5236,20 @@
       }
     }
 
-    cv.addEventListener("pointerdown", function (e) { e.preventDefault(); jump(); });
-    overlay.addEventListener("pointerdown", function (e) { e.preventDefault(); jump(); });
-    window.addEventListener("keydown", onKey);
-    window.addEventListener("resize", function () { if (live) { size(); } });
+    cv.addEventListener("pointerdown", function (e) {
+      e.preventDefault(); cv.focus({ preventScroll: true }); jump();
+    });
+    overlay.addEventListener("click", function () { cv.focus({ preventScroll: true }); jump(); });
+    cv.addEventListener("keydown", onKey);
+    window.addEventListener("resize", function () { if (live) { size(); draw(); } });
+    if (gameEl) gameEl.addEventListener("toggle", function () {
+      var pending = document.getElementById("claimPending");
+      if (gameEl.open && !gameEl.hidden && pending.style.display === "block") WaitGame.mount();
+      else WaitGame.stop();
+    });
     document.addEventListener("visibilitychange", function () {
       // Don't run the loop in a hidden tab, and don't let dt spike on return.
-      if (document.visibilityState === "visible" && live && !raf) {
+      if (document.visibilityState === "visible" && live && playing && !raf) {
         last = 0; raf = requestAnimationFrame(frame);
       } else if (document.visibilityState !== "visible" && raf) {
         cancelAnimationFrame(raf); raf = null;
@@ -5229,10 +5264,10 @@
         size();
         reset();
         playing = false;
-        showOverlay("Pass the time?", "Tap or press space to jump");
+        showOverlay("A little time to spare?", "Tap to play, then tap or press space to jump");
         bestEl.textContent = String(best);
         last = 0;
-        raf = requestAnimationFrame(frame);
+        draw();
       },
       stop: function () {
         live = false; playing = false;
@@ -5240,7 +5275,6 @@
       }
     };
   })();
-
 
   // Binds a Google uid to an app handle, mirroring firestore.phase3.rules:
   //   1. the handle is pre-seeded with this exact verified email -> instant claim
@@ -5265,6 +5299,7 @@
     var onbName = document.getElementById("onbName");
     var onbMail = document.getElementById("onbMail");
     var switchEl = document.getElementById("onbSwitch");
+    var gameEl = document.getElementById("cwGame");
     if (!box || !btn || !newEl) return { render: function () {} };
 
     var idents = {};        // lower(handle) -> { handle, uid, ts, via }
@@ -5307,15 +5342,13 @@
     // seeds mirrors claimSeeds/{handle} = { email }. "*" means "any signed-in
     // address", which is a local convenience so both branches stay clickable
     // without knowing which Google account you happen to be using. Bind a real
-    // address with __CLAIMS.demoSeed("AdminOwner", "you@gmail.com") to exercise
+    // address with __CLAIMS.demoSeed("AdminOwner", "admin@example.test") to exercise
     // the actual email comparison the rules perform.
     var demo = {
       idents: {},
       reqs: {},
-      // adminowner is bound to Rando's real address so the seeded fast path is
-      // exercised end to end locally, including the email comparison. The other
-      // two are wildcards so the flow stays clickable from any Google account.
-      seeds: { adminowner: "maisrando@gmail.com", user: "*", owner: "*" }
+      // Synthetic fixtures only; never put a member's real address in the app.
+      seeds: { adminowner: "adminowner@example.test", user: "*", owner: "*" }
     };
 
     // DEMO-only rehearsal switches, for walking the flow by hand on the dev server:
@@ -5329,9 +5362,9 @@
     if (onboardArg && IS_DEMO) {
       if ((onboardArg[1] || "") === "admin") {
         demo.seeds = { adminowner: "*" };     // any account you sign in with
-        demo.reqs["kaisa"] = {
-          handle: "Kaisa", uid: "demo-kaisa-uid",
-          email: "kaisa.lepp@gmail.com", ts: Date.now()
+        demo.reqs["newmember"] = {
+          handle: "NewMember", uid: "demo-newmember-uid",
+          email: "newmember@example.test", ts: Date.now()
         };
       } else {
         demo.seeds = {};
@@ -5372,9 +5405,15 @@
       if (usingDemo()) { idents = demo.idents; identsLoaded = true; emit(); render(); return; }
       var fb = window.__FB;
       try {
-        fb.onSnapshot(fb.collection(fb.db, "identities"), function (snap) {
+        fb.onSnapshot(fb.collection(fb.db, "identities"), { includeMetadataChanges: true }, function (snap) {
           var next = {};
           snap.forEach(function (d) {
+            // A claim appears locally before rules accept it. Do not sign in on
+            // that optimistic write; listen for its server acknowledgement.
+            if (d.metadata.hasPendingWrites) {
+              if (idents[d.id]) next[d.id] = idents[d.id];
+              return;
+            }
             var v = d.data() || {};
             next[d.id] = { handle: v.handle || d.id, uid: v.uid || "", ts: v.ts || 0, via: v.via || "" };
           });
@@ -5574,6 +5613,7 @@
       if (resEl) resEl.style.display = "none";
       onbMode(false);
       if (cardEl) cardEl.classList.remove("landing");
+      if (gameEl) gameEl.open = false;
       var sub = document.getElementById("loginSub");
       // The pitch, not an instruction. Someone arriving here has not been told
       // what Minutes is, and "sign in to open your tracker" does not tell them.
@@ -5596,6 +5636,7 @@
     }
 
     function showPending(handle) {
+      var entering = pendEl.style.display !== "block";
       box.style.display = "none";
       pendEl.style.display = "block";
       onbMode(true);
@@ -5603,8 +5644,8 @@
       if (sub) sub.textContent = "Almost there";
       var cw = document.getElementById("cwSub");
       if (cw) {
-        cw.textContent = "Someone needs to wave \u201C" + handle + "\u201D through before you " +
-          "can log minutes. The request has been sent, so there is nothing else for you to do.";
+        cw.textContent = "Your request for \u201C" + handle + "\u201D is sent. " +
+          "Once your name is approved, you can choose a challenge to join.";
       }
       // Undo a previous approval landing, in case this device queues a second
       // name in the same page load after switching Google accounts.
@@ -5619,9 +5660,12 @@
       if (dn) dn.style.display = "none";
       if (strip) strip.classList.remove("all-done");
       if (s3) s3.textContent = "Approval";
-      if (title) title.textContent = "You are in the queue";
+      if (s3) s3.parentElement.setAttribute("aria-current", "step");
+      if (title) title.textContent = "Waiting for approval";
       if (cardEl) cardEl.classList.remove("landing");
-      WaitGame.mount();
+      if (gameEl) gameEl.hidden = false;
+      if (entering && title) title.focus({ preventScroll: true });
+      if (gameEl && gameEl.open) WaitGame.mount();
     }
 
     // The approval landing. The strip promised three beats and the third one used
@@ -5637,6 +5681,7 @@
       if (landing) return;
       landing = true;
       WaitGame.stop();
+      if (gameEl) { gameEl.open = false; gameEl.hidden = true; }
       var st = document.getElementById("cwStage");
       var dn = document.getElementById("cwDone");
       var ft = document.getElementById("cwFoot");
@@ -5649,13 +5694,14 @@
       if (st) st.style.display = "none";
       if (ft) ft.style.display = "none";
       if (dn) dn.style.display = "flex";
-      if (tx) tx.textContent = "You are in, " + handle;
+      if (tx) tx.textContent = "Welcome, " + handle;
       if (strip) strip.classList.add("all-done");
-      if (s3) s3.textContent = "You are in";
+      if (s3) { s3.textContent = "Approved"; s3.parentElement.removeAttribute("aria-current"); }
       if (sub) sub.textContent = "All done";
-      if (title) title.textContent = "You are in";
-      if (cw) cw.textContent = "Opening your tracker.";
+      if (title) title.textContent = "Name approved";
+      if (cw) cw.textContent = "Next up: your challenges.";
       if (cardEl) cardEl.classList.add("landing");
+      if (title) title.focus({ preventScroll: true });
       // Signing out mid-hold must not drag them into the app afterwards, so the
       // timer is cancellable and re-checks that the account is still there.
       landTimer = setTimeout(function () {
@@ -5668,13 +5714,16 @@
     }
 
     function showClaim() {
+      var entering = box.style.display !== "block";
       pendEl.style.display = "none";
+      WaitGame.stop();
       if (resEl) resEl.style.display = "none";
       onbMode(true);
       var sub = document.getElementById("loginSub");
       if (sub) sub.textContent = "Nice to meet you";
       box.style.display = "block";
       paintChips();
+      if (entering) document.getElementById("claimHeading").focus({ preventScroll: true });
     }
 
     // The hero identifies the Google account they arrived on. Without it the only
@@ -5728,8 +5777,9 @@
       if (!prefilled) { prefilled = true; newEl.value = suggestedName(); }
       qEl.textContent = "What should we call you?";
       if (noteEl) noteEl.style.display = "";
-      btn.textContent = busy ? "Sending\u2026" : "Continue";
+      btn.textContent = busy ? "Sending\u2026" : "Request approval";
       btn.disabled = busy || !newEl.value.trim();
+      btn.setAttribute("aria-busy", String(busy));
       paintHero();
     }
 
@@ -5836,6 +5886,8 @@
       var u = me();
       if (!u) {
         autoLoggedIn = false; prefilled = false; newEl.value = "";
+        newEl.removeAttribute("aria-invalid");
+        setMsg("claimErr", "");
         cancelLanding();
         resetHero();
         hideAll(); emit(); return;
@@ -5918,7 +5970,13 @@
       if (busy) return;
       var handle = newEl.value.trim();
       var bad = checkNewName(handle);
-      if (bad) { setMsg("claimErr", bad); return; }
+      if (bad) {
+        setMsg("claimErr", bad);
+        newEl.setAttribute("aria-invalid", "true");
+        newEl.focus();
+        return;
+      }
+      newEl.removeAttribute("aria-invalid");
       busy = true;
       setMsg("claimErr", "");
       paintChips();
@@ -5962,7 +6020,11 @@
       });
     };
 
-    newEl.addEventListener("input", function () { setMsg("claimErr", ""); paintChips(); });
+    newEl.addEventListener("input", function () {
+      setMsg("claimErr", "");
+      newEl.removeAttribute("aria-invalid");
+      paintChips();
+    });
     newEl.addEventListener("keydown", function (e) { if (e.key === "Enter") btn.click(); });
 
     if (resBtn) {
@@ -6343,7 +6405,6 @@
     }, true);
   })();
 
-
   // ---- Challenges page + switcher ----
   function renderChallChip() { bump(); }   // sheet header is bound, see #ccName and #sheet's --pa
 
@@ -6677,7 +6738,6 @@
       t2label: monthDate.toLocaleString(undefined, { month: "long" }),
       t2val: monthTotal };
   }
-
   // ---- Winner card -------------------------------------------------------
   // A finished round has one headline and it is who won, so in a past round this
   // card takes the top of the tab and the You tiles and motivation bubble come out.
@@ -8126,7 +8186,6 @@
     flipMotiv();
     if (motivTimer) { clearInterval(motivTimer); motivTimer = setInterval(flipMotiv, MOTIV_MS); }
   };
-
   // ---- Admin ----
   function warnSaveFail(err) {
     console.error("Write failed:", err);

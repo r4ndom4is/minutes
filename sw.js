@@ -5,7 +5,7 @@
    - Query-string requests (the pull-to-refresh version poll): network only.
    - Other same-origin static assets (icons, manifest, svg): cache-first.
    - Cross-origin (Firebase, gstatic, reCAPTCHA): passthrough, never cached. */
-var CACHE = "minutes-v12";  // bumped whenever the cached shell changes; verify-update.py reads this name
+var CACHE = "minutes-v15";  // Bump whenever the cached shell or assets change.
 var CORE = [
   "./",
   "./index.html",

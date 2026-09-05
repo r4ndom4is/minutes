@@ -319,6 +319,21 @@
        now, so it reaches y=0 too and has to pay the inset itself, in .sheet-chrome.
        Both surfaces charge for it exactly once; see verify-island.py. */
     --sat: env(safe-area-inset-top);
+    /* Level-1 navigation. One duration and one curve for the page arriving and
+       the hub falling back behind it, because two numbers here means two
+       movements the eye has to reconcile.
+       The hub scales rather than sliding: a slide says "beside", a scale says
+       "behind", and the page is a drill-down. .93 and .82 are the shallowest
+       pair that still reads as depth on a phone; deeper looked like the sheet
+       presentation this replaced. */
+    --l1-ms: 380ms; --l1-ease: cubic-bezier(.32,.72,0,1);
+    --l1-scale: .93; --l1-dim: .82;
+    /* The hub reorders the tapped card to the top BEFORE the page arrives, so
+       the reorder needs its own, longer curve: it is the thing being watched,
+       not a background event. --l1-hold is when the page is released - short of
+       the full reorder on purpose, so the page arrives while the card is still
+       settling and the two read as one handover rather than two events. */
+    --reorder-ms: 420ms; --l1-hold: 260ms;
     /* identity + status colors (shared across themes) */
     --accent: #7c5cff;
     --accent-2: #34d399;
@@ -1516,9 +1531,20 @@
     width: 100%; max-width: calc(var(--frame-w) - 2 * var(--sheet-pad));
     background: var(--card); border: 1px solid var(--border-2);
     border-radius: var(--r-xl); padding: var(--sp-4xl); box-shadow: var(--shadow-modal); position: relative;
-    transform: translateY(12px) scale(.97); transition: transform .18s ease;
+    /* Grows out of whatever opened it. --m-ox/--m-oy are set per open by
+       16-modals.js from the trigger's centre; with no trigger they are absent
+       and it falls back to the middle, which is right for anything the user did
+       not point at. Scale from .82 rather than 0: a menu that starts from
+       nothing reads as a zoom effect, one that starts near its size reads as it
+       being handed to you. */
+    transform-origin: var(--m-ox, 50%) var(--m-oy, 50%);
+    transform: scale(.82); opacity: 0;
+    transition: transform .26s cubic-bezier(.2,.9,.3,1.02), opacity .16s ease;
   }
-  .modal-overlay.show .modal { transform: none; }
+  .modal-overlay.show .modal { transform: none; opacity: 1; }
+  @media (prefers-reduced-motion: reduce) {
+    .modal { transition: none; transform: none; }
+  }
   .modal .m-ico { width: 44px; height: 44px; border-radius: var(--r-pill); background: var(--tint-danger); color: var(--danger); display: flex; align-items: center; justify-content: center; margin-bottom: var(--sp-xl); }
   .modal .m-ico.accent { background: var(--tint-accent); color: var(--accent); }
   .modal .m-ico svg { width: 24px; height: 24px; }
@@ -1635,9 +1661,17 @@
   /* The marker is SCALE: the card you care about is simply bigger. Nothing is
      added to it, which is why the watermark below can be derived from height. */
   .chall-row.active-cid { min-height: var(--chall-card-h); }
-  .chall-row.tappable { cursor: pointer; transition: transform .06s ease, filter .15s ease; }
+  /* The card answers the tap itself. It used to press to .99, which at 361px wide
+     is under 4px of travel and effectively invisible, while the page took ~45ms
+     to start moving - so a tap read as nothing happening. .97 is the standard
+     press depth and is actually felt. */
+  .chall-row.tappable { cursor: pointer; transition: transform .12s cubic-bezier(.2,.8,.3,1), filter .15s ease; }
   .chall-row.tappable:hover { filter: brightness(1.03); }
-  .chall-row.tappable:active { transform: scale(.99); }
+  .chall-row.tappable:active { transform: scale(.97); }
+  @media (prefers-reduced-motion: reduce) {
+    .chall-row.tappable { transition: none; }
+    .chall-row.tappable:active { transform: none; }
+  }
 
   /* The round number, already on every card, TURNED UP on the active one: the
      resting cards carry it at 5% as texture, the active card at 15% and larger
@@ -1860,7 +1894,16 @@
   .layer-base {
     position: absolute; inset: 0; z-index: 1; padding-top: var(--sat);
     display: flex; flex-direction: column; background: var(--bg);
+    /* Scaled back and dimmed WHILE a page is open, so the push reads as a stack
+       rather than a slab sliding over a photograph. This is not the old sheet
+       push-back: nothing is offset, nothing is measured, and at rest the hub is
+       exactly where it always was. It is a transition and only a transition.
+       transform-origin sits above centre so the greeting, the part you are most
+       likely to still be looking at, stays put while the list falls away. */
+    transform-origin: 50% 45%; will-change: transform;
+    transition: transform var(--l1-ms) var(--l1-ease), filter var(--l1-ms) ease;
   }
+  #app.l1 .layer-base { transform: scale(var(--l1-scale)); filter: brightness(var(--l1-dim)); }
   /* .wrap carries `margin: 0 auto` from the old document-flow layout. As a
      column flex item that auto margin stops it stretching, so it shrank to
      fit-content and the whole base layer lost ~44px of width. */
@@ -1891,14 +1934,21 @@
     background: var(--bg);
     display: flex; flex-direction: column; overflow: hidden;
     transform: translateX(100%); visibility: hidden; will-change: transform;
-    transition: transform .38s cubic-bezier(.32,.72,0,1), visibility 0s linear .38s;
+    transition: transform var(--l1-ms) var(--l1-ease),
+                visibility 0s linear var(--l1-ms);
   }
   #app.l1 .sheet {
     transform: translateX(0); visibility: visible;
-    transition: transform .38s cubic-bezier(.32,.72,0,1), visibility 0s;
+    transition: transform var(--l1-ms) var(--l1-ease), visibility 0s;
   }
+  /* The page is held off-stage while the hub reorders the card you tapped up to
+     the top. Its own transition is left intact, so dropping the class lets it
+     animate in normally instead of snapping. */
+  html.l1-hold .sheet { transform: translateX(100%) !important; }
   @media (prefers-reduced-motion: reduce) {
     .sheet, #app.l1 .sheet { transition: none; }
+    .layer-base { transition: none; }
+    #app.l1 .layer-base { transform: none; filter: none; }
   }
   /* A dragged page has to track the finger exactly, so the open/close easing is
      suspended for the length of the gesture and restored on release, which is what
@@ -1930,6 +1980,27 @@
      with something else needs one added, which keeps every view starting on the
      same beat. */
   .sheet-body > .tab-panel > :first-child:not(.slabel) { margin-top: var(--sp-4xl); }
+
+  /* The floating add button is not part of the page, it sits over it, so it
+     arrives after the page has landed rather than travelling with it. */
+  @keyframes fabIn { from { transform: scale(0); opacity: 0 }
+                     to   { transform: scale(1); opacity: 1 } }
+  #app.l1 #sheet .fab { animation: fabIn .3s cubic-bezier(.2,.9,.3,1.3) .26s both; }
+  /* The page used to arrive fully formed, which is why it read as a slab rather
+     than a place you had gone to. 9px at 40ms intervals is enough to feel
+     assembled without becoming a performance. Capped at the fifth child so a
+     long page does not stagger for a second and a half. */
+  @keyframes riseIn { from { opacity: 0; transform: translateY(9px) }
+                      to   { opacity: 1; transform: none } }
+  #app.l1 #statsblockView > * { animation: riseIn .34s var(--l1-ease) both; }
+  #app.l1 #statsblockView > *:nth-child(1) { animation-delay: .10s }
+  #app.l1 #statsblockView > *:nth-child(2) { animation-delay: .14s }
+  #app.l1 #statsblockView > *:nth-child(3) { animation-delay: .18s }
+  #app.l1 #statsblockView > *:nth-child(4) { animation-delay: .22s }
+  #app.l1 #statsblockView > *:nth-child(n+5) { animation-delay: .26s }
+  @media (prefers-reduced-motion: reduce) {
+    #app.l1 #sheet .fab, #app.l1 #statsblockView > * { animation: none; }
+  }
 
   /* Logging is an action, not a place, so it stops being half the navigation and
      becomes a floating button over the round it writes into. 56px is the standard
@@ -3333,7 +3404,7 @@
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
   var NAV_KEY = "minutes-nav";
-  var VERSION = "15.4";
+  var VERSION = "15.5";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -6067,6 +6138,17 @@
 
   function appEl() { return document.getElementById("app"); }
   function sheetOpen() { return !!state.sheet; }
+  // Read from the tokens rather than duplicated here, so the CSS and the JS
+  // cannot drift: --reorder-ms is how long a card takes to travel, --l1-hold is
+  // when the page is released to follow it.
+  function msToken(name, fallback) {
+    var v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    var n = parseFloat(v);
+    if (!n) return fallback;
+    return /ms$/.test(v) ? n : n * 1000;
+  }
+  var REORDER_MS = msToken("--reorder-ms", 420);
+  var HOLD_MS = msToken("--l1-hold", 260);
   // Where the user actually was, so a refresh resumes there instead of always
   // forcing the challenge sheet open. switchTab is the only way a layer changes,
   // so recording it there covers the chevron, the edge swipe and browser back.
@@ -6283,8 +6365,96 @@
 
   function switchChallenge(cid) {
     if (cid === activeCid()) { switchTab("stats"); return; }
+    reorderThenOpen(cid);
+  }
+
+  /* Tapping a challenge makes it active, and an active challenge is hoisted to
+     the top of the hub (`.chall-row.active-cid { order: -1 }`). That used to
+     happen in a single frame, ONE FRAME BEFORE the page started covering it, so
+     you got a flash of the list rearranging under a page already wiping across.
+     Measured: the card moved 167px and grew 14px at t=28ms, with the page
+     starting to cover at t=45ms.
+
+     So the reorder is now the first thing you see and the page waits for it.
+     Three things have to travel together or it reads as a jump with extras:
+
+       POSITION   the card's own move to the top
+       HEIGHT     .active-cid also sets min-height (145 vs a natural 131), so the
+                  tapped card grows while the one it displaces shrinks. Left out,
+                  the card snaps taller in the middle of an otherwise smooth
+                  slide, which is the ugly part.
+       SCROLL     hoisting a card to the top of the list means nothing if the top
+                  of the list is off screen, which it is the moment the hub has
+                  been scrolled. The scroll is applied instantly BEFORE the
+                  "after" measurement, so it lands inside each row's delta and
+                  the whole thing is one movement rather than a jump-to-top
+                  followed by a shuffle.
+
+     Height is a layout property and animating it is not free, but there are only
+     ever a handful of cards, and the alternative (scaling) distorts the text
+     inside them. */
+  function reorderThenOpen(cid) {
+    var wrap = document.getElementById("baseWrap");
+    var rows = [].slice.call(document.querySelectorAll(".chall-row"));
+    var reduce = window.matchMedia
+      && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if (reduce || !rows.length) {
+      setActiveChallenge(cid);
+      if (wrap) wrap.scrollTop = 0;
+      switchTab("stats");
+      return;
+    }
+
+    var before = rows.map(function (el) {
+      var b = el.getBoundingClientRect();
+      return { el: el, top: b.top, h: b.height };
+    });
+
+    document.documentElement.classList.add("l1-hold");
     setActiveChallenge(cid);
     switchTab("stats");
+
+    requestAnimationFrame(function () {
+      if (wrap && wrap.scrollTop) wrap.scrollTop = 0;
+      // A row can only usefully travel from just outside the viewport. Folding a
+      // long scroll in verbatim would fling cards in from far off screen at a
+      // speed nobody can follow, so the run-up is clamped. Direction and landing
+      // stay honest; only a part you could not have seen is shortened.
+      var cap = ((wrap && wrap.clientHeight) || 800) * 1.1;
+      before.forEach(function (b) {
+        var r = b.el;
+        if (!r.isConnected) return;
+        var box = r.getBoundingClientRect();
+        var dy = Math.max(-cap, Math.min(cap, b.top - box.top));
+        var dh = Math.abs(b.h - box.height);
+        if (!dy && dh < 1) return;
+        r.style.transition = "none";
+        if (dy) r.style.transform = "translateY(" + dy + "px)";
+        if (dh >= 1) { r.style.height = b.h + "px"; r.style.minHeight = b.h + "px"; }
+        // Two frames: one to commit the inverted state, one to let the
+        // transition see a real change. A single frame gets coalesced away.
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () {
+            r.style.transition = "transform var(--reorder-ms) var(--l1-ease),"
+              + "height var(--reorder-ms) var(--l1-ease),"
+              + "min-height var(--reorder-ms) var(--l1-ease)";
+            r.style.transform = "";
+            if (dh >= 1) {
+              r.style.height = box.height + "px";
+              r.style.minHeight = box.height + "px";
+            }
+            setTimeout(function () {
+              r.style.transition = ""; r.style.transform = "";
+              r.style.height = ""; r.style.minHeight = "";
+            }, REORDER_MS + 60);
+          });
+        });
+      });
+      setTimeout(function () {
+        document.documentElement.classList.remove("l1-hold");
+      }, HOLD_MS);
+    });
   }
 
   // challRow()/renderChallenges() are gone: the Challenges screen is now the
@@ -7593,6 +7763,72 @@
     if (!off) { stopRetry(); if (Store.flushPending) Store.flushPending(); }
     renderSync();
   }
+
+  /* Every popup grows out of whatever opened it.
+   *
+   * A dialog that fades in at the centre of the screen says "answer me". A menu
+   * that scales up out of the button you touched says "here is what that button
+   * does", and it keeps the eye where it already was. The gear menu made this
+   * obvious - it holds every challenge setting now, so it is opened constantly -
+   * but it is true of all of them.
+   *
+   * Done generically rather than at each of the six call sites: the last pointer
+   * target is remembered, and any .modal-overlay that gains `show` takes its
+   * transform-origin from that element's centre. A modal opened without a click
+   * (keyboard, or programmatically) finds no trigger and falls back to the
+   * centre, which is the old behaviour and the right one - there is nowhere else
+   * for it to have come from.
+   *
+   * The origin is a PERCENTAGE of the modal's own box, because transform-origin
+   * is resolved against the transformed element, and the modal is centred while
+   * the trigger can be anywhere. */
+  (function () {
+    var lastTap = null;
+    document.addEventListener("pointerdown", function (e) {
+      var t = e.target;
+      if (!t || !t.closest) return;
+      lastTap = t.closest("button, [role='button'], .tappable, a") || t;
+    }, true);
+    // Keyboard activation produces a click with no preceding pointerdown. Using
+    // it as a fallback rather than the primary source keeps a real tap accurate:
+    // a click's target is the element, but pointerdown fires before any layout
+    // the open might cause.
+    document.addEventListener("click", function (e) {
+      if (e.detail !== 0) return;          // 0 means it was not a pointer
+      var t = e.target;
+      if (t && t.closest) lastTap = t.closest("button, [role='button'], .tappable, a") || t;
+    }, true);
+
+    function setOrigin(overlay) {
+      var modal = overlay.querySelector(".modal");
+      if (!modal) return;
+      if (!lastTap || !lastTap.isConnected) {
+        modal.style.removeProperty("--m-ox");
+        modal.style.removeProperty("--m-oy");
+        return;
+      }
+      var t = lastTap.getBoundingClientRect();
+      var m = modal.getBoundingClientRect();
+      if (!m.width || !m.height) return;
+      modal.style.setProperty("--m-ox",
+        (((t.left + t.width / 2) - m.left) / m.width * 100).toFixed(1) + "%");
+      modal.style.setProperty("--m-oy",
+        (((t.top + t.height / 2) - m.top) / m.height * 100).toFixed(1) + "%");
+    }
+
+    var overlays = [].slice.call(document.querySelectorAll(".modal-overlay"));
+    if (!overlays.length || typeof MutationObserver !== "function") return;
+    new MutationObserver(function (recs) {
+      recs.forEach(function (r) {
+        if (r.attributeName !== "class") return;
+        var el = r.target;
+        // The modal has no box until it has been shown, so the origin can only
+        // be measured after the class has landed.
+        if (el.classList.contains("show")) requestAnimationFrame(function () { setOrigin(el); });
+      });
+    }).observe(document.getElementById("app") || document.body,
+               { subtree: true, attributes: true, attributeFilter: ["class"] });
+  })();
 
   // ---- Themed confirm modal ----
   var ICON_TRASH = '<svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg>';

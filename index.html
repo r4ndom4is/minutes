@@ -708,21 +708,14 @@
   .onb-in { animation: onbIn .32s cubic-bezier(.2,.7,.3,1) both; }
   @keyframes onbIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
-  .onb-hero { display: flex; align-items: center; gap: var(--sp-md); margin-bottom: var(--sp-3xl); }
-  .onb-av { width: 34px; height: 34px; border-radius: var(--r-pill); flex: 0 0 auto; overflow: hidden;
-    display: flex; align-items: center; justify-content: center; color: var(--pa-ink);
-    font-weight: var(--fw-bold); font-size: var(--fs-lg);
-    background: color-mix(in srgb, var(--pa-ink) 10%, transparent); }
-  .onb-av img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .onb-id { min-width: 0; }
-  .onb-id b { display: block; font-size: var(--fs-xs); font-weight: var(--fw-bold); line-height: var(--lh-normal);
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .onb-id span { display: block; font-size: var(--fs-2xs); line-height: var(--lh-relaxed);
+  .onb-account { margin: calc(-1 * var(--sp-lg)) 0 var(--sp-3xl); color: var(--pa-ink);
+    font-size: var(--fs-xs); font-weight: var(--fw-sm-bold); line-height: var(--lh-relaxed);
     overflow-wrap: anywhere; }
+  .onb-account span { display: block; }
   .login-card p.onb-help, .login-card p.cw-sub { color: var(--pa-ink); font-size: var(--fs-sm);
     line-height: var(--lh-relaxed); margin: 0 0 var(--sp-3xl); max-width: none; overflow-wrap: anywhere; }
   .login-card.onb .claim .field { margin-bottom: 0; }
-  #login .onb-card input { margin-bottom: var(--sp-md); background: transparent; color: var(--pa-ink);
+  #login .onb-card input { margin-bottom: 0; background: transparent; color: var(--pa-ink);
     border: 1px solid var(--pa-ink); min-height: 48px; line-height: var(--lh-normal); box-shadow: none; }
   #login .onb-card input::placeholder { color: var(--pa-ink); opacity: 1; }
   #login .onb-card .btn { border-radius: var(--r-pill); background: var(--pa-ink); color: var(--pa);
@@ -730,7 +723,8 @@
   #login .onb-card .btn:disabled { opacity: 1; background: color-mix(in srgb, var(--pa-ink) 12%, var(--pa));
     color: var(--pa-ink); cursor: default; }
   #login .onb-card .msg { --f: var(--pa-ink); }
-  #login .onb-card .msg:not(:empty) { margin-top: var(--sp-lg); }
+  #login .onb-card .msg:not(:empty) { margin-top: var(--sp-sm); margin-bottom: var(--sp-md); }
+  #login .onb-card .field + .msg { min-height: 0; }
   #login input:focus-visible, #login button:focus-visible, #login summary:focus-visible {
     outline: 2px solid var(--text); outline-offset: 3px; }
   #login .onb-card input:focus-visible, #login .onb-card button:focus-visible,
@@ -811,6 +805,11 @@
   header h1 { font-size: var(--fs-4xl); font-weight: var(--fw-black); margin: 0;
               letter-spacing: var(--ls-tight); line-height: var(--lh-tight);
               overflow-wrap: anywhere; }
+  header h1 #meName.name-long {
+    display: inline-block; max-width: 12ch; overflow: hidden; text-overflow: ellipsis;
+    white-space: nowrap; vertical-align: bottom; overflow-wrap: normal; word-break: normal;
+    font-size: var(--fs-2xl); line-height: var(--lh-tight);
+  }
   /* The subtitle states two facts rather than labelling the page. It wraps,
      because "Three challenges running. You are leading this month." will not
      fit one line on a narrow phone and truncating a sentence is worse than
@@ -1051,7 +1050,7 @@
   .entry .det.tag { display: inline-block; flex: 0 1 auto; min-width: 0; overflow: hidden;
     text-overflow: ellipsis; white-space: nowrap; padding: var(--sp-3xs) var(--sp-sm); border-radius: var(--r-xs); border: 1px solid var(--border-2); background: var(--card); font-size: var(--fs-3xs); font-weight: var(--fw-sm-bold); }
   .entry .mins { font-weight: var(--fw-bold); font-size: var(--fs-lg); color: var(--muted); }
-  .entry .edit { background: none; border: none; color: var(--muted); cursor: pointer; padding: var(--sp-2xs) var(--sp-sm); margin-left: var(--sp-xs); display: inline-flex; align-items: center; }
+  .entry .edit { background: none; border: none; color: var(--muted); cursor: pointer; padding: 0; margin-left: var(--sp-xs); width: 44px; height: 44px; flex: 0 0 44px; display: inline-flex; align-items: center; justify-content: center; }
   .entry .edit svg { width: 17px; height: 17px; }
   .entry .edit:active { color: var(--accent); }
 
@@ -1269,6 +1268,18 @@
      first card. Change one of the three and the two gaps stop matching. */
   .round-head { margin: var(--sp-3xs) 0 var(--sp-md); }
   .rh-title { display: flex; align-items: center; gap: var(--sp-sm); }
+  .timeline-head { margin: 0; }
+  .timeline-toolbar { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px;
+    align-items: center; gap: var(--sp-sm); padding: var(--sp-sm) var(--sheet-pad) var(--sp-xs); }
+  .timeline-status { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    text-align: center; font-size: var(--fs-2xs); font-weight: var(--fw-md); line-height: var(--lh-normal); }
+  .timeline-title { padding: var(--sp-md) var(--sheet-pad) var(--sp-sm); }
+  .timeline-title .rh-name { display: block; font-size: 26px; font-weight: var(--fw-bold);
+    line-height: var(--lh-tight); letter-spacing: var(--ls-tight); min-width: 0;
+    overflow-wrap: anywhere; }
+  .timeline-head.is-compact .timeline-toolbar { padding-top: var(--sp-2xs); padding-bottom: var(--sp-3xs); }
+  .timeline-head.is-compact .timeline-title { padding-top: var(--sp-xs); padding-bottom: var(--sp-2xs); }
+  .timeline-head.is-compact .timeline-title .rh-name { font-size: 22px; }
   /* 44px, the top of the icon-button range in docs/design.md. At 36 the gear read
      as an afterthought on a header that had just become a full-bleed colour
      panel, and it is now the ONLY way into everything that governs the
@@ -1287,6 +1298,8 @@
                display: inline-flex; align-items: center; justify-content: center;
                cursor: pointer; transition: background .15s ease, color .15s ease; }
   .rh-manage svg { width: 22px; height: 22px; display: block; }
+  .rh-more { position: relative; display: block; width: 3px; height: 3px; border-radius: var(--r-pill);
+    background: currentColor; opacity: .82; box-shadow: 0 -6px 0 currentColor, 0 6px 0 currentColor; }
   .rh-manage:hover { background: var(--border); color: var(--text); }
   .rh-manage:active { background: var(--accent); color: #fff; }
   .rh-back:active { background: var(--accent); color: #fff; }
@@ -1316,7 +1329,7 @@
   #sheet[data-mode="stats"] .rh-back:hover,
   #sheet[data-mode="stats"] .rh-manage:hover { background: rgba(0,0,0,.13); color: var(--pa-ink); }
   #sheet[data-mode="stats"] .odo-m { color: rgba(20,22,43,.5); }
-  #sheet[data-mode="stats"] .odo-i[aria-current] .odo-m { color: var(--pa-ink); }
+  #sheet[data-mode="stats"] .odo-m { color: transparent; }
   #sheet[data-mode="stats"] .odo-cap { color: rgba(20,22,43,.55); }
   /* The neutral pill is the only one that has to move: live and done carry
      semantic tints that must keep reading as live and done on any ground. */
@@ -1348,7 +1361,8 @@
      its distance to the centre, which changes its size again. That feedback loop
      measured 101.5px vs 85.7px on a single month and read as visible jitter, so
      the centred month is marked by colour and scale only. */
-  .rh-wheel { margin: var(--sp-sm) calc(-1 * var(--sheet-pad)) 0; }
+  .rh-wheel { margin: var(--sp-xs) calc(-1 * var(--sheet-pad)) 0; padding-top: var(--sp-sm);
+    border-top: 1px solid rgba(20,22,43,.20); background: var(--pa, var(--card)); }
   .odo-wrap { overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory;
     scrollbar-width: none; -ms-overflow-style: none; overscroll-behavior-x: contain;
     /* The chrome around it takes every touch so the sheet can be dragged away from
@@ -1357,9 +1371,13 @@
     -webkit-mask-image: linear-gradient(to right, transparent 0, #000 17%, #000 83%, transparent 100%);
     mask-image: linear-gradient(to right, transparent 0, #000 17%, #000 83%, transparent 100%); }
   .odo-wrap::-webkit-scrollbar { display: none; }
-  .odo { display: flex; align-items: center; position: relative; width: max-content; }
+  .odo { display: flex; align-items: center; position: relative; width: max-content; padding-top: var(--sp-xs); }
   .odo-cell { flex: 0 0 auto; display: block; border: none; background: none; font: inherit;
-    padding: var(--sp-2xs) var(--sp-xl); white-space: nowrap; }
+    position: relative; padding: var(--sp-lg) var(--sp-xl) var(--sp-2xs); white-space: nowrap; }
+  .odo-cell::before { content: ""; position: absolute; top: var(--sp-3xs); left: 50%;
+    width: 6px; height: 6px; border-radius: var(--r-pill); background: #777;
+    opacity: 0; transform: translateX(-50%); }
+  .odo-i[aria-current]::before { opacity: 1; }
   .odo-i { cursor: pointer; scroll-snap-align: center; }
   /* Ghost months. A challenge in its first round has two real months, which left
      two words stranded in the middle of an otherwise empty rail. Two inert months
@@ -1367,12 +1385,14 @@
      They are not snap targets, not focusable and not clickable, and setViewMonthKey
      rejects their keys, so they can never become the viewed round. */
   .odo-g { pointer-events: none; }
-  .odo-m { display: block; font-size: var(--fs-2xl); font-weight: var(--fw-sm-bold); letter-spacing: var(--ls-tight);
-    line-height: var(--lh-snug); color: var(--muted); transform-origin: 50% 50%;
+  .odo-m { position: relative; display: block; font-size: var(--fs-2xl); font-weight: var(--fw-sm-bold); letter-spacing: var(--ls-tight);
+    line-height: var(--lh-snug); color: transparent; transform-origin: 50% 50%;
     will-change: transform, opacity; transition: color .18s ease; }
-  .odo-i[aria-current] .odo-m { color: var(--text); }
-  .odo-cap { display: flex; align-items: center; justify-content: center; gap: var(--sp-sm);
-    margin-top: var(--sp-xs); min-height: 25px; font-size: var(--fs-sm); font-weight: var(--fw-sm-bold);
+  .odo-m::after { content: attr(data-short); position: absolute; inset: 0; overflow: hidden;
+    color: rgba(20,22,43,.58); text-align: center; white-space: nowrap; }
+  .odo-i[aria-current] .odo-m::after { content: attr(data-full); color: var(--pa-ink); }
+  .odo-cap { display: flex; align-items: center; justify-content: center;
+    margin-top: var(--sp-2xs); min-height: 20px; font-size: var(--fs-sm); font-weight: var(--fw-sm-bold);
     color: var(--muted); font-variant-numeric: tabular-nums; }
   .odo-cap .sep { opacity: .4; }
   /* The pill is ALWAYS drawn, in one of three colours. Dropping it on rounds that
@@ -1394,7 +1414,6 @@
   .member .mname { flex: 1; font-size: var(--fs-md); font-weight: var(--fw-sm-bold); }
   .member .roletoggle { font-size: var(--fs-4xs); font-weight: var(--fw-black); letter-spacing: var(--ls-wider); text-transform: uppercase; padding: var(--sp-xs) var(--sp-md); border-radius: var(--r-xs); border: 1px solid var(--border-2); background: var(--card-2); color: var(--muted); cursor: pointer; flex: 0 0 auto; }
   .member .roletoggle.on { background: var(--tint-accent); color: var(--tint-accent-fg); border-color: var(--border-2); }
-
   /* ---- FEEDBACK ---------------------------------------------------------
      One message component and one empty-state component for the whole app.
      Tone is three variables (--f foreground, --b wash, --o border) and density
@@ -1747,11 +1766,11 @@
      134px against the mock's 117, which quietly ate most of the size difference
      that IS the active card's marker. */
   .chall-row .cr-meta {
-    display: flex; align-items: center; gap: var(--sp-xs);
-    font-size: var(--fs-4xs); font-weight: var(--fw-black); line-height: var(--lh-none);
+    display: flex; align-items: center; gap: var(--sp-xs); flex-wrap: wrap;
+    font-size: var(--fs-xs); font-weight: var(--fw-black); line-height: var(--lh-normal);
     letter-spacing: var(--ls-caps-lg); text-transform: uppercase;
     color: var(--pa-ink); opacity: .6;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    white-space: normal; overflow-wrap: anywhere;
   }
   /* margin-bottom: auto makes the name absorb whatever height the card has spare,
      so the footer rests on the bottom edge of EVERY card. Without it the active
@@ -1805,7 +1824,7 @@
   .chall-row .cr-right { position: relative; display: flex; align-items: center; gap: var(--sp-sm); }
   .chall-row .cr-act {
     flex: 0 0 auto; border: none; border-radius: var(--r-pill);
-    padding: var(--sp-sm) var(--sp-2xl); font-weight: var(--fw-bold); font-size: var(--fs-xs);
+    min-height: 48px; padding: var(--sp-sm) var(--sp-2xl); font-weight: var(--fw-bold); font-size: var(--fs-xs);
     cursor: pointer; background: var(--pa-ink); color: #fff;
   }
   .chall-row .cr-act:disabled { opacity: .6; cursor: default; }
@@ -2473,20 +2492,16 @@
       <div class="claim onb-card onb-in" id="claimBox" style="display:none">
         <div class="onb-kicker">Your name</div>
         <h2 class="onb-title" id="claimHeading" tabindex="-1"><label id="claimQ" for="claimNewName">What should we call you?</label></h2>
-        <div class="onb-hero">
-          <div class="onb-av" id="onbAv" aria-hidden="true">?</div>
-          <div class="onb-id">
-            <b id="onbName">Welcome</b>
-            <span id="onbMail"></span>
-          </div>
+        <div class="onb-account" aria-live="polite">
+          <span id="onbMail"></span>
         </div>
         <div class="field">
           <input type="text" id="claimNewName" placeholder="e.g. Morgan" autocomplete="off"
                  autocapitalize="words" maxlength="24" aria-describedby="onbHelp claimErr" />
         </div>
+        <div class="msg msg--quiet" id="claimErr" aria-live="polite"></div>
         <p class="onb-help" id="onbHelp">Your name on the leaderboard. We'll review it before you join a challenge.</p>
         <button class="btn" id="claimBtn" disabled>Request approval</button>
-        <div class="msg msg--quiet" id="claimErr" aria-live="polite"></div>
         <div class="onb-steps">
           <div class="onb-step done"><i></i><span>Signed in</span></div>
           <div class="onb-step now" aria-current="step"><i></i><span>Your name</span></div>
@@ -2554,6 +2569,7 @@
       <div class="greet">
         <div class="greet-text">
           <h1><span x-text="$store.s.hello.word"></span>, <span id="meName"
+              :class="{ 'name-long': ($store.s.hello.name || '').length > 18 }"
               x-text="$store.s.hello.name"></span></h1>
           <div class="sub" id="tabSub" x-text="$store.s.hello.sub"></div>
         </div>
@@ -2626,7 +2642,7 @@
                       </template>
                       <template x-if="c.pending"><span class="cr-standing pend">Requested</span></template>
                       <template x-if="!c.approved && !c.pending">
-                        <button class="cr-act" @click.stop="$store.s.act.join(c.cid)">Join</button>
+                        <button class="cr-act" aria-label="Request to join" @click.stop="$store.s.act.join(c.cid)">Request to join</button>
                       </template>
                     </div>
                     <template x-if="c.total">
@@ -2666,24 +2682,23 @@
   <div class="sheet" id="sheet" :data-mode="$store.s.sheet === 'you' ? 'you' : 'stats'"
        :style="'--pa:' + $store.s.chall.pastel">
     <div class="sheet-chrome">
-      <div class="round-head" id="chalHead">
-        <div class="rh-title">
+      <div class="round-head timeline-head" id="chalHead">
+        <div class="timeline-toolbar">
           <button class="rh-back" id="statsBack" aria-label="Back to challenges" title="Back to challenges"><svg class="ic" aria-hidden="true"><use href="#i-caret-left"/></svg></button>
-          <span class="rh-name" id="ccName" x-text="$store.s.chall.name">Challenge</span>
-          <!-- Managing a challenge belongs in the challenge's own header, next
-               to its name, not on the browse card. Here it lines up with the
-               back button on the same row and takes ordinary app-surface ink
-               instead of being tuned for six pastels. -->
+          <span class="timeline-status" id="roundStatus" x-text="$store.s.monthWheel.statusText">Round 1 · Live</span>
           <template x-if="$store.s.chall.canOpenMenu">
             <button class="rh-manage" id="chalManage" aria-label="Manage challenge"
                     :title="$store.s.chall.manageTitle"
                     @click="$store.s.act.manage($store.s.chall.cid)">
-              <svg class="ic" aria-hidden="true"><use href="#i-gear"/></svg>
+              <span class="rh-more" aria-hidden="true"></span>
               <template x-if="$store.s.chall.pendCount">
                 <span class="cr-reqdot" x-text="$store.s.chall.pendLabel"></span>
               </template>
             </button>
           </template>
+        </div>
+        <div class="timeline-title" id="challengeTitle">
+          <span class="rh-name" id="ccName" x-text="$store.s.chall.name">Challenge</span>
         </div>
         <div class="rh-wheel">
           <div class="odo-wrap" id="odoWrap" role="group" aria-label="Choose a round">
@@ -2692,14 +2707,14 @@
                 <button type="button" class="odo-cell" :class="m.ghost ? 'odo-g' : 'odo-i'"
                         :data-key="m.key" :disabled="m.ghost" :aria-hidden="m.ghost ? 'true' : null"
                         :tabindex="m.ghost ? '-1' : null" :aria-current="m.on ? 'true' : null"
-                        @click="$store.s.act.monthGoto(m.key)"><span class="odo-m" x-text="m.name"></span></button>
+                        @click="$store.s.act.monthGoto(m.key)"><span class="odo-m"
+                          :data-full="m.name" :data-short="m.shortName" x-text="m.name"></span></button>
               </template>
             </div>
           </div>
           <div class="odo-cap" id="odoCap">
             <span id="odoYear" x-text="$store.s.monthWheel.year">2026</span>
-            <span class="sep">·</span>
-            <span class="r-pill" id="roundTag" :class="$store.s.monthWheel.roundClass"
+            <span class="sr-only r-pill" id="roundTag" :class="$store.s.monthWheel.roundClass"
                   x-text="$store.s.monthWheel.roundText">Round 1</span>
           </div>
           <!-- The wheel is opaque to a screen reader, so the round is announced
@@ -3204,7 +3219,6 @@
       </div>
     </div>
   </div>
-
   <!-- BACKOFFICE (global admins) -->
   <div class="backoffice" id="backofficeView">
     <div class="bo-topbar">
@@ -3421,7 +3435,7 @@
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
   var NAV_KEY = "minutes-nav";
-  var VERSION = "15.7";
+  var VERSION = "15.8";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -4268,8 +4282,14 @@
     // over. An owner pausing logging is not a round ending: that state has its own
     // padlock in the Leaderboard header and its own toggle in the roster editor.
     var cls = rn < 1 ? "" : curKey === todayKey ? "live" : curKey > todayKey ? "" : "done";
+    var status = rn < 1 ? "Not started"
+      : curKey > todayKey ? "Upcoming"
+      : curKey < todayKey ? "Past"
+      : roundLogOpen(curKey) ? "Live" : "Closed";
     function cell(k, ghost) {
-      return { key: k, name: keyToDate(k).toLocaleString(undefined, { month: "long" }),
+      var date = keyToDate(k);
+      return { key: k, name: date.toLocaleString(undefined, { month: "long" }),
+               shortName: date.toLocaleString(undefined, { month: "short" }),
                on: !ghost && k === curKey, ghost: ghost };
     }
     function shift(k, n) {
@@ -4295,6 +4315,7 @@
       year: String(shown.getFullYear()),
       roundText: rn >= 1 ? "Round " + rn : "No round",
       roundClass: cls,
+      statusText: rn >= 1 ? "Round " + rn + " · " + status : status,
       label: shown.toLocaleString(undefined, { month: "long", year: "numeric" })
     };
   });
@@ -5295,8 +5316,6 @@
     var resName = document.getElementById("resumeName");
     var newEl   = document.getElementById("claimNewName");
     var cardEl  = document.querySelector(".login-card");
-    var avEl    = document.getElementById("onbAv");
-    var onbName = document.getElementById("onbName");
     var onbMail = document.getElementById("onbMail");
     var switchEl = document.getElementById("onbSwitch");
     var gameEl = document.getElementById("cwGame");
@@ -5315,7 +5334,6 @@
     var sweeping = false;
     var lastUid = null;
     var prefilled = false;
-    var badPhoto = "";      // photo url that already failed to load, so we stop retrying
 
     // Anything the app's Alpine store renders from this module has to announce
     // itself: the store cannot see module-local variables, so it ticks a revision
@@ -5726,51 +5744,11 @@
       if (entering) document.getElementById("claimHeading").focus({ preventScroll: true });
     }
 
-    // The hero identifies the Google account they arrived on. Without it the only
-    // clue was the "Signed in as" line that onboarding mode hides, and someone with
-    // two Google accounts had no way to tell which one they landed on.
+    // Keep the authenticated account visible without repeating the editable name.
+    // The account line is stable while the requested leaderboard name changes.
     function paintHero() {
       var u = me() || {};
-      if (onbMail) onbMail.textContent = u.email || "";
-      if (onbName) onbName.textContent = (newEl.value.trim() || u.name || "Welcome");
-      if (!avEl) return;
-      var photo = u.photo || "";
-      if (photo && photo !== badPhoto && avEl.dataset.photo !== photo) {
-        avEl.dataset.photo = photo;
-        avEl.innerHTML = "";
-        var img = new Image();
-        img.alt = "";
-        img.referrerPolicy = "no-referrer";   // Google 403s the photo without this
-        // Falls back to the initial rather than leaving a broken image in the hero.
-        // The url is remembered as bad, otherwise every keystroke repaints the hero
-        // and refetches a photo that has already failed once.
-        img.onerror = function () {
-          badPhoto = photo;
-          avEl.dataset.photo = "";
-          avEl.innerHTML = "";
-          paintInitial();
-        };
-        img.src = photo;
-        avEl.appendChild(img);
-      } else if (!photo || photo === badPhoto) {
-        paintInitial();
-      }
-    }
-
-    function paintInitial() {
-      if (!avEl || avEl.dataset.photo) return;
-      var u = me() || {};
-      var src = newEl.value.trim() || u.name || u.email || "?";
-      avEl.textContent = src.charAt(0).toUpperCase();
-    }
-
-    // Signing out or switching accounts has to drop the previous person's photo,
-    // otherwise the img element stays in the hero for whoever arrives next.
-    function resetHero() {
-      if (!avEl) return;
-      avEl.dataset.photo = "";
-      avEl.textContent = "?";
-      badPhoto = "";
+      if (onbMail) onbMail.textContent = u.email ? "Signed in as " + u.email : "Signed in with your Google account";
     }
 
     function paintChips() {
@@ -5889,7 +5867,6 @@
         newEl.removeAttribute("aria-invalid");
         setMsg("claimErr", "");
         cancelLanding();
-        resetHero();
         hideAll(); emit(); return;
       }
 
@@ -5899,7 +5876,6 @@
         lastUid = u.uid;
         prefilled = false;
         newEl.value = "";
-        resetHero();
         setMsg("claimErr", "");
       }
 
@@ -6284,11 +6260,34 @@
     if (sheetView === "you") renderYou(); else renderMonthBar();
   }
 
+  // The challenge chrome is outside the body scroller, so compaction can change
+  // only its presentation. Hysteresis keeps a short upward correction from
+  // flickering the title while the month wheel and its horizontal offset remain
+  // completely independent.
+  var timelineCompact = false;
+  function syncTimelineHeader() {
+    var head = document.getElementById("chalHead");
+    var body = document.getElementById("sheetBody");
+    if (!head || !body) return;
+    var y = body.scrollTop;
+    var next = timelineCompact ? y > 12 : y > 64;
+    if (next === timelineCompact) return;
+    timelineCompact = next;
+    head.classList.toggle("is-compact", next);
+  }
+  function resetTimelineHeader() {
+    timelineCompact = false;
+    var head = document.getElementById("chalHead");
+    if (head) head.classList.remove("is-compact");
+  }
+
   function switchTab(tab) {
     if (tab === "stats" || tab === "log" || tab === "you") {
       setSheetView(tab === "log" ? "stats" : tab);   // sets state.sheet -> #app gets .l1
       rememberNav(tab === "log" ? "stats" : tab);
-      var sb = document.getElementById("sheetBody"); if (sb) sb.scrollTop = 0;
+      var sb = document.getElementById("sheetBody");
+      if (sb) sb.scrollTop = 0;
+      resetTimelineHeader();
       syncFabTuck();
       return;
     }
@@ -6296,6 +6295,7 @@
     rememberNav("challenges");
     renderChallenges();
     var bw = document.getElementById("baseWrap"); if (bw) bw.scrollTop = 0;
+    resetTimelineHeader();
   }
 
   /* syncPeek and --peek lived here. Level 1 is a full-screen page now: it starts at
@@ -6311,6 +6311,11 @@
       queued = true;
       requestAnimationFrame(function () { queued = false; syncFabTuck(); });
     }, { passive: true });
+  })();
+
+  (function () {
+    var body = document.getElementById("sheetBody"); if (!body) return;
+    body.addEventListener("scroll", syncTimelineHeader, { passive: true });
   })();
 
   (function () {

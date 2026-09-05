@@ -306,50 +306,19 @@
        the rest of the app on purpose, because the card is the largest single
        object on the page and 16px on a 334px card reads as square. */
     --r-pill: 999px; --r-2xl: 26px; --r-xl: 16px; --r-lg: 14px; --r-md: 12px; --r-sm: 10px; --r-xs: 8px;
-    /* Frame geometry. The modal has to line up with the sheet's content column, and
-       that column's position depends on the sheet's own border, which pop widens.
-       Both are declared once here so the modal and the sheet cannot drift apart. */
-    --frame-w: 480px; --sheet-bw: 1px; --sheet-pad: 16px;
+    /* Frame geometry. The modal has to line up with the level-1 page's content
+       column, and that column is now just the page's own padding: the page is
+       full-screen, so it has no border for the column to clear. */
+    --frame-w: 480px; --sheet-pad: 16px;
     /* The status-bar / Dynamic Island inset, as one token rather than a bare env()
-       repeated at every use. Tokenised because it decides where the base layer
-       STARTS, not just how much padding its content carries, and because a bare
-       env() is always 0 in a test browser: overriding --sat is the only way to
-       render an island phone anywhere but an island phone. */
+       repeated at every use. Tokenised because a bare env() is always 0 in a test
+       browser: overriding --sat is the only way to render an island phone anywhere
+       but an island phone.
+       It used to decide where the BASE LAYER started, because the hub was the only
+       thing that ever touched the top of the screen. Level 1 is a full-screen page
+       now, so it reaches y=0 too and has to pay the inset itself, in .sheet-chrome.
+       Both surfaces charge for it exactly once; see verify-island.py. */
     --sat: env(safe-area-inset-top);
-    /* Where the layer underneath comes to rest while a sheet is open.
-       It lands on safe-area-inset-top, which is the only device-correct place to
-       put it: the web exposes no cutout geometry, so any "leave N px below the
-       island" rule has to hardcode a per-phone constant, and that constant is not
-       even stable in sign. A notch is cut FROM the top edge with nothing above it,
-       while the Dynamic Island floats ~11px below the edge. Apple already folded
-       the right clearance into the inset (pill ends ~48, inset runs to ~59), so
-       sitting on the inset yields ~11px below an island and ~17px below a notch,
-       correct on both without detecting either.
-       --l1-lift is the one knob on top of that: screen px of extra air below the
-       cutout, 1px here to make the island read as a round 12. It is a post-scale
-       length because the drop is applied BEFORE the scale (see the l1 rule), so
-       what you type is what you get, at any inset.
-       The card STARTS full-bleed at y=0 and travels this whole distance, which is
-       what makes the push-back read as a push rather than a shrink. On a phone
-       with no inset there is nothing to travel, and it degrades to a plain scale.
-       syncPeek reproduces this, so the peeking sheet follows automatically. */
-    --l1-scale: .9; --l1-lift: 1px;
-    --l1-drop: calc(var(--sat) + var(--l1-lift));
-    /* The push-back's dim, as the scrim's alpha rather than a filter on the layer.
-       A filter stops at the layer's own box, and in l1 the layer has dropped by the
-       inset, so the strip it uncovered stayed at full brightness and the dim ended
-       in a hard line across the screen right under the island. The scrim spans the
-       whole stage and sits under the sheet, so one value dims the card, the strip
-       above it and anything else behind the sheet, with no seam.
-       Compositing black at alpha a over a colour gives c x (1 - a), so this is the
-       exact equivalent of the filter it replaces: .28 here == brightness(.72).
-       Lighter than the .45 (brightness .55) it used to be, because with no radius
-       the dim is the only depth cue and a heavy value at full-screen width reads as
-       a grey slab rather than shade, especially in the light theme where anything
-       past ~.2 turns the background visibly grey instead of dim.
-       Both are tokens so the old card look is exactly one line away:
-         --l1-dim: .45;  --l1-radius: 20px; */
-    --l1-dim: .28; --l1-radius: 0px;
     /* identity + status colors (shared across themes) */
     --accent: #7c5cff;
     --accent-2: #34d399;
@@ -1332,42 +1301,15 @@
   }
   #sheet[data-mode="stats"] .r-pill.live { background: var(--pa-live-bg); color: var(--pa-live-fg); }
   #sheet[data-mode="stats"] .r-pill.done { background: var(--pa-done-bg); color: var(--pa-done-fg); }
-  /* The grab bar sits on the sheet's own surface directly above the chrome, so
-     leaving it neutral put a white band across the top of a coloured header.
-     It takes the pastel too, which makes the sheet's whole top edge the
-     challenge's colour and reads as the card continuing rather than as a
-     coloured strip inside a neutral sheet. */
-  /* Radius removed, not matched. .grab carried its own 25px corner to sit inside
-     the sheet's 26px one, which stacks two curves a pixel apart and leaves a
-     sliver of the sheet's own --bg showing between them: pale in light mode,
-     which is the arc that survived fixing the top edge. .sheet already has
-     overflow: hidden, so a square corner here is clipped to exactly the sheet's
-     inner curve and the pastel fills it with no seam and nothing to keep in
-     sync. */
-  #sheet[data-mode="stats"] .grab { background: var(--pa, var(--card)); border-radius: 0; }
-  #sheet[data-mode="stats"] .grab-bar { background: rgba(20,22,43,.22); }
-  /* .sheet draws a 1px --border-2 hairline all the way round, and that colour is
-     tuned against the PAGE. With a pastel painted inside it, the LIGHT theme's
-     #dfe2ee traced a near-white outline around the header, which is the reported
-     "slight white border".
-     Measured, because the composite is not obvious: a border with alpha sits on
-     the element's OWN background, so ink at .10 over light --bg came out
-     (221,222,228), still near-white, while the same value over dark --bg came out
-     (11,11,17) and erased the sheet's edge entirely. Light wants a DARKER border
-     and dark wants a LIGHTER one; they cannot share a value.
-     So only the top edge is shared, taking the pastel itself, and the sides are
-     left to each theme: dark keeps --border-2, which already reads as a dark line
-     on the pastel and a light one on the page, and light gets an ink wash. */
-  #sheet[data-mode="stats"] { border-top-color: var(--pa, var(--border-2)); }
-  [data-theme="light"] #sheet[data-mode="stats"] {
-    /* .30 is derived, not dialled: ink (20,22,43) at that alpha over light --bg
-       (244,245,250) composites to (177,178,188), which is the dimmed backdrop
-       the sheet sits on (173,174,177). The edge therefore disappears into the
-       page instead of drawing a pale line against the colour. The WIDTH has to
-       stay: 11-modals.css derives its padding from --sheet-bw. */
-    border-left-color: rgba(20,22,43,.30);
-    border-right-color: rgba(20,22,43,.30);
-  }
+  /* The grab bar used to sit on the page's own surface directly above the chrome
+     and had to take the pastel too, or it put a white band across the top of a
+     coloured header. It went with the sheet: the header is the top of the screen
+     now, so the pastel starts at y=0 with nothing above it to match. */
+  /* The page is full-screen, so it has no side or top edges to draw: the pastel
+     header runs into the screen edge on every side. The theme-split border that
+     used to live here is gone with it. It was never decorative - an alpha border
+     composites over the element's OWN background, so light needed a dark line and
+     dark needed a light one - but there is no longer an edge to describe. */
   .rh-name { font-size: var(--fs-3xl); font-weight: var(--fw-bold); letter-spacing: var(--ls-tight); color: var(--text); line-height: var(--lh-tight); min-width: 0; overflow-wrap: anywhere; }
   /* .rh-nest was the second row of the You header, holding the account subline and,
      before that, an .rh-lock badge. Identity moved into the You page's own profile
@@ -1555,12 +1497,14 @@
   /* Confirm modal */
   /* The overlay spans the viewport, not the frame, so it needs both: the padding
      handles viewports narrower than the frame, the max-width handles wider ones.
-     Both resolve to the sheet's content column, so a modal opens on exactly the
-     two vertical lines the cards behind it already sit on, at any width and depth. */
+     Both resolve to the level-1 page's content column, so a modal opens on exactly
+     the two vertical lines the cards behind it already sit on, at any width and
+     depth. That column used to include the sheet's border; the page is full-screen
+     now and has none, so it is the padding alone. */
   .modal-overlay {
     position: fixed; inset: 0; z-index: 50; background: var(--overlay); backdrop-filter: blur(4px);
     display: flex; align-items: center; justify-content: center;
-    padding: calc(var(--sheet-pad) + var(--sheet-bw));
+    padding: var(--sheet-pad);
     opacity: 0; pointer-events: none; transition: opacity .18s ease;
   }
   .modal-overlay.show { opacity: 1; pointer-events: auto; }
@@ -1569,7 +1513,7 @@
      so it sits just above base modals but stays below toasts. */
   #confirmModal { z-index: 52; }
   .modal {
-    width: 100%; max-width: calc(var(--frame-w) - 2 * (var(--sheet-pad) + var(--sheet-bw)));
+    width: 100%; max-width: calc(var(--frame-w) - 2 * var(--sheet-pad));
     background: var(--card); border: 1px solid var(--border-2);
     border-radius: var(--r-xl); padding: var(--sp-4xl); box-shadow: var(--shadow-modal); position: relative;
     transform: translateY(12px) scale(.97); transition: transform .18s ease;
@@ -1893,111 +1837,94 @@
   .gtog-note.is-closed svg { opacity: 1; }
 
   /* ======================================================================
-     SHELL -- layered sheets
-     The base list scales back and dims so the challenge sheet reads as a
-     sheet lifted off it, not a page replacing a page. Consequence: the
-     document no longer scrolls, each layer owns its own scroller.
+     SHELL -- hub and the level-1 page
+     Level 1 used to be a sheet: the hub scaled back, dimmed behind a scrim,
+     and the sheet stopped below the greeting so you could see the page you
+     came from. It is a PUSH now. The page covers the hub completely and
+     arrives from the right, the way a drill-down does everywhere else, so
+     nothing behind it moves and there is no peek to measure.
+     Consequence, unchanged: the document does not scroll, each layer owns
+     its own scroller.
      ====================================================================== */
   #app { position: fixed; inset: 0; padding-bottom: 0; overflow: hidden; }
   @media (min-width: 640px) {
     #app { left: 50%; right: auto; transform: translateX(-50%); width: var(--frame-w); max-width: 100%; margin: 0; min-height: 0; }
   }
-  /* The layer is full-bleed to the top edge of the screen and pays the status-bar
-     inset as its own PADDING, so at rest the content still starts below the island
-     while the layer's box reaches y=0. At rest that is invisible: the layer and the
-     body paint the same var(--bg) in every theme, so there is nothing to see in the
-     strip. It matters only when a sheet opens, because it is the distance the card
-     has to fall (see #app.l1 .layer-base).
-     The inset must not end up as a dead band INSIDE the pushed-back card, which is
-     what it was before the layer was moved off it: ~71px of empty space above the
-     greeting, invisible in a browser tab and absurd installed on an island phone.
-     #app.l1 .base-wrap cancels it instead, so the padding is spent while the card
-     is flat and reclaimed the moment it is pushed back. */
+  /* The hub is full-bleed to the top edge and pays the status-bar inset as its own
+     PADDING, so content starts below the island while the layer's box reaches y=0.
+     That is invisible at rest, because the layer and the body paint the same
+     var(--bg) in every theme. It stays a padding rather than a top offset so the
+     inset can never become a dead band inside a scaled card, which is what it was
+     before the layer was moved off it: ~71px of empty space above the greeting,
+     invisible in a browser tab and absurd installed on an island phone. */
   .layer-base {
     position: absolute; inset: 0; z-index: 1; padding-top: var(--sat);
     display: flex; flex-direction: column; background: var(--bg);
-    transform-origin: 50% 0; will-change: transform;
-    transition: transform .42s cubic-bezier(.32,.72,0,1), filter .42s ease, border-radius .42s ease;
   }
-  /* The push-back is tokenised because syncPeek has to reproduce it in JS: the sheet
-     rests below the greeting row as the eye sees it, and the eye sees the row after
-     this transform.
-     The drop is written BEFORE the scale on purpose. Transform functions apply
-     right to left, so `translateY(D) scale(s)` puts the card's top edge at exactly
-     D screen px, while the old `scale(s) translateY(L)` moved it by L x s and made
-     every number in here a pre-scale quantity you had to divide back out. With the
-     origin at the top edge: y' = D + y x s. */
-  #app.l1 .layer-base { transform: translateY(var(--l1-drop)) scale(var(--l1-scale)); border-radius: var(--l1-radius); }
-  /* The other half of the push-back: the card's top edge falls by the whole inset,
-     and the content inside rides back up by the same amount, so what the eye sees
-     is the card retracting from under the cutout while its contents hold still.
-     Same duration and same easing as the layer, which is what makes the two cancel
-     exactly at every frame rather than only at the ends.
-     It is a transform and not a padding or margin change on purpose: .base-wrap is
-     the scroller, and animating its box would resize the scroll range mid-gesture
-     and yank the scroll position of anyone sitting at the bottom of a long list. */
-  #app.l1 .base-wrap { transform: translateY(calc(-1 * var(--sat))); }
   /* .wrap carries `margin: 0 auto` from the old document-flow layout. As a
      column flex item that auto margin stops it stretching, so it shrank to
      fit-content and the whole base layer lost ~44px of width. */
-  /* The layer itself now sits below the inset, so the wrap must NOT charge for it a
+  /* The layer itself sits below the inset, so the wrap must NOT charge for it a
      second time. Login still uses the plain .wrap, and it is full-screen, so the
      inset stays in the shared rule and is cancelled here. */
   .base-wrap { flex: 1; min-height: 0; width: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-top: var(--sp-4xl);
-    padding-bottom: calc(var(--sp-2xl) + var(--fab-size) + var(--sp-5xl));
-    will-change: transform; transition: transform .42s cubic-bezier(.32,.72,0,1); }
+    padding-bottom: calc(var(--sp-2xl) + var(--fab-size) + var(--sp-5xl)); }
   /* The pop shadow sits in the right margin, so a classic scrollbar gutter would
      slice through it. Scrolling stays, the bar is just not painted. */
   .base-wrap, .sheet-body { scrollbar-width: none; }
   .base-wrap::-webkit-scrollbar, .sheet-body::-webkit-scrollbar { width: 0; height: 0; }
-  /* Two jobs in one element: it takes the tap that dismisses the sheet, and it is
-     the push-back's dim (see --l1-dim). It spans the whole stage and sits below the
-     sheet, so the dim reaches the strip above the dropped card as well as the card
-     itself. The alpha is constant and the opacity is what animates, on the layer's
-     own duration so the dim and the drop arrive together. */
-  .scrim {
-    position: absolute; inset: 0; z-index: 2; background: rgba(0,0,0,var(--l1-dim));
-    opacity: 0; pointer-events: none; transition: opacity .42s ease;
-  }
-  #app.l1 .scrim { opacity: 1; pointer-events: auto; }
-  /* The peek is not decorative: the sheet stops just below the greeting row so the
-     layer underneath reads as a page you came from rather than a sliced-off header.
-     A percentage cannot do that, because the row's height moves with the safe area,
-     the theme and the type, so --peek is measured at runtime by syncPeek and the 6%
-     here is only what holds until the first painted frame. */
+  /* LEVEL 1. `sheet` is a historical name: this is a full-screen page. The ids
+     #sheet and #sheetBody are load-bearing across the suites and the month wheel's
+     CSS, and renaming them buys nothing this comment does not.
+     It is opaque and covers the hub edge to edge, so it carries no radius, no
+     border and no shadow: all three were cues for a card floating above something
+     you could still see, and there is nothing behind it now. It also means the
+     page owns the status-bar inset, which .sheet-chrome pays. */
+  /* Off-stage the page is still in the DOM, one viewport to the right. Without
+     `visibility` its buttons stay in the tab order and a screen reader still walks
+     it, so the hub would have a whole second screen of controls hiding behind it.
+     visibility is the one property that removes it from both AND still animates:
+     with a delay going out it flips only once the page has left, and with no delay
+     coming in it is visible for the whole entrance. */
   .sheet {
-    position: absolute; left: 0; right: 0; bottom: 0; z-index: 3;
-    height: calc(100% - var(--peek, 6%));
-    background: var(--bg); border: var(--sheet-bw) solid var(--border-2); border-bottom: none;
-    border-radius: 26px 26px 0 0; box-shadow: var(--shadow-sheet);
+    position: absolute; inset: 0; z-index: 3;
+    background: var(--bg);
     display: flex; flex-direction: column; overflow: hidden;
-    transform: translateY(102%); will-change: transform;
-    transition: transform .46s cubic-bezier(.32,.72,0,1);
+    transform: translateX(100%); visibility: hidden; will-change: transform;
+    transition: transform .38s cubic-bezier(.32,.72,0,1), visibility 0s linear .38s;
   }
-  #app.l1 .sheet { transform: translateY(0); }
-  /* A dragged sheet has to track the finger exactly, so the open/close easing is
-     suspended for the length of the gesture and restored on release, which is
-     what lets the release animate from wherever the finger left it. */
+  #app.l1 .sheet {
+    transform: translateX(0); visibility: visible;
+    transition: transform .38s cubic-bezier(.32,.72,0,1), visibility 0s;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .sheet, #app.l1 .sheet { transition: none; }
+  }
+  /* A dragged page has to track the finger exactly, so the open/close easing is
+     suspended for the length of the gesture and restored on release, which is what
+     lets the release animate from wherever the finger left it. */
   .sheet.dragging { transition: none; }
-  .grab { flex: 0 0 auto; padding: var(--sp-sm) 0 var(--sp-xs); display: flex; justify-content: center; cursor: grab;
-    touch-action: none;
-    background: var(--card); border-radius: 25px 25px 0 0; }
-  .grab-bar { display: block; width: 40px; height: 5px; border-radius: var(--r-pill); background: var(--border-2); }
-  /* The chrome is a pinned surface, not part of the page. Everything that stays
-     put while you scroll lives on white, so the tab row reads as the boundary
-     between "where you are" and "what is here". */
-  /* One view per sheet now, so the chrome pays for its own bottom edge rather than
-     borrowing a tab row's height. --head-shadow already carries a hairline plus a
-     drop shadow, so the boundary is drawn: an accent rule on top of it was the tab
-     baseline, and with no tabs to seat it is just a stripe. */
-  .sheet-chrome { flex: 0 0 auto; padding: 0 var(--sheet-pad) var(--sp-md); background: var(--card);
+  /* The chrome is the page's top bar: it pins while the body scrolls, and it is
+     what pays --sat now that the page reaches y=0. The inset is added to the bar's
+     own top padding rather than offsetting the page, so the header's background
+     (the challenge pastel, in stats mode) paints edge to edge behind the status bar
+     instead of leaving a strip of --bg above it.
+     --head-shadow carries a hairline plus a drop shadow, so the boundary between
+     the bar and the scrolling body is already drawn. */
+  .sheet-chrome { flex: 0 0 auto; padding: calc(var(--sat) + var(--sp-lg)) var(--sheet-pad) var(--sp-md); background: var(--card);
     touch-action: none;
     box-shadow: var(--head-shadow); position: relative; z-index: 2; }
   /* The floating add button sits over the tail of the scroll, so the last row needs
      to be able to clear it. Written as the derivation rather than as the 96px it
      used to be, so resizing the FAB cannot leave a row stranded underneath it:
      one gap above, the button, and the padding the body already had. */
-  .sheet-body { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 0 var(--sheet-pad) calc(var(--sp-2xl) + var(--fab-size) + var(--sp-5xl)); }
+  /* pan-y, not auto. The back swipe starts at the left edge, which on most of the
+     page is inside this scroller. With `auto` the browser claims the touch for
+     scrolling the moment it moves and fires pointercancel, so the gesture died two
+     frames in - measured, it got exactly two pointermoves before the cancel. This
+     hands the horizontal axis to JS and keeps the vertical one native, so the list
+     still scrolls at full speed and the swipe survives. */
+  .sheet-body { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; touch-action: pan-y; padding: 0 var(--sheet-pad) calc(var(--sp-2xl) + var(--fab-size) + var(--sp-5xl)); }
   /* The chrome is a surface now, so content has to clear it rather than butt into
      it. A section label already carries a 20px lead-in, so only a panel that opens
      with something else needs one added, which keeps every view starting on the
@@ -2155,12 +2082,9 @@
   html[data-depth="pop"] .cal-pop {
     border: 2px solid var(--ink); box-shadow: var(--pop) var(--pop) 0 var(--pop-ink);
   }
-  /* The sheet is bottom-anchored and already lifted by the scrim, so it takes
-     the border but never an offset that would fall off-screen. Setting the width as
-     a variable keeps the modal's gutter in step: the modal lines up with the sheet's
-     content column, and pop's thicker border moves that column by a pixel. */
-  html[data-depth="pop"] { --sheet-bw: 2px; }
-  html[data-depth="pop"] .sheet { border-color: var(--ink); }
+  /* Level 1 is a full-screen page with no border, so pop has nothing to thicken
+     here and the modal's gutter no longer moves with the depth skin. The
+     --sheet-bw token that carried that coupling is gone. */
 
   html[data-depth="pop"] .btn.ghost,
   html[data-depth="pop"] .btn.btn-ghost,
@@ -2651,12 +2575,12 @@
             @click="$store.s.act.newChallenge()"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg><span class="fab-label" aria-hidden="true">Challenge</span></button>
   </div>
 
-  <div class="scrim" id="scrim"></div>
-
-  <!-- LEVEL 1 -- challenge sheet: leaderboard + log -->
+  <!-- LEVEL 1 -- challenge page: leaderboard + log. Full-screen, pushed in from
+       the right. The grab bar that used to sit here went with the sheet: a page
+       you drag downward to dismiss is a sheet affordance, and this one covers the
+       screen. Back is the chevron, or a swipe from the left edge. -->
   <div class="sheet" id="sheet" :data-mode="$store.s.sheet === 'you' ? 'you' : 'stats'"
        :style="'--pa:' + $store.s.chall.pastel">
-    <div class="grab" id="grab"><span class="grab-bar"></span></div>
     <div class="sheet-chrome">
       <div class="round-head" id="chalHead">
         <div class="rh-title">
@@ -3409,7 +3333,7 @@
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
   var NAV_KEY = "minutes-nav";
-  var VERSION = "15.3";
+  var VERSION = "15.4";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -4961,10 +4885,6 @@
     renderChallChip();
     renderAll();
     scrollActiveTop();
-    // The greeting row only has a height once Alpine has actually revealed #app,
-    // which happens after this tick, so the measurement waits for a painted frame.
-    // The second frame catches the case where web fonts land between the two.
-    requestAnimationFrame(function () { syncPeek(); requestAnimationFrame(syncPeek); });
   }
 
   function doLogout() {
@@ -6149,7 +6069,7 @@
   function sheetOpen() { return !!state.sheet; }
   // Where the user actually was, so a refresh resumes there instead of always
   // forcing the challenge sheet open. switchTab is the only way a layer changes,
-  // so recording it there covers the chevron, the grabber, the scrim and browser back.
+  // so recording it there covers the chevron, the edge swipe and browser back.
   /* NAV_KEY records where the user CHOSE to be. Restoring a session is not a choice,
      so it must not write: doLogin runs twice in production (an optimistic pass at
      boot, then again once the roster is authoritative), and the first pass persisting
@@ -6234,41 +6154,10 @@
     var bw = document.getElementById("baseWrap"); if (bw) bw.scrollTop = 0;
   }
 
-  /* The sheet stops just below the greeting row, so the peek shows a whole header
-     instead of slicing one in half. The row's height moves with the safe area, the
-     theme and the name in it, so it is measured rather than guessed. It is measured
-     through the offset chain rather than a client rect on purpose: an open sheet
-     transforms the layer underneath and a scrolled hub moves it, and a rect folds
-     both into the answer, so the sheet would come to rest somewhere slightly
-     different depending on what it was doing when it measured.
-
-     The inset is the layer's own top padding, so the offset chain already contains
-     it, and it has to come back OUT of the scaled term: in l1 the wrap is translated
-     up by exactly the inset (that is what holds the content still while the card
-     edge glides down), and the drop puts it back unscaled. Leaving it inside the
-     scaled term shortens the peek by inset x (1 - scale), which on an island phone
-     is ~6px of the greeting row quietly disappearing under the sheet. */
-  var PEEK_GAP = 9;
-  function syncPeek() {
-    var app = document.getElementById("app");
-    var wrap = document.getElementById("baseWrap");
-    var head = wrap && wrap.querySelector("header");
-    if (!app || !head || !head.offsetHeight) return;   // not painted yet; a later frame lands it
-    var layer = app.querySelector(".layer-base") || app;
-    var top = 0, n = head;
-    while (n && n !== layer && n !== app) { top += n.offsetTop; n = n.offsetParent; }
-    var sat = layer === app ? 0 : (parseFloat(getComputedStyle(layer).paddingTop) || 0);
-    var cs = getComputedStyle(document.documentElement);
-    var scale = parseFloat(cs.getPropertyValue("--l1-scale")) || 1;
-    var lift = parseFloat(cs.getPropertyValue("--l1-lift")) || 0;
-    var seen = (sat + lift) + (top - sat + head.offsetHeight) * scale;   // where the eye finds the row
-    app.style.setProperty("--peek", Math.round(seen + PEEK_GAP) + "px");
-  }
-  window.__minutesPeek = syncPeek;
-  window.addEventListener("resize", syncPeek);
-  window.addEventListener("orientationchange", function () {
-    requestAnimationFrame(function () { syncPeek(); requestAnimationFrame(syncPeek); });
-  });
+  /* syncPeek and --peek lived here. Level 1 is a full-screen page now: it starts at
+     y=0 and covers the hub, so there is no peek to measure and nothing behind it
+     whose header the page has to stop below. The measurement, the resize and
+     orientation listeners and window.__minutesPeek all went with it. */
 
   (function () {
     var bw = document.getElementById("baseWrap"); if (!bw) return;
@@ -6282,32 +6171,36 @@
 
   (function () {
     var close = function () { switchTab("challenges"); };
-    ["statsBack", "youBack", "scrim", "grab"].forEach(function (id) {
+    ["statsBack", "youBack"].forEach(function (id) {
       var el = document.getElementById(id); if (el) el.onclick = close;
     });
     var yb = document.getElementById("youBtn");
     if (yb) yb.onclick = function () { switchTab("you"); };
 
-    // ---- drag the sheet away ----
-    // The grab bar has looked draggable since it was drawn and has only ever
-    // answered to a tap, so the affordance was lying. The gesture is claimed on the
-    // sheet's own chrome (the bar and the title row) rather than anywhere on the
-    // sheet, because the month wheel is a horizontal scroller and the body is the
-    // pull-to-refresh surface; both keep the gesture they already own.
+    // ---- swipe back from the left edge ----
+    // Level 1 used to be a sheet you dragged DOWNWARD off the screen, with a grab
+    // bar to advertise it. It is a full-screen page now, and a page you drag down
+    // is not a gesture anyone has: downward dismissal is what a sheet means. The
+    // page arrives from the right, so it leaves the same way, and the gesture that
+    // sends it there is the one every stack navigator uses - a drag that starts at
+    // the left edge of the screen.
+    //
+    // EDGE is why this can be claimed on the whole page rather than on its chrome.
+    // The old drag had to exclude the month wheel (a horizontal scroller) and the
+    // body (pull-to-refresh) by only listening on the header. A gesture that must
+    // START within 24px of the left edge cannot begin inside either of those, so
+    // the exclusions are unnecessary and the whole page is live.
     var sheet = document.getElementById("sheet");
     if (!sheet) return;
-    var DISMISS = 108;   // travel that reads as "put it away"
-    var FLICK = 0.5;     // px/ms, so a short fast throw closes it too
+    var EDGE = 24;       // px from the left edge where a back swipe may start
+    var DISMISS = 96;    // travel that reads as "go back"
+    var FLICK = 0.5;     // px/ms, so a short fast throw goes back too
     var SLOP = 6;        // the jitter of a tap is not a drag
-    var RUBBER = 0.3;    // upward travel resists: the sheet is already home
+    var RUBBER = 0.3;    // leftward travel resists: there is nothing further in
 
-    var pid = null, y0 = 0, x0 = 0, dy = 0, t0 = 0, claimed = false, swallow = false;
+    var pid = null, y0 = 0, x0 = 0, dx = 0, t0 = 0, claimed = false, swallow = false;
 
-    function fromChrome(t) {
-      if (!t || !t.closest) return false;
-      return !!(t.closest(".grab") || t.closest(".sheet-chrome"));
-    }
-    function draw(y) { sheet.style.transform = y ? ("translateY(" + y + "px)") : ""; }
+    function draw(x) { sheet.style.transform = x ? ("translateX(" + x + "px)") : ""; }
     function release() {
       claimed = false; pid = null;
       sheet.classList.remove("dragging");
@@ -6315,40 +6208,42 @@
 
     sheet.addEventListener("pointerdown", function (e) {
       swallow = false;
-      if (pid !== null || e.button > 0 || !sheetOpen() || !fromChrome(e.target)) return;
-      pid = e.pointerId; y0 = e.clientY; x0 = e.clientX; t0 = e.timeStamp; dy = 0; claimed = false;
+      if (pid !== null || e.button > 0 || !sheetOpen()) return;
+      // Measured against the page's own box, not the viewport: above 640px #app is
+      // a centred frame, so the page's left edge is not x=0 on the screen.
+      if (e.clientX - sheet.getBoundingClientRect().left > EDGE) return;
+      pid = e.pointerId; y0 = e.clientY; x0 = e.clientX; t0 = e.timeStamp; dx = 0; claimed = false;
     });
 
     sheet.addEventListener("pointermove", function (e) {
       if (e.pointerId !== pid) return;
-      var ay = e.clientY - y0, ax = e.clientX - x0;
+      var ax = e.clientX - x0, ay = e.clientY - y0;
       if (!claimed) {
-        if (Math.abs(ay) < SLOP && Math.abs(ax) < SLOP) return;
-        // A sideways start belongs to the month wheel, which sits in this same
-        // chrome and keeps horizontal panning through touch-action. Letting the
-        // pointer go here is what stops a wheel spin from also dragging the sheet.
-        if (Math.abs(ax) > Math.abs(ay)) { pid = null; return; }
+        if (Math.abs(ax) < SLOP && Math.abs(ay) < SLOP) return;
+        // A vertical start from the edge is someone scrolling the list, which
+        // begins at the left margin as often as anywhere else.
+        if (Math.abs(ay) > Math.abs(ax)) { pid = null; return; }
         claimed = true;
         sheet.classList.add("dragging");
         if (sheet.setPointerCapture) { try { sheet.setPointerCapture(pid); } catch (err) {} }
       }
-      dy = ay > 0 ? ay : ay * RUBBER;
-      draw(dy);
+      dx = ax > 0 ? ax : ax * RUBBER;
+      draw(dx);
     });
 
     sheet.addEventListener("pointerup", function (e) {
       if (e.pointerId !== pid) return;
-      var was = claimed, travel = dy;
-      var vy = travel / Math.max(1, e.timeStamp - t0);
+      var was = claimed, travel = dx;
+      var vx = travel / Math.max(1, e.timeStamp - t0);
       release();
       if (!was) return;
-      // a claimed drag must not also fire the grab bar's click
+      // a claimed drag must not also fire a click on whatever was under the finger
       swallow = true;
-      // clearing the inline transform in the same task as the close lets the
-      // sheet animate from where the finger left it to off-screen, rather than
-      // snapping home first
+      // clearing the inline transform in the same task as the close lets the page
+      // animate from where the finger left it to off-screen, rather than snapping
+      // home first
       draw(0);
-      if (travel > DISMISS || (travel > 24 && vy > FLICK)) close();
+      if (travel > DISMISS || (travel > 24 && vx > FLICK)) close();
     });
 
     sheet.addEventListener("pointercancel", function (e) {
@@ -9465,11 +9360,11 @@ ${r?'Expression: "'+r+`"
 
     window.addEventListener("touchstart", function (e) {
       if (e.touches.length !== 1 || !atTop()) { pulling = false; return; }
-      // The sheet's own chrome is a drag handle, so a pull that starts there is a
-      // dismiss, not a refresh. Without this both gestures run at once and the
-      // sheet gets translated twice.
+      // The page's chrome is a pinned bar, not part of the scroller: a pull that
+      // starts there is not a pull on the list underneath it. The .grab handle this
+      // also used to exclude is gone with the sheet.
       var t = e.target;
-      if (t && t.closest && t.closest(".grab, .sheet-chrome")) { pulling = false; return; }
+      if (t && t.closest && t.closest(".sheet-chrome")) { pulling = false; return; }
       pickLayer();
       startY = e.touches[0].clientY; pulling = true; dist = 0;
     }, { passive: true });

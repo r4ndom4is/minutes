@@ -1356,7 +1356,11 @@
      used to live here is gone with it. It was never decorative - an alpha border
      composites over the element's OWN background, so light needed a dark line and
      dark needed a light one - but there is no longer an edge to describe. */
-  .rh-name { font-size: var(--fs-3xl); font-weight: var(--fw-bold); letter-spacing: var(--ls-tight); color: var(--text); line-height: var(--lh-tight); min-width: 0; overflow-wrap: anywhere; }
+  /* margin: 0 because this is an <h1>. The UA gives headings .67em top and
+     bottom, which would push the title down and break the compact-header
+     geometry the suite measures; the element carries meaning, .rh-name still
+     carries every visual property. */
+  .rh-name { margin: 0; font-size: var(--fs-3xl); font-weight: var(--fw-bold); letter-spacing: var(--ls-tight); color: var(--text); line-height: var(--lh-tight); min-width: 0; overflow-wrap: anywhere; }
   /* .rh-nest was the second row of the You header, holding the account subline and,
      before that, an .rh-lock badge. Identity moved into the You page's own profile
      block and the lock badge is long gone, so both rules went with them. */
@@ -1564,8 +1568,19 @@
      now and has none, so it is the padding alone. */
   .modal-overlay {
     position: fixed; inset: 0; z-index: 50; background: var(--overlay); backdrop-filter: blur(4px);
-    display: flex; align-items: center; justify-content: center;
+    display: flex; align-items: flex-start; justify-content: center;
     padding: var(--sheet-pad);
+    /* The overlay scrolls, the dialog does not. On a 568px-tall phone the date
+       picker's Today row lands past the bottom edge, and nothing used to move:
+       #app is position:fixed with overflow hidden, the overlay was fixed too and
+       the dialog has no scroll container, so that button was simply unreachable.
+       Flipping the picker upward does not save it -- at 361px tall it fits
+       neither above nor below -- so the way out is to let the overlay carry the
+       overflow. `margin: auto` on the dialog keeps it centred exactly as
+       align-items: center did whenever there IS room, while leaving the top
+       reachable when there is not, which centring alone does not.
+       overscroll-behavior stops that scroll continuing into whatever is behind. */
+    overflow-y: auto; overscroll-behavior: contain;
     /* A closed overlay was only transparent, so every control inside all five
        dialogs stayed in the tab order and in the accessibility tree. That is
        also what makes role="dialog"/aria-modal safe to state: a dialog that is
@@ -1582,6 +1597,7 @@
   #confirmModal { z-index: 52; }
   .modal {
     width: 100%; max-width: calc(var(--frame-w) - 2 * var(--sheet-pad));
+    margin: auto;
     background: var(--card); border: 1px solid var(--border-2);
     border-radius: var(--r-xl); padding: var(--sp-4xl); box-shadow: var(--shadow-modal); position: relative;
     /* Grows out of whatever opened it. --m-ox/--m-oy are set per open by
@@ -1953,9 +1969,26 @@
        transform-origin sits above centre so the greeting, the part you are most
        likely to still be looking at, stays put while the list falls away. */
     transform-origin: 50% 45%; will-change: transform;
-    transition: transform var(--l1-ms) var(--l1-ease), filter var(--l1-ms) ease;
+    transition: transform var(--l1-ms) var(--l1-ease);
   }
-  #app.l1 .layer-base { transform: scale(var(--l1-scale)); filter: brightness(var(--l1-dim)); }
+  #app.l1 .layer-base { transform: scale(var(--l1-scale)); }
+  /* The dim used to be a brightness() filter ON the scaled layer, so it shrank
+     WITH it: at scale .93 a 14px band down each side and 27px at the top stayed
+     undimmed. Nothing shows that at rest, because the page covers the hub edge
+     to edge -- but pull-to-refresh slides the page down while it spins, and what
+     you see then is a grey rectangle inside a lighter frame. That reads as a
+     card with a shadow, which is the one thing this layer is documented not to
+     be. So the dim is a full-bleed scrim between the hub (z1) and the page (z3)
+     instead of a property of the hub, and it covers the frame too.
+     rgba(0,0,0,.18) is not an approximation of brightness(.82): compositing
+     pure black at alpha a multiplies every sRGB channel by (1 - a), so .18 is
+     the same arithmetic and the hub itself is pixel-identical. */
+  #app::after {
+    content: ""; position: absolute; inset: 0; z-index: 2; pointer-events: none;
+    background: rgba(0, 0, 0, calc(1 - var(--l1-dim)));
+    opacity: 0; transition: opacity var(--l1-ms) ease;
+  }
+  #app.l1::after { opacity: 1; }
   /* .wrap carries `margin: 0 auto` from the old document-flow layout. As a
      column flex item that auto margin stops it stretching, so it shrank to
      fit-content and the whole base layer lost ~44px of width. */
@@ -2000,7 +2033,12 @@
   @media (prefers-reduced-motion: reduce) {
     .sheet, #app.l1 .sheet { transition: none; }
     .layer-base { transition: none; }
-    #app.l1 .layer-base { transform: none; filter: none; }
+    /* Unchanged intent: reduced motion opts out of the push-back entirely. The
+       hub is not scaled here, so there is no undimmed frame to cover and the
+       scrim has nothing to fix -- it just goes with the effect it belongs to. */
+    #app.l1 .layer-base { transform: none; }
+    #app::after { transition: none; }
+    #app.l1::after { opacity: 0; }
   }
   /* A dragged page has to track the finger exactly, so the open/close easing is
      suspended for the length of the gesture and restored on release, which is what
@@ -2724,8 +2762,14 @@
             </button>
           </template>
         </div>
+        <!-- A heading, not a styled span. Level 1 covers the hub completely, so
+             while a challenge is open its <h1> is off-screen and the heading
+             list a screen reader offers was simply EMPTY: no way to jump to the
+             content, and nothing naming the page you are on. The element is the
+             only change -- .rh-name already carries the size, weight and
+             tracking, and the UA heading margin is cancelled there. -->
         <div class="timeline-title" id="challengeTitle">
-          <span class="rh-name" id="ccName" x-text="$store.s.chall.name">Challenge</span>
+          <h1 class="rh-name" id="ccName" x-text="$store.s.chall.name">Challenge</h1>
         </div>
         <div class="rh-wheel">
           <div class="odo-wrap" id="odoWrap" role="group" aria-label="Choose a round">
@@ -2745,14 +2789,22 @@
                   x-text="$store.s.monthWheel.roundText">Round 1</span>
           </div>
           <!-- The wheel is opaque to a screen reader, so the round is announced
-               here instead. Also the stable hook the tests read. -->
-          <span class="sr-only" id="monthLabelTop" aria-live="polite" x-text="$store.s.monthWheel.label"></span>
+               here instead -- ONE live region carrying month, round and status
+               together, because picking a round that is Closed or Upcoming is
+               exactly the thing you cannot see from the label alone. The visible
+               #roundStatus is deliberately not a live region of its own: both
+               change on the same tap, so two regions would announce one move
+               twice. #monthLabelTop keeps the month by itself; it is the stable
+               hook the tests read. -->
+          <span class="sr-only" aria-live="polite"><span id="monthLabelTop" x-text="$store.s.monthWheel.label"></span><span x-text="$store.s.monthWheel.speechTail"></span></span>
         </div>
       </div>
       <div class="round-head" id="youHead">
         <div class="rh-title">
           <button class="rh-back" id="youBack" aria-label="Back to challenges" title="Back to challenges"><svg class="ic" aria-hidden="true"><use href="#i-caret-left"/></svg></button>
-          <span class="rh-name">Account</span>
+          <!-- Same reasoning as the challenge title: the account page is a
+               level-1 page too, and it had no heading of its own either. -->
+          <h1 class="rh-name">Account</h1>
         </div>
       </div>
     </div>
@@ -3311,7 +3363,7 @@
               <span class="dot sm" :style="'background:' + m.color" x-text="m.initial"></span>
               <span class="mname" x-text="m.name"></span>
               <button class="roletoggle" :class="{ on: m.admin }" title="Toggle admin" @click="$store.s.act.toggleMemberAdmin(m.name)" x-text="m.role"></button>
-              <button class="del icon-del" title="Remove" @click="$store.s.act.removeMember(m.name)"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg></button>
+              <button class="del icon-del" :aria-label="'Remove ' + m.name" :title="'Remove ' + m.name" @click="$store.s.act.removeMember(m.name)"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg></button>
             </div>
           </template>
         </div></div>
@@ -3371,7 +3423,7 @@
               <template x-for="p in $store.s.participantEditor.current" :key="p.name">
                 <div class="pe-row">
                   <span class="dot sm" :style="'background:' + p.color" x-text="p.initial"></span>
-                  <span class="nm" x-text="p.name"></span><button class="rm icon-del" title="Remove" @click="$store.s.act.removeParticipant(p.name)"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg></button>
+                  <span class="nm" x-text="p.name"></span><button class="rm icon-del" :aria-label="'Remove ' + p.name" :title="'Remove ' + p.name" @click="$store.s.act.removeParticipant(p.name)"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg></button>
                 </div>
               </template>
 
@@ -3415,7 +3467,7 @@
                 <span class="mg-name" x-text="m.name"></span>
                 <span class="mg-owner-pill" x-show="m.ownerPill">Owner</span>
                 <button class="mg-btn" :class="{ on: m.owner }" x-show="m.admin" @click="$store.s.act.setOwnerRole($store.s.manage.cid, m.name, !m.owner)" x-text="m.toggleText"></button>
-                <button class="mg-del icon-del" title="Remove from challenge" x-show="m.showDel" @click="$store.s.act.removeChallengeMember($store.s.manage.cid, m.name)"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg></button>
+                <button class="mg-del icon-del" :aria-label="'Remove ' + m.name + ' from challenge'" :title="'Remove ' + m.name + ' from challenge'" x-show="m.showDel" @click="$store.s.act.removeChallengeMember($store.s.manage.cid, m.name)"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg></button>
               </div>
             </template>
           </div>
@@ -3463,7 +3515,7 @@
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
   var NAV_KEY = "minutes-nav";
-  var VERSION = "15.12";
+  var VERSION = "15.13";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -4047,11 +4099,14 @@
         meta: n + " member" + (n === 1 ? "" : "s") + " \u00b7 Round " + challRoundNumber(cid)
               + (pend ? " \u00b7 " + pend + " request" + (pend === 1 ? "" : "s") : ""),
         active: cid === act, approved: approved, pending: status === "pending",
-        pill: pill, mins: st ? st.mins.toLocaleString("en-US") + " min this round" : "",
+        pill: pill, mins: st ? st.mins.toLocaleString() + " min this round" : "",
         // The card shows the bare number with a small unit beside it, so it needs
         // the value on its own. `mins` keeps the sentence form for screen readers
         // and for anywhere the card is not the presentation.
-        total: st ? st.mins.toLocaleString("en-US") : "",
+        // Grouping follows the reader's locale, not en-US: every other number and
+        // date in the app already does, and a pinned en-US turns 1.234 minutes
+        // into "1,234" for most of Europe, which is a different number there.
+        total: st ? st.mins.toLocaleString() : "",
         canManage: canManage, pendCount: pend,
         manageTitle: pend ? ("Manage \u00b7 " + pend + " pending request" + (pend === 1 ? "" : "s")) : "Manage challenge",
         pendLabel: pend > 9 ? "9+" : String(pend)
@@ -4344,6 +4399,9 @@
       roundText: rn >= 1 ? "Round " + rn : "No round",
       roundClass: cls,
       statusText: rn >= 1 ? "Round " + rn + " · " + status : status,
+      // What the live region says after the month. Spoken, not shown, so it
+      // spells the separator out instead of relying on the visible middle dot.
+      speechTail: rn >= 1 ? ", Round " + rn + ", " + status : ", " + status,
       label: shown.toLocaleString(undefined, { month: "long", year: "numeric" })
     };
   });
@@ -4375,9 +4433,11 @@
     var jOpen = roundJoinOpen(key), lOpen = roundLogOpen(key);
     var isFutureRound = state.viewMonth.getTime() > firstOfMonth(new Date()).getTime();
     var isPastRound = state.viewMonth.getTime() < firstOfMonth(new Date()).getTime();
-    var MON_ABBR = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     var fom = firstOfMonth(state.viewMonth);
-    var opensLbl = "Opens " + MON_ABBR[fom.getMonth()] + " " + fom.getDate();
+    // Was a hardcoded English month table with the day glued on after it. The
+    // formatter carries the reader's own abbreviation AND their day/month order,
+    // which "Mar 5" cannot. en-US output is unchanged.
+    var opensLbl = "Opens " + fom.toLocaleString(undefined, { month: "short", day: "numeric" });
     function guard(kind, isOpen, label, noteText, noteIcon, noteClosed) {
       return { kind: kind, open: isOpen, label: label, noteText: noteText || "", noteIcon: noteIcon || "", noteClosed: !!noteClosed };
     }
@@ -6373,7 +6433,16 @@
 
   (function () {
     var body = document.getElementById("sheetBody"); if (!body) return;
-    body.addEventListener("scroll", syncTimelineHeader, { passive: true });
+    // Same coalescing as the hub scroller above. A scroll event can fire many
+    // times per frame, and each one read scrollTop -- a layout value -- before
+    // deciding it had nothing to do. Once per frame is all the header can
+    // actually show, so the read happens once per frame too.
+    var queued = false;
+    body.addEventListener("scroll", function () {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(function () { queued = false; syncTimelineHeader(); });
+    }, { passive: true });
   })();
 
   (function () {
@@ -6801,7 +6870,15 @@
     }
     save.disabled = false;
     document.getElementById("challModal").classList.add("show");
-    setTimeout(function () { nm.focus(); }, 30);
+    // Focus lands in the name field on a pointer device, where the dialog's only
+    // job is typing one. On a touch screen the same call throws the on-screen
+    // keyboard up over the colour picker before you have seen the dialog, so it
+    // is withheld there. The dialog is still entered either way: the modal
+    // machinery focuses its first control, so it is still announced and Tab is
+    // still trapped -- only the keyboard waits for you to ask for it.
+    if (!(window.matchMedia && window.matchMedia("(pointer: coarse)").matches)) {
+      setTimeout(function () { nm.focus(); }, 30);
+    }
   }
   function hideChallModal() {
     document.getElementById("challModal").classList.remove("show");

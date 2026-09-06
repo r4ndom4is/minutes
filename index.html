@@ -1274,7 +1274,7 @@
   .timeline-status { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     text-align: center; font-size: var(--fs-2xs); font-weight: var(--fw-md); line-height: var(--lh-normal); }
   .timeline-title { padding: var(--sp-md) 0 var(--sp-sm); }
-  .timeline-title .rh-name { display: block; font-size: 25px; font-weight: var(--fw-bold);
+  .timeline-title .rh-name { display: block; font-size: 26px; font-weight: var(--fw-bold);
     line-height: var(--lh-tight); letter-spacing: var(--ls-tight); min-width: 0;
     overflow-wrap: anywhere; }
   .timeline-head.is-compact .timeline-toolbar { padding-top: var(--sp-2xs); padding-bottom: var(--sp-3xs); }
@@ -1303,6 +1303,14 @@
   .rh-manage:hover { background: var(--border); color: var(--text); }
   .rh-manage:active { background: var(--accent); color: #fff; }
   .rh-back:active { background: var(--accent); color: #fff; }
+  /* Keyboard focus on the pastel chrome. Both controls had hover and active but
+     no focus ring, so a keyboard lands on the UA default over a colour panel it
+     was never chosen against. login.css already settled the house answer for
+     pastel surfaces (2px, offset 3, --pa-ink inside the pastel); these follow it
+     rather than introducing a second pattern. Outlines are not part of layout,
+     so nothing here can move the header or the rail. */
+  .rh-back:focus-visible,
+  .rh-manage:focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
   /* The challenge's identity used to be a 22px dot beside the name, which was a
      second, smaller statement of something the header can simply BE. The whole
      chrome now carries the challenge's colour, so opening a card continues that
@@ -1328,6 +1336,8 @@
   }
   #sheet[data-mode="stats"] .rh-back:hover,
   #sheet[data-mode="stats"] .rh-manage:hover { background: rgba(0,0,0,.13); color: var(--pa-ink); }
+  #sheet[data-mode="stats"] .rh-back:focus-visible,
+  #sheet[data-mode="stats"] .rh-manage:focus-visible { outline-color: var(--pa-ink); }
   #sheet[data-mode="stats"] .odo-m { color: transparent; }
   #sheet[data-mode="stats"] .odo-cap { color: rgba(20,22,43,.55); }
   /* The neutral pill is the only one that has to move: live and done carry
@@ -1380,6 +1390,13 @@
     opacity: 0; transform: translateX(-50%); }
   .odo-i[aria-current]::before { opacity: 1; }
   .odo-i { cursor: pointer; scroll-snap-align: center; }
+  /* The rail clips vertically (.odo-wrap is overflow-y: hidden) and fades at both
+     ends (mask-image), so a ring drawn OUTSIDE a snap cell gets cut off. Drawing
+     it inside keeps the whole ring visible, and because an outline is never part
+     of layout this cannot touch slot widths, scroll offsets or snap geometry.
+     Ghost months are disabled and tabindex -1, so only .odo-i can ever show it. */
+  .odo-i:focus-visible { outline: 2px solid var(--pa-ink); outline-offset: -3px;
+    border-radius: var(--r-md); }
   /* Ghost months. A challenge in its first round has two real months, which left
      two words stranded in the middle of an otherwise empty rail. Two inert months
      are drawn past each end so the wheel always reads as a wheel (min 5 on screen).
@@ -1549,9 +1566,16 @@
     position: fixed; inset: 0; z-index: 50; background: var(--overlay); backdrop-filter: blur(4px);
     display: flex; align-items: center; justify-content: center;
     padding: var(--sheet-pad);
-    opacity: 0; pointer-events: none; transition: opacity .18s ease;
+    /* A closed overlay was only transparent, so every control inside all five
+       dialogs stayed in the tab order and in the accessibility tree. That is
+       also what makes role="dialog"/aria-modal safe to state: a dialog that is
+       still exposed while closed would announce five of them at once. Hiding it
+       after the fade keeps the exit animation exactly as it was. */
+    opacity: 0; pointer-events: none; visibility: hidden;
+    transition: opacity .18s ease, visibility 0s linear .18s;
   }
-  .modal-overlay.show { opacity: 1; pointer-events: auto; }
+  .modal-overlay.show { opacity: 1; pointer-events: auto; visibility: visible;
+    transition: opacity .18s ease, visibility 0s; }
   /* Layer scale: base modals 50 < confirm 52 < toast 55 < ptr 60.
      confirm is the one reusable nested dialog (it can open over the manage modal),
      so it sits just above base modals but stays below toasts. */
@@ -3093,7 +3117,7 @@
   </div>
 
   <div class="modal-overlay" id="confirmModal">
-    <div class="modal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmMsg">
       <div class="m-ico" id="confirmIco"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg></div>
       <div class="modal-title" id="confirmTitle">Delete?</div>
       <div class="modal-msg" id="confirmMsg"></div>
@@ -3105,7 +3129,7 @@
   </div>
 
   <div class="modal-overlay" id="editModal">
-    <div class="modal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="editTitle">
       <button class="modal-x" id="editClose" aria-label="Close"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
       <div class="m-ico accent"><svg class="ic" aria-hidden="true"><use href="#i-pencil"/></svg></div>
       <div class="modal-title" id="editTitle">Edit entry</div>
@@ -3135,16 +3159,17 @@
   </div>
 
   <div class="modal-overlay" id="addModal">
-    <div class="modal add-modal">
+    <div class="modal add-modal" role="dialog" aria-modal="true" aria-labelledby="addModalTitle">
       <button class="modal-x" id="addClose" aria-label="Close"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
       <div class="m-ico accent"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg></div>
-      <div class="modal-title">Log your time</div>
+      <div class="modal-title" id="addModalTitle">Log your time</div>
       <div class="modal-msg" id="addModalSub"></div>
       <div class="row">
         <div class="field">
-          <label>Date</label>
+          <label id="dateLabel">Date</label>
           <div class="datepick" id="datepick">
-            <button type="button" class="dp-trigger" id="dpTrigger">
+            <button type="button" class="dp-trigger" id="dpTrigger" aria-labelledby="dateLabel dpLabel"
+                    aria-haspopup="dialog" aria-expanded="false" aria-controls="calPop">
               <span id="dpLabel">Today</span>
               <span class="dp-ic"><svg class="ic" aria-hidden="true"><use href="#i-calendar"/></svg></span>
             </button>
@@ -3176,8 +3201,8 @@
         </div>
       </div>
       <div class="field">
-        <label>Quick add</label>
-        <div class="quick">
+        <label id="quickAddLabel">Quick add</label>
+        <div class="quick" role="group" aria-labelledby="quickAddLabel">
           <button data-add="15">+15</button>
           <button data-add="30">+30</button>
           <button data-add="45">+45</button>
@@ -3200,7 +3225,7 @@
     </div>
   </div>
   <div class="modal-overlay" id="challModal">
-    <div class="modal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="challModalTitle">
       <button class="modal-x" id="challClose" aria-label="Close"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
       <div class="m-ico accent"><svg class="ic" aria-hidden="true"><use href="#i-trophy"/></svg></div>
       <div class="modal-title" id="challModalTitle">New challenge</div>
@@ -3308,7 +3333,7 @@
 
   <!-- MANAGE ONE CHALLENGE (owner or admin) -->
   <div class="modal-overlay" id="manageModal">
-    <div class="modal manage-modal">
+    <div class="modal manage-modal" role="dialog" aria-modal="true" aria-labelledby="manageTitle">
       <button class="modal-x" id="manageX" aria-label="Close"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
       <div class="m-ico" id="manageIco" aria-hidden="true" :style="'background:' + $store.s.manage.pastel"></div>
       <div class="modal-title" id="manageTitle" x-text="$store.s.manage.title">Manage</div>
@@ -3438,7 +3463,7 @@
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
   var NAV_KEY = "minutes-nav";
-  var VERSION = "15.11";
+  var VERSION = "15.12";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -4989,12 +5014,39 @@
     paintAvatars();
     setDate(todayStr());
     refreshAdminAccess();
-    state.viewMonth = keyToDate(defaultViewKey());
-    var land = landingTab();   // read first: switchTab writes NAV_KEY, which this reads
+    // The URL wins over the remembered layer: a link the user followed is a more
+    // deliberate statement of intent than wherever this device happened to be
+    // last. With no hash nothing below changes and the localStorage restore is
+    // exactly what it always was -- which is also what an installed launch gets,
+    // since start_url carries no hash of its own.
+    var route = routeLanding();
+    if (route && route.cid) {
+      state.activeCid = route.cid;
+      try { localStorage.setItem(ACTIVECID_KEY, route.cid); } catch (e) {}
+    }
+    var routeMonth = route ? routeMonthKey(route.month) : "";
+    state.viewMonth = keyToDate(routeMonth || defaultViewKey());
+    // A round that came from the URL pins the landing resolver exactly as
+    // setViewMonthKey does. Without this the lazy landing pass would drag the
+    // view back to the default round a moment after the link opened, which is
+    // the whole bug that made a refresh lose which round you were reading.
+    if (routeMonth) { state.viewTouched = true; state.landingResolved = true; }
+    var land = route ? route.tab : landingTab();   // read first: switchTab writes NAV_KEY, which this reads
     restoringNav = true;       // and the restore itself must not overwrite that intent
     switchTab("challenges");
     switchTab(land);
     restoringNav = false;
+    // A URL the user followed is a deliberate choice, so it is remembered like
+    // one. rememberNav is suppressed above for the restore itself (see NAV_KEY),
+    // which is why this is written here rather than left to switchTab -- without
+    // it a deep link and a later hash-less launch would disagree about where the
+    // user is. The round is not stored: localStorage never carried one, and the
+    // URL is now the thing that does.
+    if (route) rememberNav(route.tab);
+    // Only now may the URL be written: the two switchTab calls above pass through
+    // a layer the user is not staying on.
+    routeReady = true;
+    writeRoute();
     renderChallChip();
     renderAll();
     scrollActiveTop();
@@ -5004,6 +5056,7 @@
     state.me = null;
     localStorage.removeItem(SESSION_KEY);
     localStorage.removeItem(NAV_KEY);   // the next person to sign in gets the default landing
+    clearRoute();                       // and does not inherit this one's challenge in the URL
     closeBackoffice();
     state.signedIn = false;
     setMsg("loginErr", "");
@@ -6292,6 +6345,7 @@
       if (sb) sb.scrollTop = 0;
       resetTimelineHeader();
       syncFabTuck();
+      writeRoute();
       return;
     }
     state.sheet = "";                                // drops back to the base layer
@@ -6299,6 +6353,7 @@
     renderChallenges();
     var bw = document.getElementById("baseWrap"); if (bw) bw.scrollTop = 0;
     resetTimelineHeader();
+    writeRoute();
   }
 
   /* syncPeek and --peek lived here. Level 1 is a full-screen page now: it starts at
@@ -6412,6 +6467,126 @@
       e.preventDefault();
     }, true);
   })();
+  // ---- URL reflection -------------------------------------------------------
+  // The address bar now says where you are: which layer, which challenge, which
+  // round. That makes a refresh land where you were and gives a future sharing
+  // feature something to hand out.
+  //
+  // WHY THE HASH. sw.js bails out of every request that carries a query string
+  // (`if (url.search) return;`), so a ?c=... link would bypass the service worker
+  // and break offline launch for exactly the links people would share. Path
+  // routes are worse: GitHub Pages would 404 them on refresh, and the manifest
+  // scopes the app to "./". The hash is invisible to both, so it is the only
+  // shape that costs nothing.
+  //
+  // WHY IT ONLY EVER REPLACES. initBackButton already owns this document's
+  // history: it pushes ONE {mOverlay:1} sentinel while any layer is open and
+  // pops it as the last one closes. Crucially the level-1 sheet is one of those
+  // layers, so the sentinel is armed for the whole time a challenge is open. A
+  // router that also pushed would sit on top of that sentinel and its
+  // history.back() would eat the route instead of the overlay. So this never
+  // pushes. History depth stays entirely initBackButton's, back behaves exactly
+  // as it did before any of this existed, and history.length cannot grow -- which
+  // is what keeps a flick through the month wheel from writing a dozen entries.
+  var ROUTE_CID = /^[A-Za-z0-9_-]{1,64}$/;
+  var ROUTE_MONTH = /^\d{4}-(0[1-9]|1[0-2])$/;
+  // Nothing is written until the first landing has been resolved, so the two
+  // switchTab calls doLogin makes while restoring cannot publish a URL for a
+  // layer the user is only passing through.
+  var routeReady = false;
+  // The hash as it was when the app first looked at it. doLogin runs twice in
+  // production -- an optimistic pass at boot, then again once the roster is
+  // authoritative -- and the first pass rewrites the URL to wherever it managed
+  // to land. Re-reading location.hash on the second pass would therefore find
+  // our own correction instead of the link the user actually followed, and a
+  // deep link would collapse to the hub every time.
+  var bootRoute = null, bootRouteRead = false;
+  function incomingRoute() {
+    if (!bootRouteRead) { bootRouteRead = true; bootRoute = parseRoute(location.hash); }
+    return bootRoute;
+  }
+
+  function parseRoute(hash) {
+    var h = String(hash || "").replace(/^#/, "");
+    var p = h.split("/").filter(Boolean);
+    if (!p.length) return null;
+    if (p[0] === "challenges" && p.length === 1) return { layer: "challenges" };
+    if (p[0] === "you" && p.length === 1) return { layer: "you" };
+    if (p[0] === "c" && p.length >= 2 && p.length <= 3 && ROUTE_CID.test(p[1])) {
+      var m = p.length === 3 ? p[2] : "";
+      // A malformed month is not a challenge route with a bad tail; it is a URL
+      // this app did not write, so it is discarded whole rather than half-honoured.
+      if (m && !ROUTE_MONTH.test(m)) return null;
+      return { layer: "challenge", cid: p[1], month: m };
+    }
+    return null;
+  }
+
+  // The URL that describes right now. Signed out has no route: the login screen
+  // is not a place you can be sent to, and leaving a stale challenge hash on it
+  // would deep-link the next person who signs in on this device.
+  function routeHash() {
+    if (!state.signedIn) return "";
+    if (!state.sheet) return "#/challenges";
+    if (state.sheet === "you") return "#/you";
+    var cid = activeCid();
+    if (!cid) return "#/challenges";
+    return "#/c/" + cid + "/" + monthKeyOf(state.viewMonth);
+  }
+
+  function writeRoute() {
+    if (!routeReady || !("replaceState" in history)) return;
+    var h = routeHash();
+    if (!h || h === location.hash) return;
+    // history.state is carried through deliberately: replacing it with null
+    // would erase initBackButton's {mOverlay:1} marker out from under an open
+    // dialog and leave its sentinel unrecognisable.
+    try { history.replaceState(history.state, "", h); } catch (e) {}
+  }
+
+  function clearRoute() {
+    routeReady = false;
+    bootRoute = null; bootRouteRead = false;
+    if (!("replaceState" in history) || !location.hash) return;
+    try { history.replaceState(history.state, "", location.pathname + location.search); } catch (e) {}
+  }
+
+  // What the URL asks for at boot, reduced to something doLogin can land on.
+  // An unreadable, unknown or unapproved challenge is not an error worth a
+  // message: it lands on the hub and the URL is corrected on the way past.
+  function routeLanding() {
+    var r = incomingRoute();
+    if (!r) return null;
+    if (r.layer === "you") return { tab: "you" };
+    if (r.layer === "challenges") return { tab: "challenges" };
+    if (myStatus(r.cid) !== "approved") return { tab: "challenges" };
+    return { tab: "stats", cid: r.cid, month: r.month };
+  }
+
+  // A month is only honoured if it is one this user may actually browse;
+  // anything else falls back to the round they would have landed on anyway.
+  function routeMonthKey(month) {
+    if (!month) return "";
+    return viewableMonthKeys().indexOf(month) > -1 ? month : "";
+  }
+
+  // Applied when a popstate reaches us that initBackButton did not consume --
+  // the user moved through history to an entry we did not write (a bookmark, an
+  // edited address bar). Since this never pushes, that is rare by construction,
+  // but leaving the URL and the app disagreeing would be worse than handling it.
+  function routePopstate() {
+    if (!routeReady) return;
+    var r = parseRoute(location.hash);
+    if (!r) { writeRoute(); return; }
+    if (r.layer === "challenges") { switchTab("challenges"); return; }
+    if (r.layer === "you") { switchTab("you"); return; }
+    if (myStatus(r.cid) !== "approved") { switchTab("challenges"); writeRoute(); return; }
+    if (r.cid !== activeCid()) setActiveChallenge(r.cid);
+    var m = routeMonthKey(r.month);
+    if (m) setViewMonthKey(m);
+    switchTab("stats");
+    writeRoute();
+  }
 
   // ---- Challenges page + switcher ----
   function renderChallChip() { bump(); }   // sheet header is bound, see #ccName and #sheet's --pa
@@ -6430,6 +6605,7 @@
     state.viewMonth = keyToDate(defaultViewKey());
     renderChallChip();
     renderAll();
+    writeRoute();
   }
 
   function switchChallenge(cid) {
@@ -7633,6 +7809,7 @@
     state.viewMonth = keyToDate(key);
     if (!isCurrentMonth(state.viewMonth)) state.lbRange = "month";
     renderAll();
+    writeRoute();
     return true;
   }
 
@@ -8040,8 +8217,12 @@
     updateLogGate();
   }
   function renderCal() { state.calRev++; }
-  function openCal() { renderCal(); document.getElementById("calPop").classList.add("show"); }
-  function closeCal() { document.getElementById("calPop").classList.remove("show"); }
+  function setCalExpanded(on) {
+    var t = document.getElementById("dpTrigger");
+    if (t) t.setAttribute("aria-expanded", on ? "true" : "false");
+  }
+  function openCal() { renderCal(); document.getElementById("calPop").classList.add("show"); setCalExpanded(true); }
+  function closeCal() { document.getElementById("calPop").classList.remove("show"); setCalExpanded(false); }
   document.getElementById("dpTrigger").onclick = function (e) {
     e.stopPropagation();
     var pop = document.getElementById("calPop");
@@ -9338,6 +9519,10 @@
       ["confirmModal", "show", hideConfirm],
       ["calPop", "show", closeCal],
       ["challModal", "show", hideChallModal],
+      // calPop lives INSIDE addModal, so it has to peel first -- same reason it
+      // is ordered ahead of addModal in initModalA11y. Keep these two lists in
+      // the same order or Escape and Back would close different things.
+      ["addModal", "show", hideAdd],
       ["backofficeView", "show", closeBackoffice],
       ["app", "l1", function () { switchTab("challenges"); }]
     ];
@@ -9362,19 +9547,133 @@
     }
 
     window.addEventListener("popstate", function () {
-      if (suppress) { suppress = false; guard = false; return; }
+      // The sentinel being retired by the UI, not by the user. history.back()
+      // restores the URL that entry was pushed with, which is the route as it
+      // was BEFORE this layer opened -- so the address bar has to be re-asserted
+      // from the state that is actually on screen, or closing a challenge would
+      // silently leave its own URL behind.
+      if (suppress) { suppress = false; guard = false; writeRoute(); return; }
       guard = false;
-      if (anyOpen()) closeTop(); // removes a state class -> sync() re-arms if more remain
+      // The overlay stack gets first refusal, and a pop it consumed is finished
+      // here. Only a pop that closed nothing can be history traversal, and only
+      // then does the router look at the URL -- one listener, one owner per
+      // event, so a back press can never peel a dialog and re-route in the same
+      // breath.
+      if (anyOpen()) { closeTop(); return; } // removes a state class -> sync() re-arms if more remain
+      routePopstate();
     });
 
     var mo = new MutationObserver(sync);
     els.forEach(function (el) { mo.observe(el, { attributes: true, attributeFilter: ["class"] }); });
   }
 
+  // ---- Dialog semantics: Escape, focus trap, focus return ----
+  // The five overlays now declare role="dialog" aria-modal="true", so they have
+  // to behave like dialogs: Escape closes the top one, Tab cannot walk out of
+  // it, and focus goes back to whatever opened it. None of this changes who can
+  // see or do anything -- every dismissal goes through the layer's own existing
+  // close function, so the state it tears down is torn down the same way.
+  var FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]),' +
+    'select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+
+  function initModalA11y() {
+    // Top-most first, mirroring initBackButton so Escape and the Android back
+    // gesture peel the same layer in the same order. calPop sits INSIDE the add
+    // modal and so must be offered Escape before it; it is a popover rather than
+    // a dialog, so it is dismissed but never trapped. initBackButton continues
+    // past this list with backofficeView and the level-1 sheet, which are views
+    // rather than dialogs; the overlay prefix is identical in both.
+    var layers = [
+      ["manageModal", closeManageModal],
+      ["editModal", hideEdit],
+      ["confirmModal", hideConfirm],
+      ["calPop", closeCal],
+      ["challModal", hideChallModal],
+      ["addModal", hideAdd]
+    ];
+    var dialogs = ["manageModal", "editModal", "confirmModal", "challModal", "addModal"];
+    var openers = {};
+
+    function shown(id) {
+      var el = document.getElementById(id);
+      return !!el && el.classList.contains("show");
+    }
+    function topLayer() {
+      for (var i = 0; i < layers.length; i++) { if (shown(layers[i][0])) return layers[i]; }
+      return null;
+    }
+    function topDialog() {
+      for (var i = 0; i < layers.length; i++) {
+        if (shown(layers[i][0]) && dialogs.indexOf(layers[i][0]) > -1) {
+          return document.getElementById(layers[i][0]);
+        }
+      }
+      return null;
+    }
+    // Anything laid out is reachable. x-show collapses to display:none, which
+    // drops out of here on its own, so optional sections cannot trap a Tab.
+    function reachable(root) {
+      return [].slice.call(root.querySelectorAll(FOCUSABLE)).filter(function (el) {
+        if (el.getAttribute("aria-hidden") === "true") return false;
+        return !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length);
+      });
+    }
+
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") {
+        var top = topLayer();
+        if (!top) return;
+        e.preventDefault();
+        // Always the layer's own close path. On a destructive confirm that is
+        // exactly what Cancel does, so Escape can never run the callback.
+        top[1]();
+        return;
+      }
+      if (e.key !== "Tab") return;
+      var dlg = topDialog();
+      if (!dlg) return;
+      var f = reachable(dlg);
+      if (!f.length) { e.preventDefault(); return; }
+      var first = f[0], last = f[f.length - 1];
+      if (!dlg.contains(document.activeElement)) { e.preventDefault(); first.focus(); return; }
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    });
+
+    dialogs.forEach(function (id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      var was = el.classList.contains("show");
+      new MutationObserver(function () {
+        var now = el.classList.contains("show");
+        if (now === was) return;
+        was = now;
+        if (now) {
+          // Read before focus moves, so this is the control that opened it.
+          var prev = document.activeElement;
+          openers[id] = (prev && prev !== document.body && !el.contains(prev)) ? prev : null;
+          var f = reachable(el);
+          if (f.length) f[0].focus();
+        } else {
+          var back = openers[id];
+          openers[id] = null;
+          var inside = el.contains(document.activeElement);
+          // The opener can itself have been torn down or hidden meanwhile --
+          // Delete inside the edit dialog closes it before raising the confirm --
+          // so focus only goes back to something still laid out and visible.
+          if (back && document.contains(back) && (back.offsetWidth || back.offsetHeight) &&
+              getComputedStyle(back).visibility !== "hidden") back.focus();
+          else if (inside && document.activeElement.blur) document.activeElement.blur();
+        }
+      }).observe(el, { attributes: true, attributeFilter: ["class"] });
+    });
+  }
+
   // ---- Boot ----
   function begin() {
     initTheme();
     initBackButton();
+    initModalA11y();
     var av = document.querySelectorAll(".ver-tag");
     av.forEach(function (el) { el.textContent = "v" + VERSION; });
     console.log("Minutes v" + VERSION);

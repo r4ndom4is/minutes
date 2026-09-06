@@ -3515,7 +3515,7 @@
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
   var NAV_KEY = "minutes-nav";
-  var VERSION = "15.13";
+  var VERSION = "15.14";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -6373,7 +6373,21 @@
     // in the markup now; this only has to move the state.
     sheetView = (v === "you") ? "you" : "stats";
     state.sheet = sheetView;
+    syncBaseInert();
     if (sheetView === "you") renderYou(); else renderMonthBar();
+  }
+
+  // A page on top is a different screen, not a card floating over this one, so
+  // the hub behind it has to be out of reach while it is open. It was not: Tab
+  // from inside the open page walked straight into the hub's account button and
+  // challenge rows, and the hub's heading stayed in the screen reader's heading
+  // list, so two screens were reachable at once. `inert` takes the whole layer
+  // out of the tab order AND the accessibility tree in one move. The sheet and
+  // its FAB are siblings of this layer, not children, so nothing the open page
+  // needs is inside it.
+  function syncBaseInert() {
+    var base = document.querySelector(".layer-base");
+    if (base) base.inert = !!state.sheet;
   }
 
   // The challenge chrome is outside the body scroller, so compaction can change
@@ -6409,6 +6423,7 @@
       return;
     }
     state.sheet = "";                                // drops back to the base layer
+    syncBaseInert();
     rememberNav("challenges");
     renderChallenges();
     var bw = document.getElementById("baseWrap"); if (bw) bw.scrollTop = 0;

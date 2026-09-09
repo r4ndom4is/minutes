@@ -655,11 +655,11 @@
   #login ::selection { background: var(--accent-soft); color: var(--text); }
   #login button, #login input { font-family: inherit; }
   #login .ver-tag { opacity: 1; }
-  .login-card { flex: 1; display: flex; flex-direction: column; text-align: center;
+  .login-card { flex: 1; display: flex; flex-direction: column; justify-content: center; text-align: center;
     background: none; border: none; padding: var(--sp-6xl) var(--sp-md) var(--sp-4xl); }
-  .login-lead { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center;
-    padding: var(--sp-6xl) 0; }
-  .login-card .logo { width: 52px; height: 52px; margin: 0 auto var(--sp-2xl); flex: 0 0 auto; }
+  .login-lead { flex: 0 0 auto; display: flex; flex-direction: column; justify-content: center;
+    padding: 0; }
+  .login-card .logo { width: 80px; height: 80px; margin: 0 auto var(--sp-lg); flex: 0 0 auto; }
   .login-card .logo > svg { width: 100%; height: 100%; display: block; }
   .login-card h1 { font-size: var(--fs-6xl); font-weight: var(--fw-sm-bold); margin: 0 0 var(--sp-md);
     letter-spacing: 0; line-height: var(--lh-tight); }
@@ -684,12 +684,13 @@
   .btn.btn-oauth[data-mode="out"] svg { background: none; padding: 0; }
   .login-who { color: var(--muted); font-size: var(--fs-xs); margin: var(--sp-md) 0 var(--sp-3xs); overflow-wrap: anywhere; }
   .login-card p.login-hint { font-size: var(--fs-2xs); margin: var(--sp-xl) auto 0; line-height: var(--lh-loose); }
+  #authHint:empty { display: none; }
   #login .msg { text-align: left; }
   #login .msg:not(:empty) { margin: var(--sp-sm) 0 var(--sp-2xl); }
 
   /* The same identity becomes a compact header once there is a task. */
   .login-card.onb #googleBtn, .login-card.onb #authWho, .login-card.onb #authHint { display: none !important; }
-  .login-card.onb { padding-top: var(--sp-lg); }
+  .login-card.onb { padding-top: var(--sp-lg); justify-content: flex-start; }
   .login-card.onb .login-lead { flex: 0 0 auto; flex-direction: row; align-items: center;
     justify-content: flex-start; gap: var(--sp-sm); padding: 0; margin-bottom: var(--sp-6xl); }
   .login-card.onb .logo { width: 26px; height: 26px; margin: 0; }
@@ -2650,7 +2651,7 @@
         <p class="claim-note">Not you? Log out above to use a different account.</p>
       </div>
 
-      <p class="login-hint" id="authHint">Your Google account is your login. Nothing else to remember.</p>
+      <p class="login-hint" id="authHint"></p>
     </div>
     <div class="ver-tag"></div>
   </div>
@@ -3546,7 +3547,7 @@
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
   var NAV_KEY = "minutes-nav";
-  var VERSION = "15.15";
+  var VERSION = "15.16";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -5031,7 +5032,7 @@
         var reason = navigator.onLine === false ? "You're offline. " : "Not connected. ";
         text = reason + (pending ? "Your request is still waiting. Reconnect for approval updates."
           : claiming ? "Your name draft is kept here. Reconnect before requesting approval."
-          : "Reconnect to continue. Your Google account is still your login.");
+          : "Reconnect to continue.");
       }
       if (network.textContent !== text) setMsg(network, text, "warn");
       var google = document.getElementById("googleBtn");

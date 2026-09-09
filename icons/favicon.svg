@@ -1,12 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 100 100">
-  <defs>
-    <linearGradient id="fbg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#8f72ff"/><stop offset="1" stop-color="#6b4bff"/>
-    </linearGradient>
-  </defs>
-  <rect x="0" y="0" width="100" height="100" rx="24" fill="url(#fbg)"/>
-  <g transform="translate(50 50) scale(1.12) translate(-50 -50)" stroke="#ffffff" fill="none" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M54.24 18.28 A32 32 0 1 1 24.58 30.56" stroke-width="9"/>
-    <path d="M38 58 V42 L50 53 L62 42 V58" stroke-width="9"/>
-  </g>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="11 11 70 70" role="img" aria-label="Minutes"><title>Minutes - Stack with clock hands</title><style>.favicon-dark{display:none}@media(prefers-color-scheme:dark){.favicon-light{display:none}.favicon-dark{display:inline}}</style><g class="favicon-light"><rect x="15" y="15" width="44" height="44" rx="13" fill="#5a314b"/><rect x="33" y="33" width="44" height="44" rx="13" fill="#81506e" stroke="#fffefa" stroke-width="5.5"/><g data-clock="hands" fill="none" stroke="#fffefa" stroke-linecap="round" stroke-linejoin="round"><path data-clock-hands="true" d="M55 46.27V55H61.82" stroke-width="5"/></g></g><g class="favicon-dark"><rect x="15" y="15" width="44" height="44" rx="13" fill="#cfa0be"/><rect x="33" y="33" width="44" height="44" rx="13" fill="#ecc8df" stroke="#161615" stroke-width="5.5"/><g data-clock="hands" fill="none" stroke="#161615" stroke-linecap="round" stroke-linejoin="round"><path data-clock-hands="true" d="M55 46.27V55H61.82" stroke-width="5"/></g></g></svg>

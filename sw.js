@@ -5,13 +5,15 @@
    - Query-string requests (the pull-to-refresh version poll): network only.
    - Other same-origin static assets (icons, manifest, svg): cache-first.
    - Cross-origin (Firebase, gstatic, reCAPTCHA): passthrough, never cached. */
-var CACHE = "minutes-v23";  // Bump whenever the cached shell or assets change.
+var CACHE = "minutes-v24";  // Bump whenever the cached shell or assets change.
 var CORE = [
   "./",
   "./index.html",
   "./manifest.webmanifest",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
+  "./icons/icon-192-maskable.png",
+  "./icons/icon-512-maskable.png",
   "./icons/icon.svg",
   "./icons/favicon.svg",
   "./icons/apple-touch-icon.png",

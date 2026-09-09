@@ -42,9 +42,15 @@
       // user doesn't see a flash of the login card before JS restores their view.
       if (localStorage.getItem("minutes_session_v3")) {
         document.documentElement.classList.add("has-session");
+        if (location.hash === "#/challenges" || (!location.hash && localStorage.getItem("minutes-nav") === "challenges")) {
+          document.documentElement.classList.add("hub-active");
+        }
+      } else {
+        document.documentElement.classList.add("welcome-active");
       }
     } catch (e) {
       document.documentElement.setAttribute("data-theme", "dark");
+      document.documentElement.classList.add("welcome-active");
     }
   })();
 </script>
@@ -570,6 +576,51 @@
                    0 calc(6px * var(--ez)) calc(14px * var(--ez)) calc(-4px * var(--ez)) rgba(28,30,60,calc(.12 * var(--ea)));
     --ink: #1c1e2e; --pop-ink: #131313;
   }
+  /* Approved entry surfaces share one palette. Saved palettes still govern the
+     open challenge and account; hub overlays follow the screen that opened them. */
+  :root { --welcome-bg: #161615; }
+  html[data-theme="light"] { --welcome-bg: #f5f4f0; }
+  #login, #layerBase, html.hub-active :is(#challModal, #popDock, #ptr) {
+    --bg: var(--welcome-bg); --card: #232321; --card-2: #2e2e2a;
+    --text: #efefea; --muted: #b8b8ae; --muted-2: #a0a095;
+    --border: #3d3d37; --border-2: #55554b; --field-edge: #828274;
+    --accent: #dfb4cf; --on-accent: #321c2c;
+    --accent-hover: #ecc8df; --accent-pressed: #cfa0be; --accent-soft: #3c2a38;
+    --s-fg: #a4d6c9; --s-bg: #203631;
+    --d-fg: #ffb8a7; --d-bg: #442c28;
+    --w-fg: #dfcc8d; --w-bg: #393423;
+    --i-fg: #b1cbe8; --i-bg: #283442;
+    --s-bd: var(--s-fg); --d-bd: var(--d-fg);
+    --w-bd: var(--w-fg); --i-bd: var(--i-fg);
+    --danger: var(--d-fg); --ink: var(--text);
+    --pop-ink: var(--text); --tint-accent: var(--accent-soft);
+    --toast-bg: var(--card); --toast-bd: var(--border);
+    --overlay: rgba(0,0,0,.62);
+    --shadow-fab: 0 calc(6px * var(--ez)) calc(18px * var(--ez)) rgba(0,0,0,calc(.45 * var(--ea)));
+    --shadow-fab-active: 0 calc(3px * var(--ez)) calc(10px * var(--ez)) rgba(0,0,0,calc(.4 * var(--ea)));
+    --shadow-modal: 0 calc(24px * var(--ez)) calc(60px * var(--ez)) calc(-18px * var(--ez)) rgba(0,0,0,calc(.7 * var(--ea)));
+    --shadow-toast: 0 calc(14px * var(--ez)) calc(34px * var(--ez)) calc(-12px * var(--ez)) rgba(0,0,0,calc(.65 * var(--ea)));
+    --brand-rear: var(--accent-pressed); --brand-middle: var(--accent); --brand-front: var(--accent-hover);
+    --logo-surface: var(--bg);
+  }
+  html[data-theme="light"] :is(#login, #layerBase),
+  html[data-theme="light"].hub-active :is(#challModal, #popDock, #ptr) {
+    --card: #fffefa; --card-2: #eeede7;
+    --text: #292925; --muted: #64645d; --muted-2: #6b6b62;
+    --border: #deded5; --border-2: #cacac0; --field-edge: #858578;
+    --accent: #81506e; --on-accent: #ffffff;
+    --accent-hover: #6f3f5c; --accent-pressed: #5a314b; --accent-soft: #f4eaf0;
+    --s-fg: #276b60; --s-bg: #eaf3ef;
+    --d-fg: #b13c2e; --d-bg: #fbeee9;
+    --w-fg: #756012; --w-bg: #f7f1df;
+    --i-fg: #456888; --i-bg: #ecf1f7;
+    --overlay: rgba(0,0,0,.28);
+    --shadow-fab: 0 calc(6px * var(--ez)) calc(18px * var(--ez)) rgba(0,0,0,calc(.2 * var(--ea)));
+    --shadow-fab-active: 0 calc(3px * var(--ez)) calc(10px * var(--ez)) rgba(0,0,0,calc(.16 * var(--ea)));
+    --shadow-modal: 0 calc(24px * var(--ez)) calc(60px * var(--ez)) calc(-18px * var(--ez)) rgba(0,0,0,calc(.22 * var(--ea)));
+    --shadow-toast: 0 calc(14px * var(--ez)) calc(34px * var(--ez)) calc(-12px * var(--ez)) rgba(0,0,0,calc(.16 * var(--ea)));
+    --brand-middle: var(--accent-hover); --brand-front: var(--accent);
+  }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; padding: 0; }
   /* Only suppress the browser's native pull-to-refresh when installed standalone (where our
@@ -592,196 +643,132 @@
   #ptr.ready .ptr-spinner { transform: scale(1.15); border-color: var(--accent); border-top-color: var(--accent); }
   #ptr.spin .ptr-spinner { animation: ptrspin .7s linear infinite; }
   @keyframes ptrspin { to { transform: rotate(360deg); } }
-  /* ---- Login ---- */
+  /* ---- Login and name approval ---- */
   [x-cloak] { display: none !important; }
-  /* .wrap is a flex item here, and its `margin: 0 auto` makes it shrink-to-fit on the
-     cross axis instead of stretching. Without an explicit width the card ends up as
-     wide as its longest unbreakable line, so wording changes silently resize it. */
-  /* The login screen is not a card. A card separates content from OTHER
-     content, and this page has nothing else on it, so the border and panel were
-     boxing in the one thing you came for and stranding it at the top of an
-     otherwise empty screen. It uses the whole screen instead: the identity
-     block sits in the middle of the available space and the action sits where a
-     thumb is.
-
-     100dvh, not 100vh: on mobile Safari 100vh is the tallest the viewport ever
-     gets, so the action would sit under the address bar until you scrolled. */
-  #login { min-height: 100dvh; display: flex; flex-direction: column; }
-  #login .wrap { width: 100%; flex: 1; display: flex; flex-direction: column; }
-  /* Boot gate: avoid a login-screen flash on reload when a session is saved. */
+  #login { min-height: 100dvh; display: flex; flex-direction: column; background: var(--bg); color: var(--text); }
+  html #login { box-shadow: none; }
+  html.welcome-active, html.welcome-active body { background: var(--welcome-bg); }
+  #login .wrap { width: 100%; flex: 1; display: flex; flex-direction: column;
+    padding-bottom: env(safe-area-inset-bottom); }
   html.has-session #login { display: none !important; }
   html.has-session #app { display: block !important; }
-  .login-card { flex: 1; display: flex; flex-direction: column; text-align: center;
-    background: none; border: none; padding: var(--sp-6xl) 0 var(--sp-4xl); }
+  #login ::selection { background: var(--accent-soft); color: var(--text); }
   #login button, #login input { font-family: inherit; }
-  /* Takes the slack, so the identity block is centred in whatever is left after
-     the action below it. During onboarding the claim card grows and this simply
-     yields, which is why it is flex rather than a fixed height. */
-  .login-lead { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; }
-  /* Flat, single colour, and small. It was a 100px purple GRADIENT, the only
-     gradient in the app, sitting directly above the word "Minutes" set at
-     display size: two logos of the same thing stacked, one of them off-language.
-     The wordmark is the logo; this is a mark beside it, not a second one. */
-  .login-card .logo { margin-bottom: var(--sp-2xl); line-height: var(--lh-flush); color: var(--accent); }
-  .login-card .logo svg { width: 52px; height: 52px; display: inline-block; vertical-align: middle; }
-  /* The sign-in screen is the only poster in the app: one word on an empty page,
-     no data, no task. That is where the display rung of the ramp belongs, and
-     28px on a one-word wordmark was leaving it unused. --fs-6xl is the top of
-     the ramp; if this stops using it, delete the rung rather than orphan it. */
-  .login-card h1 { font-size: var(--fs-6xl); font-weight: var(--fw-black); margin: 0 0 var(--sp-md);
-    letter-spacing: var(--ls-tight); line-height: var(--lh-tight); }
-  /* Says what Minutes IS. It used to say "Sign in to open your tracker", which
-     is an instruction to someone who has not been told what they are opening. */
+  #login .ver-tag { opacity: 1; }
+  .login-card { flex: 1; display: flex; flex-direction: column; text-align: center;
+    background: none; border: none; padding: var(--sp-6xl) var(--sp-md) var(--sp-4xl); }
+  .login-lead { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center;
+    padding: var(--sp-6xl) 0; }
+  .login-card .logo { width: 52px; height: 52px; margin: 0 auto var(--sp-2xl); flex: 0 0 auto; }
+  .login-card .logo > svg { width: 100%; height: 100%; display: block; }
+  .login-card h1 { font-size: var(--fs-6xl); font-weight: var(--fw-sm-bold); margin: 0 0 var(--sp-md);
+    letter-spacing: 0; line-height: var(--lh-tight); }
   .login-card p { color: var(--muted); font-size: var(--fs-sm); line-height: var(--lh-relaxed);
     margin: 0 auto var(--sp-5xl); max-width: 30ch; }
-  /* This rule now matches exactly one element, #claimNewName, since every other input
-     lives in #app. Left-aligned to match the label above and the helper below it;
-     centring was a leftover from the old fully-centred name-only login card. */
-  .login-card input {
-    width: 100%; padding: var(--sp-xl); border-radius: var(--r-md); border: 1px solid var(--border-2);
-    background: var(--card-2); color: var(--text); font-size: var(--fs-lg); outline: none; text-align: left; margin-bottom: var(--sp-lg);
-  }
-  .login-card input:focus { border-color: var(--accent); }
-  .login-status { align-items: center; justify-content: center; gap: var(--sp-sm); color: var(--muted); font-size: var(--fs-xs); margin: var(--sp-2xs) 0 var(--sp-sm); }
-  .login-spin { width: 15px; height: 15px; border-radius: 50%; border: 2px solid var(--border-2); border-top-color: var(--accent); box-sizing: border-box; animation: ptrspin .7s linear infinite; flex: 0 0 auto; }
-  .btn.btn-ghost { background: transparent; color: var(--accent); border: 1px solid var(--border); }
-  /* The only action on the screen, so it is the PRIMARY shape: a filled pill, not
-     the pale bordered box it was. That box read as a secondary option next to
-     nothing at all. The Google mark stays because it is a promise about which
-     account system you are about to meet, not decoration. */
-  .btn.btn-oauth { display: flex; align-items: center; justify-content: center; gap: var(--sp-md);
-    background: var(--text); color: var(--bg); border: none; border-radius: var(--r-pill);
-    font-weight: var(--fw-bold); font-size: var(--fs-md); padding: var(--sp-xl) var(--sp-2xl); }
-  .btn.btn-oauth svg { width: 18px; height: 18px; flex: 0 0 auto;
-    background: #fff; border-radius: var(--r-pill); padding: var(--sp-3xs); box-sizing: content-box; }
-  /* Signing OUT is an escape hatch, not the thing you came to do, so it drops to
-     a secondary shape. Rendering it as the same filled hero pill made the most
-     prominent action on the screen the one nobody arrived for. The white plate
-     behind the Google mark goes with it: on a transparent button it reads as a
-     sticker rather than as part of the control. */
-  .btn.btn-oauth[data-mode="out"] { background: none; color: var(--text);
-    box-shadow: inset 0 0 0 1px var(--border-2); font-weight: var(--fw-sm-bold); font-size: var(--fs-sm); }
-  /* Full ink and full opacity on purpose. The outline, the smaller size and the
-     lighter weight already say "secondary"; reaching for grey and .8 opacity on
-     top of that is three devices doing one job, and both are budgeted. */
+  .login-status { align-items: center; justify-content: center; gap: var(--sp-sm); color: var(--muted);
+    font-size: var(--fs-xs); margin: var(--sp-2xs) 0 var(--sp-sm); }
+  .login-spin { width: 15px; height: 15px; border-radius: 50%; border: 2px solid var(--border-2);
+    border-top-color: var(--accent); box-sizing: border-box; animation: ptrspin .7s linear infinite; flex: 0 0 auto; }
+  #login .btn { min-height: 48px; padding: var(--sp-xl) var(--sp-2xl); border: none; border-radius: var(--r-pill);
+    background: var(--accent); color: var(--on-accent); font-size: var(--fs-sm); font-weight: var(--fw-sm-bold);
+    line-height: var(--lh-normal); box-shadow: none; overflow-wrap: anywhere; }
+  #login .btn:hover:not(:disabled) { background: var(--accent-hover); }
+  #login .btn:active:not(:disabled) { background: var(--accent-pressed); }
+  #login .btn:disabled { opacity: 1; background: var(--card-2); color: var(--muted-2); cursor: default; }
+  #login .btn-oauth { display: flex; align-items: center; justify-content: center; gap: var(--sp-md); }
+  .btn.btn-oauth svg { width: 18px; height: 18px; flex: 0 0 auto; background: #fff;
+    border-radius: var(--r-pill); padding: var(--sp-3xs); box-sizing: content-box; }
+  #login .btn-ghost, #login .btn-oauth[data-mode="out"] { background: transparent; color: var(--text);
+    text-decoration: underline; text-underline-offset: 3px; }
+  #login .btn-ghost:hover:not(:disabled), #login .btn-oauth[data-mode="out"]:hover:not(:disabled) { background: var(--card-2); }
   .btn.btn-oauth[data-mode="out"] svg { background: none; padding: 0; }
-  .login-or { display: flex; align-items: center; gap: var(--sp-md); margin: var(--sp-3xl) 0 var(--sp-md); color: var(--muted); font-size: var(--fs-2xs); }
-  .login-or::before, .login-or::after { content: ""; height: 1px; background: var(--border); flex: 1; }
-  .login-who { color: var(--muted); font-size: var(--fs-xs); margin: var(--sp-md) 0 var(--sp-3xs); }
-  /* `.login-card p` is more specific than `.login-hint`, so this has to be scoped to
-     the card or its margins are silently dropped. */
-  .login-card p.login-hint { color: var(--muted); font-size: var(--fs-2xs); margin: var(--sp-xl) auto 0; line-height: var(--lh-loose); max-width: 220px; }
+  .login-who { color: var(--muted); font-size: var(--fs-xs); margin: var(--sp-md) 0 var(--sp-3xs); overflow-wrap: anywhere; }
+  .login-card p.login-hint { font-size: var(--fs-2xs); margin: var(--sp-xl) auto 0; line-height: var(--lh-loose); }
+  #login .msg { text-align: left; }
+  #login .msg:not(:empty) { margin: var(--sp-sm) 0 var(--sp-2xl); }
 
-  /* ---- Handle claim (Phase 3) ---- */
-  .claim { margin-top: var(--sp-lg); text-align: left; }
-  .claim-note { color: var(--muted); font-size: var(--fs-2xs); margin: var(--sp-sm) 0 0; line-height: var(--lh-relaxed); }
-
-  /* ---- Onboarding. The claim card is the first real screen a new person sees, so
-     it gets treated as a moment rather than a stray input. While it is up the login
-     card switches modes: the OAuth button has already flipped to "Log out" by then,
-     and leaving it in place makes the most prominent action on screen the wrong one.
-     Hidden via a class so the auth module's inline styles can't fight it. ---- */
-  .login-card.onb #googleBtn,
-  .login-card.onb #authWho,
-  .login-card.onb #authHint { display: none !important; }
-  /* Past the door, the hero stops being a pitch and becomes a header. The lead
-     block is the entire content of the sign-in screen and earns display size
-     there; on the name step and in the waiting room it sits above a real task,
-     and 52px of mark plus 28px of wordmark plus a two-line sales sentence was
-     pushing that task into the bottom third of the screen. The sentence goes
-     entirely: it argues the case for signing in to somebody who already has. */
+  /* The same identity becomes a compact header once there is a task. */
+  .login-card.onb #googleBtn, .login-card.onb #authWho, .login-card.onb #authHint { display: none !important; }
   .login-card.onb { padding-top: var(--sp-lg); }
   .login-card.onb .login-lead { flex: 0 0 auto; flex-direction: row; align-items: center;
-    justify-content: flex-start; gap: var(--sp-sm); margin-bottom: var(--sp-3xl); }
-  .login-card.onb .logo { margin: 0; color: var(--text); }
-  .login-card.onb .logo svg { width: 26px; height: 26px; }
+    justify-content: flex-start; gap: var(--sp-sm); padding: 0; margin-bottom: var(--sp-6xl); }
+  .login-card.onb .logo { width: 26px; height: 26px; margin: 0; }
   .login-card.onb h1 { font-size: var(--fs-xl); margin: 0; }
   .login-card.onb #loginSub { display: none; }
-  /* Like a challenge card, onboarding owns its ink independently of page theme. */
-  .login-card .onb-card { --pa: var(--pa-lilac); background: var(--pa); color: var(--pa-ink);
-    border: none; border-radius: var(--r-2xl); padding: var(--sp-4xl); margin: 0; text-align: left; }
-  .onb-kicker { font-size: var(--fs-3xs); font-weight: var(--fw-black); line-height: var(--lh-normal);
-    letter-spacing: var(--ls-caps-lg); text-transform: uppercase; margin-bottom: var(--sp-lg); }
+  .claim { margin-top: var(--sp-lg); text-align: left; }
+  .claim-note { color: var(--muted); font-size: var(--fs-2xs); margin: var(--sp-sm) 0 0; line-height: var(--lh-relaxed); }
+  .login-card .onb-card { background: var(--bg); color: var(--text); border: none;
+    border-radius: 0; padding: 0; margin: var(--sp-4xl) 0 0; text-align: left; box-shadow: none; }
   .onb-title { font-size: var(--fs-4xl); font-weight: var(--fw-bold); line-height: var(--lh-tight);
-    letter-spacing: var(--ls-tight); margin: 0 0 var(--sp-3xl); overflow-wrap: anywhere; }
+    letter-spacing: var(--ls-tight); margin: 0 0 var(--sp-2xl); overflow-wrap: anywhere; }
   .login-card .onb-title:focus { outline: none; }
   .onb-in { animation: onbIn .32s cubic-bezier(.2,.7,.3,1) both; }
   @keyframes onbIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-
-  .onb-account { margin: calc(-1 * var(--sp-lg)) 0 var(--sp-3xl); color: var(--pa-ink);
-    font-size: var(--fs-xs); font-weight: var(--fw-sm-bold); line-height: var(--lh-relaxed);
-    overflow-wrap: anywhere; }
+  .onb-account { margin: 0 0 var(--sp-5xl); color: var(--muted); font-size: var(--fs-xs);
+    line-height: var(--lh-relaxed); overflow-wrap: anywhere; }
   .onb-account span { display: block; }
-  .login-card p.onb-help, .login-card p.cw-sub { color: var(--pa-ink); font-size: var(--fs-sm);
-    line-height: var(--lh-relaxed); margin: 0 0 var(--sp-3xl); max-width: none; overflow-wrap: anywhere; }
+  .login-card p.onb-help, .login-card p.cw-sub { font-size: var(--fs-sm); line-height: var(--lh-relaxed);
+    margin: var(--sp-lg) 0 var(--sp-5xl); max-width: none; overflow-wrap: anywhere; }
+  .login-card p.cw-sub { color: var(--text); }
   .login-card.onb .claim .field { margin-bottom: 0; }
-  #login .onb-card input { margin-bottom: 0; background: transparent; color: var(--pa-ink);
-    border: 1px solid var(--pa-ink); min-height: 48px; line-height: var(--lh-normal); box-shadow: none; }
-  #login .onb-card input::placeholder { color: var(--pa-ink); opacity: 1; }
-  #login .onb-card .btn { border-radius: var(--r-pill); background: var(--pa-ink); color: var(--pa);
-    min-height: 48px; margin: 0; line-height: var(--lh-normal); border: none; box-shadow: none; }
-  #login .onb-card .btn:disabled { opacity: 1; background: color-mix(in srgb, var(--pa-ink) 12%, var(--pa));
-    color: var(--pa-ink); cursor: default; }
-  #login .onb-card .msg { --f: var(--pa-ink); }
-  #login .onb-card .msg:not(:empty) { margin-top: var(--sp-sm); margin-bottom: var(--sp-md); }
+  #login input { width: 100%; min-width: 0; min-height: 48px; margin: 0; padding: var(--sp-lg) var(--sp-xl);
+    border: 1px solid var(--field-edge); border-radius: var(--r-md); background: var(--card); color: var(--text);
+    font-size: var(--fs-lg); line-height: var(--lh-normal); text-align: left; box-shadow: none; caret-color: var(--accent); }
+  #login input::placeholder { color: var(--muted); opacity: 1; }
+  #login input:focus { border-color: var(--accent); }
+  html[data-depth="pop"] #login input { border-width: 2px; border-color: var(--text); box-shadow: none; }
   #login .onb-card .field + .msg { min-height: 0; }
   #login input:focus-visible, #login button:focus-visible, #login summary:focus-visible {
-    outline: 2px solid var(--text); outline-offset: 3px; }
-  #login .onb-card input:focus-visible, #login .onb-card button:focus-visible,
-  #login .onb-card summary:focus-visible { outline-color: var(--pa-ink); }
+    outline: 2px solid var(--accent); outline-offset: 3px; }
 
-  /* Three-beat progress. Its real job is to tell someone that an approval step is
-     coming BEFORE they hit it, so the waiting room isn't a surprise. */
-  .onb-steps { display: flex; gap: var(--sp-xs); margin: var(--sp-xl) 0 0; }
-  .onb-step { flex: 1; min-width: 0; text-align: center; }
-  .onb-step i { display: block; height: 3px; border-radius: var(--r-pill);
-    background: color-mix(in srgb, var(--pa-ink) 18%, transparent); margin-bottom: var(--sp-xs); }
-  .onb-step span { display: block; font-size: var(--fs-3xs); line-height: var(--lh-normal);
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .onb-step.done i { background: var(--pa-ink); }
-  .onb-step.now i { background: var(--pa-ink); }
+  .onb-steps { display: flex; gap: var(--sp-sm); list-style: none; padding: 0; margin: var(--sp-5xl) 0 var(--sp-sm); }
+  .onb-step { flex: 1; min-width: 0; text-align: center; color: var(--muted); }
+  .onb-step i { display: block; height: 3px; border-radius: var(--r-pill); background: var(--border-2); margin-bottom: var(--sp-sm); }
+  .onb-step span { display: block; font-size: var(--fs-3xs); line-height: var(--lh-normal); overflow-wrap: anywhere; }
+  .onb-step.done, .onb-step.now { color: var(--text); }
+  .onb-step.done i, .onb-step.now i, .onb-steps.all-done .onb-step i { background: var(--text); }
   .onb-step.now span { font-weight: var(--fw-bold); }
-  /* All three beats land together on approval, so the strip reads as finished
-     rather than leaving the last bar half-lit on the way out. */
-  .onb-steps.all-done .onb-step i { background: var(--pa-ink); }
-
   .onb-alt { display: none; width: 100%; margin: var(--sp-lg) 0 0; padding: var(--sp-lg); border: 0;
     min-height: 44px; border-radius: var(--r-pill); background: none; color: var(--text);
     font-size: var(--fs-xs); line-height: var(--lh-normal); text-align: center;
-    text-decoration: underline; cursor: pointer; font-family: inherit; }
+    text-decoration: underline; text-underline-offset: 3px; cursor: pointer; font-family: inherit; }
   .login-card.onb .onb-alt { display: block; }
-  .onb-alt:hover { color: var(--text); }
-  /* The landing is a handoff, not a decision point: offering an account switch
-     one second before the app opens is both wrong and a way to break the
-     transition mid-flight. */
+  .onb-alt:hover:not(:disabled) { background: var(--card-2); }
   .login-card.landing .onb-alt { display: none; }
 
-  .cw-game { margin-top: var(--sp-3xl); }
-  .cw-game summary { min-height: 44px; padding: var(--sp-lg); border-radius: var(--r-pill);
-    font-size: var(--fs-xs); font-weight: var(--fw-sm-bold); line-height: var(--lh-loose); cursor: pointer;
-    background: color-mix(in srgb, var(--pa-ink) 8%, transparent); }
-  .cw-stage { position: relative; border-radius: var(--r-xl); overflow: hidden; margin-top: var(--sp-lg);
-    background: color-mix(in srgb, var(--pa-ink) 8%, transparent); }
+  .cw-game { margin-top: var(--sp-4xl); }
+  .cw-game summary { min-height: 44px; padding: var(--sp-lg) var(--sp-2xl); border-radius: var(--r-pill);
+    font-size: var(--fs-xs); font-weight: var(--fw-sm-bold); line-height: var(--lh-loose); cursor: pointer; background: var(--card-2); }
+  .cw-stage { position: relative; border-radius: var(--r-xl); overflow: hidden; margin-top: var(--sp-lg); background: var(--card-2); }
   .cw-stage canvas { display: block; width: 100%; height: 132px; touch-action: manipulation; }
-  .cw-stage canvas:focus-visible { outline: 2px solid var(--pa-ink); outline-offset: -3px; }
+  .cw-stage canvas:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
   .cw-overlay { position: absolute; inset: 0; display: flex; flex-direction: column;
-    width: 100%; padding: var(--sp-lg); border: none; color: var(--pa-ink);
-    align-items: center; justify-content: center; gap: var(--sp-xs); cursor: pointer;
-    background: var(--pa); text-align: center; }
+    width: 100%; padding: var(--sp-lg); border: none; color: var(--text); align-items: center; justify-content: center;
+    gap: var(--sp-xs); cursor: pointer; background: var(--card-2); text-align: center; }
   #login .cw-overlay:focus-visible { outline-offset: -3px; }
   .cw-overlay strong { font-size: var(--fs-xs); font-weight: var(--fw-bold); }
   .cw-overlay span { font-size: var(--fs-2xs); line-height: var(--lh-relaxed); }
-  .cw-foot { display: flex; align-items: baseline; justify-content: space-between;
-    gap: var(--sp-sm); margin-top: var(--sp-sm); font-size: var(--fs-3xs); }
+  .cw-foot { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-sm); margin-top: var(--sp-sm); font-size: var(--fs-3xs); }
   .cw-foot b { font-variant-numeric: tabular-nums; }
-
   .cw-done { display: none; align-items: center; gap: var(--sp-lg); padding: var(--sp-lg) 0; }
-  .cw-tick { width: 44px; height: 44px; flex: 0 0 auto; border-radius: var(--r-pill); background: var(--pa-ink);
-    color: var(--pa); display: flex; align-items: center; justify-content: center;
-    font-size: var(--fs-3xl); line-height: var(--lh-none); animation: cwPop .32s cubic-bezier(.2,.9,.3,1.3) both; }
+  .cw-tick { width: 44px; height: 44px; flex: 0 0 auto; border-radius: var(--r-pill); background: var(--s-bg);
+    color: var(--s-fg); display: flex; align-items: center; justify-content: center; animation: cwPop .32s cubic-bezier(.16,1,.3,1) both; }
+  .cw-tick svg { width: 22px; height: 22px; }
   .cw-done b { font-size: var(--fs-lg); overflow-wrap: anywhere; min-width: 0; }
-  @keyframes cwPop { from { transform: scale(.3); opacity: 0 } to { transform: scale(1); opacity: 1 } }
-  @media (prefers-reduced-motion: reduce) { .onb-in, .cw-tick { animation: none; } }
+  @keyframes cwPop { from { transform: scale(.3); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+  #loginBrand { position: relative; perspective: 500px; isolation: isolate; }
+  #loginBrand .card-layer, #loginBrand .clock-hand { position: absolute; inset: 0; }
+  #loginBrand .card-layer { transform-style: preserve-3d; transform-origin: 50% 50%; }
+  #loginBrand .clock-hand { transform-origin: 66.666667% 66.666667%; pointer-events: none; }
+  #loginBrand .layer-rear { z-index: 0; }
+  #loginBrand .layer-middle { z-index: 1; }
+  #loginBrand .layer-front { z-index: 2; }
+  #loginBrand svg { display: block; width: 100%; height: 100%; overflow: visible; }
+  @media (prefers-reduced-motion: reduce) {
+    .onb-in, .cw-tick, .login-spin { animation: none; }
+    #loginBrand .card-layer, #loginBrand .clock-hand { transform: none !important; }
+  }
   /* ---- App ---- */
   /* #app is shown by x-show once Alpine boots; [x-cloak] covers the pre-init frame.
      A CSS display:none here would win, because x-show reveals by clearing the
@@ -1672,6 +1659,42 @@
 
   header { position: relative; }
   /* Challenges page */
+  html.hub-active, html.hub-active body { background: var(--welcome-bg); }
+  html.hub-active #app { box-shadow: none; }
+  #layerBase { color: var(--text); }
+  #layerBase ::selection { background: var(--accent-soft); color: var(--text); }
+  #layerBase .fab, #layerBase .nudge-btn { color: var(--on-accent); }
+  #layerBase .fab:hover, #layerBase .nudge-btn:hover:not(:disabled) { background: var(--accent-hover); }
+  #layerBase .fab:active, #layerBase .nudge-btn:active:not(:disabled) { background: var(--accent-pressed); }
+  #layerBase .nudge { box-shadow: none; }
+  #layerBase .nudge-btn, #layerBase .nudge-x { min-height: 44px; }
+  #layerBase .nudge-x { min-width: 44px; }
+  #layerBase .nudge-btn:disabled { color: var(--muted); }
+  #layerBase .head-you { min-width: 44px; min-height: 44px; align-items: center; justify-content: center; }
+  /* Avatar colours elsewhere still identify people; this is the account control. */
+  #headAvatar:not([data-photo]) { background-color: var(--accent) !important; color: var(--on-accent); }
+  #layerBase .tab-badge { background: var(--text); color: var(--bg); }
+  #layerBase .chall-row { --ink: var(--pa-ink); }
+  #layerBase .ver-tag { opacity: 1; }
+  #layerBase :is(button, [role="button"]):focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 3px;
+  }
+  #layerBase .chall-row:focus-visible, #layerBase .cr-act:focus-visible { outline-color: var(--pa-ink); }
+  html.hub-active #challModal { color: var(--text); }
+  html.hub-active #challModal .modal-x { width: 44px; height: 44px; }
+  html.hub-active #challModal input { min-height: 48px; border-color: var(--field-edge); caret-color: var(--accent); }
+  html.hub-active #challModal input::placeholder { color: var(--muted); opacity: 1; }
+  html.hub-active #challModal .mbtn { min-height: 48px; border-radius: var(--r-pill); }
+  html.hub-active #challModal .mbtn.primary { color: var(--on-accent); }
+  html.hub-active #challModal .mbtn.primary:hover:not(:disabled) { background: var(--accent-hover); }
+  html.hub-active #challModal .mbtn.primary:active:not(:disabled) { background: var(--accent-pressed); }
+  html.hub-active #challModal :is(button, input):focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 3px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #layerBase .head-you { transition: none; }
+    #layerBase .head-you:hover { transform: none; }
+  }
   .sub-note { color: var(--muted); font-size: var(--fs-xs); margin: calc(-1 * var(--sp-3xs)) 0 var(--sp-lg); }
   .btn.ghost { background: var(--card-2); color: var(--text); border: 1px solid var(--border-2); }
   .btn.ghost:disabled { opacity: .55; cursor: default; }
@@ -1858,10 +1881,10 @@
     line-height: var(--lh-none);
     border-radius: var(--r-pill); padding: var(--sp-xs) var(--sp-lg);
     white-space: nowrap; letter-spacing: normal;
-    background: rgba(0,0,0,.08); color: rgba(0,0,0,.72); border: none;
+    background: rgba(0,0,0,.08); color: var(--pa-ink); border: none;
   }
   .chall-row .cr-standing.lead { background: rgba(0,0,0,.14); color: var(--pa-ink); }
-  .chall-row .cr-standing.pend { background: rgba(0,0,0,.06); color: rgba(0,0,0,.6); }
+  .chall-row .cr-standing.pend { background: rgba(0,0,0,.06); color: var(--pa-ink); }
   .chall-row .cr-right { position: relative; display: flex; align-items: center; gap: var(--sp-sm); }
   .chall-row .cr-act {
     flex: 0 0 auto; border: none; border-radius: var(--r-pill);
@@ -2530,11 +2553,20 @@
   <div class="wrap">
     <div class="login-card">
       <div class="login-lead">
-        <div class="logo"><svg viewBox="12 12 76 76" aria-label="Minutes" role="img"><path d="M54.24 18.28 A32 32 0 1 1 24.58 30.56" fill="none" stroke="currentColor" stroke-width="8.5" stroke-linecap="round"/><path d="M38 58 V42 L50 53 L62 42 V58" fill="none" stroke="currentColor" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="logo" id="loginBrand" data-motion="settled" aria-hidden="true">
+          <div class="card-layer layer-rear" data-layer="rear"><svg viewBox="18 18 60 60"><rect x="20" y="20" width="36" height="36" rx="11" fill="var(--brand-rear)"/></svg></div>
+          <div class="card-layer layer-middle"><svg viewBox="18 18 60 60"><rect x="30" y="30" width="36" height="36" rx="11" fill="var(--brand-middle)" stroke="var(--logo-surface)" stroke-width="3"/></svg></div>
+          <div class="card-layer layer-front" data-layer="front">
+            <svg viewBox="18 18 60 60"><rect x="40" y="40" width="36" height="36" rx="11" fill="var(--brand-front)" stroke="var(--logo-surface)" stroke-width="3"/></svg>
+            <div class="clock-hand" data-hand="long"><svg viewBox="18 18 60 60"><path d="M58 58V50.86" fill="none" stroke="var(--logo-surface)" stroke-width="3.5" stroke-linecap="round"/></svg></div>
+            <div class="clock-hand" data-hand="short"><svg viewBox="18 18 60 60"><path d="M58 58H63.58" fill="none" stroke="var(--logo-surface)" stroke-width="3.5" stroke-linecap="round"/></svg></div>
+          </div>
+        </div>
         <h1>Minutes</h1>
         <p id="loginSub">Log your minutes and see where you stand against everyone else this month.</p>
       </div>
       <div class="msg msg--quiet" id="loginErr" aria-live="polite"></div>
+      <div class="msg msg--quiet" id="loginNetwork" role="status" aria-live="polite"></div>
       <div class="login-status" id="loginStatus" style="display:none"><span class="login-spin"></span><span id="loginStatusText">Connecting to the server…</span></div>
       <button class="btn btn-ghost" id="loginRetry" style="display:none">Retry connection</button>
       <div class="login-who" id="authWho" style="display:none"></div>
@@ -2555,40 +2587,39 @@
            approves. The roster is deliberately NOT listed here, because that would
            show every member's name to anyone who signs in. -->
       <div class="claim onb-card onb-in" id="claimBox" style="display:none">
-        <div class="onb-kicker">Your name</div>
         <h2 class="onb-title" id="claimHeading" tabindex="-1"><label id="claimQ" for="claimNewName">What should we call you?</label></h2>
         <div class="onb-account" aria-live="polite">
           <span id="onbMail"></span>
         </div>
         <div class="field">
-          <input type="text" id="claimNewName" placeholder="e.g. Morgan" autocomplete="off"
+          <input type="text" id="claimNewName" placeholder="Your leaderboard name" autocomplete="off" spellcheck="false"
                  autocapitalize="words" maxlength="24" aria-describedby="onbHelp claimErr" />
         </div>
         <div class="msg msg--quiet" id="claimErr" aria-live="polite"></div>
-        <p class="onb-help" id="onbHelp">Your name on the leaderboard. We'll review it before you join a challenge.</p>
+        <p class="onb-help" id="onbHelp">Start with a letter. Use 1–24 letters, numbers, spaces, underscores or hyphens. We'll review your name before you join a challenge.</p>
         <button class="btn" id="claimBtn" disabled>Request approval</button>
-        <div class="onb-steps">
-          <div class="onb-step done"><i></i><span>Signed in</span></div>
-          <div class="onb-step now" aria-current="step"><i></i><span>Your name</span></div>
-          <div class="onb-step"><i></i><span>Approval</span></div>
-        </div>
+        <ol class="onb-steps" aria-label="Name approval progress">
+          <li class="onb-step done"><i aria-hidden="true"></i><span>Signed in</span></li>
+          <li class="onb-step now" aria-current="step"><i aria-hidden="true"></i><span>Your name</span></li>
+          <li class="onb-step"><i aria-hidden="true"></i><span>Approval</span></li>
+        </ol>
       </div>
 
       <div class="claim-pending onb-card" id="claimPending" style="display:none">
-        <div class="onb-kicker">Name request</div>
         <div role="status" aria-live="polite" aria-atomic="true">
           <h2 class="onb-title" id="cwTitle" tabindex="-1">Waiting for approval</h2>
           <p class="cw-sub" id="cwSub"></p>
         </div>
+        <div class="onb-account" id="pendingMail"></div>
         <div class="cw-done" id="cwDone">
-          <span class="cw-tick" aria-hidden="true">&#10003;</span>
+          <span class="cw-tick" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4 10-10"/></svg></span>
           <b id="cwDoneTx">Welcome</b>
         </div>
-        <div class="onb-steps" id="onbStepsPend">
-          <div class="onb-step done"><i></i><span>Signed in</span></div>
-          <div class="onb-step done"><i></i><span>Your name</span></div>
-          <div class="onb-step now" aria-current="step"><i></i><span id="onbStep3">Approval</span></div>
-        </div>
+        <ol class="onb-steps" id="onbStepsPend" aria-label="Name approval progress">
+          <li class="onb-step done"><i aria-hidden="true"></i><span>Signed in</span></li>
+          <li class="onb-step done"><i aria-hidden="true"></i><span>Your name</span></li>
+          <li class="onb-step now" aria-current="step"><i aria-hidden="true"></i><span id="onbStep3">Approval</span></li>
+        </ol>
         <details class="cw-game" id="cwGame">
           <summary>Play while you wait</summary>
           <div class="cw-stage" id="cwStage">
@@ -3515,7 +3546,7 @@
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
   var NAV_KEY = "minutes-nav";
-  var VERSION = "15.14";
+  var VERSION = "15.15";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -4908,6 +4939,114 @@
   function isCurrentMonth(d) { var n = new Date(); return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth(); }
   function niceDate(s) { var p = s.split("-"); return new Date(+p[0], (+p[1]) - 1, +p[2]).toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" }); }
 
+  // The approved Winding Key. Parity with the motion study is covered in tests.
+  var WELCOME_MOTION = (function () {
+    var hold = "linear", effort = "cubic-bezier(.55, 0, .88, .45)",
+      release = "cubic-bezier(.12, .76, .2, 1)", coast = "cubic-bezier(.18, .66, .34, 1)",
+      turn = "cubic-bezier(.42, 0, .58, 1)";
+    function card(at, x, y, yaw, roll, easing) {
+      return { offset: at, transform: "translate(" + x + "%, " + y + "%) rotateY(" + yaw +
+        "deg) rotateZ(" + roll + "deg) scale(1)", opacity: 1, easing: easing };
+    }
+    function hand(at, angle, easing) {
+      return { offset: at, transform: "rotate(" + angle + "deg)", opacity: 1, easing: easing };
+    }
+    return { duration: 5000, tracks: {
+      rear: [
+        card(0, 16.666667, 16.666667, 0, 0, hold), card(.1, 16.666667, 16.666667, 0, 0, effort),
+        card(.15, 16, 16, -2, 1.5, hold), card(.21, 16, 16, -2, 1.5, effort),
+        card(.25, 15.5, 15.5, -4, 3, effort), card(.31, 15, 15, -7, 5, release),
+        card(.43, -7, -11, -18, -19, coast), card(.62, -5, -4, -9, -8, release),
+        card(.67, 0, 0, 0, 0, hold), card(1, 0, 0, 0, 0, turn)
+      ],
+      front: [
+        card(0, -16.666667, -16.666667, 0, 0, hold), card(.1, -16.666667, -16.666667, 0, 0, effort),
+        card(.15, -16, -16, 2, -2, hold), card(.21, -16, -16, 2, -2, effort),
+        card(.25, -15.5, -15.5, 5, -4, effort), card(.31, -15, -15, 9, -7, release),
+        card(.44, 9, 8, 22, 22, coast), card(.62, 5, 4, 11, 9, release),
+        card(.67, 0, 0, 0, 0, hold), card(1, 0, 0, 0, 0, turn)
+      ],
+      long: [
+        hand(0, 0, hold), hand(.04, 0, effort), hand(.1, -42, release), hand(.12, -37, hold),
+        hand(.15, -37, effort), hand(.21, -84, release), hand(.23, -78, hold),
+        hand(.25, -78, effort), hand(.31, -132, release), hand(.46, 41, coast),
+        hand(.62, 17, release), hand(.67, 0, hold), hand(1, 0, turn)
+      ],
+      short: [
+        hand(0, 0, hold), hand(.08, 0, effort), hand(.11, 12, release), hand(.14, 4, hold),
+        hand(.19, 4, effort), hand(.22, 19, release), hand(.25, 9, hold),
+        hand(.29, 9, effort), hand(.32, 28, release), hand(.48, -27, coast),
+        hand(.62, -11, release), hand(.67, 0, hold), hand(1, 0, turn)
+      ]
+    } };
+  })();
+  var LoginWelcome = (function () {
+    var login = document.getElementById("login");
+    var card = login.querySelector(".login-card");
+    var mark = document.getElementById("loginBrand");
+    var network = document.getElementById("loginNetwork");
+    var preference = matchMedia("(prefers-reduced-motion: reduce)");
+    var started = false, wasSignin = false, played = false, animations = [];
+
+    function stop() {
+      animations.forEach(function (animation) { animation.cancel(); });
+      animations = [];
+      mark.dataset.motion = "settled";
+    }
+    function play() {
+      played = true;
+      if (typeof mark.animate !== "function") return;
+      Object.keys(WELCOME_MOTION.tracks).forEach(function (key) {
+        var layer = mark.querySelector('[data-layer="' + key + '"], [data-hand="' + key + '"]');
+        var animation = layer.animate(WELCOME_MOTION.tracks[key],
+          { duration: WELCOME_MOTION.duration, iterations: 1, fill: "both", easing: "linear" });
+        animation.onfinish = function () {
+          if (animations.every(function (item) { return item.playState === "finished"; })) stop();
+        };
+        animations.push(animation);
+      });
+      mark.dataset.motion = "playing";
+    }
+    function updateThemeColor() {
+      document.documentElement.classList.toggle("welcome-active", !state.signedIn);
+      var hub = state.signedIn && !state.sheet;
+      document.documentElement.classList.toggle("hub-active", hub);
+      var meta = document.querySelector('meta[name="theme-color"]');
+      var surface = !state.signedIn ? login : hub ? document.getElementById("layerBase") : document.documentElement;
+      if (meta) meta.setAttribute("content", getComputedStyle(surface).getPropertyValue("--bg").trim());
+    }
+    function sync() {
+      if (!started) return;
+      var signin = !state.signedIn && !(window.__AUTH && window.__AUTH.user) &&
+        !card.classList.contains("onb");
+      if (signin && !wasSignin) played = false;
+      wasSignin = signin;
+      if (!signin || document.hidden || preference.matches) stop();
+      else if (!played) play();
+
+      var pending = document.getElementById("claimPending").style.display === "block";
+      var claiming = document.getElementById("claimBox").style.display === "block";
+      var text = "";
+      if (!state.signedIn && !card.classList.contains("landing") && bannerOffline()) {
+        var reason = navigator.onLine === false ? "You're offline. " : "Not connected. ";
+        text = reason + (pending ? "Your request is still waiting. Reconnect for approval updates."
+          : claiming ? "Your name draft is kept here. Reconnect before requesting approval."
+          : "Reconnect to continue. Your Google account is still your login.");
+      }
+      if (network.textContent !== text) setMsg(network, text, "warn");
+      var google = document.getElementById("googleBtn");
+      google.disabled = google.getAttribute("aria-busy") === "true" ||
+        (google.dataset.mode !== "out" && navigator.onLine === false);
+      var request = document.getElementById("claimBtn");
+      request.disabled = request.getAttribute("aria-busy") === "true" ||
+        !document.getElementById("claimNewName").value.trim() || offlineNow();
+      updateThemeColor();
+    }
+    preference.addEventListener("change", sync);
+    document.addEventListener("visibilitychange", sync);
+    window.addEventListener("minutes-auth", sync);
+    return { start: function () { started = true; sync(); }, sync: sync, updateThemeColor: updateThemeColor };
+  })();
   // ---- Login ----
   function resolveName(input) {
     var q = (input || "").trim().toLowerCase();
@@ -5062,6 +5201,7 @@
     state.viewMonth = firstOfMonth(new Date());
     localStorage.setItem(SESSION_KEY, name);
     state.signedIn = true;
+    LoginWelcome.sync();
     // The greeting is a view now (see the "hello" view model), so the only thing
     // read here is whether this device has already welcomed this handle.
     var seen = "";
@@ -5119,6 +5259,7 @@
     clearRoute();                       // and does not inherit this one's challenge in the URL
     closeBackoffice();
     state.signedIn = false;
+    LoginWelcome.sync();
     setMsg("loginErr", "");
     // One logout, like every other app that signs in with Google. This ends the
     // Firebase session too, so "Log out" actually means logged out instead of
@@ -5192,13 +5333,15 @@
       }
       var signingOut = btn.dataset.mode === "out";
       btn.disabled = true;
+      btn.setAttribute("aria-busy", "true");
       setMsg("authErr", "");
       var p = signingOut ? window.__AUTH.signOut() : window.__AUTH.signInGoogle();
       p.catch(function (e) {
         console.error(signingOut ? "Google sign-out:" : "Google sign-in:", e);
         setMsg("authErr", errText(e));
       }).finally(function () {
-        btn.disabled = false;
+        btn.setAttribute("aria-busy", "false");
+        LoginWelcome.sync();
       });
     };
 
@@ -5210,7 +5353,7 @@
 
   // --- Waiting-room mini game --------------------------------------------------
   // Shown while a claim sits with an admin. An original endless runner, deliberately
-  // tiny: the player is the Minutes mark hopping over tally bars, and the score is
+  // tiny: the player is a Minutes clock card hopping over tally bars, and the score is
   // counted in "minutes survived" so the joke lands with the rest of the app.
   // It only animates while the pending panel is on screen.
   var WaitGame = (function () {
@@ -5234,12 +5377,10 @@
 
     function readColors() {
       var s = getComputedStyle(cv);
-      col.accent = s.getPropertyValue("--pa-ink").trim();
-      col.line = col.accent;
-      col.muted = col.accent;
-      col.text = s.getPropertyValue("--pa").trim();
-      col.font = s.getPropertyValue("--fw-bold").trim() + " " +
-        s.getPropertyValue("--fs-3xs").trim() + " " + s.fontFamily;
+      col.line = s.getPropertyValue("--muted").trim();
+      col.muted = s.getPropertyValue("--text").trim();
+      col.player = s.getPropertyValue("--brand-front").trim();
+      col.surface = s.getPropertyValue("--card-2").trim();
     }
 
     function size() {
@@ -5332,14 +5473,21 @@
       }
 
       var x = 26, y = ground - 18 - py;
-      ctx.fillStyle = col.accent;
-      roundRect(x, y, 18, 18, 5);
+      // Just the front clock card, fitted to the unchanged 18px player box.
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(.5, .5);
+      ctx.translate(-40, -40);
+      ctx.fillStyle = col.player;
+      roundRect(40, 40, 36, 36, 11);
       ctx.fill();
-      ctx.fillStyle = col.text;
-      ctx.font = col.font;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText("M", x + 9, y + 10);
+      ctx.strokeStyle = col.surface;
+      ctx.lineWidth = 3.5;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(58, 50.86); ctx.lineTo(58, 58); ctx.lineTo(63.58, 58);
+      ctx.stroke();
+      ctx.restore();
 
       scoreEl.textContent = String(Math.floor(dist / 40));
       bestEl.textContent = String(best);
@@ -5412,7 +5560,6 @@
       }
     };
   })();
-
   // Binds a Google uid to an app handle, mirroring firestore.phase3.rules:
   //   1. the handle is pre-seeded with this exact verified email -> instant claim
   //   2. anything else -> a claimRequests doc for an admin to approve
@@ -5433,6 +5580,7 @@
     var newEl   = document.getElementById("claimNewName");
     var cardEl  = document.querySelector(".login-card");
     var onbMail = document.getElementById("onbMail");
+    var pendingMail = document.getElementById("pendingMail");
     var switchEl = document.getElementById("onbSwitch");
     var gameEl = document.getElementById("cwGame");
     if (!box || !btn || !newEl) return { render: function () {} };
@@ -5739,6 +5887,7 @@
     // inline display on the same elements whenever an auth event fires.
     function onbMode(on) {
       if (cardEl) cardEl.classList.toggle("onb", !!on);
+      LoginWelcome.sync();
     }
 
     function hideAll() {
@@ -5753,6 +5902,7 @@
       // what Minutes is, and "sign in to open your tracker" does not tell them.
       if (sub) sub.textContent = "Log your minutes and see where you stand against everyone else this month.";
       WaitGame.stop();
+      if (!me()) paintHero();
     }
 
     // Signed in, name already bound, but no app session. Offer the one tap back
@@ -5798,8 +5948,10 @@
       if (title) title.textContent = "Waiting for approval";
       if (cardEl) cardEl.classList.remove("landing");
       if (gameEl) gameEl.hidden = false;
+      paintHero();
       if (entering && title) title.focus({ preventScroll: true });
       if (gameEl && gameEl.open) WaitGame.mount();
+      LoginWelcome.sync();
     }
 
     // The approval landing. The strip promised three beats and the third one used
@@ -5836,6 +5988,7 @@
       if (cw) cw.textContent = "Next up: your challenges.";
       if (cardEl) cardEl.classList.add("landing");
       if (title) title.focus({ preventScroll: true });
+      LoginWelcome.sync();
       // Signing out mid-hold must not drag them into the app afterwards, so the
       // timer is cancellable and re-checks that the account is still there.
       landTimer = setTimeout(function () {
@@ -5857,14 +6010,17 @@
       if (sub) sub.textContent = "Nice to meet you";
       box.style.display = "block";
       paintChips();
+      LoginWelcome.sync();
       if (entering) document.getElementById("claimHeading").focus({ preventScroll: true });
     }
 
     // Keep the authenticated account visible without repeating the editable name.
     // The account line is stable while the requested leaderboard name changes.
     function paintHero() {
-      var u = me() || {};
-      if (onbMail) onbMail.textContent = u.email ? "Signed in as " + u.email : "Signed in with your Google account";
+      var u = me();
+      var account = u ? (u.email ? "Signed in as " + u.email : "Signed in with your Google account") : "";
+      if (onbMail) onbMail.textContent = account;
+      if (pendingMail) pendingMail.textContent = account;
     }
 
     function paintChips() {
@@ -5872,7 +6028,7 @@
       qEl.textContent = "What should we call you?";
       if (noteEl) noteEl.style.display = "";
       btn.textContent = busy ? "Sending\u2026" : "Request approval";
-      btn.disabled = busy || !newEl.value.trim();
+      btn.disabled = busy || !newEl.value.trim() || offlineNow();
       btn.setAttribute("aria-busy", String(busy));
       paintHero();
     }
@@ -6060,6 +6216,10 @@
 
     btn.onclick = function () {
       if (busy) return;
+      if (offlineNow()) {
+        setMsg("claimErr", "Reconnect before requesting approval. Your name draft is kept here.", "warn");
+        return;
+      }
       var handle = newEl.value.trim();
       var bad = checkNewName(handle);
       if (bad) {
@@ -6133,8 +6293,10 @@
       switchEl.onclick = function () {
         if (!window.__AUTH || !window.__AUTH.signOut) return;
         switchEl.disabled = true;
+        setMsg("authErr", "");
         window.__AUTH.signOut().catch(function (e) {
           console.error("Switch account:", e);
+          setMsg("authErr", "Couldn't switch accounts. Please try again.");
         }).finally(function () { switchEl.disabled = false; });
       };
     }
@@ -6388,6 +6550,7 @@
   function syncBaseInert() {
     var base = document.querySelector(".layer-base");
     if (base) base.inert = !!state.sheet;
+    LoginWelcome.updateThemeColor();
   }
 
   // The challenge chrome is outside the body scroller, so compaction can change
@@ -8087,6 +8250,7 @@
     // whichever one you are standing on.
     var slots = document.querySelectorAll(".amb");
     Array.prototype.forEach.call(slots, function (s) { setMsg(s, text, tone); });
+    LoginWelcome.sync();
   }
   // The name every existing caller and the test bridge already use. Connection state
   // is owned by netReady, so flipping it here keeps the banner and the write gates
@@ -8100,7 +8264,6 @@
     if (!off) { stopRetry(); if (Store.flushPending) Store.flushPending(); }
     renderSync();
   }
-
   /* Every popup grows out of whatever opened it.
    *
    * A dialog that fades in at the centre of the screen says "answer me". A menu
@@ -9549,8 +9712,7 @@
       for (var j = 0; j < PAL_TOKENS.length; j++) st.setProperty(PAL_TOKENS[j], T[PAL_TOKENS[j]]);
     }
     if (persist) { try { localStorage.setItem(PAL_KEY, id); } catch (e) {} }
-    var meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute("content", getComputedStyle(document.documentElement).getPropertyValue("--bg").trim());
+    LoginWelcome.updateThemeColor();
     if (state.me) renderChart();
     syncAppearance();
   }
@@ -9760,7 +9922,6 @@
       }).observe(el, { attributes: true, attributeFilter: ["class"] });
     });
   }
-
   // ---- Boot ----
   function begin() {
     initTheme();
@@ -9823,6 +9984,7 @@
     if (saved && resolveName(saved)) doLogin(resolveName(saved));
     // Release the boot gate now that visibility is decided (restored -> app, else login).
     document.documentElement.classList.remove("has-session");
+    LoginWelcome.start();
   }
   var began = false;
   function tryBegin() { if (began) return; began = true; begin(); }

@@ -1672,6 +1672,7 @@
   #layerBase .nudge-x { min-width: 44px; }
   #layerBase .nudge-btn:disabled { color: var(--muted); }
   #layerBase .head-you { min-width: 44px; min-height: 44px; align-items: center; justify-content: center; }
+  #headAvatar { width: 52px; height: 52px; font-size: var(--fs-2xl); }
   /* Avatar colours elsewhere still identify people; this is the account control. */
   #headAvatar:not([data-photo]) { background-color: var(--accent) !important; color: var(--on-accent); }
   #layerBase .tab-badge { background: var(--text); color: var(--bg); }
@@ -3546,7 +3547,7 @@
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
   var NAV_KEY = "minutes-nav";
-  var VERSION = "15.17";
+  var VERSION = "15.18";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -5104,7 +5105,7 @@
   //     remembered until an explicit retry, reauthentication or reconnection.
   //   - Signing out has to drop the previous person's face.
   //
-  // The URL is asked for at 128px wherever it lands, so the 36px header and the
+  // The URL is asked for at 192px wherever it lands, so the 52px header and the
   // 64px You circle share one cached image and both stay sharp on a 3x screen.
   var badAvatarPhoto = null;
   var avatarLoads = new WeakMap();
@@ -5147,7 +5148,7 @@
     var u = (window.__AUTH && window.__AUTH.user) || null;
     var p = (u && u.photo) || "";
     if (!p || avatarPhotoFailed()) return "";
-    return /=s\d+/.test(p) ? p.replace(/=s\d+(-c)?/, "=s128-c") : p;
+    return /=s\d+/.test(p) ? p.replace(/=s\d+(-c)?/, "=s192-c") : p;
   }
   function paintAvatar(el, name) {
     if (!el) return;

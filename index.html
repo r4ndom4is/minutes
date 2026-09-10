@@ -576,11 +576,12 @@
                    0 calc(6px * var(--ez)) calc(14px * var(--ez)) calc(-4px * var(--ez)) rgba(28,30,60,calc(.12 * var(--ea)));
     --ink: #1c1e2e; --pop-ink: #131313;
   }
-  /* Approved entry surfaces share one palette. Saved palettes still govern the
-     open challenge and account; hub overlays follow the screen that opened them. */
+  /* Member surfaces share the approved palette; Backoffice retains saved palettes. */
   :root { --welcome-bg: #161615; }
   html[data-theme="light"] { --welcome-bg: #f5f4f0; }
-  #login, #layerBase, html.hub-active :is(#challModal, #popDock, #ptr) {
+  #login, #layerBase, html.hub-active :is(#challModal, #popDock, #ptr),
+  html.settings-active :is(#sheet, #popDock, #ptr),
+  html.challenge-active :is(#sheet, .modal-overlay, #popDock, #ptr) {
     --bg: var(--welcome-bg); --card: #232321; --card-2: #2e2e2a;
     --text: #efefea; --muted: #b8b8ae; --muted-2: #a0a095;
     --border: #3d3d37; --border-2: #55554b; --field-edge: #828274;
@@ -594,6 +595,18 @@
     --w-bd: var(--w-fg); --i-bd: var(--i-fg);
     --danger: var(--d-fg); --ink: var(--text);
     --pop-ink: var(--text); --tint-accent: var(--accent-soft);
+    --tint-accent-fg: var(--accent); --tint-danger: var(--d-bg);
+    --note-fg: var(--d-fg); --note-bg: var(--d-bg); --note-bd: var(--d-fg);
+    --live-fg: var(--s-fg); --tint-live: var(--s-bg); --total: var(--text);
+    --tile-accent-bg: var(--card); --tile-accent-bd: var(--border);
+    --motiv-lead: var(--w-fg); --motiv-warn: var(--d-fg);
+    --motiv-climb: var(--accent); --motiv-zero: var(--i-fg);
+    --chart-grid: #393933; --chart-grid-2: #2d2d28; --chart-node-ring: var(--card);
+    --chart-a: #84cfc3; --chart-b: #dfbc77; --chart-c: #99b9ef; --chart-d: #f0a791;
+    --series-0: var(--chart-a); --series-1: var(--accent); --series-2: var(--chart-b);
+    --series-3: var(--chart-c); --series-4: var(--chart-d); --series-5: var(--accent-hover);
+    --series-6: var(--s-fg); --series-7: var(--w-fg); --series-8: var(--i-fg);
+    --series-9: var(--accent-pressed); --series-10: var(--d-fg); --series-11: var(--chart-a);
     --toast-bg: var(--card); --toast-bd: var(--border);
     --overlay: rgba(0,0,0,.62);
     --shadow-fab: 0 calc(6px * var(--ez)) calc(18px * var(--ez)) rgba(0,0,0,calc(.45 * var(--ea)));
@@ -604,7 +617,9 @@
     --logo-surface: var(--bg);
   }
   html[data-theme="light"] :is(#login, #layerBase),
-  html[data-theme="light"].hub-active :is(#challModal, #popDock, #ptr) {
+  html[data-theme="light"].hub-active :is(#challModal, #popDock, #ptr),
+  html[data-theme="light"].settings-active :is(#sheet, #popDock, #ptr),
+  html[data-theme="light"].challenge-active :is(#sheet, .modal-overlay, #popDock, #ptr) {
     --card: #fffefa; --card-2: #eeede7;
     --text: #292925; --muted: #64645d; --muted-2: #6b6b62;
     --border: #deded5; --border-2: #cacac0; --field-edge: #858578;
@@ -614,6 +629,8 @@
     --d-fg: #b13c2e; --d-bg: #fbeee9;
     --w-fg: #756012; --w-bg: #f7f1df;
     --i-fg: #456888; --i-bg: #ecf1f7;
+    --chart-grid: #e8e8df; --chart-grid-2: #f2f2eb;
+    --chart-a: #20736d; --chart-b: #94631e; --chart-c: #4463a3; --chart-d: #b04d38;
     --overlay: rgba(0,0,0,.28);
     --shadow-fab: 0 calc(6px * var(--ez)) calc(18px * var(--ez)) rgba(0,0,0,calc(.2 * var(--ea)));
     --shadow-fab-active: 0 calc(3px * var(--ez)) calc(10px * var(--ez)) rgba(0,0,0,calc(.16 * var(--ea)));
@@ -843,7 +860,7 @@
   .bo-chall-right { flex: 0 0 auto; display: flex; align-items: center; gap: var(--sp-sm); }
 
   /* Manage-challenge modal rows */
-  .modal.manage-modal { text-align: left; max-width: 440px; display: flex; flex-direction: column; max-height: calc(100dvh - 48px); }
+  .modal.manage-modal { text-align: left; display: flex; flex-direction: column; max-height: calc(100dvh - 48px - var(--modal-toast-space, 0px)); }
   .modal.manage-modal .modal-title { flex: 0 0 auto; }
   .modal.manage-modal .m-ico { flex: 0 0 auto; }
   .modal.manage-modal #manageBody { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
@@ -1021,7 +1038,8 @@
   .chart-wrap { width: 100%; }
   .chart-wrap svg { width: 100%; height: auto; display: block; }
   .chart-legend { display: flex; flex-wrap: wrap; gap: var(--sp-md) var(--sp-xl); margin-top: var(--sp-lg); }
-  .leg-item { display: flex; align-items: center; gap: var(--sp-xs); font-size: var(--fs-2xs); color: var(--muted); cursor: pointer; user-select: none; }
+  .leg-item { display: flex; align-items: center; gap: var(--sp-xs); border: none; padding: 0; background: none;
+    font-family: inherit; font-size: var(--fs-2xs); color: var(--muted); cursor: pointer; user-select: none; }
   .leg-item.off { opacity: .4; }
   .leg-item.me { color: var(--text); font-weight: var(--fw-bold); }
   /* Round, to match the chart's own node dots and the rest of the icon shapes.
@@ -1503,6 +1521,14 @@
     padding: 0 max(var(--sp-2xl), calc(50% - var(--frame-w) / 2 + var(--sp-2xl)));
     display: flex; justify-content: flex-end;
   }
+  #app:has(.modal-overlay.show) .pop-dock {
+    bottom: calc(env(safe-area-inset-bottom) + var(--sheet-pad));
+  }
+  #app:has(#toast.show) .modal-overlay {
+    --modal-toast-space: calc(var(--toast-height, 0px) + var(--sp-md) + env(safe-area-inset-bottom));
+    padding-bottom: calc(var(--sheet-pad) + var(--modal-toast-space));
+    scroll-padding-bottom: calc(var(--sheet-pad) + var(--modal-toast-space));
+  }
   .pop {
     pointer-events: none; max-width: 100%; position: relative; overflow: hidden;
     background: var(--toast-bg); border: 1px solid var(--o, var(--toast-bd));
@@ -1605,10 +1631,10 @@
   .modal .m-ico { width: 44px; height: 44px; border-radius: var(--r-pill); background: var(--tint-danger); color: var(--danger); display: flex; align-items: center; justify-content: center; margin-bottom: var(--sp-xl); }
   .modal .m-ico.accent { background: var(--tint-accent); color: var(--accent); }
   .modal .m-ico svg { width: 24px; height: 24px; }
-  .modal-title { font-size: var(--fs-xl); font-weight: var(--fw-black); margin-bottom: var(--sp-xs); letter-spacing: var(--ls-tight); }
-  .modal-msg { font-size: var(--fs-sm); color: var(--muted); line-height: var(--lh-loose); margin-bottom: var(--sp-4xl); }
+  .modal-title { font-size: var(--fs-xl); font-weight: var(--fw-black); margin-bottom: var(--sp-lg); letter-spacing: var(--ls-tight); overflow-wrap: anywhere; }
+  .modal-msg { font-size: var(--fs-sm); color: var(--muted); line-height: var(--lh-loose); margin-bottom: var(--sp-4xl); overflow-wrap: anywhere; }
   .modal-actions { display: flex; gap: var(--sp-md); }
-  .mbtn { flex: 1; padding: var(--sp-lg); border-radius: var(--r-md); font-size: var(--fs-lg); font-weight: var(--fw-bold); cursor: pointer; border: 1px solid var(--border-2); }
+  .mbtn { flex: 1; min-width: 0; min-height: 48px; padding: var(--sp-lg); border-radius: var(--r-pill); background: var(--card-2); color: var(--text); font-size: var(--fs-lg); font-weight: var(--fw-bold); cursor: pointer; border: 1px solid var(--border-2); }
   .mbtn.ghost { background: var(--card-2); color: var(--text); }
   .mbtn.danger { background: var(--danger); color: #fff; border-color: var(--danger); }
   .mbtn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
@@ -1616,9 +1642,31 @@
   .edit-del { display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-sm); background: var(--card-2); color: var(--danger); border-color: var(--border-2); }
   .edit-del svg { width: 16px; height: 16px; }
   /* Popup close (× top-right) — dismiss, never destructive */
-  .modal-x { position: absolute; top: 14px; right: 14px; width: 30px; height: 30px; border: none; background: none; color: var(--muted); border-radius: var(--r-pill); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1; }
+  .modal-x { position: absolute; top: var(--sp-4xl); right: var(--sp-4xl); width: 44px; height: 44px; padding: 0; border: none; background: var(--card-2); color: var(--text); border-radius: var(--r-pill); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1; }
   .modal-x svg { width: 18px; height: 18px; }
-  .modal-x:hover, .modal-x:active { background: var(--card-2); color: var(--text); }
+  .modal-x:hover, .modal-x:active { background: var(--border-2); }
+  .modal button { font-family: inherit; }
+  .modal :is(button, input):focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .modal :is(input, .dp-trigger) { min-height: 48px; }
+  .modal :is(.btn, .quick button) { border-radius: var(--r-pill); }
+  .modal :is(.btn, .pe-add button) { min-height: 48px; }
+  .modal :is(.pe-chip, .mg-btn, .ar-btn, .quick button) { min-height: 44px; }
+  .modal .stepper { align-items: center; }
+  .modal .stepper .step { flex-basis: 44px; width: 44px; height: 44px; }
+  .modal :is(.stepper .step, .quick button, .pe-chip):active { color: var(--on-accent, #fff); }
+  .modal .icon-del { min-width: 44px; min-height: 44px; justify-content: center; border-radius: var(--r-pill); }
+  .modal .swatches { gap: var(--sp-xs); }
+  .modal .swatch { width: 44px; height: 44px; }
+  .modal :is(.pe-row .nm, .mg-name, .approve-row .ar-name) { min-width: 0; overflow: visible; white-space: normal; overflow-wrap: anywhere; }
+  .modal .row .field { min-width: 0; }
+  .modal :is(.mbtn, .btn):disabled { background: var(--card-2); color: var(--muted-2); border-color: var(--border-2); box-shadow: none; opacity: 1; cursor: not-allowed; }
+  @media (max-width: 380px) {
+    .modal .row { flex-direction: column; }
+    .modal .swatches { display: grid; grid-template-columns: repeat(3, 44px); gap: var(--sp-md); }
+    .modal .approve-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; }
+    .modal .approve-row .ar-name { grid-column: 2 / -1; }
+    .modal .approve-row .ar-approve { grid-column: 2; justify-self: end; }
+  }
   /* Destructive remove (trash) — shared across every per-row delete */
   .icon-del { border: none; background: none; color: var(--muted); cursor: pointer; padding: var(--sp-2xs); display: inline-flex; align-items: center; justify-content: center; border-radius: var(--r-sm); flex: 0 0 auto; }
   .icon-del svg { width: 16px; height: 16px; }
@@ -1628,9 +1676,22 @@
   .tab-panel { display: none; }
   .tab-panel.active { display: block; }
 
-  /* Account button in the header — the only way into You now that the bottom
-     bar is gone. The bar only ever worked on the home screen anyway, since the
-     sheet covers it whenever a challenge is open. */
+  /* The avatar menu keeps account utilities out of the challenge content. */
+  .account-control { position: relative; flex: 0 0 auto; z-index: 4; }
+  .account-menu { position: absolute; top: calc(100% + var(--sp-md)); right: 0;
+    width: 220px; max-width: calc(100vw - 2 * var(--sheet-pad)); padding: var(--sp-sm);
+    display: flex; flex-direction: column; gap: var(--sp-2xs);
+    background: var(--card); color: var(--text); border: 1px solid var(--border);
+    border-radius: var(--r-xl); box-shadow: var(--elev); }
+  .account-menu[hidden] { display: none; }
+  .account-menu button { min-height: 44px; padding: var(--sp-md) var(--sp-lg);
+    border: none; border-radius: var(--r-pill); background: transparent; color: inherit;
+    font-family: inherit; font-size: var(--fs-md); font-weight: var(--fw-sm-bold);
+    text-align: left; cursor: pointer; }
+  .account-menu button:hover, .account-menu button:active { background: var(--card-2); }
+  .account-menu button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .account-menu .account-menu-logout { margin-top: var(--sp-sm); }
+  html[data-depth="pop"] .account-menu { border: 2px solid var(--ink); box-shadow: none; }
   .head-you {
     position: relative; flex: 0 0 auto; padding: 0; border: none; background: none;
     cursor: pointer; display: inline-flex; border-radius: 50%;
@@ -1683,10 +1744,8 @@
   }
   #layerBase .chall-row:focus-visible, #layerBase .cr-act:focus-visible { outline-color: var(--pa-ink); }
   html.hub-active #challModal { color: var(--text); }
-  html.hub-active #challModal .modal-x { width: 44px; height: 44px; }
   html.hub-active #challModal input { min-height: 48px; border-color: var(--field-edge); caret-color: var(--accent); }
   html.hub-active #challModal input::placeholder { color: var(--muted); opacity: 1; }
-  html.hub-active #challModal .mbtn { min-height: 48px; border-radius: var(--r-pill); }
   html.hub-active #challModal .mbtn.primary { color: var(--on-accent); }
   html.hub-active #challModal .mbtn.primary:hover:not(:disabled) { background: var(--accent-hover); }
   html.hub-active #challModal .mbtn.primary:active:not(:disabled) { background: var(--accent-pressed); }
@@ -2194,7 +2253,6 @@
      Controls inside a surface (buttons, inputs, steppers) stay flat here on
      purpose: in soft, shadow means layer, not affordance. */
   html[data-depth="soft"] .card,
-  html[data-depth="soft"] .sgroup,
   html[data-depth="soft"] .jointile,
   html[data-depth="soft"] .rescard { box-shadow: var(--elev); }
   html[data-depth="soft"] .tile,
@@ -2206,7 +2264,7 @@
      because a 6px hard offset is 17% of a 36px button and looks crude at that
      size; a blur has no such problem, so soft can lift them and pop cannot.
      The test for inclusion is "does this control draw its own surface": anything
-     with a background and a border lifts. Bare glyph buttons (.modal-x, .edit,
+     with a background and a border lifts. Bare glyph buttons (.edit,
      .head-you, .odo-i) are transparent and borderless, so there is no object
      to lift and they stay flat. Applied to the whole set, not just the nav
      buttons, so soft does not repeat pop's old bug of lifting some controls in a
@@ -2229,7 +2287,6 @@
   html[data-depth="soft"] input,
   html[data-depth="soft"] textarea { box-shadow: var(--elev-xs); }
   html[data-depth="pop"] .card,
-  html[data-depth="pop"] .sgroup,
   html[data-depth="pop"] .jointile,
   html[data-depth="pop"] .rescard {
     border: 2px solid var(--ink); border-radius: var(--r-md);
@@ -2297,6 +2354,7 @@
   html[data-depth="pop"] .cal-foot button,
   html[data-depth="pop"] .rh-back,
   html[data-depth="pop"] .rh-manage,
+  html[data-depth="pop"] .modal-x,
   html[data-depth="pop"] .bo-close,
   html[data-depth="pop"] .roletoggle,
   html[data-depth="pop"] .ar-btn { border: 2px solid var(--ink); box-shadow: none; }
@@ -2325,7 +2383,7 @@
 
   /* The challenge lists used to take part in the grouped/separate card layout.
      They no longer do: a challenge is a pastel card, and "grouped" means flush
-     transparent rows, so the two cannot both be true. The Appearance toggle
+     transparent rows, so the two cannot both be true. The saved layout choice
      still governs the leaderboard and the Log lists, which is where the setting
      earns its keep, and e2e:layout guards it there.
 
@@ -2338,7 +2396,7 @@
      This is the prototype language, applied app-wide rather than only on You.
      ====================================================================== */
   .sect { margin-bottom: 0; }
-  .sect > .card, .sect > .sgroup { margin-bottom: 0; }
+  .sect > .card { margin-bottom: 0; }
   .sect > .sub-note { padding: 0; margin: calc(-1 * var(--sp-2xs)) 0 var(--sp-sm); }
   /* a section label that also carries a control (e.g. Leave).
      This was a stale copy of the old .slabel padding (20px 4px 8px), so it kept
@@ -2484,26 +2542,81 @@
      small and faint compound. --muted is the tested-at-4.5 token. */
   .slabel { font-size: var(--fs-2xs); font-weight: var(--fw-black); letter-spacing: var(--ls-caps-lg); text-transform: uppercase;
     color: var(--muted); padding: var(--sp-4xl) 0 var(--sp-sm); }
-  .sgroup { background: var(--card); border-radius: var(--r-xl); overflow: hidden;
-    box-shadow: inset 0 0 0 1px var(--border); }
-  .srow { display: flex; align-items: center; gap: var(--sp-lg); padding: var(--sp-lg) var(--sp-xl); width: 100%;
-    background: none; border: none; color: var(--text); font-family: inherit; text-align: left; }
-  .srow + .srow { border-top: 1px solid var(--border); }
-  html[data-depth="pop"] .srow + .srow { border-top: 2px solid var(--ink); }
-  .srow-btn { cursor: pointer; }
-  .srow-btn:active { background: var(--card-2); }
-  .smeta { flex: 1; min-width: 0; }
-  .sname { display: block; font-weight: var(--fw-bold); font-size: var(--fs-sm); letter-spacing: var(--ls-snug); }
-  .ssub { display: block; font-size: var(--fs-3xs); color: var(--muted); font-weight: var(--fw-sm-bold); margin-top: var(--sp-3xs); }
-  .schev { flex: 0 0 auto; color: var(--muted-2); display: inline-flex; }
-  .schev svg { width: 16px; height: 16px; display: block; }
-  /* Small inline control, so it takes the pill, not the block radius. */
-  .seg3 { display: inline-flex; flex: 0 0 auto; background: var(--card-2); border-radius: var(--r-pill);
-    padding: var(--sp-2xs); box-shadow: inset 0 0 0 1px var(--border); }
-  html[data-depth="pop"] .seg3 { border: 2px solid var(--ink); box-shadow: none; }
-  .seg3 button { background: none; border: none; font-family: inherit; font-size: var(--fs-3xs); font-weight: var(--fw-black);
-    color: var(--muted); padding: var(--sp-xs) var(--sp-lg); border-radius: var(--r-pill); cursor: pointer; white-space: nowrap; }
-  .seg3 button.on { background: var(--accent); color: #fff; }
+  html.settings-active, html.settings-active body { background: var(--welcome-bg); }
+  html.settings-active #app { box-shadow: none; }
+  html.settings-active #sheet { color: var(--text); }
+  #sheet[data-mode="you"] .sheet-chrome { background: var(--bg); border: none; box-shadow: none; }
+  #sheet[data-mode="you"] .sheet-body { padding-bottom: calc(var(--sp-5xl) + env(safe-area-inset-bottom)); }
+  #youBack { background: var(--card-2); color: var(--text); border: none; box-shadow: none; }
+  #youAvatar:not([data-photo]) { background-color: var(--accent) !important; color: var(--on-accent); }
+  #tab-you ::selection { background: var(--accent-soft); color: var(--text); }
+  .settings-profile, .settings-preferences, .settings-actions { display: flex; flex-direction: column; gap: var(--sp-3xl); }
+  .settings-preferences, .settings-actions { margin-top: var(--sp-6xl); }
+  .settings-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--sp-lg); }
+  .settings-copy { min-width: 0; }
+  .settings-label { display: block; color: var(--text); font-size: var(--fs-lg); font-weight: var(--fw-bold); line-height: var(--lh-snug); }
+  .settings-hint { display: block; margin-top: var(--sp-2xs); color: var(--muted); font-size: var(--fs-xs); line-height: var(--lh-normal); }
+  .settings-error { color: var(--d-fg); }
+  .settings-choice { display: inline-flex; padding: var(--sp-2xs); border: 1px solid transparent;
+    border-radius: var(--r-pill); background: var(--card-2); }
+  .settings-choice button { min-width: 64px; min-height: 44px; padding: var(--sp-sm) var(--sp-md);
+    border: none; border-radius: var(--r-pill); background: transparent; color: var(--muted);
+    font-family: inherit; font-size: var(--fs-sm); font-weight: var(--fw-bold); cursor: pointer; }
+  .settings-choice button.on { background: var(--accent); color: var(--on-accent); }
+  .settings-choice button:hover:not(.on) { color: var(--text); }
+  .settings-choice button.on:hover { background: var(--accent-hover); }
+  .settings-choice button.on:active { background: var(--accent-pressed); }
+  html[data-depth="pop"] .settings-choice { border-color: var(--border-2); }
+  .settings-admin { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-lg);
+    min-height: 48px; padding: var(--sp-sm) 0; border: none; background: transparent;
+    color: var(--text); font-family: inherit; text-align: left; cursor: pointer; }
+  .settings-admin:hover .settings-label { color: var(--accent); }
+  .settings-logout { align-self: flex-start; min-height: 48px; padding: var(--sp-lg) var(--sp-4xl);
+    border: 1px solid var(--border-2); border-radius: var(--r-pill); background: transparent;
+    color: var(--text); font-family: inherit; font-size: var(--fs-md); font-weight: var(--fw-bold); cursor: pointer; }
+  .settings-logout:hover { background: var(--card-2); }
+  #youBack:focus-visible, #tab-you button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  /* Current-flow challenge: the same cards and scroller, in the approved palette. */
+  html.challenge-active, html.challenge-active body { background: var(--welcome-bg); }
+  html.challenge-active #app { box-shadow: none; }
+  html.challenge-active :is(#sheet, .modal-overlay) { color: var(--text); }
+  html.challenge-active #sheet .sheet-chrome { --ink: var(--pa-ink); }
+  html.challenge-active ::selection { background: var(--accent-soft); color: var(--text); }
+  html.challenge-active #sheet .tile .label .badge { background: var(--card-2); color: var(--muted); border-radius: var(--r-pill); }
+  html.challenge-active .chart-legend { gap: var(--sp-2xs) var(--sp-lg); }
+  html.challenge-active .leg-item { min-height: 44px; font-size: var(--fs-xs); color: var(--text); }
+  html.challenge-active .leg-item.off { opacity: 1; color: var(--muted); text-decoration: line-through; }
+  html.challenge-active .leg-item.off .leg-swatch { background: var(--muted) !important; }
+  html.challenge-active .ltabs button { min-height: 44px; }
+  html.challenge-active .ltabs button.active { color: var(--accent); }
+  html.challenge-active .ltabs button.active::after { background: var(--accent); }
+  html.challenge-active .ltabs button:disabled { opacity: 1; color: var(--muted-2); }
+  html.challenge-active .entry .edit { min-width: 44px; min-height: 44px; color: var(--muted); }
+  html.challenge-active .lb-head { min-height: 64px; }
+  html.challenge-active .lb-name { white-space: normal; overflow-wrap: anywhere; }
+  html.challenge-active .jointile .jt-sub { color: var(--muted); }
+  html.challenge-active .jointile .jt-btn { min-height: 44px; color: var(--on-accent); }
+  html.challenge-active #fabAdd { color: var(--on-accent); }
+  html[data-depth="soft"].challenge-active #fabAdd { box-shadow: var(--elev-sm); }
+  html.challenge-active :is(#fabAdd, .jt-btn, .mbtn.primary, .btn:not(.ghost)):hover:not(:disabled) { background: var(--accent-hover); }
+  html.challenge-active :is(#fabAdd, .jt-btn, .mbtn.primary, .btn:not(.ghost)):active:not(:disabled) { background: var(--accent-pressed); }
+  html.challenge-active :is(#fabAdd, .jt-btn):disabled { color: var(--muted-2); background: var(--card-2); box-shadow: none; opacity: 1; cursor: not-allowed; }
+  html.challenge-active :is(#sheetBody, .modal-overlay) :is(button, input):focus-visible,
+  html.challenge-active #fabAdd:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  html.challenge-active .rh-manage .cr-reqdot { background: var(--d-bg); color: var(--d-fg); }
+  html.challenge-active .modal :is(input, .dp-trigger) { min-height: 48px; border-color: var(--field-edge); caret-color: var(--accent); }
+  html.challenge-active .modal input::placeholder { color: var(--muted); opacity: 1; }
+  html.challenge-active :is(.mbtn.primary, .btn:not(.ghost), .ar-approve, .mg-btn.on, .pe-chip.on, .cal-cell.sel, .cal-nav:active, .dot) { color: var(--on-accent); }
+  html.challenge-active .mbtn.danger { background: var(--d-bg); color: var(--d-fg); border-color: var(--d-fg); }
+  html.challenge-active .modal :is(.pe-chip, .mg-btn, .ar-btn, .quick button) { min-width: 44px; }
+  html.challenge-active .gtog .gtog-opt { height: 44px; }
+  html.challenge-active .gtog .gtog-thumb { top: var(--sp-2xs); left: var(--sp-2xs); height: 44px; box-shadow: none; }
+  html.challenge-active .gtog.is-closed .gtog-thumb { background: var(--d-bg); }
+  html.challenge-active .gtog.is-open .gtog-thumb { background: var(--s-bg); }
+  html.challenge-active .gtog.is-closed .gtog-opt[data-g="closed"] { color: var(--d-fg); }
+  html.challenge-active .gtog.is-open .gtog-opt[data-g="open"] { color: var(--s-fg); }
+  html.challenge-active .gtog-note { min-height: 44px; }
+
   /* ---- Icons ---------------------------------------------------------
      Phosphor, inlined as a sprite. Every icon in the app points at a stable
      #i-NAME alias and never at a weight directly, so changing weight rewrites
@@ -2516,33 +2629,6 @@
   .mg-chev .ic, .lb-chev .ic { width: 15px; height: 15px; display: block; }
   /* These two carried a text glyph before, sized by font-size. */
   .mg-chev, .lb-chev { display: inline-flex; align-items: center; }
-  /* ---- Settings: stacked rows for the two grid controls ---- */
-  .srow-col { flex-direction: column; align-items: stretch; gap: var(--sp-md); }
-  .wgrid { display: grid; grid-template-columns: repeat(var(--wcols, 3), 1fr); gap: var(--sp-xs); }
-  .wgrid button { min-width: 0; background: var(--card-2);
-    border: 1px solid var(--border); border-radius: var(--r-pill); padding: var(--sp-xs) var(--sp-md);
-    font-family: inherit; font-size: var(--fs-3xs); font-weight: var(--fw-black); color: var(--muted);
-    cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-xs); }
-  .wgrid button.on { background: var(--accent); border-color: var(--accent); color: #fff; }
-  .wgrid-scale button { padding: var(--sp-xs) 0; font-variant-numeric: tabular-nums; font-size: var(--fs-2xs); }
-  .wgrid button .ic { width: 15px; height: 15px; }
-  html[data-depth="pop"] .wgrid button { border: 2px solid var(--ink); }
-  html[data-depth="pop"] .wgrid button.on { border-color: var(--ink); }
-  .palgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(94px, 1fr)); gap: var(--sp-sm); }
-  .palgrid button { background: var(--card-2); border: 1px solid var(--border);
-    border-radius: var(--r-md); padding: var(--sp-sm); font-family: inherit; cursor: pointer;
-    text-align: left; color: var(--text); }
-  .palgrid button.on { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
-  html[data-depth="pop"] .palgrid button { border: 2px solid var(--ink); box-shadow: none; }
-  html[data-depth="pop"] .palgrid button.on { box-shadow: inset 0 0 0 2px var(--accent); }
-  .pal-sw { display: flex; height: 20px; border-radius: var(--r-xs); overflow: hidden;
-    margin-bottom: var(--sp-xs); box-shadow: inset 0 0 0 1px rgba(128,128,128,.28); }
-  .pal-sw i { flex: 1; }
-  .pal-nm { display: block; font-size: var(--fs-4xs); font-weight: var(--fw-black); letter-spacing: var(--ls-snug);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .pal-md { display: block; font-size: var(--fs-4xs); font-weight: var(--fw-bold); color: var(--muted-2);
-    text-transform: uppercase; letter-spacing: var(--ls-caps); margin-top: var(--sp-hair); }
-  .pal-md.warn { color: var(--danger); }
 </style>
 </head>
 <body x-data>
@@ -2672,10 +2758,18 @@
           <div class="sub" id="tabSub" x-text="$store.s.hello.sub"></div>
         </div>
       </div>
-      <button class="head-you" id="youBtn" aria-label="Your account" title="Your account">
-        <span class="dot lg" id="headAvatar"></span>
-        <span class="tab-badge" id="pendingBadge" hidden>0</span>
-      </button>
+      <div class="account-control">
+        <button class="head-you" id="youBtn" aria-label="Your account" title="Your account"
+                aria-haspopup="menu" aria-expanded="false">
+          <span class="dot lg" id="headAvatar"></span>
+          <span class="tab-badge" id="pendingBadge" hidden>0</span>
+        </button>
+        <div class="account-menu" id="accountMenu" role="menu" aria-label="Your account" hidden>
+          <button type="button" role="menuitem" tabindex="-1" id="accountSettings">Settings</button>
+          <button type="button" role="menuitem" tabindex="-1" id="accountBackoffice" x-show="$store.s.you.canAdmin">Backoffice</button>
+          <button type="button" role="menuitem" tabindex="-1" id="accountLogout" class="account-menu-logout">Log out</button>
+        </div>
+      </div>
     </header>
 
     <div class="msg msg--banner amb" role="status" aria-live="polite"></div>
@@ -2837,7 +2931,7 @@
           <button class="rh-back" id="youBack" aria-label="Back to challenges" title="Back to challenges"><svg class="ic" aria-hidden="true"><use href="#i-caret-left"/></svg></button>
           <!-- Same reasoning as the challenge title: the account page is a
                level-1 page too, and it had no heading of its own either. -->
-          <h1 class="rh-name">Account</h1>
+          <h1 class="rh-name">Settings</h1>
         </div>
       </div>
     </div>
@@ -2916,9 +3010,10 @@
         <div class="chart-wrap" id="chart"></div>
         <div class="chart-legend" id="legend">
           <template x-for="l in $store.s.legend" :key="l.name">
-            <div class="leg-item" :class="{ off: l.off, me: l.me }" @click="$store.s.act.toggleLegend(l.name)">
+            <button type="button" class="leg-item" :class="{ off: l.off, me: l.me }"
+                    :aria-pressed="!l.off" @click="$store.s.act.toggleLegend(l.name)">
               <span class="leg-swatch" :style="'background:' + l.color"></span><span x-text="l.name"></span>
-            </div>
+            </button>
           </template>
         </div>
         </div>
@@ -3053,138 +3148,54 @@
       </div>
       </section>
       <section class="tab-panel" id="tab-you" :class="{ active: $store.s.sheet === 'you' }">
-      <!-- Identity used to live in the sheet header, which repeated the avatar and
-           name already showing through the peek above it. The header now says only
-           where you are; who you are is the first thing IN the page, at a size that
-           can hold a real photo once there is one to hold. -->
-      <div class="prof" id="youProfile">
-        <!-- paintAvatar owns both the initial and the referrer-safe image. -->
-        <span class="prof-av" id="youAvatar">?</span>
-        <span class="prof-meta">
-          <span class="prof-name" id="youName" x-text="$store.s.you.name">You</span>
-          <span class="prof-sub" id="youSub" x-text="$store.s.you.sub">Your account</span>
-        </span>
-      </div>
-      <div class="slabel">Appearance</div>
-      <div class="sgroup">
-        <div class="srow">
-          <span class="smeta">
-            <span class="sname">Theme</span>
-            <span class="ssub">Light or dark</span>
+      <div class="settings-profile">
+        <div class="prof" id="youProfile">
+          <!-- paintAvatar owns both the initial and the referrer-safe image. -->
+          <span class="prof-av" id="youAvatar">?</span>
+          <span class="prof-meta">
+            <span class="prof-name" id="youName" x-text="$store.s.you.name">You</span>
+            <span class="prof-sub" id="youSub" x-text="$store.s.you.sub">Your account</span>
           </span>
-          <div class="seg3" id="setTheme">
-            <button type="button" data-theme-choice="light">Light</button>
-            <button type="button" data-theme-choice="dark">Dark</button>
-          </div>
         </div>
-        <!-- Only shown once there is a photo to choose. A Photo/Letter toggle
-             for somebody with no linked Google account is a control that cannot
-             do anything, which is worse than no control.
-
-             It sits AFTER Theme rather than first because x-show hides a row
-             without removing it, so as the first child it still counted as a
-             sibling and handed the Theme row a `.srow + .srow` border it should
-             not have had. Second, it is invisible when hidden in every sense. -->
-        <div class="srow" id="avatarRow" x-show="$store.s.you.hasPhoto">
-          <span class="smeta">
-            <span class="sname">Your picture</span>
-            <span class="ssub" id="avatarHint" aria-live="polite"
+        <div class="settings-row" id="avatarRow" x-show="$store.s.you.hasPhoto">
+          <span class="settings-copy">
+            <span class="settings-label" id="avatarLabel">Your picture</span>
+            <span class="settings-hint" id="avatarHint" aria-live="polite"
+              :class="{ 'settings-error': $store.s.you.photoFailed }"
               x-text="$store.s.you.photoFailed ? &quot;Couldn't load your photo. Choose Photo to retry.&quot; : 'Google photo, or your initial'">Google photo, or your initial</span>
           </span>
-          <div class="seg3" id="setAvatar">
-            <button type="button" data-avatar-choice="photo">Photo</button>
-            <button type="button" data-avatar-choice="letter">Letter</button>
+          <div class="settings-choice" id="setAvatar" role="group" aria-labelledby="avatarLabel" aria-describedby="avatarHint">
+            <button type="button" data-avatar-choice="photo" aria-pressed="false">Photo</button>
+            <button type="button" data-avatar-choice="letter" aria-pressed="false">Initial</button>
           </div>
-        </div>
-        <!-- Cards through Palette are still an in-progress design surface, not
-             ready for everyone yet: gated to admins only via the you view. -->
-        <div id="appearanceAdminOnly" x-show="$store.s.you.canAdmin">
-        <div class="srow">
-          <span class="smeta">
-            <span class="sname">Cards</span>
-            <span class="ssub">One list, or a card each</span>
-          </span>
-          <div class="seg3" id="setLayout">
-            <button type="button" data-layout="b">Grouped</button>
-            <button type="button" data-layout="c">Separate</button>
-          </div>
-        </div>
-        <div class="srow">
-          <span class="smeta">
-            <span class="sname">Depth</span>
-            <span class="ssub">Soft shadow, or hard pop</span>
-          </span>
-          <div class="seg3" id="setDepth">
-            <button type="button" data-depth="soft">Soft</button>
-            <button type="button" data-depth="pop">Pop</button>
-          </div>
-        </div>
-        <div class="srow srow-col">
-          <span class="smeta">
-            <span class="sname">Shadow</span>
-            <span class="ssub" x-text="$store.s.elevSteps.sub"></span>
-          </span>
-          <div class="wgrid wgrid-scale" id="setElev" style="--wcols: 7">
-            <template x-for="s in $store.s.elevSteps.steps" :key="s.n">
-              <button type="button" :data-elev="s.n" :class="{ on: s.on }"
-                      :title="s.label" :aria-label="'Shadow step ' + s.n + ', ' + s.label"
-                      @click="$store.s.act.setElev(s.n)" x-text="s.n"></button>
-            </template>
-          </div>
-        </div>
-        <div class="srow srow-col">
-          <span class="smeta">
-            <span class="sname">Icons</span>
-            <span class="ssub">Line weight, from hairline to solid</span>
-          </span>
-          <div class="wgrid" id="setIcons" style="--wcols: 3">
-            <template x-for="w in $store.s.iconWeights" :key="w.w">
-              <button type="button" :data-icw="w.w" :class="{ on: w.on }" @click="$store.s.act.setIconWeight(w.w)">
-                <svg class="ic" viewBox="0 0 256 256" aria-hidden="true"><use :href="w.href"/></svg><span x-text="w.label"></span>
-              </button>
-            </template>
-          </div>
-        </div>
-        <div class="srow">
-          <span class="smeta">
-            <span class="sname">Contrast</span>
-            <span class="ssub">Keep authored colours, or lift them to WCAG AA</span>
-          </span>
-          <div class="seg3" id="setContrast">
-            <button type="button" data-contrast="authored">Authored</button>
-            <button type="button" data-contrast="aa">AA</button>
-          </div>
-        </div>
-        <div class="srow srow-col">
-          <span class="smeta">
-            <span class="sname">Palette</span>
-            <span class="ssub">Colour scheme, shown in the current mode</span>
-          </span>
-          <div class="palgrid" id="setPalette">
-            <template x-for="p in $store.s.palettes" :key="p.id">
-              <button type="button" :data-pal="p.id" :class="{ on: p.on }" @click="$store.s.act.setPalette(p.id)">
-                <span class="pal-sw"><template x-for="(c, i) in p.sw" :key="i"><i :style="'background:' + c"></i></template></span>
-                <span class="pal-nm" x-text="p.name"></span>
-                <span class="pal-md" :class="{ warn: p.low }" x-text="p.note"></span>
-              </button>
-            </template>
-          </div>
-        </div>
         </div>
       </div>
-
-      <div class="slabel">Account</div>
-      <div class="sgroup">
-        <button type="button" class="srow srow-btn" id="youBackoffice" x-show="$store.s.you.canAdmin">
-          <span class="smeta"><span class="sname">Backoffice</span>
-          <span class="ssub">Manage challenges and members</span></span>
-          <span class="schev"><svg class="ic" aria-hidden="true"><use href="#i-caret-right"/></svg></span>
+      <div class="settings-preferences">
+        <div class="settings-row">
+          <span class="settings-label" id="themeLabel">Theme</span>
+          <div class="settings-choice" id="setTheme" role="group" aria-labelledby="themeLabel">
+            <button type="button" data-theme-choice="light" aria-pressed="false">Light</button>
+            <button type="button" data-theme-choice="dark" aria-pressed="false">Dark</button>
+          </div>
+        </div>
+        <div class="settings-row">
+          <span class="settings-copy">
+            <span class="settings-label" id="depthLabel">Depth</span>
+            <span class="settings-hint" id="depthHint">Soft shadows or bold edges</span>
+          </span>
+          <div class="settings-choice" id="setDepth" role="group" aria-labelledby="depthLabel" aria-describedby="depthHint">
+            <button type="button" data-depth="soft" aria-pressed="false">Soft</button>
+            <button type="button" data-depth="pop" aria-pressed="false">Pop</button>
+          </div>
+        </div>
+      </div>
+      <div class="settings-actions">
+        <button type="button" class="settings-admin" id="youBackoffice" x-show="$store.s.you.canAdmin">
+          <span class="settings-copy"><span class="settings-label">Backoffice</span>
+          <span class="settings-hint">Manage challenges and members</span></span>
+          <svg class="ic" aria-hidden="true"><use href="#i-caret-right"/></svg>
         </button>
-        <button type="button" class="srow srow-btn" id="youLogout">
-          <span class="smeta"><span class="sname">Log out</span>
-          <span class="ssub" id="youLogoutSub">End this session</span></span>
-          <span class="schev"><svg class="ic" aria-hidden="true"><use href="#i-caret-right"/></svg></span>
-        </button>
+        <button type="button" class="settings-logout" id="youLogout">Log out</button>
       </div>
       </section>
     </div>
@@ -3469,8 +3480,8 @@
                 </div>
               </template>
 
-              <div class="mg-section-h">Add someone new</div>
-              <div class="pe-add"><input type="text" id="peNewName" placeholder="New name" autocomplete="off" autocapitalize="words" @keydown.enter="$store.s.act.addNewParticipant()" /><button type="button" id="peNewBtn" @click="$store.s.act.addNewParticipant()">Add</button></div>
+              <div class="mg-section-h" id="peNewNameLabel">Add someone new</div>
+              <div class="pe-add"><input type="text" id="peNewName" aria-labelledby="peNewNameLabel" placeholder="New name" autocomplete="off" autocapitalize="words" @keydown.enter="$store.s.act.addNewParticipant()" /><button type="button" id="peNewBtn" @click="$store.s.act.addNewParticipant()">Add</button></div>
               <div class="msg msg--quiet" id="peErr" aria-live="polite"></div>
             </div>
           </div>
@@ -3525,7 +3536,6 @@
     </div>
   </div>
 </div>
-
 <script>
 (function () {
   "use strict";
@@ -3541,13 +3551,15 @@
   var DEFAULT_MEMBERS = [];
   var DEFAULT_ADMINS = [];
   var PALETTE = ["#7c5cff", "#34d399", "#ffb454", "#ff5c7c", "#38bdf8", "#f472d0",
-                 "#a3e635", "#fb923c", "#22d3ee", "#c084fc", "#f87171", "#4ade80"];
+                 "#a3e635", "#fb923c", "#22d3ee", "#c084fc", "#f87171", "#4ade80"].map(function (colour, index) {
+    return "var(--series-" + index + ", " + colour + ")";
+  });
   var SESSION_KEY = "minutes_session_v3";
   var ACTIVECID_KEY = "minutes_active_cid";
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
   var NAV_KEY = "minutes-nav";
-  var VERSION = "15.18";
+  var VERSION = "15.19";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -3911,10 +3923,6 @@
   // this flag, Vue saw no store write, and the strip never re-rendered.
   state.lbTouched = false;
   state.hiddenRev = 0;        // chart line show/hide ticks
-  state.iconRev = 0;          // icon weight ticks
-  state.paletteRev = 0;       // palette ticks
-  state.themeRev = 0;         // theme ticks (palette swatches are mode-dependent)
-  state.elevRev = 0;          // soft-shadow strength ticks
   // One-shot landing resolution (see clampViewMonth). viewTouched pins the month
   // the moment the user steps it themselves, so the resolver can never snap the
   // view out from under them.
@@ -4338,42 +4346,6 @@
       });
   });
 
-  view("elevSteps", function () {
-    this.elevRev;
-    var cur = currentElev();
-    return {
-      sub: "Soft depth \u00b7 step " + cur + " (" + ELEV_LABELS[cur] + ")",
-      steps: ELEV_LABELS.map(function (label, n) {
-        return { n: n, label: label, on: n === cur };
-      })
-    };
-  });
-
-  view("iconWeights", function () {
-    this.iconRev;
-    var label = { thin: "Thin", light: "Light", regular: "Regular", bold: "Bold", fill: "Fill", duotone: "Duo" };
-    var cur = currentIconWeight();
-    return ICON_WEIGHTS.map(function (w) {
-      // Each swatch previews its OWN weight, so it points at the variant directly
-      // rather than at the #i-* alias every other icon in the app uses.
-      return { w: w, label: label[w], href: "#p-trophy-" + w, on: w === cur };
-    });
-  });
-
-  view("palettes", function () {
-    this.paletteRev; this.themeRev;
-    var mode = currentTheme(), aa = currentContrast() === "aa", cur = currentPalette();
-    return PALETTES.map(function (p) {
-      var q = deriveMode(p, mode) || p;
-      if (aa) q = fitPalette(q);
-      var note = q.derived ? "derived" : "authored";
-      var low = !aa && !palettePassesAA(q);
-      if (low) note += " \u00b7 low";
-      return { id: p.id, name: p.name, note: note, low: low, on: p.id === cur,
-               sw: [q.bg, q.card, q.accent, q.live, q.gold] };
-    });
-  });
-
   // The rail needs five months on it to read as a wheel at all. Four of those are
   // fixed relative to TODAY: the current month, next month (always browsable), the
   // month after that (never browsable, it exists purely to balance the right-hand
@@ -4651,9 +4623,6 @@
     setRange: function (r) { state.lbTouched = true; state.lbRange = r; },
     togglePerson: function (name) { lbOpen[name] = !lbOpen[name]; state.lbOpenRev++; },
     toggleLegend: function (name) { state.hidden[name] = !state.hidden[name]; state.hiddenRev++; renderChart(); },
-    setElev: function (n) { applyElev(n, true); },
-    setIconWeight: function (w) { applyIconWeight(w, true); state.iconRev++; },
-    setPalette: function (id) { applyPalette(id, true); state.paletteRev++; },
     monthPrev: function () { changeMonth(-1); },
     monthNext: function () { changeMonth(1); },
     monthGoto: function (key) { wheelGlideToKey(key); setViewMonthKey(key); },
@@ -5011,10 +4980,16 @@
     }
     function updateThemeColor() {
       document.documentElement.classList.toggle("welcome-active", !state.signedIn);
-      var hub = state.signedIn && !state.sheet;
+      var backoffice = document.getElementById("backofficeView").classList.contains("show");
+      var hub = state.signedIn && !state.sheet && !backoffice;
+      var settings = state.signedIn && state.sheet === "you" && !backoffice;
+      var challenge = state.signedIn && state.sheet === "stats" && !backoffice;
       document.documentElement.classList.toggle("hub-active", hub);
+      document.documentElement.classList.toggle("settings-active", settings);
+      document.documentElement.classList.toggle("challenge-active", challenge);
       var meta = document.querySelector('meta[name="theme-color"]');
-      var surface = !state.signedIn ? login : hub ? document.getElementById("layerBase") : document.documentElement;
+      var surface = !state.signedIn ? login : hub ? document.getElementById("layerBase")
+        : settings || challenge ? document.getElementById("sheet") : document.documentElement;
       if (meta) meta.setAttribute("content", getComputedStyle(surface).getPropertyValue("--bg").trim());
     }
     function sync() {
@@ -5128,10 +5103,7 @@
     bump();
   }
   function syncAvatarSeg() {
-    var cur = currentAvatarStyle();
-    document.querySelectorAll("#setAvatar button").forEach(function (b) {
-      b.classList.toggle("on", b.getAttribute("data-avatar-choice") === cur);
-    });
+    syncPreferenceChoices("setAvatar", "data-avatar-choice", currentAvatarStyle());
   }
   // A failed download must not remove the user's choice or its retry action.
   function hasAvatarPhoto() {
@@ -5272,6 +5244,7 @@
   }
 
   function doLogout() {
+    closeAccountMenu(false);
     state.me = null;
     localStorage.removeItem(SESSION_KEY);
     localStorage.removeItem(NAV_KEY);   // the next person to sign in gets the default landing
@@ -6507,6 +6480,70 @@
   // "you" are all level-1 sheet views, and asking for any of them raises the sheet.
   var sheetView = "stats";
 
+  function closeAccountMenu(returnFocus) {
+    var menu = document.getElementById("accountMenu");
+    if (menu.hidden) return;
+    menu.hidden = true;
+    menu.classList.remove("show");
+    var trigger = document.getElementById("youBtn");
+    trigger.setAttribute("aria-expanded", "false");
+    if (returnFocus !== false && state.signedIn && !state.sheet &&
+        !appEl().classList.contains("bo-active")) trigger.focus({ preventScroll: true });
+  }
+
+  (function () {
+    var trigger = document.getElementById("youBtn");
+    var menu = document.getElementById("accountMenu");
+    function items() {
+      return [].slice.call(menu.querySelectorAll('[role="menuitem"]')).filter(function (el) {
+        return !!(el.offsetWidth || el.offsetHeight);
+      });
+    }
+    function focusItem(list, index) {
+      list.forEach(function (el, i) { el.tabIndex = i === index ? 0 : -1; });
+      list[index].focus({ preventScroll: true });
+    }
+    function open(last) {
+      if (!state.signedIn || state.sheet || appEl().classList.contains("bo-active")) return;
+      menu.hidden = false;
+      menu.classList.add("show");
+      trigger.setAttribute("aria-expanded", "true");
+      var list = items();
+      focusItem(list, last ? list.length - 1 : 0);
+    }
+    trigger.onclick = function () { if (menu.hidden) open(false); else closeAccountMenu(); };
+    trigger.addEventListener("keydown", function (e) {
+      if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+      e.preventDefault();
+      open(e.key === "ArrowUp");
+    });
+    menu.addEventListener("keydown", function (e) {
+      if (["ArrowDown", "ArrowUp", "Home", "End"].indexOf(e.key) < 0) return;
+      e.preventDefault();
+      var list = items(), index = list.indexOf(document.activeElement);
+      if (e.key === "Home") index = 0;
+      else if (e.key === "End") index = list.length - 1;
+      else index = (index + (e.key === "ArrowDown" ? 1 : -1) + list.length) % list.length;
+      focusItem(list, index);
+    });
+    document.addEventListener("pointerdown", function (e) {
+      if (!menu.contains(e.target) && !trigger.contains(e.target)) closeAccountMenu(false);
+    }, true);
+    document.addEventListener("focusin", function (e) {
+      if (!menu.contains(e.target) && !trigger.contains(e.target)) closeAccountMenu(false);
+    });
+    window.addEventListener("resize", function () { closeAccountMenu(false); });
+    document.getElementById("accountSettings").onclick = function () {
+      closeAccountMenu(false);
+      switchTab("you");
+      requestAnimationFrame(function () {
+        if (state.signedIn && state.sheet === "you") document.getElementById("youBack").focus({ preventScroll: true });
+      });
+    };
+    document.getElementById("accountBackoffice").onclick = function () { openBackoffice(trigger); };
+    document.getElementById("accountLogout").onclick = function () { doLogout(); };
+  })();
+
   function appEl() { return document.getElementById("app"); }
   function sheetOpen() { return !!state.sheet; }
   // Read from the tokens rather than duplicated here, so the CSS and the JS
@@ -6604,7 +6641,10 @@
   // needs is inside it.
   function syncBaseInert() {
     var base = document.querySelector(".layer-base");
-    if (base) base.inert = !!state.sheet;
+    var backoffice = document.getElementById("backofficeView").classList.contains("show");
+    if (base) base.inert = !!state.sheet || backoffice;
+    document.getElementById("sheet").inert = backoffice;
+    if (state.sheet || backoffice || !state.signedIn) closeAccountMenu(false);
     LoginWelcome.updateThemeColor();
   }
 
@@ -6658,6 +6698,7 @@
     var bw = document.getElementById("baseWrap"); if (!bw) return;
     var queued = false;
     bw.addEventListener("scroll", function () {
+      closeAccountMenu(false);
       if (queued) return;
       queued = true;
       requestAnimationFrame(function () { queued = false; syncFabTuck(); });
@@ -6683,8 +6724,10 @@
     ["statsBack", "youBack"].forEach(function (id) {
       var el = document.getElementById(id); if (el) el.onclick = close;
     });
-    var yb = document.getElementById("youBtn");
-    if (yb) yb.onclick = function () { switchTab("you"); };
+    document.getElementById("youBack").onclick = function () {
+      switchTab("challenges");
+      document.getElementById("youBtn").focus({ preventScroll: true });
+    };
 
     // ---- swipe back from the left edge ----
     // Level 1 used to be a sheet you dragged DOWNWARD off the screen, with a grab
@@ -7722,13 +7765,13 @@
 
   // ---- Multi-line cumulative chart (all friends) ----
   function chartColors() {
-    var s = getComputedStyle(document.documentElement);
+    // Resolve in the SVG's surface, including when a cached chart changes theme.
     return {
-      grid: s.getPropertyValue("--chart-grid").trim(),
-      grid2: s.getPropertyValue("--chart-grid-2").trim(),
-      ring: s.getPropertyValue("--chart-node-ring").trim(),
-      label: s.getPropertyValue("--muted").trim(),
-      sub: s.getPropertyValue("--muted-2").trim()
+      grid: "var(--chart-grid)",
+      grid2: "var(--chart-grid-2)",
+      ring: "var(--chart-node-ring)",
+      label: "var(--muted)",
+      sub: "var(--muted-2)"
     };
   }
 
@@ -7897,7 +7940,6 @@
   // are the templates in #seg / #leaderboard, fed by the `board` view model. Only
   // the admin roster editor is still imperative, so it is refreshed here.
   function renderLeaderboard() { bump(); }
-
   // ---- Motivational hero line (auto-cycles today / month) ----
   var motivTimer = null;
   var MOTIV_MS = 12000;
@@ -8178,6 +8220,11 @@
   var POP_MS = { success: 2500, info: 3000, warn: 4500, danger: 0 };
   var UNDO_MS = 5000;
   var toastTimer = null, toastUndoFn = null;
+  // Wrapped feedback needs its own space below an open dialog's actions.
+  new ResizeObserver(function () {
+    document.getElementById("app").style.setProperty("--toast-height",
+      document.getElementById("toast").offsetHeight + "px");
+  }).observe(document.getElementById("toast"));
   // The third argument is either an undo function (the long-standing shape) or an
   // explicit { label, fn } for any other recovery. An undo is time-boxed because it
   // reverses something that already happened; a recovery is not, so it keeps the
@@ -8875,19 +8922,30 @@
   }
 
   // ---- Backoffice console (global admins only) ----
-  function openBackoffice() {
+  var backofficeOpener = null;
+  function openBackoffice(opener) {
     if (!meIsAdmin()) return;
+    backofficeOpener = opener || document.activeElement;
+    closeAccountMenu(false);
     setMsg("boUserErr", "");
     renderBackoffice();
     document.getElementById("app").classList.add("bo-active");
     document.getElementById("backofficeView").classList.add("show");
+    syncBaseInert();
     scrollActiveTop();
+    document.getElementById("boClose").focus({ preventScroll: true });
   }
   function closeBackoffice() {
     var v = document.getElementById("backofficeView");
+    var wasOpen = v && v.classList.contains("show");
     if (v) v.classList.remove("show");
     document.getElementById("app").classList.remove("bo-active");
+    syncBaseInert();
     closeManageModal();
+    var opener = backofficeOpener;
+    backofficeOpener = null;
+    if (wasOpen && state.me && opener && opener.isConnected &&
+        (opener.offsetWidth || opener.offsetHeight)) opener.focus({ preventScroll: true });
   }
   function renderBackoffice() { if (!meIsAdmin()) { closeBackoffice(); return; } bump(); }
   function renderBoChallenges() { bump(); }
@@ -8961,7 +9019,6 @@
   document.getElementById("newMember").addEventListener("keydown", function (e) {
     if (e.key === "Enter") document.getElementById("addMemberBtn").click();
   });
-
   // ---- Data store: Firestore only ----
   var entriesAll = [];        // every entry across all challenges, each carrying its cid
   var Store = (function () {
@@ -9382,14 +9439,11 @@
     var meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.setAttribute("content", getComputedStyle(document.documentElement).getPropertyValue("--bg").trim() || "#14162b");
     if (state.me) renderChart();
-    state.themeRev++;
-    if (palReady) { renderPaletteGrid(); applyPalette(currentPalette(), false); }
+    if (palReady) applyPalette(currentPalette(), false);
   }
   function toggleMenu() { /* the gear menu is gone; settings live on the You tab */ }
-
-  // ---- Appearance: card layout and depth ----
-  // Only two user-facing choices. The offsets, ink and soft ramp are fixed design
-  // tokens in CSS, not knobs, so there is nothing here to drift out of sync.
+  // ---- Appearance: current choices and retained legacy preferences ----
+  // Retired experiment controls must not erase saved styling on open challenges.
   var LAYOUT_KEY = "minutes-layout", DEPTH_KEY = "minutes-depth";
   function currentLayout() { try { return localStorage.getItem(LAYOUT_KEY) === "c" ? "c" : "b"; } catch (e) { return "b"; } }
   function currentDepth() { try { return localStorage.getItem(DEPTH_KEY) === "pop" ? "pop" : "soft"; } catch (e) { return "soft"; } }
@@ -9405,27 +9459,16 @@
     if (persist) { try { localStorage.setItem(DEPTH_KEY, t); } catch (e) {} }
     syncAppearance();
   }
+  function syncPreferenceChoices(id, attribute, value) {
+    document.querySelectorAll("#" + id + " button").forEach(function (b) {
+      var selected = b.getAttribute(attribute) === value;
+      b.classList.toggle("on", selected);
+      b.setAttribute("aria-pressed", String(selected));
+    });
+  }
   function syncAppearance() {
-    var t = currentTheme(), l = currentLayout(), d = currentDepth();
-    document.querySelectorAll("#setTheme button").forEach(function (b) {
-      b.classList.toggle("on", b.getAttribute("data-theme-choice") === t);
-    });
-    document.querySelectorAll("#setLayout button").forEach(function (b) {
-      b.classList.toggle("on", b.getAttribute("data-layout") === l);
-    });
-    document.querySelectorAll("#setDepth button").forEach(function (b) {
-      b.classList.toggle("on", b.getAttribute("data-depth") === d);
-    });
-    var w = currentIconWeight(), pal = currentPalette(), ct = currentContrast();
-    document.querySelectorAll("#setIcons button").forEach(function (b) {
-      b.classList.toggle("on", b.getAttribute("data-icw") === w);
-    });
-    document.querySelectorAll("#setPalette button").forEach(function (b) {
-      b.classList.toggle("on", b.getAttribute("data-pal") === pal);
-    });
-    document.querySelectorAll("#setContrast button").forEach(function (b) {
-      b.classList.toggle("on", b.getAttribute("data-contrast") === ct);
-    });
+    syncPreferenceChoices("setTheme", "data-theme-choice", currentTheme());
+    syncPreferenceChoices("setDepth", "data-depth", document.documentElement.getAttribute("data-depth"));
   }
 
 
@@ -9437,7 +9480,6 @@
   // Shadow strength for Soft depth. 4 is the shipped ramp; the setting only
   // rescales it, so nothing else in the design system has to know about it.
   var ELEV_KEY = "minutes-elev", ELEV_DEFAULT = 1;
-  var ELEV_LABELS = ["None", "Whisper", "Faint", "Light", "Medium", "Strong", "Heavy"];
   function currentElev() {
     try {
       var v = parseInt(localStorage.getItem(ELEV_KEY), 10);
@@ -9448,7 +9490,6 @@
     n = (n >= 0 && n <= 6) ? n : ELEV_DEFAULT;
     document.documentElement.setAttribute("data-elev", String(n));
     if (persist) { try { localStorage.setItem(ELEV_KEY, String(n)); } catch (e) {} }
-    state.elevRev++;
   }
 
   var ICONW_KEY = "minutes-iconw";
@@ -9708,12 +9749,6 @@
     try { return localStorage.getItem(CONTRAST_KEY) === "aa" ? "aa" : "authored"; }
     catch (e) { return "authored"; }
   }
-  function applyContrast(v, persist) {
-    v = v === "aa" ? "aa" : "authored";
-    if (persist) { try { localStorage.setItem(CONTRAST_KEY, v); } catch (e) {} }
-    renderPaletteGrid();
-    applyPalette(currentPalette(), false);
-  }
   // Pull only the readability-critical colours up to AA. Backgrounds and text are
   // left alone: those are the palette's identity, and moving them moves everything.
   function fitPalette(p) {
@@ -9726,20 +9761,6 @@
     o.gold   = fitOnBoth(p.gold,   p.bg, p.card, 3.0, m);
     o.tiles  = p.tiles.map(function (c) { return fitOnBoth(c, p.bg, p.card, 3.0, m); });
     return o;
-  }
-  // Does this palette read cleanly once expanded? The ten authored colours are
-  // not what gets drawn: the tokens derived from them are, and a colour can pass
-  // on the page background and still fail on a card sitting on top of it.
-  function palettePassesAA(p) {
-    var T = expandPalette(p), card = T["--card"], i;
-    var need = [["--text", 4.5], ["--muted", 4.5], ["--total", 4.5],
-                ["--tint-accent-fg", 4.5], ["--live-fg", 4.5],
-                ["--accent", 3], ["--accent-2", 3]];
-    for (i = 0; i < need.length; i++) {
-      var v = T[need[i][0]];
-      if (v && v.charAt(0) === "#" && contrast(v, card) < need[i][1]) return false;
-    }
-    return true;
   }
   function currentPalette() {
     try {
@@ -9772,36 +9793,21 @@
     syncAppearance();
   }
 
-  // ---- Settings grids ---------------------------------------------------
-  // The weight swatches are the `iconWeights` template inside #setIcons.
-  function renderIconGrid() { state.iconRev++; }
-
-  // The palette swatches are the `palettes` template inside #setPalette.
-  function renderPaletteGrid() { state.paletteRev++; }
-
   function renderYou() { bump(); syncAppearance(); }
 
   function initTheme() {
-    renderIconGrid();
     applyTheme(currentTheme(), false);
     applyLayout(currentLayout(), false);
     applyDepth(currentDepth(), false);
     applyIconWeight(currentIconWeight(), false);
     applyElev(currentElev(), false);
-    renderPaletteGrid();
     applyPalette(currentPalette(), false);
     palReady = true;
     document.querySelectorAll("#setTheme button").forEach(function (b) {
       b.addEventListener("click", function () { applyTheme(b.getAttribute("data-theme-choice"), true); syncAppearance(); });
     });
-    document.querySelectorAll("#setLayout button").forEach(function (b) {
-      b.addEventListener("click", function () { applyLayout(b.getAttribute("data-layout"), true); });
-    });
     document.querySelectorAll("#setDepth button").forEach(function (b) {
       b.addEventListener("click", function () { applyDepth(b.getAttribute("data-depth"), true); });
-    });
-    document.querySelectorAll("#setContrast button").forEach(function (b) {
-      b.addEventListener("click", function () { applyContrast(b.getAttribute("data-contrast"), true); });
     });
     document.querySelectorAll("#setAvatar button").forEach(function (b) {
       b.addEventListener("click", function () {
@@ -9812,7 +9818,7 @@
     var ml = document.getElementById("youLogout");
     if (ml) ml.addEventListener("click", function () { doLogout(); });
     var mbo = document.getElementById("youBackoffice");
-    if (mbo) mbo.addEventListener("click", function () { openBackoffice(); });
+    if (mbo) mbo.addEventListener("click", function () { openBackoffice(mbo); });
   }
 
   // Android back gesture: close the topmost open overlay instead of exiting the app.
@@ -9832,6 +9838,7 @@
       // is ordered ahead of addModal in initModalA11y. Keep these two lists in
       // the same order or Escape and Back would close different things.
       ["addModal", "show", hideAdd],
+      ["accountMenu", "show", closeAccountMenu],
       ["backofficeView", "show", closeBackoffice],
       ["app", "l1", function () { switchTab("challenges"); }]
     ];
@@ -9843,7 +9850,7 @@
       var el = document.getElementById(o[0]);
       return !!el && el.classList.contains(o[1]);
     }
-    function anyOpen() { return layers.some(isOpen); }
+    function anyOpen() { return state.signedIn && layers.some(isOpen); }
     function closeTop() {
       for (var i = 0; i < layers.length; i++) {
         if (isOpen(layers[i])) { layers[i][2](); return; }
@@ -9861,7 +9868,13 @@
       // was BEFORE this layer opened -- so the address bar has to be re-asserted
       // from the state that is actually on screen, or closing a challenge would
       // silently leave its own URL behind.
-      if (suppress) { suppress = false; guard = false; writeRoute(); return; }
+      // A menu action can replace the menu with a page while its sentinel retires.
+      if (suppress) {
+        suppress = false; guard = false;
+        if (state.signedIn) writeRoute(); else clearRoute();
+        sync();
+        return;
+      }
       guard = false;
       // The overlay stack gets first refusal, and a pop it consumed is finished
       // here. Only a pop that closed nothing can be history traversal, and only
@@ -9869,7 +9882,7 @@
       // event, so a back press can never peel a dialog and re-route in the same
       // breath.
       if (anyOpen()) { closeTop(); return; } // removes a state class -> sync() re-arms if more remain
-      routePopstate();
+      if (state.signedIn) routePopstate(); else clearRoute();
     });
 
     var mo = new MutationObserver(sync);
@@ -9898,7 +9911,9 @@
       ["confirmModal", hideConfirm],
       ["calPop", closeCal],
       ["challModal", hideChallModal],
-      ["addModal", hideAdd]
+      ["addModal", hideAdd],
+      ["accountMenu", closeAccountMenu],
+      ["backofficeView", closeBackoffice]
     ];
     var dialogs = ["manageModal", "editModal", "confirmModal", "challModal", "addModal"];
     var openers = {};

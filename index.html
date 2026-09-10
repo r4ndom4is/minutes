@@ -858,9 +858,9 @@
      is doing real work and is not decoration: a photograph brings its own
      arbitrary edge colour, and without a rim a light one bleeds into the light
      canvas and a dark one into the dark. */
-  .dot.lg, .prof-av { background-size: cover; background-position: center; }
-  .dot.lg[data-photo], .prof-av[data-photo] {
-    box-shadow: inset 0 0 0 1px rgba(0,0,0,.14);
+  .dot.lg > img, .prof-av > img {
+    width: 100%; height: 100%; object-fit: cover; border-radius: inherit;
+    outline: 1px solid rgba(0,0,0,.14); outline-offset: -1px;
   }
   .dot.lg { width: 36px; height: 36px; font-size: var(--fs-lg); }
   .mg-row:last-child { border-bottom: none; }
@@ -3057,10 +3057,8 @@
            where you are; who you are is the first thing IN the page, at a size that
            can hold a real photo once there is one to hold. -->
       <div class="prof" id="youProfile">
-        <!-- No :style binding here. Alpine writing the `background` shorthand on
-             every render resets background-image, which is where the photo
-             lives, so the avatar is painted imperatively by paintAvatar(). -->
-        <span class="prof-av" id="youAvatar" x-text="$store.s.you.initial">?</span>
+        <!-- paintAvatar owns both the initial and the referrer-safe image. -->
+        <span class="prof-av" id="youAvatar">?</span>
         <span class="prof-meta">
           <span class="prof-name" id="youName" x-text="$store.s.you.name">You</span>
           <span class="prof-sub" id="youSub" x-text="$store.s.you.sub">Your account</span>
@@ -3089,7 +3087,8 @@
         <div class="srow" id="avatarRow" x-show="$store.s.you.hasPhoto">
           <span class="smeta">
             <span class="sname">Your picture</span>
-            <span class="ssub">Google photo, or your initial</span>
+            <span class="ssub" id="avatarHint" aria-live="polite"
+              x-text="$store.s.you.photoFailed ? &quot;Couldn't load your photo. Choose Photo to retry.&quot; : 'Google photo, or your initial'">Google photo, or your initial</span>
           </span>
           <div class="seg3" id="setAvatar">
             <button type="button" data-avatar-choice="photo">Photo</button>
@@ -3547,7 +3546,7 @@
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
   var NAV_KEY = "minutes-nav";
-  var VERSION = "15.16";
+  var VERSION = "15.17";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -4450,6 +4449,7 @@
       color: colorFor(state.me || ""),
       // Drives whether the Photo/Letter choice is offered at all.
       hasPhoto: hasAvatarPhoto(),
+      photoFailed: currentAvatarStyle() === "photo" && avatarPhotoFailed(),
       sub: mine === 1 ? "In 1 challenge" : "In " + mine + " challenges",
       canAdmin: meIsAdmin()
     };
@@ -5036,7 +5036,7 @@
       }
       if (network.textContent !== text) setMsg(network, text, "warn");
       var google = document.getElementById("googleBtn");
-      google.disabled = google.getAttribute("aria-busy") === "true" ||
+      google.disabled = (google.dataset.mode === "out" && google.getAttribute("aria-busy") === "true") ||
         (google.dataset.mode !== "out" && navigator.onLine === false);
       var request = document.getElementById("claimBtn");
       request.disabled = request.getAttribute("aria-busy") === "true" ||
@@ -5098,15 +5098,16 @@
   // Google photo once there was one. This is that swap, in one place, because
   // the photo carries edge cases not worth discovering twice:
   //
-  //   - Google 403s the image without referrerpolicy=no-referrer.
+  //   - The displayed image uses referrerpolicy=no-referrer, not just a preload.
   //   - A photo can fail (revoked, deleted, offline). It falls back to the
   //     initial rather than leaving a broken image, and the failed URL is
-  //     remembered so a repaint cannot refetch it on a loop.
+  //     remembered until an explicit retry, reauthentication or reconnection.
   //   - Signing out has to drop the previous person's face.
   //
   // The URL is asked for at 128px wherever it lands, so the 36px header and the
   // 64px You circle share one cached image and both stay sharp on a 3x screen.
-  var badAvatarPhoto = "";
+  var badAvatarPhoto = null;
+  var avatarLoads = new WeakMap();
   // Photo or initial. Some people would rather not have their face in an app,
   // and the choice costs nothing to honour. Stored like the theme: a plain
   // local preference, no account round-trip, so it survives a reload and stays
@@ -5120,8 +5121,10 @@
   function applyAvatarStyle(choice, persist) {
     var c = (choice === "letter") ? "letter" : "photo";
     if (persist) { try { localStorage.setItem(AVATAR_KEY, c); } catch (e) {} }
+    if (c === "photo") badAvatarPhoto = null;
     paintAvatars();
     syncAvatarSeg();
+    bump();
   }
   function syncAvatarSeg() {
     var cur = currentAvatarStyle();
@@ -5129,51 +5132,62 @@
       b.classList.toggle("on", b.getAttribute("data-avatar-choice") === cur);
     });
   }
-  // Whether a photo is available at all, which decides if the choice is even
-  // offered. Reads auth directly rather than the preference.
+  // A failed download must not remove the user's choice or its retry action.
   function hasAvatarPhoto() {
     var u = (window.__AUTH && window.__AUTH.user) || null;
-    var p = (u && u.photo) || "";
-    return !!p && p !== badAvatarPhoto;
+    return !!(u && u.photo);
+  }
+  function avatarPhotoFailed() {
+    var u = (window.__AUTH && window.__AUTH.user) || null;
+    return !!(u && badAvatarPhoto && badAvatarPhoto.uid === u.uid &&
+      badAvatarPhoto.photo === u.photo);
   }
   function avatarPhotoUrl() {
     if (currentAvatarStyle() === "letter") return "";
     var u = (window.__AUTH && window.__AUTH.user) || null;
     var p = (u && u.photo) || "";
-    if (!p || p === badAvatarPhoto) return "";
+    if (!p || avatarPhotoFailed()) return "";
     return /=s\d+/.test(p) ? p.replace(/=s\d+(-c)?/, "=s128-c") : p;
   }
   function paintAvatar(el, name) {
     if (!el) return;
     var initial = String(name || "?").charAt(0).toUpperCase();
     var url = avatarPhotoUrl();
+    var user = (window.__AUTH && window.__AUTH.user) || null;
     function fallback() {
       // Removed, not blanked: [data-photo] matches an empty attribute too, and
       // the ringed style would survive the photo it was meant to ring.
       delete el.dataset.photo;
       el.style.backgroundImage = "";
       el.style.color = "";
-      if (el.textContent !== initial && !el.hasAttribute("x-text")) el.textContent = initial;
+      if (el.textContent !== initial || el.childElementCount) el.textContent = initial;
       el.style.backgroundColor = colorFor(name || "");
     }
-    if (!url) { fallback(); return; }
-    if (el.dataset.photo === url) return;      // already showing this face
-    // The photo lands as a BACKGROUND, not an appended <img>. The You page's
-    // circle is x-text bound, so a child element would be wiped on the next
-    // Alpine pass; a background survives it, and the initial underneath is
-    // simply made transparent. Preloading through an Image is what buys back
-    // the error handling that background-image does not have.
+    if (!url) { avatarLoads.delete(el); fallback(); return; }
+    var previous = avatarLoads.get(el);
+    if (previous && previous.uid === user.uid && previous.photo === user.photo) return;
+    var request = { uid: user.uid, photo: user.photo };
+    avatarLoads.set(el, request);
+    fallback();
+    function current() {
+      var u = (window.__AUTH && window.__AUTH.user) || null;
+      return avatarLoads.get(el) === request && u && u.uid === request.uid &&
+        u.photo === request.photo && avatarPhotoUrl() === url;
+    }
     var probe = new Image();
     probe.referrerPolicy = "no-referrer";
+    probe.alt = "";
     probe.onload = function () {
+      if (!current()) return;
       el.dataset.photo = url;
-      el.style.backgroundImage = 'url("' + url + '")';
       el.style.backgroundColor = "";
-      el.style.color = "transparent";
+      el.replaceChildren(probe);
     };
     probe.onerror = function () {
-      badAvatarPhoto = ((window.__AUTH && window.__AUTH.user) || {}).photo || "";
-      fallback();
+      if (!current()) return;
+      badAvatarPhoto = request;
+      paintAvatars();
+      bump();
     };
     probe.src = url;
   }
@@ -5187,9 +5201,16 @@
   // and only show a face after some unrelated re-render. bump() re-runs the
   // `you` view so the Photo/Letter row appears the moment a photo exists.
   window.addEventListener("minutes-auth", function () {
+    badAvatarPhoto = null;
     paintAvatars();
     syncAvatarSeg();
     if (typeof bump === "function") bump();
+  });
+  window.addEventListener("online", function () {
+    if (!avatarPhotoFailed()) return;
+    badAvatarPhoto = null;
+    paintAvatars();
+    bump();
   });
 
   function doLogin(name) {
@@ -5208,10 +5229,6 @@
     var seen = "";
     try { seen = localStorage.getItem(WELCOME_KEY) || ""; } catch (e) {}
     state.welcomed = seen === String(name).toLowerCase();
-    // Both avatars, not just the header. The You circle used to get its colour
-    // from an Alpine :style binding, which had to go because it reset the
-    // background-image the photo lives in; painting one and not the other left
-    // that circle transparent with white text on it.
     paintAvatars();
     setDate(todayStr());
     refreshAdminAccess();
@@ -5284,17 +5301,29 @@
     }
   }
 
-  // --- Google sign-in (Phase 2) ------------------------------------------------
-  // Additive and non-enforcing: this records WHO is signed in, it does not yet decide
-  // app identity. The typed handle still does that. Keeping the two separate for one
-  // release means the OAuth plumbing gets proven in production before any identity
-  // logic is built on top of it, and nothing breaks for users who never sign in.
+  // --- Google sign-in ---------------------------------------------------------
   (function () {
     var btn = document.getElementById("googleBtn");
     var label = document.getElementById("googleBtnLabel");
     var who = document.getElementById("authWho");
     var hint = document.getElementById("authHint");
     if (!btn || !label || !who) return;
+    var activeAttempt = null;
+
+    function finish(attempt) {
+      if (activeAttempt !== attempt) return false;
+      activeAttempt = null;
+      btn.setAttribute("aria-busy", "false");
+      btn.disabled = false;
+      LoginWelcome.sync();
+      return true;
+    }
+    function failed(attempt, e) {
+      if (!finish(attempt)) return;
+      var message = errText(e);
+      if (message) console.error(attempt.signingOut ? "Google sign-out:" : "Google sign-in:", e);
+      setMsg("authErr", message);
+    }
 
     // Auth failures here are nearly always one of a few config gaps, and the raw
     // Firebase codes point at nothing obvious. Name the actual fix instead.
@@ -5325,6 +5354,7 @@
         if (hint) hint.style.display = "";
       }
       setMsg("authErr", "");
+      if (activeAttempt && (activeAttempt.signingOut ? !u : !!u)) finish(activeAttempt);
     }
 
     btn.onclick = function () {
@@ -5333,19 +5363,42 @@
         return;
       }
       var signingOut = btn.dataset.mode === "out";
-      btn.disabled = true;
+      if (activeAttempt && activeAttempt.signingOut) return;
+      var attempt = { signingOut: signingOut, away: false };
+      activeAttempt = attempt;
+      // iOS can leave a cancelled popup pending. A fresh user click must still
+      // reach Firebase, which replaces the previous popup request.
+      btn.disabled = signingOut;
       btn.setAttribute("aria-busy", "true");
+      LoginWelcome.sync();
       setMsg("authErr", "");
-      var p = signingOut ? window.__AUTH.signOut() : window.__AUTH.signInGoogle();
-      p.catch(function (e) {
-        console.error(signingOut ? "Google sign-out:" : "Google sign-in:", e);
-        setMsg("authErr", errText(e));
-      }).finally(function () {
-        btn.setAttribute("aria-busy", "false");
-        LoginWelcome.sync();
-      });
+      try {
+        // Call synchronously to preserve the click's popup permission.
+        var p = signingOut ? window.__AUTH.signOut() : window.__AUTH.signInGoogle();
+        p.then(function () { finish(attempt); }, function (e) { failed(attempt, e); });
+      } catch (e) {
+        failed(attempt, e);
+      }
     };
 
+    function markAway() {
+      if (activeAttempt) activeAttempt.away = true;
+    }
+    function returned(restored) {
+      if (!activeAttempt || activeAttempt.signingOut || document.hidden ||
+          (!activeAttempt.away && !restored)) return;
+      activeAttempt.away = false;
+      // Keep ownership of its eventual result until the user starts a retry.
+      btn.setAttribute("aria-busy", "false");
+      LoginWelcome.sync();
+    }
+    window.addEventListener("blur", markAway);
+    window.addEventListener("focus", function () { returned(false); });
+    window.addEventListener("pageshow", function (ev) { returned(ev.persisted); });
+    document.addEventListener("visibilitychange", function () {
+      if (document.hidden) markAway();
+      else returned(false);
+    });
     window.addEventListener("minutes-auth", function (ev) { render(ev.detail); });
     // The auth module may have resolved before this script ran, so don't rely on the
     // event alone for the initial paint.

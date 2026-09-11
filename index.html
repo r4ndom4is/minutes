@@ -33,7 +33,7 @@
       // Soft-shadow strength, applied before first paint so a lighter setting
       // does not flash the heavier default ramp on load.
       var el = parseInt(localStorage.getItem("minutes-elev"), 10);
-      document.documentElement.setAttribute("data-elev", (el >= 0 && el <= 6) ? String(el) : "1");
+      document.documentElement.setAttribute("data-elev", (el >= 0 && el <= 6) ? String(el) : "2");
       // The strength steps are scoped to soft depth, so data-depth has to be on the
       // element before first paint or the scoped rules would not match yet.
       document.documentElement.setAttribute("data-depth",
@@ -408,7 +408,7 @@
        read as floating at once.
          --elev     section-owning cards
          --elev-sm  small or secondary surfaces (tiles, banner, list rows)
-         --elev-xs  controls (buttons, inputs)
+         --elev-xs  the pressed floating action, not ordinary controls
        Dark used to run a bigger geometry than light (8px/20px against 5px/14px)
        on top of much higher alpha, so it spread further and read heavy. It now
        shares light's geometry and only the alpha differs, which is the part that
@@ -418,13 +418,13 @@
        Every drop shadow in this app is an ELEVATION and must come from one of the
        tokens below, never from a literal box-shadow on a rule:
 
-         --elev-xs / --elev-sm / --elev   surfaces (inputs, rows, cards)
+         --elev-xs / --elev-sm / --elev   floating action, tiles, rows, cards
          --head-shadow                    the sticky sheet header
          --shadow-pop / -toast / -modal / -sheet   overlays
          --shadow-fab                     the floating action button
 
        They are all built from two multipliers, so the whole system is dialled by
-       one setting (You > Appearance > Shadow, html[data-elev]): --ea scales
+       one retained preference (html[data-elev]): --ea scales
        opacity, --ez scales geometry (offset/blur/spread). Both default to 1, which
        reproduces the authored ramp byte for byte; step 0 sets them to 0 for a flat
        look. Scaling BOTH matters: dropping alpha alone leaves a wide washed-out
@@ -435,8 +435,6 @@
          - pop depth's hard offsets (--pop/--pop-ink) = a different visual language
          - status/identity glows (the live-dot pulse, the guard-toggle thumb) = meaning
 
-       A test enforces this: workspace/tests/check-shadows.py fails on any literal
-       drop shadow outside those groups, so a NEW element cannot silently opt out.
        -------------------------------------------------------------------------- */
     --ea: 1; --ez: 1;
     --shadow-fab: 0 calc(6px * var(--ez)) calc(18px * var(--ez)) rgba(124,92,255,calc(.45 * var(--ea)));
@@ -829,9 +827,8 @@
      box was the app doing the opposite in nine places.
 
      The fill carries the affordance now that the border is gone, which is why
-     these keep --card-2 rather than going transparent. Depth still composes on
-     top: soft adds --elev-xs, pop adds its 2px ink border, and a border on a
-     circle is still a circle. */
+     these keep --card-2 rather than going transparent. Soft keeps resting
+     controls flat; Pop retains its 2px ink border. */
   .gear { flex: 0 0 auto; width: 40px; height: 40px; padding: var(--sp-sm); display: flex; align-items: center; justify-content: center; background: var(--card-2); border: none; color: var(--muted); border-radius: var(--r-pill); cursor: pointer; }
   .gear svg { width: 18px; height: 18px; display: block; }
   .gear:active, .gear.open { background: var(--accent); border-color: var(--accent); color: #fff; }
@@ -1265,7 +1262,7 @@
   .motiv.climb .motiv-text { color: var(--motiv-climb); }
   .motiv.zero .motiv-text { color: var(--motiv-zero); }
   .motiv.seed .motiv-text, .motiv.past .motiv-text { color: var(--muted); }
-  @media (prefers-reduced-motion: reduce) { .motiv { transition: none; } }
+  @media (prefers-reduced-motion: reduce) { .motiv, .motiv .motiv-tail { transition: none; } }
 
   /* Month carousel */
   /* Bottom margin pairs with .sheet-chrome's own 10px bottom padding, so the gap
@@ -2133,8 +2130,8 @@
      own top padding rather than offsetting the page, so the header's background
      (the challenge pastel, in stats mode) paints edge to edge behind the status bar
      instead of leaving a strip of --bg above it.
-     --head-shadow carries a hairline plus a drop shadow, so the boundary between
-     the bar and the scrolling body is already drawn. */
+     Soft adds a small shadow only while content passes underneath; Pop keeps
+     its drawn boundary. */
   .sheet-chrome { flex: 0 0 auto; padding: calc(var(--sat) + var(--sp-lg)) var(--sheet-pad) var(--sp-md); background: var(--card);
     touch-action: none;
     box-shadow: var(--head-shadow); position: relative; z-index: 2; }
@@ -2244,48 +2241,31 @@
   /* ======================================================================
      CARD SYSTEM -- layout (grouped | separate) x depth (soft | pop)
      ====================================================================== */
-  /* Soft says "this surface rests on the background", so every resting surface
-     gets the same --elev: cards, tiles, the join tile and the motivation banner.
-     Soft was previously only wired to .card/.sgroup, so tiles and the banner sat
-     flat while pop lifted them, and the two depth modes disagreed about what
-     counts as a surface. Pop needs two offsets (--pop / --pop-sm) because a hard
-     offset looks wrong at the wrong scale; a blur does not, so soft needs one.
-     Controls inside a surface (buttons, inputs, steppers) stay flat here on
-     purpose: in soft, shadow means layer, not affordance. */
+  /* Elevation belongs to surfaces and overlap, not ordinary controls. */
   html[data-depth="soft"] .card,
   html[data-depth="soft"] .jointile,
-  html[data-depth="soft"] .rescard { box-shadow: var(--elev); }
+  html[data-depth="soft"] .rescard,
+  html[data-depth="soft"] .chall-row,
+  html[data-depth="soft"] .chall-list > .blank,
+  html[data-depth="soft"] .onb-welcome { box-shadow: var(--elev); }
   html[data-depth="soft"] .tile,
-  html[data-depth="soft"] .motiv { box-shadow: var(--elev-sm); }
-  /* Controls get the lowest rung rather than nothing. In soft the only thing
-     separating a control from its surface was --card-2 against --card, about 15
-     levels of luminance, so the nav buttons read as printed on the chrome rather
-     than sitting on it. Pop deliberately leaves compact icon buttons outline-only
-     because a 6px hard offset is 17% of a 36px button and looks crude at that
-     size; a blur has no such problem, so soft can lift them and pop cannot.
-     The test for inclusion is "does this control draw its own surface": anything
-     with a background and a border lifts. Bare glyph buttons (.edit,
-     .head-you, .odo-i) are transparent and borderless, so there is no object
-     to lift and they stay flat. Applied to the whole set, not just the nav
-     buttons, so soft does not repeat pop's old bug of lifting some controls in a
-     cluster and leaving their neighbours flat. */
-  html[data-depth="soft"] .btn,
-  html[data-depth="soft"] .btn.btn-ghost,
-  html[data-depth="soft"] .mbtn,
-  html[data-depth="soft"] .quick button,
-  html[data-depth="soft"] .stepper .step,
-  html[data-depth="soft"] .dp-trigger,
-  html[data-depth="soft"] .cr-edit,
-  html[data-depth="soft"] .cr-act,
-  html[data-depth="soft"] .cal-nav,
-  html[data-depth="soft"] .cal-foot button,
-  html[data-depth="soft"] .rh-back,
-  html[data-depth="soft"] .rh-manage,
-  html[data-depth="soft"] .bo-close,
-  html[data-depth="soft"] .roletoggle,
-  html[data-depth="soft"] .ar-btn,
-  html[data-depth="soft"] input,
-  html[data-depth="soft"] textarea { box-shadow: var(--elev-xs); }
+  html[data-depth="soft"] .motiv,
+  html[data-depth="soft"] #layerBase .nudge,
+  html[data-depth="soft"] .bo-chall,
+  html[data-depth="soft"] .msg--boxed:not(:empty),
+  html[data-depth="soft"] .msg--banner:not(:empty) { box-shadow: var(--elev-sm); }
+  html[data-depth="soft"] .fab { box-shadow: var(--elev-sm); }
+  html[data-depth="soft"] .fab:active { box-shadow: var(--elev-xs); }
+  /* Retain border geometry so removing an outline never moves the content. */
+  html[data-depth="soft"] #tab-stats :is(.card, .tile, .jointile, .rescard, .motiv) {
+    border-color: transparent;
+  }
+  html[data-depth="soft"][data-layout="c"] #tab-stats :is(.lb-person, .mgroup, #entries > .entry, .list-card .blank) {
+    border-color: transparent;
+  }
+  html[data-depth="soft"] #tab-stats .motiv { --mv-bd: transparent; }
+  html[data-depth="soft"] #sheet[data-mode="stats"] > .sheet-chrome { box-shadow: none; }
+  html[data-depth="soft"] #sheet[data-mode="stats"].is-scrolled > .sheet-chrome { box-shadow: var(--elev-sm); }
   html[data-depth="pop"] .card,
   html[data-depth="pop"] .jointile,
   html[data-depth="pop"] .rescard {
@@ -2370,9 +2350,8 @@
   html[data-depth="pop"] .entry:not(:last-child) { border-bottom: 2px solid var(--ink); }
   html[data-depth="pop"] .modal.manage-modal .modal-actions { border-top: 2px solid var(--ink); }
 
-  /* Shadow strength steps for Soft depth. 4 is the shipped look, so there are
-     four lighter stops below it and two heavier ones above. Set on <html> as
-     data-elev; anything outside 0-6 simply falls through to the :root default. */
+  /* Soft strength 2 is the default; 4 is the full authored ramp.
+     The retained data-elev preference scales opacity and geometry together. */
   html[data-depth="soft"][data-elev="0"] { --ea: 0;    --ez: 0;    }
   html[data-depth="soft"][data-elev="1"] { --ea: 0.28; --ez: 0.55; }
   html[data-depth="soft"][data-elev="2"] { --ea: 0.45; --ez: 0.70; }
@@ -2597,7 +2576,6 @@
   html.challenge-active .jointile .jt-sub { color: var(--muted); }
   html.challenge-active .jointile .jt-btn { min-height: 44px; color: var(--on-accent); }
   html.challenge-active #fabAdd { color: var(--on-accent); }
-  html[data-depth="soft"].challenge-active #fabAdd { box-shadow: var(--elev-sm); }
   html.challenge-active :is(#fabAdd, .jt-btn, .mbtn.primary, .btn:not(.ghost)):hover:not(:disabled) { background: var(--accent-hover); }
   html.challenge-active :is(#fabAdd, .jt-btn, .mbtn.primary, .btn:not(.ghost)):active:not(:disabled) { background: var(--accent-pressed); }
   html.challenge-active :is(#fabAdd, .jt-btn):disabled { color: var(--muted-2); background: var(--card-2); box-shadow: none; opacity: 1; cursor: not-allowed; }
@@ -3558,7 +3536,7 @@
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
   var NAV_KEY = "minutes-nav";
-  var VERSION = "15.20";
+  var VERSION = "15.21";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -6911,6 +6889,7 @@
     var body = document.getElementById("sheetBody");
     if (!head || !body) return;
     var y = body.scrollTop;
+    document.getElementById("sheet").classList.toggle("is-scrolled", y > 0);
     var next = timelineCompact ? y > 12 : y > 64;
     if (next === timelineCompact) return;
     timelineCompact = next;
@@ -6918,6 +6897,7 @@
   }
   function resetTimelineHeader() {
     timelineCompact = false;
+    document.getElementById("sheet").classList.remove("is-scrolled");
     var head = document.getElementById("chalHead");
     if (head) head.classList.remove("is-compact");
   }
@@ -9730,9 +9710,8 @@
   // and never at a weight directly, so switching weight rewrites 14 hrefs
   // rather than every icon in the document. That also means icon markup built
   // as a string once at load never goes stale.
-  // Shadow strength for Soft depth. 4 is the shipped ramp; the setting only
-  // rescales it, so nothing else in the design system has to know about it.
-  var ELEV_KEY = "minutes-elev", ELEV_DEFAULT = 1;
+  // Level 2 is the selected Soft strength; explicit saved choices still win.
+  var ELEV_KEY = "minutes-elev", ELEV_DEFAULT = 2;
   function currentElev() {
     try {
       var v = parseInt(localStorage.getItem(ELEV_KEY), 10);

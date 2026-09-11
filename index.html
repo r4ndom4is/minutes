@@ -778,7 +778,7 @@
   #loginBrand { position: relative; perspective: 500px; isolation: isolate; }
   #loginBrand .card-layer, #loginBrand .clock-hand { position: absolute; inset: 0; }
   #loginBrand .card-layer { transform-style: preserve-3d; transform-origin: 50% 50%; }
-  #loginBrand .clock-hand { transform-origin: 66.666667% 66.666667%; pointer-events: none; }
+  #loginBrand .clock-hand { transform-origin: var(--hand-origin-x) var(--hand-origin-y); pointer-events: none; }
   #loginBrand .layer-rear { z-index: 0; }
   #loginBrand .layer-middle { z-index: 1; }
   #loginBrand .layer-front { z-index: 2; }
@@ -2641,15 +2641,14 @@
   <div class="wrap">
     <div class="login-card">
       <div class="login-lead">
-        <div class="logo" id="loginBrand" data-motion="settled" aria-hidden="true">
-          <div class="card-layer layer-rear" data-layer="rear"><svg viewBox="18 18 60 60"><rect x="20" y="20" width="36" height="36" rx="11" fill="var(--brand-rear)"/></svg></div>
-          <div class="card-layer layer-middle"><svg viewBox="18 18 60 60"><rect x="30" y="30" width="36" height="36" rx="11" fill="var(--brand-middle)" stroke="var(--logo-surface)" stroke-width="3"/></svg></div>
-          <div class="card-layer layer-front" data-layer="front">
-            <svg viewBox="18 18 60 60"><rect x="40" y="40" width="36" height="36" rx="11" fill="var(--brand-front)" stroke="var(--logo-surface)" stroke-width="3"/></svg>
-            <div class="clock-hand" data-hand="long"><svg viewBox="18 18 60 60"><path d="M58 58V50.86" fill="none" stroke="var(--logo-surface)" stroke-width="3.5" stroke-linecap="round"/></svg></div>
-            <div class="clock-hand" data-hand="short"><svg viewBox="18 18 60 60"><path d="M58 58H63.58" fill="none" stroke="var(--logo-surface)" stroke-width="3.5" stroke-linecap="round"/></svg></div>
-          </div>
-        </div>
+        <div class="logo" id="loginBrand" data-motion="settled" aria-hidden="true" style="--hand-origin-x:59.252336%;--hand-origin-y:63.841495%">
+    <div class="card-layer layer-rear" data-layer="rear"><svg xmlns="http://www.w3.org/2000/svg" viewBox="18 18 60 60" aria-hidden="true"><rect x="20.242991" y="20.242991" width="37.143925" height="37.143925" rx="9.285981" fill="var(--brand-rear)"/></svg></div>
+    <div class="card-layer layer-middle"><svg xmlns="http://www.w3.org/2000/svg" viewBox="18 18 60 60" aria-hidden="true"><rect x="25.17757" y="25.17757" width="40.373832" height="40.373832" rx="10.093458" fill="var(--brand-middle)" stroke="var(--logo-surface)" stroke-width="3.364486" paint-order="stroke fill"/></svg></div>
+    <div class="card-layer layer-front" data-layer="front"><svg xmlns="http://www.w3.org/2000/svg" viewBox="18 18 60 60" aria-hidden="true"><rect x="31.345794" y="31.345794" width="44.411215" height="44.411215" rx="11.102804" fill="var(--brand-front)" stroke="var(--logo-surface)" stroke-width="3.364486" paint-order="stroke fill"/></svg>
+      <div class="clock-hand hand-long" data-hand="long"><svg xmlns="http://www.w3.org/2000/svg" viewBox="18 18 60 60" aria-hidden="true"><path d="M53.551402 56.304897L63.089789 50.797907" fill="none" stroke="var(--logo-surface)" stroke-width="4.317757" stroke-linecap="round"/></svg></div>
+      <div class="clock-hand hand-short" data-hand="short"><svg xmlns="http://www.w3.org/2000/svg" viewBox="18 18 60 60" aria-hidden="true"><path d="M53.551402 56.304897L46.502866 51.36946" fill="none" stroke="var(--logo-surface)" stroke-width="4.317757" stroke-linecap="round"/></svg></div>
+    </div>
+  </div>
         <h1>Minutes</h1>
         <p id="loginSub">Log your minutes and see where you stand against everyone else this month.</p>
       </div>
@@ -3559,7 +3558,7 @@
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
   var NAV_KEY = "minutes-nav";
-  var VERSION = "15.19";
+  var VERSION = "15.20";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -4910,47 +4909,297 @@
   function isCurrentMonth(d) { var n = new Date(); return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth(); }
   function niceDate(s) { var p = s.split("-"); return new Date(+p[0], (+p[1]) - 1, +p[2]).toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" }); }
 
-  // The approved Winding Key. Parity with the motion study is covered in tests.
-  var WELCOME_MOTION = (function () {
-    var hold = "linear", effort = "cubic-bezier(.55, 0, .88, .45)",
-      release = "cubic-bezier(.12, .76, .2, 1)", coast = "cubic-bezier(.18, .66, .34, 1)",
-      turn = "cubic-bezier(.42, 0, .58, 1)";
-    function card(at, x, y, yaw, roll, easing) {
-      return { offset: at, transform: "translate(" + x + "%, " + y + "%) rotateY(" + yaw +
-        "deg) rotateZ(" + roll + "deg) scale(1)", opacity: 1, easing: easing };
-    }
-    function hand(at, angle, easing) {
-      return { offset: at, transform: "rotate(" + angle + "deg)", opacity: 1, easing: easing };
-    }
-    return { duration: 5000, tracks: {
-      rear: [
-        card(0, 16.666667, 16.666667, 0, 0, hold), card(.1, 16.666667, 16.666667, 0, 0, effort),
-        card(.15, 16, 16, -2, 1.5, hold), card(.21, 16, 16, -2, 1.5, effort),
-        card(.25, 15.5, 15.5, -4, 3, effort), card(.31, 15, 15, -7, 5, release),
-        card(.43, -7, -11, -18, -19, coast), card(.62, -5, -4, -9, -8, release),
-        card(.67, 0, 0, 0, 0, hold), card(1, 0, 0, 0, 0, turn)
-      ],
-      front: [
-        card(0, -16.666667, -16.666667, 0, 0, hold), card(.1, -16.666667, -16.666667, 0, 0, effort),
-        card(.15, -16, -16, 2, -2, hold), card(.21, -16, -16, 2, -2, effort),
-        card(.25, -15.5, -15.5, 5, -4, effort), card(.31, -15, -15, 9, -7, release),
-        card(.44, 9, 8, 22, 22, coast), card(.62, 5, 4, 11, 9, release),
-        card(.67, 0, 0, 0, 0, hold), card(1, 0, 0, 0, 0, turn)
-      ],
-      long: [
-        hand(0, 0, hold), hand(.04, 0, effort), hand(.1, -42, release), hand(.12, -37, hold),
-        hand(.15, -37, effort), hand(.21, -84, release), hand(.23, -78, hold),
-        hand(.25, -78, effort), hand(.31, -132, release), hand(.46, 41, coast),
-        hand(.62, 17, release), hand(.67, 0, hold), hand(1, 0, turn)
-      ],
-      short: [
-        hand(0, 0, hold), hand(.08, 0, effort), hand(.11, 12, release), hand(.14, 4, hold),
-        hand(.19, 4, effort), hand(.22, 19, release), hand(.25, 9, hold),
-        hand(.29, 9, effort), hand(.32, 28, release), hand(.48, -27, coast),
-        hand(.62, -11, release), hand(.67, 0, hold), hand(1, 0, turn)
-      ]
-    } };
-  })();
+  // Generated by scripts/build-brand.mjs from the approved geometry and Winding Key.
+  var WELCOME_MOTION = {
+  "duration": 5000,
+  "tracks": {
+    "rear": [
+      {
+        "offset": 0,
+        "transform": "translate(12.247054%, 12.247054%) rotateY(0deg) rotateZ(0deg) scale(1.086957)",
+        "opacity": 1,
+        "easing": "linear"
+      },
+      {
+        "offset": 0.1,
+        "transform": "translate(12.247054%, 12.247054%) rotateY(0deg) rotateZ(0deg) scale(1.086957)",
+        "opacity": 1,
+        "easing": "cubic-bezier(.55, 0, .88, .45)"
+      },
+      {
+        "offset": 0.15,
+        "transform": "translate(11.757172%, 11.757172%) rotateY(-2deg) rotateZ(1.5deg) scale(1.083478)",
+        "opacity": 1,
+        "easing": "linear"
+      },
+      {
+        "offset": 0.21,
+        "transform": "translate(11.757172%, 11.757172%) rotateY(-2deg) rotateZ(1.5deg) scale(1.083478)",
+        "opacity": 1,
+        "easing": "cubic-bezier(.55, 0, .88, .45)"
+      },
+      {
+        "offset": 0.25,
+        "transform": "translate(11.38976%, 11.38976%) rotateY(-4deg) rotateZ(3deg) scale(1.08087)",
+        "opacity": 1,
+        "easing": "cubic-bezier(.55, 0, .88, .45)"
+      },
+      {
+        "offset": 0.31,
+        "transform": "translate(11.022348%, 11.022348%) rotateY(-7deg) rotateZ(5deg) scale(1.078261)",
+        "opacity": 1,
+        "easing": "cubic-bezier(.12, .76, .2, 1)"
+      },
+      {
+        "offset": 0.43,
+        "transform": "translate(-5.143763%, -8.083056%) rotateY(-18deg) rotateZ(-19deg) scale(1)",
+        "opacity": 1,
+        "easing": "cubic-bezier(.18, .66, .34, 1)"
+      },
+      {
+        "offset": 0.62,
+        "transform": "translate(-3.674116%, -2.939293%) rotateY(-9deg) rotateZ(-8deg) scale(1)",
+        "opacity": 1,
+        "easing": "cubic-bezier(.12, .76, .2, 1)"
+      },
+      {
+        "offset": 0.67,
+        "transform": "translate(0%, 0%) rotateY(0deg) rotateZ(0deg) scale(1)",
+        "opacity": 1,
+        "easing": "linear"
+      },
+      {
+        "offset": 1,
+        "transform": "translate(0%, 0%) rotateY(0deg) rotateZ(0deg) scale(1)",
+        "opacity": 1,
+        "easing": "cubic-bezier(.42, 0, .58, 1)"
+      }
+    ],
+    "front": [
+      {
+        "offset": 0,
+        "transform": "translate(-12.803738%, -12.803738%) rotateY(0deg) rotateZ(0deg) scale(0.909091)",
+        "opacity": 1,
+        "easing": "linear"
+      },
+      {
+        "offset": 0.1,
+        "transform": "translate(-12.803738%, -12.803738%) rotateY(0deg) rotateZ(0deg) scale(0.909091)",
+        "opacity": 1,
+        "easing": "cubic-bezier(.55, 0, .88, .45)"
+      },
+      {
+        "offset": 0.15,
+        "transform": "translate(-12.291589%, -12.291589%) rotateY(2deg) rotateZ(-2deg) scale(0.912727)",
+        "opacity": 1,
+        "easing": "linear"
+      },
+      {
+        "offset": 0.21,
+        "transform": "translate(-12.291589%, -12.291589%) rotateY(2deg) rotateZ(-2deg) scale(0.912727)",
+        "opacity": 1,
+        "easing": "cubic-bezier(.55, 0, .88, .45)"
+      },
+      {
+        "offset": 0.25,
+        "transform": "translate(-11.907476%, -11.907476%) rotateY(5deg) rotateZ(-4deg) scale(0.915455)",
+        "opacity": 1,
+        "easing": "cubic-bezier(.55, 0, .88, .45)"
+      },
+      {
+        "offset": 0.31,
+        "transform": "translate(-11.523364%, -11.523364%) rotateY(9deg) rotateZ(-7deg) scale(0.918182)",
+        "opacity": 1,
+        "easing": "cubic-bezier(.12, .76, .2, 1)"
+      },
+      {
+        "offset": 0.44,
+        "transform": "translate(6.914019%, 6.145794%) rotateY(22deg) rotateZ(22deg) scale(1)",
+        "opacity": 1,
+        "easing": "cubic-bezier(.18, .66, .34, 1)"
+      },
+      {
+        "offset": 0.62,
+        "transform": "translate(3.841121%, 3.072897%) rotateY(11deg) rotateZ(9deg) scale(1)",
+        "opacity": 1,
+        "easing": "cubic-bezier(.12, .76, .2, 1)"
+      },
+      {
+        "offset": 0.67,
+        "transform": "translate(0%, 0%) rotateY(0deg) rotateZ(0deg) scale(1)",
+        "opacity": 1,
+        "easing": "linear"
+      },
+      {
+        "offset": 1,
+        "transform": "translate(0%, 0%) rotateY(0deg) rotateZ(0deg) scale(1)",
+        "opacity": 1,
+        "easing": "cubic-bezier(.42, 0, .58, 1)"
+      }
+    ],
+    "long": [
+      {
+        "offset": 0,
+        "transform": "rotate(0deg)",
+        "opacity": 1,
+        "easing": "linear"
+      },
+      {
+        "offset": 0.04,
+        "transform": "rotate(0deg)",
+        "opacity": 1,
+        "easing": "cubic-bezier(.55, 0, .88, .45)"
+      },
+      {
+        "offset": 0.1,
+        "transform": "rotate(-42deg)",
+        "opacity": 1,
+        "easing": "cubic-bezier(.12, .76, .2, 1)"
+      },
+      {
+        "offset": 0.12,
+        "transform": "rotate(-37deg)",
+        "opacity": 1,
+        "easing": "linear"
+      },
+      {
+        "offset": 0.15,
+        "transform": "rotate(-37deg)",
+        "opacity": 1,
+        "easing": "cubic-bezier(.55, 0, .88, .45)"
+      },
+      {
+        "offset": 0.21,
+        "transform": "rotate(-84deg)",
+        "opacity": 1,
+        "easing": "cubic-bezier(.12, .76, .2, 1)"
+      },
+      {
+        "offset": 0.23,
+        "transform": "rotate(-78deg)",
+        "opacity": 1,
+        "easing": "linear"
+      },
+      {
+        "offset": 0.25,
+        "transform": "rotate(-78deg)",
+        "opacity": 1,
+        "easing": "cubic-bezier(.55, 0, .88, .45)"
+      },
+      {
+        "offset": 0.31,
+        "transform": "rotate(-132deg)",
+        "opacity": 1,
+        "easing": "cubic-bezier(.12, .76, .2, 1)"
+      },
+      {
+        "offset": 0.46,
+        "transform": "rotate(41deg)",
+        "opacity": 1,
+        "easing": "cubic-bezier(.18, .66, .34, 1)"
+      },
+      {
+        "offset": 0.62,
+        "transform": "rotate(17deg)",
+        "opacity": 1,
+        "easing": "cubic-bezier(.12, .76, .2, 1)"
+      },
+      {
+        "offset": 0.67,
+        "transform": "rotate(0deg)",
+        "opacity": 1,
+        "easing": "linear"
+      },
+      {
+        "offset": 1,
+        "transform": "rotate(0deg)",
+        "opacity": 1,
+        "easing": "cubic-bezier(.42, 0, .58, 1)"
+      }
+    ],
+    "short": [
+      {
+        "offset": 0,
+        "transform": "rotate(0deg)",
+        "opacity": 1,
+        "easing": "linear"
+      },
+      {
+        "offset": 0.08,
+        "transform": "rotate(0deg)",
+        "opacity": 1,
+        "easing": "cubic-bezier(.55, 0, .88, .45)"
+      },
+      {
+        "offset": 0.11,
+        "transform": "rotate(12deg)",
+        "opacity": 1,
+        "easing": "cubic-bezier(.12, .76, .2, 1)"
+      },
+      {
+        "offset": 0.14,
+        "transform": "rotate(4deg)",
+        "opacity": 1,
+        "easing": "linear"
+      },
+      {
+        "offset": 0.19,
+        "transform": "rotate(4deg)",
+        "opacity": 1,
+        "easing": "cubic-bezier(.55, 0, .88, .45)"
+      },
+      {
+        "offset": 0.22,
+        "transform": "rotate(19deg)",
+        "opacity": 1,
+        "easing": "cubic-bezier(.12, .76, .2, 1)"
+      },
+      {
+        "offset": 0.25,
+        "transform": "rotate(9deg)",
+        "opacity": 1,
+        "easing": "linear"
+      },
+      {
+        "offset": 0.29,
+        "transform": "rotate(9deg)",
+        "opacity": 1,
+        "easing": "cubic-bezier(.55, 0, .88, .45)"
+      },
+      {
+        "offset": 0.32,
+        "transform": "rotate(28deg)",
+        "opacity": 1,
+        "easing": "cubic-bezier(.12, .76, .2, 1)"
+      },
+      {
+        "offset": 0.48,
+        "transform": "rotate(-27deg)",
+        "opacity": 1,
+        "easing": "cubic-bezier(.18, .66, .34, 1)"
+      },
+      {
+        "offset": 0.62,
+        "transform": "rotate(-11deg)",
+        "opacity": 1,
+        "easing": "cubic-bezier(.12, .76, .2, 1)"
+      },
+      {
+        "offset": 0.67,
+        "transform": "rotate(0deg)",
+        "opacity": 1,
+        "easing": "linear"
+      },
+      {
+        "offset": 1,
+        "transform": "rotate(0deg)",
+        "opacity": 1,
+        "easing": "cubic-bezier(.42, 0, .58, 1)"
+      }
+    ]
+  }
+};
+  var WELCOME_GEOMETRY = {"front":{"x":31.345794392523356,"y":31.345794392523356,"width":44.41121495327103,"height":44.41121495327103,"radius":11.102803738317757,"outline":3.3644859813084107},"hands":{"pivot":{"x":53.551401869158866,"y":56.30489719626167},"minute":{"x":63.08978947904995,"y":50.79790654205606},"hour":{"x":46.50286647498247,"y":51.36945957992141},"stroke":4.317757009345795}};
   var LoginWelcome = (function () {
     var login = document.getElementById("login");
     var card = login.querySelector(".login-card");
@@ -5501,19 +5750,23 @@
       }
 
       var x = 26, y = ground - 18 - py;
+      var card = WELCOME_GEOMETRY.front, hands = WELCOME_GEOMETRY.hands;
       // Just the front clock card, fitted to the unchanged 18px player box.
       ctx.save();
       ctx.translate(x, y);
-      ctx.scale(.5, .5);
-      ctx.translate(-40, -40);
+      ctx.scale(18 / card.width, 18 / card.height);
+      ctx.translate(-card.x, -card.y);
       ctx.fillStyle = col.player;
-      roundRect(40, 40, 36, 36, 11);
+      roundRect(card.x, card.y, card.width, card.height, card.radius);
       ctx.fill();
       ctx.strokeStyle = col.surface;
-      ctx.lineWidth = 3.5;
+      ctx.lineWidth = hands.stroke;
       ctx.lineCap = "round";
+      ctx.lineJoin = "round";
       ctx.beginPath();
-      ctx.moveTo(58, 50.86); ctx.lineTo(58, 58); ctx.lineTo(63.58, 58);
+      ctx.moveTo(hands.minute.x, hands.minute.y);
+      ctx.lineTo(hands.pivot.x, hands.pivot.y);
+      ctx.lineTo(hands.hour.x, hands.hour.y);
       ctx.stroke();
       ctx.restore();
 

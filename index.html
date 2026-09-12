@@ -319,15 +319,12 @@
        column, and that column is now just the page's own padding: the page is
        full-screen, so it has no border for the column to clear. */
     --frame-w: 480px; --sheet-pad: 16px;
-    /* The status-bar / Dynamic Island inset, as one token rather than a bare env()
-       repeated at every use. Tokenised because a bare env() is always 0 in a test
-       browser: overriding --sat is the only way to render an island phone anywhere
-       but an island phone.
-       It used to decide where the BASE LAYER started, because the hub was the only
-       thing that ever touched the top of the screen. Level 1 is a full-screen page
-       now, so it reaches y=0 too and has to pay the inset itself, in .sheet-chrome.
-       Both surfaces charge for it exactly once; see verify-island.py. */
-    --sat: env(safe-area-inset-top);
+    /* Tokenised device insets let local browsers exercise safe-area geometry.
+       Each full-screen surface accounts for its own insets exactly once. */
+    --sat: env(safe-area-inset-top, 0px);
+    --sar: env(safe-area-inset-right, 0px);
+    --sab: env(safe-area-inset-bottom, 0px);
+    --sal: env(safe-area-inset-left, 0px);
     /* Level-1 navigation. One duration and one curve for the page arriving and
        the hub falling back behind it, because two numbers here means two
        movements the eye has to reconcile.
@@ -857,7 +854,7 @@
   .bo-chall-right { flex: 0 0 auto; display: flex; align-items: center; gap: var(--sp-sm); }
 
   /* Manage-challenge modal rows */
-  .modal.manage-modal { text-align: left; display: flex; flex-direction: column; max-height: calc(100dvh - 48px - var(--modal-toast-space, 0px)); }
+  .modal.manage-modal { text-align: left; display: flex; flex-direction: column; max-height: calc(100dvh - var(--sat) - var(--sab) - 48px - var(--modal-toast-space, 0px)); }
   .modal.manage-modal .modal-title { flex: 0 0 auto; }
   .modal.manage-modal .m-ico { flex: 0 0 auto; }
   .modal.manage-modal #manageBody { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
@@ -1514,17 +1511,15 @@
      It is pointer-transparent; only the pill itself takes events. */
   .pop-dock {
     position: fixed; left: 0; right: 0; z-index: 55; pointer-events: none;
-    bottom: calc(env(safe-area-inset-bottom) + var(--sp-2xl) + var(--fab-size) + var(--sp-md));
+    bottom: calc(var(--sab) + var(--sp-2xl) + var(--fab-size) + var(--sp-md));
     padding: 0 max(var(--sp-2xl), calc(50% - var(--frame-w) / 2 + var(--sp-2xl)));
     display: flex; justify-content: flex-end;
   }
   #app:has(.modal-overlay.show) .pop-dock {
-    bottom: calc(env(safe-area-inset-bottom) + var(--sheet-pad));
+    bottom: calc(var(--sab) + var(--sheet-pad));
   }
   #app:has(#toast.show) .modal-overlay {
-    --modal-toast-space: calc(var(--toast-height, 0px) + var(--sp-md) + env(safe-area-inset-bottom));
-    padding-bottom: calc(var(--sheet-pad) + var(--modal-toast-space));
-    scroll-padding-bottom: calc(var(--sheet-pad) + var(--modal-toast-space));
+    --modal-toast-space: calc(var(--toast-height, 0px) + var(--sp-md));
   }
   .pop {
     pointer-events: none; max-width: 100%; position: relative; overflow: hidden;
@@ -1571,16 +1566,18 @@
   @media (prefers-reduced-motion: reduce) { .ent-sync { animation: none; opacity: .75; } }
 
   /* Confirm modal */
-  /* The overlay spans the viewport, not the frame, so it needs both: the padding
-     handles viewports narrower than the frame, the max-width handles wider ones.
-     Both resolve to the level-1 page's content column, so a modal opens on exactly
-     the two vertical lines the cards behind it already sit on, at any width and
-     depth. That column used to include the sheet's border; the page is full-screen
-     now and has none, so it is the padding alone. */
+  /* Dialogs follow the screen on phones and the centred app frame on wide views.
+     Only safe-area overlap with that frame consumes additional side padding. */
   .modal-overlay {
     position: fixed; inset: 0; z-index: 50; background: var(--overlay); backdrop-filter: blur(4px);
     display: flex; align-items: flex-start; justify-content: center;
-    padding: var(--sheet-pad);
+    --modal-side-gutter: max(0px, calc((100vw - 100%) / 2));
+    padding: calc(var(--sat) + var(--sheet-pad))
+      calc(var(--sheet-pad) + max(0px, var(--sar) - var(--modal-side-gutter)))
+      calc(var(--sab) + var(--sheet-pad) + var(--modal-toast-space, 0px))
+      calc(var(--sheet-pad) + max(0px, var(--sal) - var(--modal-side-gutter)));
+    scroll-padding-top: calc(var(--sat) + var(--sheet-pad));
+    scroll-padding-bottom: calc(var(--sab) + var(--sheet-pad) + var(--modal-toast-space, 0px));
     /* The overlay scrolls, the dialog does not. On a 568px-tall phone the date
        picker's Today row lands past the bottom edge, and nothing used to move:
        #app is position:fixed with overflow hidden, the overlay was fixed too and
@@ -3536,7 +3533,7 @@
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
   var NAV_KEY = "minutes-nav";
-  var VERSION = "15.21";
+  var VERSION = "15.22";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no

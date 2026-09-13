@@ -1270,16 +1270,22 @@
   .rh-title { display: flex; align-items: center; gap: var(--sp-sm); }
   .timeline-head { margin: 0; }
   .timeline-toolbar { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px;
-    align-items: center; gap: var(--sp-sm); padding: var(--sp-sm) 0 var(--sp-xs); }
+    align-items: center; gap: var(--sp-sm);
+    padding: calc(var(--sp-sm) + (var(--sp-2xs) - var(--sp-sm)) * var(--timeline-progress, var(--timeline-compact, 0))) 0
+      calc(var(--sp-xs) + (var(--sp-3xs) - var(--sp-xs)) * var(--timeline-progress, var(--timeline-compact, 0))); }
   .timeline-status { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     text-align: center; font-size: var(--fs-2xs); font-weight: var(--fw-md); line-height: var(--lh-normal); }
-  .timeline-title { padding: var(--sp-md) 0 var(--sp-sm); }
-  .timeline-title .rh-name { display: block; font-size: 26px; font-weight: var(--fw-bold);
-    line-height: var(--lh-tight); letter-spacing: var(--ls-tight); min-width: 0;
+  .timeline-title {
+    padding: calc(var(--sp-md) + (var(--sp-xs) - var(--sp-md)) * var(--timeline-progress, var(--timeline-compact, 0))) 0
+      calc(var(--sp-sm) + (var(--sp-2xs) - var(--sp-sm)) * var(--timeline-progress, var(--timeline-compact, 0))); }
+  .timeline-title .rh-name { display: block;
+    font-size: calc(26px - 4px * var(--timeline-progress, var(--timeline-compact, 0))); font-weight: var(--fw-bold);
+    /* Keep line breaks stable while the type and available line width shrink together. */
+    width: calc(100% * (1 - 4 / 26 * var(--timeline-progress, var(--timeline-compact, 0))));
+    line-height: var(--lh-tight);
+    letter-spacing: calc(var(--ls-tight) * (1 - 4 / 26 * var(--timeline-progress, var(--timeline-compact, 0)))); min-width: 0;
     overflow-wrap: anywhere; }
-  .timeline-head.is-compact .timeline-toolbar { padding-top: var(--sp-2xs); padding-bottom: var(--sp-3xs); }
-  .timeline-head.is-compact .timeline-title { padding-top: var(--sp-xs); padding-bottom: var(--sp-2xs); }
-  .timeline-head.is-compact .timeline-title .rh-name { font-size: 22px; }
+  .timeline-head.is-compact { --timeline-compact: 1; }
   /* 44px, the top of the icon-button range in docs/design.md. At 36 the gear read
      as an afterthought on a header that had just become a full-bleed colour
      panel, and it is now the ONLY way into everything that governs the
@@ -2417,9 +2423,7 @@
     border: 2px solid var(--ink); border-radius: var(--r-md);
     box-shadow: var(--pop) var(--pop) 0 var(--pop-ink); margin-right: var(--pop);
   }
-  /* A flush list card holding nothing would paint as a bare 2px line. With the
-     tab strip moved OUT of the card there is no chrome left inside to discount,
-     so this is now simply "empty means gone". */
+  /* Controls and empty-state rows count as content; truly empty wrappers stay hidden. */
   .card.list-card:not(:has(> *:not(:empty))) { display: none; }
   .card.list-card .blank { padding: var(--sp-3xl) var(--sp-xl); }
   /* "separate" strips the wrapper card, so every row draws its own surface. The
@@ -2442,26 +2446,7 @@
      no accent: a filled purple pill then only ever means "go somewhere",
      never "filter this", which is what separates it from the page switcher.
      ---------------------------------------------------------------------- */
-  /* ----------------------------------------------------------------------
-     LIST TABS -- text and a rule, not a segmented control.
-
-     This replaced 190 lines whose subject was not tabs at all: folder-corner
-     radius maths for two layouts times two depths, transparent-border width
-     compensation, a "swoop" fillet, and :has() rules to stop two arcs stacking
-     into a doubled edge. Every one of those existed to make a rounded-rectangle
-     tab sit convincingly on a card.
-
-     docs/design.md: hierarchy comes from weight and size, not from lines, boxes
-     or tint; anything you can act on is a pill or a circle, never a rounded
-     rectangle. A tab strip is neither, so it stops pretending to be a control
-     and becomes what it actually is -- a line of headings, one of which is
-     current. The underline is the one line kept, because marking the current
-     item is work no fill can do without drawing a box.
-
-     They now sit ABOVE the card rather than inside it, which is what removes
-     the corner problem at the source: nothing has to negotiate with the card's
-     radius any more.
-     ---------------------------------------------------------------------- */
+  /* Text-tab baseline; .list-tabs attaches table controls to their results. */
   .ltabs { display: flex; align-items: baseline; gap: var(--sp-4xl);
     padding: var(--sp-xs) 0 var(--sp-lg); }
   .ltabs button {
@@ -2493,6 +2478,28 @@
      muted colour and the lighter weight in both states. */
   .ltabs .ltabs-n { font-size: var(--fs-sm); font-weight: var(--fw-sm-bold); color: var(--muted); margin-left: var(--sp-xs); }
 
+  .list-card:has(> .list-tabs) { padding: 0; overflow: hidden; }
+  #tab-stats .list-tabs {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch; gap: 0; margin: 0; padding: 0;
+  }
+  #tab-stats .list-tabs button {
+    min-height: 52px; padding: var(--sp-md) var(--sp-lg);
+    font-size: var(--fs-sm); font-weight: var(--fw-sm-bold); letter-spacing: normal;
+    color: var(--muted); background: var(--card-2);
+    border: 0; border-bottom: 1px solid var(--border); border-radius: 0; box-shadow: none;
+    transition: none;
+  }
+  #tab-stats .list-tabs button.active {
+    color: var(--text); background: var(--card); border-bottom-color: transparent;
+  }
+  #tab-stats .list-tabs button.active::after { display: none; }
+  #tab-stats .list-tabs button:active:not(:disabled) { color: var(--text); }
+  #tab-stats .ltabs.list-tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: -4px; }
+  #tab-stats .list-tabs button:disabled { opacity: 1; color: var(--muted-2); cursor: not-allowed; }
+  #tab-stats .list-tabs .ltabs-n { font-size: var(--fs-xs); font-weight: var(--fw-md); color: var(--muted); }
+  #tab-stats .list-tabs button:disabled .ltabs-n { color: var(--muted-2); }
+  #tab-stats .slabel { font-size: var(--fs-sm); font-weight: var(--fw-sm-bold); letter-spacing: normal; text-transform: none; }
 
   /* ======================================================================
      YOU / settings page
@@ -2979,7 +2986,7 @@
       </button>
 
       <div class="sect">
-        <div class="slabel">Daily Progress</div>
+        <div class="slabel">Daily progress</div>
         <div class="card">
         <div class="chart-wrap" id="chart"></div>
         <div class="chart-legend" id="legend">
@@ -2995,24 +3002,23 @@
 
       <div class="sect">
         <div class="card-head">
-          <div class="ch-title"><div class="slabel">Leaderboard &amp; Members</div><span class="lb-lock" id="rosterLock" role="img"
+          <div class="ch-title"><div class="slabel">Leaderboard &amp; members</div><span class="lb-lock" id="rosterLock" role="img"
                 x-show="$store.s.board.lock.show" :class="$store.s.board.lock.open ? 'open' : 'closed'"
                 :title="$store.s.board.lock.title" :aria-label="$store.s.board.lock.title"><svg class="ic" aria-hidden="true"><use :href="$store.s.board.lock.open ? '#i-lock-open' : '#i-lock'"/></svg></span></div>
         </div>
-        <!-- Text and a rule, above the card rather than inside it. Leaving and
-             editing the roster both moved into the gear's menu: they change the
-             CHALLENGE, while these two only change which slice of it you are
-             looking at, and mixing the two kinds in one strip is what made the
-             old control need a differently-shaped third tab. -->
-        <div class="ltabs" id="seg" x-show="$store.s.board.seg.show">
-          <button data-range="today" :class="{ active: $store.s.board.seg.range === 'today' }"
-                  :disabled="$store.s.board.seg.disabled || $store.s.board.seg.todayOff"
-                  @click="$store.s.act.setRange('today')">Today <span class="ltabs-n" x-show="$store.s.board.seg.todayCount" x-text="$store.s.board.seg.todayCount"></span></button>
-          <button data-range="month" :class="{ active: $store.s.board.seg.range === 'month' }"
-                  :disabled="$store.s.board.seg.disabled"
-                  @click="$store.s.act.setRange('month')"><span x-text="$store.s.board.seg.monthName"></span> <span class="ltabs-n" x-show="$store.s.board.seg.monthCount" x-text="$store.s.board.seg.monthCount"></span></button>
-        </div>
         <div class="card list-card">
+          <div class="ltabs list-tabs" id="seg" role="group" aria-label="Leaderboard period" x-show="$store.s.board.seg.show">
+            <button type="button" data-range="today" aria-controls="leaderboard"
+                    :aria-pressed="$store.s.board.seg.range === 'today'"
+                    :class="{ active: $store.s.board.seg.range === 'today' }"
+                    :disabled="$store.s.board.seg.disabled || $store.s.board.seg.todayOff"
+                    @click="$store.s.act.setRange('today')">Today <span class="ltabs-n" x-show="$store.s.board.seg.todayCount" x-text="$store.s.board.seg.todayCount"></span></button>
+            <button type="button" data-range="month" aria-controls="leaderboard"
+                    :aria-pressed="$store.s.board.seg.range === 'month'"
+                    :class="{ active: $store.s.board.seg.range === 'month' }"
+                    :disabled="$store.s.board.seg.disabled"
+                    @click="$store.s.act.setRange('month')"><span x-text="$store.s.board.seg.monthName"></span> <span class="ltabs-n" x-show="$store.s.board.seg.monthCount" x-text="$store.s.board.seg.monthCount"></span></button>
+          </div>
           <!-- No `editing` gate any more: the roster editor moved into the gear's
                modal, so the board is the only thing this card ever shows. -->
           <div id="leaderboard">
@@ -3058,13 +3064,17 @@
 
       <div class="sect">
         <div class="slabel">Your entries</div>
-        <div class="ltabs" id="entriesSeg">
-          <button type="button" data-egroup="date" :class="{ active: $store.s.entriesGroup !== 'category' }"
-                  @click="$store.s.act.setEntriesGroup('date')">By date</button>
-          <button type="button" data-egroup="category" :class="{ active: $store.s.entriesGroup === 'category' }"
-                  @click="$store.s.act.setEntriesGroup('category')">By category</button>
-        </div>
         <div class="card list-card">
+          <div class="ltabs list-tabs" id="entriesSeg" role="group" aria-label="Entry grouping">
+            <button type="button" data-egroup="date" aria-controls="entries"
+                    :aria-pressed="$store.s.entriesGroup !== 'category'"
+                    :class="{ active: $store.s.entriesGroup !== 'category' }"
+                    @click="$store.s.act.setEntriesGroup('date')">By date</button>
+            <button type="button" data-egroup="category" aria-controls="entries"
+                    :aria-pressed="$store.s.entriesGroup === 'category'"
+                    :class="{ active: $store.s.entriesGroup === 'category' }"
+                    @click="$store.s.act.setEntriesGroup('category')">By category</button>
+          </div>
           <div id="entries">
             <template x-if="$store.s.entryView.empty">
               <div class="blank" x-text="$store.s.entryView.empty"></div>
@@ -3533,7 +3543,7 @@
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
   var NAV_KEY = "minutes-nav";
-  var VERSION = "15.22";
+  var VERSION = "15.23";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -6876,17 +6886,17 @@
     LoginWelcome.updateThemeColor();
   }
 
-  // The challenge chrome is outside the body scroller, so compaction can change
-  // only its presentation. Hysteresis keeps a short upward correction from
-  // flickering the title while the month wheel and its horizontal offset remain
-  // completely independent.
+  // Keep scroll-linked geometry local to the header; the month wheel is independent.
   var timelineCompact = false;
+  var timelineMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   function syncTimelineHeader() {
     var head = document.getElementById("chalHead");
     var body = document.getElementById("sheetBody");
     if (!head || !body) return;
     var y = body.scrollTop;
     document.getElementById("sheet").classList.toggle("is-scrolled", y > 0);
+    var progress = timelineMotion.matches ? 0 : Math.min(1, Math.max(0, y / 120));
+    head.style.setProperty("--timeline-progress", String(progress * progress * (3 - 2 * progress)));
     var next = timelineCompact ? y > 12 : y > 64;
     if (next === timelineCompact) return;
     timelineCompact = next;
@@ -6896,8 +6906,12 @@
     timelineCompact = false;
     document.getElementById("sheet").classList.remove("is-scrolled");
     var head = document.getElementById("chalHead");
-    if (head) head.classList.remove("is-compact");
+    if (head) {
+      head.classList.remove("is-compact");
+      head.style.setProperty("--timeline-progress", "0");
+    }
   }
+  timelineMotion.addEventListener("change", syncTimelineHeader);
 
   function switchTab(tab) {
     if (tab === "stats" || tab === "log" || tab === "you") {

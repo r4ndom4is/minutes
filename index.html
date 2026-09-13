@@ -857,6 +857,17 @@
   .modal.manage-modal { text-align: left; display: flex; flex-direction: column; max-height: calc(100dvh - var(--sat) - var(--sab) - 48px - var(--modal-toast-space, 0px)); }
   .modal.manage-modal .modal-title { flex: 0 0 auto; }
   .modal.manage-modal .m-ico { flex: 0 0 auto; }
+  .modal.manage-modal .manage-details { flex: 0 0 auto; display: flex; align-items: center; gap: var(--sp-md);
+    min-height: 48px; padding: var(--sp-md) var(--sp-xl); border: none; box-shadow: none;
+    font-size: var(--fs-md); text-align: left; }
+  .manage-details > :first-child { flex: 1; min-width: 0; }
+  .manage-details > .ic { flex: 0 0 auto; width: 16px; height: 16px; color: var(--muted); }
+  .manage-colour { display: inline-flex; align-items: center; gap: var(--sp-xs);
+    font-size: var(--fs-xs); font-weight: var(--fw-md); color: var(--muted); }
+  .manage-colour-name { text-transform: capitalize; }
+  .manage-colour-swatch { flex: 0 0 auto; width: 18px; height: 18px; border-radius: var(--r-pill); border: 1px solid var(--border-2); }
+  .modal.manage-modal .manage-details:hover { background: var(--border); }
+  html[data-depth="pop"] .modal.manage-modal .manage-details { border: 2px solid var(--ink); }
   .modal.manage-modal #manageBody { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
   .modal.manage-modal .modal-actions { flex: 0 0 auto; gap: var(--sp-lg); margin-top: var(--sp-2xl); padding-top: var(--sp-2xl); border-top: 1px solid var(--border); }
   .mg-section-h { font-size: var(--fs-2xs); font-weight: var(--fw-bold); color: var(--muted); text-transform: uppercase; letter-spacing: var(--ls-caps); margin: var(--sp-xl) 0 var(--sp-xs); }
@@ -3453,6 +3464,16 @@
       <button class="modal-x" id="manageX" aria-label="Close"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
       <div class="m-ico" id="manageIco" aria-hidden="true" :style="'background:' + $store.s.manage.pastel"></div>
       <div class="modal-title" id="manageTitle" x-text="$store.s.manage.title">Manage</div>
+      <button type="button" class="mbtn manage-details" id="manageRename" x-show="$store.s.manage.canRename"
+              aria-labelledby="manageDetailsLabel" aria-describedby="manageColour"
+              @click="$store.s.act.openManageRename()">
+        <span id="manageDetailsLabel">Name &amp; colour</span>
+        <span class="manage-colour" id="manageColour">
+          <span class="manage-colour-swatch" aria-hidden="true" :style="{ background: $store.s.manage.pastel }"></span>
+          <span><span class="sr-only">Current colour: </span><span class="manage-colour-name" x-text="$store.s.manage.color"></span></span>
+        </span>
+        <svg class="ic" aria-hidden="true"><use href="#i-caret-right"/></svg>
+      </button>
       <div id="manageBody">
         <!-- Everything that governs this challenge now lives behind the one gear,
              in the order you act on it: this round first, then who is waiting,
@@ -3544,15 +3565,11 @@
         </template>
       </div>
       <div class="msg msg--quiet" id="manageErr" aria-live="polite"></div>
-      <div class="modal-actions">
-        <!-- Leaving is the one destructive thing here and it is a MEMBER's
-             action, not an owner's, so the two never appear together. It keeps
-             the secondary shape: the primary slot belongs to the thing you came
-             to do, never to the way out. -->
+      <div class="modal-actions" x-show="$store.s.manage.isActive && $store.s.manage.canLeave">
+        <!-- Members keep Leave separate from the owner/admin controls. -->
         <button class="mbtn" id="manageLeave" x-show="$store.s.manage.isActive && $store.s.manage.canLeave"
                 @click="$store.s.act.leaveRound()"
                 x-text="'Leave ' + $store.s.manage.roundName"></button>
-        <button class="mbtn primary" id="manageRename" x-show="$store.s.manage.canRename" @click="$store.s.act.openManageRename()">Edit details</button>
       </div>
     </div>
   </div>
@@ -3580,7 +3597,7 @@
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
   var NAV_KEY = "minutes-nav";
-  var VERSION = "15.24";
+  var VERSION = "15.25";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no

@@ -1047,11 +1047,16 @@
   .btn.ok { background: var(--accent-2); }
 
   /* Chart */
+  .chart-caption { display: flex; justify-content: space-between; gap: var(--sp-md); font-size: var(--fs-2xs); color: var(--muted); margin-bottom: var(--sp-md); }
+  .chart-caption span:last-child { font-variant-numeric: tabular-nums; }
+  .chart-caption[hidden] { display: none; }
   .chart-wrap { width: 100%; }
   .chart-wrap svg { width: 100%; height: auto; display: block; }
   .chart-legend { display: flex; flex-wrap: wrap; gap: var(--sp-md) var(--sp-xl); margin-top: var(--sp-lg); }
   .leg-item { display: flex; align-items: center; gap: var(--sp-xs); border: none; padding: 0; background: none;
+    max-width: 100%; min-width: 0; overflow-wrap: anywhere; text-align: left;
     font-family: inherit; font-size: var(--fs-2xs); color: var(--muted); cursor: pointer; user-select: none; }
+  .leg-item > span:not(.leg-swatch) { min-width: 0; }
   .leg-item.off { opacity: .4; }
   .leg-item.me { color: var(--text); font-weight: var(--fw-bold); }
   /* Round, to match the chart's own node dots and the rest of the icon shapes.
@@ -2668,7 +2673,8 @@
   html.challenge-active #sheet .sheet-chrome { --ink: var(--pa-ink); }
   html.challenge-active ::selection { background: var(--accent-soft); color: var(--text); }
   html.challenge-active #sheet .tile .label .badge { background: var(--card-2); color: var(--muted); border-radius: var(--r-pill); }
-  html.challenge-active .chart-legend { gap: var(--sp-2xs) var(--sp-lg); }
+  html.challenge-active .chart-legend { gap: 0 var(--sp-lg); margin-top: var(--sp-2xs); }
+  html.challenge-active .card:has(> .chart-legend > .leg-item) { padding-bottom: var(--sp-sm); }
   html.challenge-active .leg-item { min-height: 44px; font-size: var(--fs-xs); color: var(--text); }
   html.challenge-active .leg-item.off { opacity: 1; color: var(--muted); text-decoration: line-through; }
   html.challenge-active .leg-item.off .leg-swatch { background: var(--muted) !important; }
@@ -3090,6 +3096,7 @@
       <div class="sect">
         <div class="slabel">Daily progress</div>
         <div class="card">
+        <div class="chart-caption" id="chartCaption" hidden><span>Cumulative minutes</span><span></span></div>
         <div class="chart-wrap" id="chart"></div>
         <div class="chart-legend" id="legend">
           <template x-for="l in $store.s.legend" :key="l.name">
@@ -3654,7 +3661,7 @@
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
   var NAV_KEY = "minutes-nav";
-  var VERSION = "15.26";
+  var VERSION = "15.27";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -8143,7 +8150,54 @@
     };
   }
 
+  function splinePath(points) {
+    if (!points.length) return "";
+    function format(value) { return Number(value.toFixed(4)).toString(); }
+    var path = "M" + format(points[0].x) + " " + format(points[0].y);
+    if (points.length === 1) return path;
+    var slopes = [], widths = [], tangents = [];
+    for (var i = 0; i < points.length - 1; i++) {
+      var width = points[i + 1].x - points[i].x;
+      if (!(width > 0)) throw new Error("Spline samples must have increasing x coordinates.");
+      widths.push(width);
+      slopes.push((points[i + 1].y - points[i].y) / width);
+    }
+    tangents[0] = slopes[0];
+    tangents[points.length - 1] = slopes[slopes.length - 1];
+    for (var j = 1; j < points.length - 1; j++) {
+      var before = slopes[j - 1], after = slopes[j];
+      // Weighted harmonic tangents preserve quiet days and cannot overshoot samples.
+      var w1 = 2 * widths[j] + widths[j - 1], w2 = widths[j] + 2 * widths[j - 1];
+      tangents[j] = before * after <= 0 ? 0 : (w1 + w2) / (w1 / before + w2 / after);
+    }
+    for (var k = 0; k < points.length - 1; k++) {
+      var a = points[k], b = points[k + 1], third = widths[k] / 3;
+      path += " C" + format(a.x + third) + " " + format(a.y + third * tangents[k]) +
+        " " + format(b.x - third) + " " + format(b.y - third * tangents[k + 1]) +
+        " " + format(b.x) + " " + format(b.y);
+    }
+    return path;
+  }
+
+  var chartResizeObserver;
+  function initChartResize(redraw) {
+    if (chartResizeObserver) return;
+    var chart = document.getElementById("chart"), width = chart.clientWidth, timer;
+    redraw = redraw || renderChart;
+    chartResizeObserver = new ResizeObserver(function () {
+      var nextWidth = chart.clientWidth;
+      if (nextWidth === width) return;
+      width = nextWidth;
+      clearTimeout(timer);
+      // Ignore height changes caused by drawing. Timers also run in offscreen
+      // portable previews, where rAF may pause. Their adapter owns the redraw.
+      if (width > 0) timer = setTimeout(redraw, 0);
+    });
+    chartResizeObserver.observe(chart);
+  }
+
   function renderChart() {
+    var chart = document.getElementById("chart");
     var vm = state.viewMonth;
     var isCur = isCurrentMonth(vm);
     var mp = monthKeyOf(vm);
@@ -8170,22 +8224,25 @@
       if (!state.hidden[name] && cum > globalMax) globalMax = cum;
     });
 
-    // Nobody logged anything this month → show a sleepy illustration instead of flat zero lines
-    if (!anyData) {
-      document.getElementById("chart").innerHTML = sleepyChartSvg();
-      return;
+    var caption = document.getElementById("chartCaption");
+    if (caption) {
+      caption.hidden = !anyData;
+      caption.lastElementChild.textContent = vm.toLocaleDateString(undefined, { month: "long" });
     }
 
-    // The y tick labels sit in the left gutter, so it has to clear the widest of
-    // them. It was a fixed 34 against a right gutter of 12, which pushed the plot
-    // 22 viewBox px off centre: on a 430px phone the line started 46px from the
-    // card edge and ended 29px from it. Size the gutter to the labels that are
-    // actually drawn, then mirror it, so the plot stays centred whatever the
-    // numbers are and no width is wasted on a gutter nothing needs.
+    // Nobody logged anything this month → show a sleepy illustration instead of flat zero lines
+    if (!anyData) {
+      chart.innerHTML = sleepyChartSvg();
+      return;
+    }
+    // Opening a hidden panel gives it geometry; the width observer draws then.
+    if (!chart.clientWidth) { renderLegend(); return; }
+
+    // Mirror the label gutter so the plot stays centred at the actual card width.
     var yTicks = [0, Math.round(globalMax / 2), globalMax];
     var widest = Math.max.apply(null, yTicks.map(function (t) { return String(t).length; }));
-    var GUT = Math.max(20, Math.round(widest * 5.6) + 9);   // 9px digits + the 6px label gap
-    var W = 448, H = 200, PL = GUT, PR = GUT, PT = 12, PB = 22;
+    var GUT = Math.max(24, Math.round(widest * 6.5) + 9);
+    var W = chart.clientWidth, H = 180, PL = GUT, PR = GUT, PT = 16, PB = 28;
     var innerW = W - PL - PR, innerH = H - PT - PB;
     var C = chartColors();
 
@@ -8196,20 +8253,19 @@
     yTicks.forEach(function (tv) {
       var yy = y(tv);
       grid += '<line x1="' + PL + '" y1="' + yy + '" x2="' + (W - PR) + '" y2="' + yy + '" stroke="' + C.grid + '" stroke-width="1"/>';
-      grid += '<text x="' + (PL - 6) + '" y="' + (yy + 3) + '" text-anchor="end" font-size="9" fill="' + C.label + '">' + tv + '</text>';
+      grid += '<text x="' + (PL - 6) + '" y="' + (yy + 3) + '" text-anchor="end" font-size="11" fill="' + C.label + '">' + tv + '</text>';
     });
 
     // x-axis calendar day labels - only as many as comfortably fit
-    var minSpacingPx = 26;
-    var maxLabels = Math.max(2, Math.floor(innerW / minSpacingPx));
-    var step = Math.max(1, Math.ceil(maxDay / maxLabels));
-    var xdays = [];
-    for (var dd = 1; dd <= lastDay; dd += step) { xdays.push(dd); }
-    if (xdays[xdays.length - 1] !== lastDay) xdays.push(lastDay);
+    var xdays = [1], step = lastDay <= 5 ? 1 : (innerW < 220 ? 7 : 5);
+    for (var dd = step; dd < (step === 1 ? lastDay : lastDay - 1); dd += step) {
+      if (dd > 1) xdays.push(dd);
+    }
+    if (xdays.length > 1 && x(lastDay) - x(xdays[xdays.length - 1]) < 18) xdays.pop();
+    if (lastDay > 1) xdays.push(lastDay);
     xdays.forEach(function (dnum) {
       var xx = x(dnum);
-      grid += '<line x1="' + xx.toFixed(1) + '" y1="' + PT + '" x2="' + xx.toFixed(1) + '" y2="' + (PT + innerH) + '" stroke="' + C.grid2 + '" stroke-width="1"/>';
-      grid += '<text x="' + xx.toFixed(1) + '" y="' + (H - 6) + '" text-anchor="middle" font-size="9" fill="' + C.label + '">' + dnum + '</text>';
+      grid += '<text x="' + xx.toFixed(1) + '" y="' + (H - 7) + '" text-anchor="middle" font-size="11" fill="' + C.label + '">' + dnum + '</text>';
     });
 
     var lines = "";
@@ -8220,9 +8276,8 @@
       var pts = series[name]; if (!pts || !pts.length) return;
       if (pts[pts.length - 1].val === 0) return; // skip flat zero lines (no data for this member)
       var isMe = name === state.me;
-      var path = "";
-      pts.forEach(function (p, i) { path += (i === 0 ? "M" : "L") + x(p.day).toFixed(1) + " " + y(p.val).toFixed(1) + " "; });
-      lines += '<path d="' + path + '" fill="none" stroke="' + colorFor(name) + '" stroke-width="' + (isMe ? 3.5 : 2.5) +
+      var path = splinePath(pts.map(function (p) { return { x: x(p.day), y: y(p.val) }; }));
+      lines += '<path d="' + path + '" fill="none" stroke="' + colorFor(name) + '" stroke-width="' + (isMe ? 2.75 : 1.8) +
                '" stroke-linejoin="round" stroke-linecap="round" opacity="' + (isMe ? 1 : 0.85) + '"/>';
       var last = pts[pts.length - 1];
       lines += '<circle cx="' + x(last.day).toFixed(1) + '" cy="' + y(last.val).toFixed(1) + '" r="' + (isMe ? 4 : 3) +
@@ -8230,9 +8285,9 @@
     });
 
     var svg =
-      '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet" role="img">' +
+      '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Cumulative minutes">' +
       grid + lines + '</svg>';
-    document.getElementById("chart").innerHTML = svg;
+    chart.innerHTML = svg;
 
     renderLegend();
   }
@@ -10361,6 +10416,7 @@
   }
   // ---- Boot ----
   function begin() {
+    initChartResize();
     initTheme();
     initBackButton();
     initModalA11y();

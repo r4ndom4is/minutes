@@ -478,7 +478,15 @@
        next time the card's height is tuned. */
     --pa-mint:  #c8e6cd; --pa-coral: #f3c9b6; --pa-lime: #dceeb1;
     --pa-lilac: #c5b0f4; --pa-cream: #f4ecd6; --pa-pink: #efd4d4;
+    /* Selected Tonal colour / Subtle: explicit sRGB stops, exact pastel at 52%. */
+    --pa-mint-tonal: linear-gradient(155deg, #cfebd5 0%, var(--pa-mint) 52%, #bbdebf 100%);
+    --pa-coral-tonal: linear-gradient(155deg, #f6d0bd 0%, var(--pa-coral) 52%, #efbda9 100%);
+    --pa-lime-tonal: linear-gradient(155deg, #e4f3b8 0%, var(--pa-lime) 52%, #cfe6a2 100%);
+    --pa-lilac-tonal: linear-gradient(155deg, #c7b7f9 0%, var(--pa-lilac) 52%, #c0a4ed 100%);
+    --pa-cream-tonal: linear-gradient(155deg, #faf2df 0%, var(--pa-cream) 52%, #ebe2c5 100%);
+    --pa-pink-tonal: linear-gradient(155deg, #f3dbda 0%, var(--pa-pink) 52%, #ebc8c9 100%);
     --pa-ink: #14162b;
+    --pa-tonal-label-opacity: .75;
     /* Semantic tints for use ON a pastel. The round pill in the challenge sheet's
        header carries live/done state, and --tint-live / --done-fg are tuned
        against the PAGE: in dark mode --live-fg is #7ff0c8, a pale mint that all
@@ -576,7 +584,7 @@
   html[data-theme="light"] { --welcome-bg: #f5f4f0; }
   #login, #layerBase, #backofficeView,
   html:has(#backofficeView.show) :is(.modal-overlay, #popDock, #ptr),
-  html.hub-active :is(#challModal, #popDock, #ptr),
+  html.hub-active :is(#challModal, #activityModal, #popDock, #ptr),
   html.settings-active :is(#sheet, #popDock, #ptr),
   html.challenge-active :is(#sheet, .modal-overlay, #popDock, #ptr) {
     --bg: var(--welcome-bg); --card: #232321; --card-2: #2e2e2a;
@@ -615,7 +623,7 @@
   }
   html[data-theme="light"] :is(#login, #layerBase, #backofficeView),
   html[data-theme="light"]:has(#backofficeView.show) :is(.modal-overlay, #popDock, #ptr),
-  html[data-theme="light"].hub-active :is(#challModal, #popDock, #ptr),
+  html[data-theme="light"].hub-active :is(#challModal, #activityModal, #popDock, #ptr),
   html[data-theme="light"].settings-active :is(#sheet, #popDock, #ptr),
   html[data-theme="light"].challenge-active :is(#sheet, .modal-overlay, #popDock, #ptr) {
     --card: #fffefa; --card-2: #eeede7;
@@ -773,17 +781,11 @@
   .cw-done b { font-size: var(--fs-lg); overflow-wrap: anywhere; min-width: 0; }
   @keyframes cwPop { from { transform: scale(.3); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-  #loginBrand { position: relative; perspective: 500px; isolation: isolate; }
-  #loginBrand .card-layer, #loginBrand .clock-hand { position: absolute; inset: 0; }
-  #loginBrand .card-layer { transform-style: preserve-3d; transform-origin: 50% 50%; }
-  #loginBrand .clock-hand { transform-origin: var(--hand-origin-x) var(--hand-origin-y); pointer-events: none; }
-  #loginBrand .layer-rear { z-index: 0; }
-  #loginBrand .layer-middle { z-index: 1; }
-  #loginBrand .layer-front { z-index: 2; }
-  #loginBrand svg { display: block; width: 100%; height: 100%; overflow: visible; }
+  #loginBrand { color: var(--accent); }
+  #loginBrand .h2-column { transform-box: fill-box; transform-origin: center bottom; }
   @media (prefers-reduced-motion: reduce) {
     .onb-in, .cw-tick, .login-spin { animation: none; }
-    #loginBrand .card-layer, #loginBrand .clock-hand { transform: none !important; }
+    #loginBrand .h2-column { transform: none !important; }
   }
   /* ---- App ---- */
   /* #app is shown by x-show once Alpine boots; [x-cloak] covers the pre-init frame.
@@ -863,7 +865,6 @@
   /* Manage-challenge modal rows */
   .modal.manage-modal { text-align: left; display: flex; flex-direction: column; max-height: calc(100dvh - var(--sat) - var(--sab) - 48px - var(--modal-toast-space, 0px)); }
   .modal.manage-modal .modal-title { flex: 0 0 auto; }
-  .modal.manage-modal .m-ico { flex: 0 0 auto; }
   .modal.manage-modal .manage-details { flex: 0 0 auto; display: flex; align-items: center; gap: var(--sp-md);
     min-height: 48px; padding: var(--sp-md) var(--sp-xl); border: none; box-shadow: none;
     font-size: var(--fs-md); text-align: left; }
@@ -1676,7 +1677,8 @@
   .modal .m-ico { width: 44px; height: 44px; border-radius: var(--r-pill); background: var(--tint-danger); color: var(--danger); display: flex; align-items: center; justify-content: center; margin-bottom: var(--sp-xl); }
   .modal .m-ico.accent { background: var(--tint-accent); color: var(--accent); }
   .modal .m-ico svg { width: 24px; height: 24px; }
-  .modal-title { font-size: var(--fs-xl); font-weight: var(--fw-black); margin-bottom: var(--sp-lg); letter-spacing: var(--ls-tight); overflow-wrap: anywhere; }
+  .modal-title { font-size: var(--fs-xl); font-weight: var(--fw-black); margin: 0 0 var(--sp-lg); letter-spacing: var(--ls-tight); overflow-wrap: anywhere; }
+  .modal-x + .modal-title { display: flex; align-items: center; min-height: 44px; padding-right: calc(44px + var(--sp-lg)); }
   .modal-msg { font-size: var(--fs-sm); color: var(--muted); line-height: var(--lh-loose); margin-bottom: var(--sp-4xl); overflow-wrap: anywhere; }
   .modal-actions { display: flex; gap: var(--sp-md); }
   .mbtn { flex: 1; min-width: 0; min-height: 48px; padding: var(--sp-lg); border-radius: var(--r-pill); background: var(--card-2); color: var(--text); font-size: var(--fs-lg); font-weight: var(--fw-bold); cursor: pointer; border: 1px solid var(--border-2); }
@@ -1815,13 +1817,7 @@
      var(--text), because the card is a coloured object and its text must stay
      readable whatever the page theme does. Same contract .rescard uses.
 
-     RHYTHM. The active card is its own group and everything below it is the
-     discover list, so the gap below the active card is wider than the gaps
-     between the rest. A flex container cannot hold two gap values, and the
-     active card is moved by `order` so :nth-child would target the wrong one.
-     Both problems disappear if the container carries the NARROW gap and the
-     active card carries the extra room below itself: the wide gap then follows
-     that card wherever it is. */
+     All cards share their content-driven height and the same list gap. */
   .chall-list { display: flex; flex-direction: column; gap: var(--sp-2xl); }
   /* ---- CARD COLOUR PICKER --------------------------------------------------
      Six pastel discs. The selected one is marked by a ring drawn OUTSIDE the
@@ -1853,11 +1849,7 @@
     padding: var(--sp-3xl); border: none; border-radius: var(--r-2xl);
     background: var(--pa, var(--card)); color: var(--pa-ink);
   }
-  /* Active first, and given the room below it that separates it from discover. */
-  .chall-row.active-cid { order: -1; margin-bottom: var(--sp-xs); }
-  /* The marker is SCALE: the card you care about is simply bigger. Nothing is
-     added to it, which is why the watermark below can be derived from height. */
-  .chall-row.active-cid { min-height: var(--chall-card-h); }
+  .chall-row.active-cid { order: -1; }
   /* The card answers the tap itself. It used to press to .99, which at 361px wide
      is under 4px of travel and effectively invisible, while the page took ~45ms
      to start moving - so a tap read as nothing happening. .97 is the standard
@@ -1870,11 +1862,6 @@
     .chall-row.tappable:active { transform: none; }
   }
 
-  /* The round number, already on every card, TURNED UP on the active one: the
-     resting cards carry it at 5% as texture, the active card at 15% and larger
-     so it reads as the card's own number. Sized from the card's height by
-     --chall-wm so it cannot grow out of the card.
-     aria-hidden in the markup: it repeats the round the kicker already states. */
   /* Whatever sits here is a CHARACTER, never an icon. The slot is right-anchored
      and typographic: a glyph brings a baseline, side bearings and the same stroke
      weight as the digits, so it lands where a digit lands. An icon has none of
@@ -1919,22 +1906,8 @@
     font-weight: var(--fw-sm-bold);
     transform: translate(.11em, .0486em);
   }
-  .chall-row.active-cid .cr-wm[data-wm="+"] {
-    font-size: var(--chall-wm-plus);
-  }
-  /* Same alpha as every other card. The active card's marker is SCALE, and it
-     already carries a bigger numeral; darkening the ink as well made its
-     watermark a second, competing signal and pulled the eye to the background of
-     the one card whose foreground matters most. */
-  .chall-row.active-cid .cr-wm {
-    font-size: var(--chall-wm); bottom: calc(var(--sp-6xl) * -1 - var(--sp-2xs));
-  }
 
   .chall-row .cr-main { position: relative; flex: 1; display: flex; flex-direction: column; }
-  /* Every text run on the card pins its own line-height. Leaving them at
-     `normal` let the browser add 20-50% leading and the resting card came out
-     134px against the mock's 117, which quietly ate most of the size difference
-     that IS the active card's marker. */
   .chall-row .cr-meta {
     display: flex; align-items: center; gap: var(--sp-xs); flex-wrap: wrap;
     font-size: var(--fs-xs); font-weight: var(--fw-black); line-height: var(--lh-normal);
@@ -1942,13 +1915,7 @@
     color: var(--pa-ink); opacity: .6;
     white-space: normal; overflow-wrap: anywhere;
   }
-  /* margin-bottom: auto makes the name absorb whatever height the card has spare,
-     so the footer rests on the bottom edge of EVERY card. Without it the active
-     card, which is the only one with a min-height, laid its content out from the
-     top and left the slack underneath, so its pill and minutes floated in the
-     middle of the card while every resting card had them at the foot. The
-     footer's own margin-top survives as the minimum gap, because a fixed margin
-     is honoured before free space is handed to the auto one. */
+  /* Keep the footer at the bottom when wrapped content stretches a card. */
   .chall-row .cr-name {
     font-weight: var(--fw-bold); font-size: var(--fs-2xl); letter-spacing: var(--ls-tight);
     line-height: var(--lh-tight); margin-top: var(--sp-sm); margin-bottom: auto;
@@ -2077,7 +2044,8 @@
      Consequence, unchanged: the document does not scroll, each layer owns
      its own scroller.
      ====================================================================== */
-  #app { position: fixed; inset: 0; padding-bottom: 0; overflow: hidden; }
+  /* Clip the outgoing page without creating a programmatically scrollable stage. */
+  #app { position: fixed; inset: 0; padding-bottom: 0; overflow: clip; }
   @media (min-width: 640px) {
     #app { left: 50%; right: auto; transform: translateX(-50%); width: var(--frame-w); max-width: 100%; margin: 0; min-height: 0; }
   }
@@ -2205,6 +2173,19 @@
     content: ""; position: absolute; z-index: -1; pointer-events: none;
     inset: calc(-1 * var(--timeline-room)) 0 0; background: var(--pa, var(--card));
     transform: translateY(calc(-1 * var(--timeline-room) * var(--timeline-progress, 0)));
+  }
+  html[data-depth="soft"] .chall-row,
+  html[data-depth="soft"] #sheet:not(.timeline-stable)[data-mode="stats"] > .sheet-chrome,
+  html[data-depth="soft"] #sheet.timeline-stable[data-mode="stats"] > .sheet-chrome::before {
+    background-image: var(--pa-tonal, none);
+  }
+  html[data-depth="soft"] .chall-row :is(.cr-meta, .cr-you, .cr-sub i) {
+    opacity: var(--pa-tonal-label-opacity);
+  }
+  html[data-depth="soft"] #sheet[data-mode="stats"] .rh-wheel { background-color: transparent; }
+  html[data-depth="soft"] #sheet[data-mode="stats"] .odo-cap,
+  html[data-depth="soft"] #sheet[data-mode="stats"] .odo-i:not([aria-current]) .odo-m::after {
+    color: rgb(20 22 43 / var(--pa-tonal-label-opacity));
   }
   .timeline-stable :is(.timeline-toolbar, .timeline-title, .rh-wheel) { pointer-events: auto; }
   /* The chrome is a surface now, so content has to clear it rather than butt into
@@ -2719,6 +2700,103 @@
   .mg-chev .ic, .lb-chev .ic { width: 15px; height: 15px; display: block; }
   /* These two carried a text glyph before, sized by font-size. */
   .mg-chev, .lb-chev { display: inline-flex; align-items: center; }
+  .activity-home { margin: 0 0 var(--sp-lg); }
+  .activity-home > .slabel { margin: 0; }
+  .activity-overview { display: block; width: 100%; border: 0; padding: 0;
+    border-radius: var(--r-xl); background: none; color: var(--text); text-align: left;
+    font: inherit; cursor: pointer; }
+  .activity-overview:focus-visible { outline: 3px solid var(--accent); outline-offset: 5px; }
+  .activity-heading, .activity-month-heading { display: flex; align-items: center;
+    justify-content: space-between; gap: var(--sp-md); }
+  .activity-progress { display: block; font-size: var(--fs-3xl);
+    font-weight: var(--fw-bold); letter-spacing: var(--ls-tight); font-variant-numeric: tabular-nums; }
+  .activity-progress > span { white-space: nowrap; }
+  .activity-progress small { font-size: var(--fs-sm); font-weight: var(--fw-md); letter-spacing: normal; color: var(--muted); }
+  .activity-calendar-link { display: inline-flex; align-items: center; gap: var(--sp-2xs);
+    font-size: var(--fs-xs); font-weight: var(--fw-sm-bold); color: var(--accent); }
+  .activity-calendar-link .ic { width: 16px; height: 16px; }
+  .activity-week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: var(--sp-2xs); margin: var(--sp-4xl) 0 var(--sp-3xl); }
+  .activity-day { display: grid; min-width: 0; grid-template-rows: auto 38px; justify-items: center;
+    gap: var(--sp-sm); color: var(--muted); font-size: var(--fs-3xs); text-align: center; }
+  .activity-weekday { width: 100%; line-height: var(--lh-normal); text-align: center; }
+  .activity-bead { width: 34px; height: 38px; display: grid; place-items: center; background: var(--card-2);
+    border: 2px solid transparent; border-radius: var(--r-pill); font-size: var(--fs-sm);
+    font-weight: var(--fw-sm-bold); font-variant-numeric: tabular-nums; color: var(--text); }
+  .activity-bead .ic { width: 18px; height: 18px; }
+  .activity-day.is-active .activity-bead { background: var(--accent); color: var(--on-accent); }
+  .activity-day.is-today .activity-bead { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .activity-day.is-future .activity-bead { background: none; color: var(--muted); border-color: var(--border); }
+  .activity-day.is-today { color: var(--accent); font-weight: var(--fw-bold); }
+  .activity-weekly { display: block; margin: 0; font-size: var(--fs-sm); font-weight: var(--fw-sm-bold); color: var(--accent); }
+  .activity-daily { font-size: var(--fs-xs); color: var(--muted); }
+  .activity-note { margin: var(--sp-sm) 0 0; font-size: var(--fs-xs); color: var(--muted); line-height: var(--lh-normal); }
+  .activity-modal { margin-block: 0; }
+  .activity-modal .activity-month-heading { margin: var(--sp-5xl) 0 var(--sp-xl); }
+  .activity-month-heading h3 { margin: 0; font-size: var(--fs-lg); font-weight: var(--fw-bold); }
+  .activity-month-nav { display: flex; gap: var(--sp-2xs); }
+  .activity-month-nav button { width: 44px; height: 44px; display: grid; place-items: center;
+    padding: 0; border: 0; border-radius: var(--r-pill); background: var(--card-2); color: var(--text); cursor: pointer; }
+  .activity-month-nav button:disabled { color: var(--muted); background: none; cursor: default; }
+  .activity-month-nav .ic { width: 18px; height: 18px; }
+  .activity-month-nav button:not(:disabled):hover { background: var(--accent-soft); color: var(--accent); }
+  .activity-calendar { display: grid; justify-items: center; margin-inline: calc(-1 * var(--sp-4xl)); }
+  .activity-weekdays, .activity-dates { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr));
+    width: 100%; max-width: calc(7 * 44px); gap: 0; }
+  .activity-dates { grid-auto-rows: 44px; }
+  .activity-weekdays { padding: var(--sp-sm) 0; color: var(--muted); font-size: var(--fs-3xs); text-align: center; }
+  .activity-date { width: 100%; min-width: 0; min-height: 44px; padding: var(--sp-2xs) 0; border: 0; background: none;
+    color: var(--text); font: inherit; font-size: var(--fs-sm); font-variant-numeric: tabular-nums;
+    display: grid; place-items: center; cursor: pointer; }
+  .activity-date span { width: 32px; height: 32px; display: grid; place-items: center; border-radius: var(--r-pill); }
+  .activity-date.is-active span { background: var(--accent); color: var(--on-accent); font-weight: var(--fw-bold); }
+  .activity-date.is-outside { color: var(--muted); }
+  .activity-date.is-outside.is-active span { background: var(--accent-soft); color: var(--accent); }
+  .activity-date.is-today span { outline: 1px solid var(--accent); outline-offset: 2px; }
+  .activity-date.is-selected span { box-shadow: 0 0 0 2px var(--card), 0 0 0 4px var(--text); }
+  .activity-date:disabled { color: var(--muted); cursor: default; }
+  .activity-date:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: var(--r-md); }
+  .activity-day-detail { margin: var(--sp-4xl) 0; }
+  .activity-day-detail strong { display: block; font-size: var(--fs-sm); font-weight: var(--fw-sm-bold); }
+  .activity-day-detail p { margin: var(--sp-2xs) 0 0; font-size: var(--fs-xs); color: var(--muted); }
+  .activity-disclosure { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-md);
+    width: 100%; min-height: 44px; padding: var(--sp-sm) 0; border: 0; background: none;
+    color: var(--text); font: inherit; font-size: var(--fs-sm); font-weight: var(--fw-sm-bold);
+    text-align: left; cursor: pointer; border-radius: var(--r-md); }
+  .activity-disclosure .ic { flex: 0 0 16px; width: 16px; height: 16px; color: var(--muted); }
+  .activity-disclosure .ic.is-open { transform: rotate(90deg); }
+  .activity-disclosure:hover { color: var(--accent); }
+  .activity-disclosure-body { padding: var(--sp-sm) 0 var(--sp-4xl); }
+  .activity-goal-row { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2xl); }
+  .activity-goal-row label { font-size: var(--fs-sm); font-weight: var(--fw-sm-bold); }
+  .activity-goal-picker { position: relative; flex: 0 0 110px; }
+  #activityGoal { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-md);
+    width: 100%; min-height: 44px; padding: var(--sp-sm) var(--sp-lg);
+    border: 1px solid transparent; border-radius: var(--r-md); background: var(--card-2);
+    color: var(--text); font: inherit; font-size: var(--fs-lg); cursor: pointer; }
+  #activityGoal > .ic { flex: 0 0 16px; width: 16px; height: 16px; transform: rotate(90deg); color: var(--muted); }
+  #activityGoal:hover { background: var(--accent-soft); }
+  .activity-goal-menu { display: none; position: absolute; z-index: 3; top: calc(100% + var(--sp-sm)); right: 0;
+    width: 100%; max-height: var(--activity-goal-room, 318px); overflow-y: auto; overscroll-behavior: contain;
+    padding: var(--sp-2xs); border: 1px solid transparent; border-radius: var(--r-md);
+    background: var(--card); box-shadow: var(--shadow-pop); }
+  .activity-goal-menu.show { display: block; }
+  .activity-goal-menu.opens-up { top: auto; bottom: calc(100% + var(--sp-sm)); }
+  .activity-goal-menu button { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-sm);
+    width: 100%; min-height: 44px; padding: var(--sp-sm); border: 0; border-radius: var(--r-xs);
+    background: none; color: var(--text); font: inherit; font-size: var(--fs-sm); text-align: left; cursor: pointer; }
+  .activity-goal-menu button.is-active { background: var(--accent-soft); color: var(--accent); }
+  .activity-goal-menu button[aria-selected="true"] { font-weight: var(--fw-sm-bold); }
+  .activity-goal-menu .ic { width: 16px; height: 16px; visibility: hidden; }
+  .activity-goal-menu .ic.is-selected { visibility: visible; }
+  #activityDetails .activity-daily { margin: var(--sp-sm) 0; }
+  .activity-month-nav button:focus-visible, .activity-disclosure:focus-visible, #activityGoal:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 3px; }
+  html[data-depth="pop"] #activityGoal { border: 2px solid var(--ink); }
+  html[data-depth="pop"] .activity-goal-menu { border: 2px solid var(--ink); box-shadow: var(--pop-sm) var(--pop-sm) 0 var(--pop-ink); }
+  .activity-goal-help { font-size: var(--fs-xs); color: var(--muted); line-height: var(--lh-normal); margin: var(--sp-sm) 0 0; }
+  .activity-goal-error { font-size: var(--fs-xs); color: var(--d-fg); line-height: var(--lh-normal); margin: var(--sp-sm) 0 0; }
+  html[data-depth="pop"] .activity-day.is-active .activity-bead { border-color: var(--on-accent); }
 </style>
 </head>
 <body x-data>
@@ -2731,14 +2809,7 @@
   <div class="wrap">
     <div class="login-card">
       <div class="login-lead">
-        <div class="logo" id="loginBrand" data-motion="settled" aria-hidden="true" style="--hand-origin-x:59.252336%;--hand-origin-y:63.841495%">
-    <div class="card-layer layer-rear" data-layer="rear"><svg xmlns="http://www.w3.org/2000/svg" viewBox="18 18 60 60" aria-hidden="true"><rect x="20.242991" y="20.242991" width="37.143925" height="37.143925" rx="9.285981" fill="var(--brand-rear)"/></svg></div>
-    <div class="card-layer layer-middle"><svg xmlns="http://www.w3.org/2000/svg" viewBox="18 18 60 60" aria-hidden="true"><rect x="25.17757" y="25.17757" width="40.373832" height="40.373832" rx="10.093458" fill="var(--brand-middle)" stroke="var(--logo-surface)" stroke-width="3.364486" paint-order="stroke fill"/></svg></div>
-    <div class="card-layer layer-front" data-layer="front"><svg xmlns="http://www.w3.org/2000/svg" viewBox="18 18 60 60" aria-hidden="true"><rect x="31.345794" y="31.345794" width="44.411215" height="44.411215" rx="11.102804" fill="var(--brand-front)" stroke="var(--logo-surface)" stroke-width="3.364486" paint-order="stroke fill"/></svg>
-      <div class="clock-hand hand-long" data-hand="long"><svg xmlns="http://www.w3.org/2000/svg" viewBox="18 18 60 60" aria-hidden="true"><path d="M53.551402 56.304897L63.089789 50.797907" fill="none" stroke="var(--logo-surface)" stroke-width="4.317757" stroke-linecap="round"/></svg></div>
-      <div class="clock-hand hand-short" data-hand="short"><svg xmlns="http://www.w3.org/2000/svg" viewBox="18 18 60 60" aria-hidden="true"><path d="M53.551402 56.304897L46.502866 51.36946" fill="none" stroke="var(--logo-surface)" stroke-width="4.317757" stroke-linecap="round"/></svg></div>
-    </div>
-  </div>
+        <div class="logo" id="loginBrand" data-motion="settled" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" data-brand="h2" role="img" aria-label="Minutes H2, one-two-three joined hourglasses" color="currentColor"><g class="h2-column" data-column="0"><circle cx="35" cy="97" r="12" fill="currentColor"/></g><g class="h2-column" data-column="1"><path d="M64 56 A12 12 0 0 1 70.8829 77.8298 C68.5532 79.4611 67 80.1649 67 82.5 C67 84.8351 68.5532 85.5389 70.8829 87.1702 A12 12 0 1 1 57.1171 87.1702 C59.4468 85.5389 61 84.8351 61 82.5 C61 80.1649 59.4468 79.4611 57.1171 77.8298 A12 12 0 0 1 64 56 Z" fill="currentColor"/></g><g class="h2-column" data-column="2"><path d="M93 27 A12 12 0 0 1 99.8829 48.8298 C97.5532 50.4611 96 51.1649 96 53.5 C96 55.8351 97.5532 56.5389 99.8829 58.1702 A12 12 0 0 1 99.8829 77.8298 C97.5532 79.4611 96 80.1649 96 82.5 C96 84.8351 97.5532 85.5389 99.8829 87.1702 A12 12 0 1 1 86.1171 87.1702 C88.4468 85.5389 90 84.8351 90 82.5 C90 80.1649 88.4468 79.4611 86.1171 77.8298 A12 12 0 0 1 86.1171 58.1702 C88.4468 56.5389 90 55.8351 90 53.5 C90 51.1649 88.4468 50.4611 86.1171 48.8298 A12 12 0 0 1 93 27 Z" fill="currentColor"/></g></svg></div>
         <h1>Minutes</h1>
         <p id="loginSub">Log your minutes and see where you stand against everyone else this month.</p>
       </div>
@@ -2881,6 +2952,29 @@
     </template>
 
     <section class="tab-panel active" id="tab-challenges">
+      <section class="activity-home" x-show="$store.s.activity.show" aria-labelledby="activityHomeTitle">
+        <h2 class="slabel" id="activityHomeTitle">Your activity</h2>
+        <button type="button" class="activity-overview" id="activityOpen" :aria-label="$store.s.activity.buttonLabel" @click="$store.s.act.openActivity()">
+          <span class="activity-heading">
+            <span class="activity-progress"><span x-text="$store.s.activity.progress"></span> <small>days this week</small></span>
+            <span class="activity-calendar-link">Calendar <svg class="ic" aria-hidden="true"><use href="#i-caret-right"/></svg></span>
+          </span>
+          <span class="activity-week">
+            <template x-for="day in $store.s.activity.week" :key="day.date">
+              <span class="activity-day" :data-week-date="day.date" :class="{ 'is-active': day.active, 'is-today': day.today, 'is-future': day.future }" :aria-label="day.label">
+                <span class="activity-weekday" x-text="day.weekday"></span>
+                <span class="activity-bead">
+                  <template x-if="day.active"><svg class="ic" aria-hidden="true"><use href="#i-ok"/></svg></template>
+                  <template x-if="!day.active"><span x-text="day.number"></span></template>
+                </span>
+              </span>
+            </template>
+          </span>
+          <span class="activity-weekly" x-text="$store.s.activity.weeklyLabel"></span>
+        </button>
+        <p class="activity-note" role="status" x-show="$store.s.activity.note" x-text="$store.s.activity.note"></p>
+        <p class="activity-goal-error" role="status" x-show="$store.s.activityGoalNotice" x-text="$store.s.activityGoalNotice"></p>
+      </section>
       <template x-for="sec in $store.s.challSections" :key="sec.id">
         <div class="sect">
           <div class="slabel" x-text="sec.label"></div>
@@ -2900,7 +2994,7 @@
             <template x-if="!sec.rows.length && !sec.welcome"><div class="blank" x-text="sec.empty"></div></template>
             <template x-for="c in sec.rows" :key="c.cid">
               <div class="chall-row"
-                   :style="'--pa:' + c.pastel"
+                   :style="{ '--pa': c.pastel, '--pa-tonal': 'var(--pa-' + c.color + '-tonal)' }"
                    :class="{ 'active-cid': c.active, 'tappable': c.approved }"
                    :role="c.approved ? 'button' : null"
                    :tabindex="c.approved ? 0 : null"
@@ -2961,7 +3055,7 @@
        you drag downward to dismiss is a sheet affordance, and this one covers the
        screen. Back is the chevron, or a swipe from the left edge. -->
   <div class="sheet" id="sheet" :data-mode="$store.s.sheet === 'you' ? 'you' : 'stats'"
-       :style="{ '--pa': $store.s.chall.pastel }">
+       :style="{ '--pa': $store.s.chall.pastel, '--pa-tonal': 'var(--pa-' + $store.s.chall.color + '-tonal)' }">
     <div class="sheet-chrome">
       <div class="round-head timeline-head" id="chalHead">
         <div class="timeline-toolbar">
@@ -3304,9 +3398,100 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="activityModal">
+    <div class="modal activity-modal" role="dialog" aria-modal="true" aria-labelledby="activityTitle">
+      <button type="button" class="modal-x" id="activityClose" aria-label="Close activity calendar" @click="$store.s.act.closeActivity()">
+        <svg class="ic" aria-hidden="true"><use href="#i-x"/></svg>
+      </button>
+      <h2 class="modal-title" id="activityTitle">Your activity</h2>
+      <p class="activity-note" role="status" x-show="$store.s.activity.note" x-text="$store.s.activity.note"></p>
+      <div class="activity-month-heading">
+        <div>
+          <h3 id="activityMonthTitle" x-text="$store.s.activity.monthTitle"></h3>
+          <span class="activity-note" x-text="$store.s.activity.monthSummary"></span>
+        </div>
+        <div class="activity-month-nav">
+          <button type="button" id="activityPrev" aria-label="Previous activity month" :disabled="$store.s.activity.prevOff" @click="$store.s.act.activityMonth(-1)">
+            <svg class="ic" aria-hidden="true"><use href="#i-caret-left"/></svg>
+          </button>
+          <button type="button" id="activityNext" aria-label="Next activity month" :disabled="$store.s.activity.nextOff" @click="$store.s.act.activityMonth(1)">
+            <svg class="ic" aria-hidden="true"><use href="#i-caret-right"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="activity-calendar">
+        <div class="activity-weekdays" aria-hidden="true">
+          <template x-for="(label, index) in $store.s.activity.weekdays" :key="index"><span x-text="label"></span></template>
+        </div>
+        <p id="activityCalendarHelp" class="sr-only">Use the arrow keys to move between dates.</p>
+        <div class="activity-dates" role="group" aria-labelledby="activityMonthTitle" aria-describedby="activityCalendarHelp">
+          <template x-for="day in $store.s.activity.calendar" :key="day.key">
+            <div>
+              <button type="button" class="activity-date" :data-activity-date="day.date" :aria-label="day.label"
+                      :disabled="day.future" :aria-current="day.today ? 'date' : null"
+                      :aria-pressed="day.date === $store.s.activitySelected"
+                      :tabindex="day.date === $store.s.activitySelected ? 0 : -1"
+                      :class="{ 'is-active': day.active, 'is-outside': day.outsideMonth, 'is-today': day.today, 'is-selected': day.date === $store.s.activitySelected }"
+                      @click="$store.s.act.activitySelect(day.date)"
+                      @keydown="$store.s.act.activityCalendarKey($event, day.date)">
+                <span x-text="day.number"></span>
+              </button>
+            </div>
+          </template>
+        </div>
+      </div>
+      <div class="activity-day-detail" aria-live="polite">
+        <strong x-text="$store.s.activity.selectedTitle"></strong>
+        <p x-text="$store.s.activity.selectedText"></p>
+        <p x-show="$store.s.activity.selectedPending">Saved on this device, waiting to sync.</p>
+      </div>
+      <div class="activity-goal-row">
+        <label id="activityGoalLabel" for="activityGoal">Weekly goal</label>
+        <div class="activity-goal-picker" id="activityGoalPicker">
+          <button type="button" id="activityGoal" role="combobox" aria-haspopup="listbox"
+                  aria-labelledby="activityGoalLabel" aria-describedby="activityGoalText activityGoalHelp activityGoalError"
+                  aria-controls="activityGoalOptions" :aria-expanded="$store.s.activityGoalMenuOpen"
+                  :aria-activedescendant="$store.s.activityGoalMenuOpen ? 'activityGoalOption' + $store.s.activityGoalActive : null"
+                  @click="$store.s.act.toggleActivityGoalMenu()" @keydown="$store.s.act.activityGoalKey($event)">
+            <span id="activityGoalText" x-text="$store.s.activity.goal + ($store.s.activity.goal === 1 ? ' day' : ' days')"></span>
+            <svg class="ic" aria-hidden="true"><use href="#i-caret-right"/></svg>
+          </button>
+          <div id="activityGoalOptions" class="activity-goal-menu" :class="{ 'show': $store.s.activityGoalMenuOpen }"
+               role="listbox" aria-labelledby="activityGoalLabel">
+            <template x-for="days in [1, 2, 3, 4, 5, 6, 7]" :key="days">
+              <button type="button" role="option" tabindex="-1" :id="'activityGoalOption' + days"
+                      :aria-selected="days === $store.s.activity.goal"
+                      :class="{ 'is-active': days === $store.s.activityGoalActive }"
+                      @pointermove="$store.s.activityGoalActive = days" @click="$store.s.act.chooseActivityGoal(days)">
+                <span x-text="days + (days === 1 ? ' day' : ' days')"></span>
+                <svg class="ic" aria-hidden="true" :class="{ 'is-selected': days === $store.s.activity.goal }"><use href="#i-ok"/></svg>
+              </button>
+            </template>
+          </div>
+        </div>
+      </div>
+      <p class="activity-goal-help" id="activityGoalHelp" role="status"
+         x-text="$store.s.activityGoalSaved ? 'Saved on this device.' : 'This week onward, on this device.'"></p>
+      <p class="activity-goal-error" id="activityGoalError" role="alert" x-show="$store.s.activityGoalNotice" x-text="$store.s.activityGoalNotice"></p>
+      <button type="button" class="activity-disclosure" id="activityDetailsToggle"
+              :aria-expanded="$store.s.activityDetailsOpen" aria-controls="activityDetails"
+              @click="$store.s.act.toggleActivityDetails()">
+        <span>About your streaks</span>
+        <svg class="ic" aria-hidden="true" :class="{ 'is-open': $store.s.activityDetailsOpen }"><use href="#i-caret-right"/></svg>
+      </button>
+      <div id="activityDetails" class="activity-disclosure-body" x-show="$store.s.activityDetailsOpen">
+        <p class="activity-weekly" x-text="$store.s.activity.weeklyLabel"></p>
+        <p class="activity-daily" x-show="$store.s.activity.dailyLabel" x-text="$store.s.activity.dailyLabel"></p>
+        <p class="activity-goal-help" x-text="$store.s.activity.encouragement"></p>
+        <p class="activity-goal-help">A weekly streak counts consecutive weeks when you met that week's goal. Earlier weeks keep their original goals.</p>
+        <p class="activity-goal-help">Each date with minutes counts once across challenges. Weeks run Monday to Sunday; the current week stays open.</p>
+        <p class="activity-goal-help">The daily streak counts consecutive active dates, including a run ending yesterday while today is still open. Goal history is saved for your profile on this device, not synced across devices.</p>
+      </div>
+    </div>
+  </div>
+
   <div class="modal-overlay" id="confirmModal">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmMsg">
-      <div class="m-ico" id="confirmIco"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg></div>
       <div class="modal-title" id="confirmTitle">Delete?</div>
       <div class="modal-msg" id="confirmMsg"></div>
       <div class="modal-actions">
@@ -3319,7 +3504,6 @@
   <div class="modal-overlay" id="editModal">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="editTitle">
       <button class="modal-x" id="editClose" aria-label="Close"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
-      <div class="m-ico accent"><svg class="ic" aria-hidden="true"><use href="#i-pencil"/></svg></div>
       <div class="modal-title" id="editTitle">Edit entry</div>
       <div class="field">
         <label for="editMins">Minutes</label>
@@ -3349,7 +3533,6 @@
   <div class="modal-overlay" id="addModal">
     <div class="modal add-modal" role="dialog" aria-modal="true" aria-labelledby="addModalTitle">
       <button class="modal-x" id="addClose" aria-label="Close"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
-      <div class="m-ico accent"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg></div>
       <div class="modal-title" id="addModalTitle">Log your time</div>
       <div class="modal-msg" id="addModalSub"></div>
       <div class="row">
@@ -3415,7 +3598,6 @@
   <div class="modal-overlay" id="challModal">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="challModalTitle">
       <button class="modal-x" id="challClose" aria-label="Close"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
-      <div class="m-ico accent"><svg class="ic" aria-hidden="true"><use href="#i-trophy"/></svg></div>
       <div class="modal-title" id="challModalTitle">New challenge</div>
       <div class="field">
         <label for="challNameInput">Name</label>
@@ -3526,7 +3708,6 @@
   <div class="modal-overlay" id="manageModal">
     <div class="modal manage-modal" role="dialog" aria-modal="true" aria-labelledby="manageTitle">
       <button class="modal-x" id="manageX" aria-label="Close"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
-      <div class="m-ico" id="manageIco" aria-hidden="true" :style="'background:' + $store.s.manage.pastel"></div>
       <div class="modal-title" id="manageTitle" x-text="$store.s.manage.title">Manage</div>
       <button type="button" class="mbtn manage-details" id="manageRename" x-show="$store.s.manage.canRename"
               aria-labelledby="manageDetailsLabel" aria-describedby="manageColour"
@@ -3661,7 +3842,7 @@
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
   var NAV_KEY = "minutes-nav";
-  var VERSION = "15.27";
+  var VERSION = "15.28";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -3993,6 +4174,94 @@
   }
 
   var state = { me: null, entries: [], lbRange: "today", hidden: {}, viewMonth: firstOfMonth(new Date()), entriesGroup: "date", openCats: {}, activeCid: (function () { try { return localStorage.getItem(ACTIVECID_KEY) || FOUNDING_CID; } catch (e) { return FOUNDING_CID; } })() };
+  var ActivityModel = (function () {
+    var DAY = 86400000;
+    function day(value) {
+      if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+      var parts = value.split("-").map(Number), date = new Date(0);
+      date.setUTCFullYear(parts[0], parts[1] - 1, parts[2]);
+      date.setUTCHours(0, 0, 0, 0);
+      if (date.toISOString().slice(0, 10) !== value) return null;
+      return date.getTime() / DAY;
+    }
+    function key(value) { return new Date(value * DAY).toISOString().slice(0, 10); }
+    function monday(value) { return value - ((value + 3) % 7 + 7) % 7; }
+    function validGoal(value) { return Number.isInteger(value) && value >= 1 && value <= 7; }
+    function snapshotReady(wasReady, fromCache, count) { return !!wasReady || !fromCache || count > 0; }
+    function validHistory(history) {
+      return Array.isArray(history) && history.every(function (change, index) {
+        var date = change && day(change.week);
+        return date !== null && date === monday(date) && validGoal(change.goal) &&
+          (!index || history[index - 1].week < change.week);
+      });
+    }
+    function goalAt(history, week) {
+      var goal = 3;
+      history.forEach(function (change) { if (change.week <= week) goal = change.goal; });
+      return goal;
+    }
+    function changeGoal(history, today, goal) {
+      if (!validHistory(history) || day(today) === null || !validGoal(goal)) throw new Error("Invalid activity goal.");
+      var week = key(monday(day(today)));
+      return history.filter(function (change) { return change.week < week; }).concat([{ week: week, goal: goal }]);
+    }
+    function summarize(entries, who, today, history, month) {
+      var now = day(today);
+      if (now === null || !validHistory(history)) throw new Error("Invalid activity calendar input.");
+      month = month || today.slice(0, 7);
+      var monthStart = day(month + "-01");
+      if (monthStart === null || month > today.slice(0, 7)) throw new Error("Invalid activity month.");
+      var days = Object.create(null), weeks = Object.create(null), invalid = 0, earliest = today;
+      entries.forEach(function (entry) {
+        if (entry.who !== who) return;
+        var date = day(entry.date);
+        if (date === null || typeof entry.mins !== "number" || !Number.isFinite(entry.mins)) { invalid++; return; }
+        if (date > now || entry.mins <= 0) return;
+        var value = days[entry.date];
+        if (!value) {
+          value = days[entry.date] = { minutes: 0, pending: false, entries: 0 };
+          var week = key(monday(date));
+          weeks[week] = (weeks[week] || 0) + 1;
+          if (entry.date < earliest) earliest = entry.date;
+        }
+        value.minutes += entry.mins; value.entries++; value.pending = value.pending || !!entry._pending;
+      });
+      var start = monday(now), currentWeek = key(start), goal = goalAt(history, currentWeek);
+      var activeDays = weeks[currentWeek] || 0, weekly = 0;
+      var cursor = activeDays >= goal ? start : start - 7;
+      while ((weeks[key(cursor)] || 0) >= goalAt(history, key(cursor))) { weekly++; cursor -= 7; }
+      var daily = 0;
+      cursor = days[today] ? now : now - 1;
+      while (days[key(cursor)]) { daily++; cursor--; }
+      function cell(date) {
+        var dateKey = key(date), value = days[dateKey];
+        return {
+          key: dateKey, date: dateKey, number: Number(dateKey.slice(8)), blank: false,
+          outsideMonth: dateKey.slice(0, 7) !== month,
+          today: date === now, future: date > now, active: !!value,
+          minutes: value ? value.minutes : 0, pending: !!(value && value.pending),
+          entries: value ? value.entries : 0
+        };
+      }
+      var weekDays = [], calendar = [];
+      for (var i = 0; i < 7; i++) weekDays.push(cell(start + i));
+      var offset = monthStart - monday(monthStart);
+      for (var before = offset; before > 0; before--) calendar.push(cell(monthStart - before));
+      cursor = monthStart;
+      while (key(cursor).slice(0, 7) === month) calendar.push(cell(cursor++));
+      while (calendar.length % 7) calendar.push(cell(cursor++));
+      return {
+        today: today, week: currentWeek, weekEnd: key(start + 6), goal: goal,
+        activeDays: activeDays, goalMet: activeDays >= goal, weekly: weekly, daily: daily,
+        weekDays: weekDays, days: days, calendar: calendar, invalid: invalid,
+        earliestMonth: earliest.slice(0, 7), month: month,
+        monthActiveDays: calendar.filter(function (item) { return item.active && !item.outsideMonth; }).length,
+        hasEntries: Object.keys(days).length > 0
+      };
+    }
+    return { day: day, key: key, monday: monday, validGoal: validGoal, validHistory: validHistory, snapshotReady: snapshotReady,
+      goalAt: goalAt, changeGoal: changeGoal, summarize: summarize };
+  })();
 
   // ---- Alpine reactive layer ------------------------------------------------
   // The render layer is declarative: templates in the markup read this store and
@@ -4061,6 +4330,7 @@
   setInterval(function () {
     var k = dayPart().key;
     if (k !== lastPart) { lastPart = k; state.hourRev++; }
+    refreshActivityDay();
   }, 60000);
 
   // How many challenges the user is in, pending included: a join that is waiting
@@ -5012,304 +5282,42 @@
   function isCurrentMonth(d) { var n = new Date(); return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth(); }
   function niceDate(s) { var p = s.split("-"); return new Date(+p[0], (+p[1]) - 1, +p[2]).toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" }); }
 
-  // Generated by scripts/build-brand.mjs from the approved geometry and Winding Key.
+  // Generated by scripts/build-brand.mjs; H2 entrance only, no Stack motion.
   var WELCOME_MOTION = {
-  "duration": 5000,
-  "tracks": {
-    "rear": [
+  "duration": 640,
+  "stagger": 160,
+  "total": 960,
+  "easing": "cubic-bezier(0.23, 1, 0.32, 1)",
+  "frames": [
+    {
+      "opacity": 0,
+      "transform": "translateY(8px) scale(0.97)"
+    },
+    {
+      "opacity": 1,
+      "transform": "translateY(0px) scale(1)"
+    }
+  ],
+  "reduced": {
+    "duration": 160,
+    "frames": [
       {
-        "offset": 0,
-        "transform": "translate(12.247054%, 12.247054%) rotateY(0deg) rotateZ(0deg) scale(1.086957)",
-        "opacity": 1,
-        "easing": "linear"
+        "opacity": 0.65
       },
       {
-        "offset": 0.1,
-        "transform": "translate(12.247054%, 12.247054%) rotateY(0deg) rotateZ(0deg) scale(1.086957)",
-        "opacity": 1,
-        "easing": "cubic-bezier(.55, 0, .88, .45)"
-      },
-      {
-        "offset": 0.15,
-        "transform": "translate(11.757172%, 11.757172%) rotateY(-2deg) rotateZ(1.5deg) scale(1.083478)",
-        "opacity": 1,
-        "easing": "linear"
-      },
-      {
-        "offset": 0.21,
-        "transform": "translate(11.757172%, 11.757172%) rotateY(-2deg) rotateZ(1.5deg) scale(1.083478)",
-        "opacity": 1,
-        "easing": "cubic-bezier(.55, 0, .88, .45)"
-      },
-      {
-        "offset": 0.25,
-        "transform": "translate(11.38976%, 11.38976%) rotateY(-4deg) rotateZ(3deg) scale(1.08087)",
-        "opacity": 1,
-        "easing": "cubic-bezier(.55, 0, .88, .45)"
-      },
-      {
-        "offset": 0.31,
-        "transform": "translate(11.022348%, 11.022348%) rotateY(-7deg) rotateZ(5deg) scale(1.078261)",
-        "opacity": 1,
-        "easing": "cubic-bezier(.12, .76, .2, 1)"
-      },
-      {
-        "offset": 0.43,
-        "transform": "translate(-5.143763%, -8.083056%) rotateY(-18deg) rotateZ(-19deg) scale(1)",
-        "opacity": 1,
-        "easing": "cubic-bezier(.18, .66, .34, 1)"
-      },
-      {
-        "offset": 0.62,
-        "transform": "translate(-3.674116%, -2.939293%) rotateY(-9deg) rotateZ(-8deg) scale(1)",
-        "opacity": 1,
-        "easing": "cubic-bezier(.12, .76, .2, 1)"
-      },
-      {
-        "offset": 0.67,
-        "transform": "translate(0%, 0%) rotateY(0deg) rotateZ(0deg) scale(1)",
-        "opacity": 1,
-        "easing": "linear"
-      },
-      {
-        "offset": 1,
-        "transform": "translate(0%, 0%) rotateY(0deg) rotateZ(0deg) scale(1)",
-        "opacity": 1,
-        "easing": "cubic-bezier(.42, 0, .58, 1)"
-      }
-    ],
-    "front": [
-      {
-        "offset": 0,
-        "transform": "translate(-12.803738%, -12.803738%) rotateY(0deg) rotateZ(0deg) scale(0.909091)",
-        "opacity": 1,
-        "easing": "linear"
-      },
-      {
-        "offset": 0.1,
-        "transform": "translate(-12.803738%, -12.803738%) rotateY(0deg) rotateZ(0deg) scale(0.909091)",
-        "opacity": 1,
-        "easing": "cubic-bezier(.55, 0, .88, .45)"
-      },
-      {
-        "offset": 0.15,
-        "transform": "translate(-12.291589%, -12.291589%) rotateY(2deg) rotateZ(-2deg) scale(0.912727)",
-        "opacity": 1,
-        "easing": "linear"
-      },
-      {
-        "offset": 0.21,
-        "transform": "translate(-12.291589%, -12.291589%) rotateY(2deg) rotateZ(-2deg) scale(0.912727)",
-        "opacity": 1,
-        "easing": "cubic-bezier(.55, 0, .88, .45)"
-      },
-      {
-        "offset": 0.25,
-        "transform": "translate(-11.907476%, -11.907476%) rotateY(5deg) rotateZ(-4deg) scale(0.915455)",
-        "opacity": 1,
-        "easing": "cubic-bezier(.55, 0, .88, .45)"
-      },
-      {
-        "offset": 0.31,
-        "transform": "translate(-11.523364%, -11.523364%) rotateY(9deg) rotateZ(-7deg) scale(0.918182)",
-        "opacity": 1,
-        "easing": "cubic-bezier(.12, .76, .2, 1)"
-      },
-      {
-        "offset": 0.44,
-        "transform": "translate(6.914019%, 6.145794%) rotateY(22deg) rotateZ(22deg) scale(1)",
-        "opacity": 1,
-        "easing": "cubic-bezier(.18, .66, .34, 1)"
-      },
-      {
-        "offset": 0.62,
-        "transform": "translate(3.841121%, 3.072897%) rotateY(11deg) rotateZ(9deg) scale(1)",
-        "opacity": 1,
-        "easing": "cubic-bezier(.12, .76, .2, 1)"
-      },
-      {
-        "offset": 0.67,
-        "transform": "translate(0%, 0%) rotateY(0deg) rotateZ(0deg) scale(1)",
-        "opacity": 1,
-        "easing": "linear"
-      },
-      {
-        "offset": 1,
-        "transform": "translate(0%, 0%) rotateY(0deg) rotateZ(0deg) scale(1)",
-        "opacity": 1,
-        "easing": "cubic-bezier(.42, 0, .58, 1)"
-      }
-    ],
-    "long": [
-      {
-        "offset": 0,
-        "transform": "rotate(0deg)",
-        "opacity": 1,
-        "easing": "linear"
-      },
-      {
-        "offset": 0.04,
-        "transform": "rotate(0deg)",
-        "opacity": 1,
-        "easing": "cubic-bezier(.55, 0, .88, .45)"
-      },
-      {
-        "offset": 0.1,
-        "transform": "rotate(-42deg)",
-        "opacity": 1,
-        "easing": "cubic-bezier(.12, .76, .2, 1)"
-      },
-      {
-        "offset": 0.12,
-        "transform": "rotate(-37deg)",
-        "opacity": 1,
-        "easing": "linear"
-      },
-      {
-        "offset": 0.15,
-        "transform": "rotate(-37deg)",
-        "opacity": 1,
-        "easing": "cubic-bezier(.55, 0, .88, .45)"
-      },
-      {
-        "offset": 0.21,
-        "transform": "rotate(-84deg)",
-        "opacity": 1,
-        "easing": "cubic-bezier(.12, .76, .2, 1)"
-      },
-      {
-        "offset": 0.23,
-        "transform": "rotate(-78deg)",
-        "opacity": 1,
-        "easing": "linear"
-      },
-      {
-        "offset": 0.25,
-        "transform": "rotate(-78deg)",
-        "opacity": 1,
-        "easing": "cubic-bezier(.55, 0, .88, .45)"
-      },
-      {
-        "offset": 0.31,
-        "transform": "rotate(-132deg)",
-        "opacity": 1,
-        "easing": "cubic-bezier(.12, .76, .2, 1)"
-      },
-      {
-        "offset": 0.46,
-        "transform": "rotate(41deg)",
-        "opacity": 1,
-        "easing": "cubic-bezier(.18, .66, .34, 1)"
-      },
-      {
-        "offset": 0.62,
-        "transform": "rotate(17deg)",
-        "opacity": 1,
-        "easing": "cubic-bezier(.12, .76, .2, 1)"
-      },
-      {
-        "offset": 0.67,
-        "transform": "rotate(0deg)",
-        "opacity": 1,
-        "easing": "linear"
-      },
-      {
-        "offset": 1,
-        "transform": "rotate(0deg)",
-        "opacity": 1,
-        "easing": "cubic-bezier(.42, 0, .58, 1)"
-      }
-    ],
-    "short": [
-      {
-        "offset": 0,
-        "transform": "rotate(0deg)",
-        "opacity": 1,
-        "easing": "linear"
-      },
-      {
-        "offset": 0.08,
-        "transform": "rotate(0deg)",
-        "opacity": 1,
-        "easing": "cubic-bezier(.55, 0, .88, .45)"
-      },
-      {
-        "offset": 0.11,
-        "transform": "rotate(12deg)",
-        "opacity": 1,
-        "easing": "cubic-bezier(.12, .76, .2, 1)"
-      },
-      {
-        "offset": 0.14,
-        "transform": "rotate(4deg)",
-        "opacity": 1,
-        "easing": "linear"
-      },
-      {
-        "offset": 0.19,
-        "transform": "rotate(4deg)",
-        "opacity": 1,
-        "easing": "cubic-bezier(.55, 0, .88, .45)"
-      },
-      {
-        "offset": 0.22,
-        "transform": "rotate(19deg)",
-        "opacity": 1,
-        "easing": "cubic-bezier(.12, .76, .2, 1)"
-      },
-      {
-        "offset": 0.25,
-        "transform": "rotate(9deg)",
-        "opacity": 1,
-        "easing": "linear"
-      },
-      {
-        "offset": 0.29,
-        "transform": "rotate(9deg)",
-        "opacity": 1,
-        "easing": "cubic-bezier(.55, 0, .88, .45)"
-      },
-      {
-        "offset": 0.32,
-        "transform": "rotate(28deg)",
-        "opacity": 1,
-        "easing": "cubic-bezier(.12, .76, .2, 1)"
-      },
-      {
-        "offset": 0.48,
-        "transform": "rotate(-27deg)",
-        "opacity": 1,
-        "easing": "cubic-bezier(.18, .66, .34, 1)"
-      },
-      {
-        "offset": 0.62,
-        "transform": "rotate(-11deg)",
-        "opacity": 1,
-        "easing": "cubic-bezier(.12, .76, .2, 1)"
-      },
-      {
-        "offset": 0.67,
-        "transform": "rotate(0deg)",
-        "opacity": 1,
-        "easing": "linear"
-      },
-      {
-        "offset": 1,
-        "transform": "rotate(0deg)",
-        "opacity": 1,
-        "easing": "cubic-bezier(.42, 0, .58, 1)"
+        "opacity": 1
       }
     ]
   }
 };
-  var WELCOME_GEOMETRY = {"front":{"x":31.345794392523356,"y":31.345794392523356,"width":44.41121495327103,"height":44.41121495327103,"radius":11.102803738317757,"outline":3.3644859813084107},"hands":{"pivot":{"x":53.551401869158866,"y":56.30489719626167},"minute":{"x":63.08978947904995,"y":50.79790654205606},"hour":{"x":46.50286647498247,"y":51.36945957992141},"stroke":4.317757009345795}};
+  var WAIT_GAME_GEOMETRY = {"front":{"x":31.345794392523356,"y":31.345794392523356,"width":44.41121495327103,"height":44.41121495327103,"radius":11.102803738317757,"outline":3.3644859813084107},"hands":{"pivot":{"x":53.551401869158866,"y":56.30489719626167},"minute":{"x":63.08978947904995,"y":50.79790654205606},"hour":{"x":46.50286647498247,"y":51.36945957992141},"stroke":4.317757009345795}};
   var LoginWelcome = (function () {
     var login = document.getElementById("login");
     var card = login.querySelector(".login-card");
     var mark = document.getElementById("loginBrand");
     var network = document.getElementById("loginNetwork");
     var preference = matchMedia("(prefers-reduced-motion: reduce)");
-    var started = false, wasSignin = false, played = false, animations = [];
+    var started = false, played = false, animations = [];
 
     function stop() {
       animations.forEach(function (animation) { animation.cancel(); });
@@ -5319,16 +5327,19 @@
     function play() {
       played = true;
       if (typeof mark.animate !== "function") return;
-      Object.keys(WELCOME_MOTION.tracks).forEach(function (key) {
-        var layer = mark.querySelector('[data-layer="' + key + '"], [data-hand="' + key + '"]');
-        var animation = layer.animate(WELCOME_MOTION.tracks[key],
-          { duration: WELCOME_MOTION.duration, iterations: 1, fill: "both", easing: "linear" });
+      var reduced = preference.matches;
+      mark.querySelectorAll('[data-brand="h2"] .h2-column').forEach(function (column, index) {
+        var animation = column.animate(reduced ? WELCOME_MOTION.reduced.frames : WELCOME_MOTION.frames, {
+          duration: reduced ? WELCOME_MOTION.reduced.duration : WELCOME_MOTION.duration,
+          delay: reduced ? 0 : index * WELCOME_MOTION.stagger,
+          iterations: 1, fill: "both", easing: WELCOME_MOTION.easing
+        });
         animation.onfinish = function () {
           if (animations.every(function (item) { return item.playState === "finished"; })) stop();
         };
         animations.push(animation);
       });
-      mark.dataset.motion = "playing";
+      mark.dataset.motion = animations.length ? "playing" : "settled";
     }
     function updateThemeColor() {
       document.documentElement.classList.toggle("welcome-active", !state.signedIn);
@@ -5349,9 +5360,7 @@
       if (!started) return;
       var signin = !state.signedIn && !(window.__AUTH && window.__AUTH.user) &&
         !card.classList.contains("onb");
-      if (signin && !wasSignin) played = false;
-      wasSignin = signin;
-      if (!signin || document.hidden || preference.matches) stop();
+      if (!signin || document.hidden) stop();
       else if (!played) play();
 
       var pending = document.getElementById("claimPending").style.display === "block";
@@ -5372,7 +5381,7 @@
         !document.getElementById("claimNewName").value.trim() || offlineNow();
       updateThemeColor();
     }
-    preference.addEventListener("change", sync);
+    preference.addEventListener("change", function () { stop(); sync(); });
     document.addEventListener("visibilitychange", sync);
     window.addEventListener("minutes-auth", sync);
     return { start: function () { started = true; sync(); }, sync: sync, updateThemeColor: updateThemeColor };
@@ -5541,6 +5550,9 @@
 
   function doLogin(name) {
     state.me = name;
+    hideActivity();
+    refreshActivityDay();
+    loadActivityGoal();
     // reset per-user view state so nothing leaks between sessions on a shared device
     state.hidden = {}; state.openCats = {}; state.entriesGroup = "date"; state.lbRange = "today"; state.lbTouched = false;
     // Landing is resolved lazily once entries load; reset the one-shot flags so a
@@ -5598,6 +5610,10 @@
 
   function doLogout() {
     closeAccountMenu(false);
+    hideActivity();
+    activityGoals = [];
+    state.activityGoalRev++;
+    state.activityGoalNotice = "";
     state.me = null;
     localStorage.removeItem(SESSION_KEY);
     localStorage.removeItem(NAV_KEY);   // the next person to sign in gets the default landing
@@ -5854,7 +5870,7 @@
       }
 
       var x = 26, y = ground - 18 - py;
-      var card = WELCOME_GEOMETRY.front, hands = WELCOME_GEOMETRY.hands;
+      var card = WAIT_GAME_GEOMETRY.front, hands = WAIT_GAME_GEOMETRY.hands;
       // Just the front clock card, fitted to the unchanged 18px player box.
       ctx.save();
       ctx.translate(x, y);
@@ -6851,6 +6867,8 @@
   (function () {
     var trigger = document.getElementById("youBtn");
     var menu = document.getElementById("accountMenu");
+    var scroller = document.getElementById("baseWrap");
+    var scrollTopAtOpen = 0, scrollLeftAtOpen = 0;
     function items() {
       return [].slice.call(menu.querySelectorAll('[role="menuitem"]')).filter(function (el) {
         return !!(el.offsetWidth || el.offsetHeight);
@@ -6865,6 +6883,8 @@
       menu.hidden = false;
       menu.classList.add("show");
       trigger.setAttribute("aria-expanded", "true");
+      scrollTopAtOpen = scroller.scrollTop;
+      scrollLeftAtOpen = scroller.scrollLeft;
       var list = items();
       focusItem(list, last ? list.length - 1 : 0);
     }
@@ -6890,6 +6910,11 @@
       if (!menu.contains(e.target) && !trigger.contains(e.target)) closeAccountMenu(false);
     });
     window.addEventListener("resize", function () { closeAccountMenu(false); });
+    scroller.addEventListener("scroll", function () {
+      // A pre-open scroll event may arrive after the click without moving the menu.
+      if (!menu.hidden && (scroller.scrollTop !== scrollTopAtOpen ||
+          scroller.scrollLeft !== scrollLeftAtOpen)) closeAccountMenu(false);
+    }, { passive: true });
     document.getElementById("accountSettings").onclick = function () {
       closeAccountMenu(false);
       switchTab("you");
@@ -7072,7 +7097,6 @@
     var bw = document.getElementById("baseWrap"); if (!bw) return;
     var queued = false;
     bw.addEventListener("scroll", function () {
-      closeAccountMenu(false);
       if (queued) return;
       queued = true;
       requestAnimationFrame(function () { queued = false; syncFabTuck(); });
@@ -7344,10 +7368,8 @@
      Three things have to travel together or it reads as a jump with extras:
 
        POSITION   the card's own move to the top
-       HEIGHT     .active-cid also sets min-height (145 vs a natural 131), so the
-                  tapped card grows while the one it displaces shrinks. Left out,
-                  the card snaps taller in the middle of an otherwise smooth
-                  slide, which is the ugly part.
+       HEIGHT     content can change height when the selected round changes;
+                  include that delta rather than snapping mid-slide.
        SCROLL     hoisting a card to the top of the list means nothing if the top
                   of the list is off screen, which it is the moment the hub has
                   been scrolled. The scroll is applied instantly BEFORE the
@@ -8856,8 +8878,6 @@
   })();
 
   // ---- Themed confirm modal ----
-  var ICON_TRASH = '<svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg>';
-  var ICON_SHIELD = '<svg class="ic" aria-hidden="true"><use href="#i-shield"/></svg>';
   var confirmCb = null;
   function showConfirm(opts, onOk) {
     document.getElementById("confirmTitle").textContent = opts.title || "Are you sure?";
@@ -8867,9 +8887,6 @@
     var danger = opts.danger !== false;
     ok.classList.toggle("danger", danger);
     ok.classList.toggle("primary", !danger);
-    var ico = document.getElementById("confirmIco");
-    ico.classList.toggle("accent", !danger);
-    ico.innerHTML = opts.icon || ICON_TRASH;
     confirmCb = onOk;
     document.getElementById("confirmModal").classList.add("show");
   }
@@ -9241,8 +9258,7 @@
           ? "You won't be included next month. You can re-join anytime before it starts."
           : "You'll be removed from " + monthName + "'s standings. You can re-join anytime this month.",
         ok: "Leave",
-        danger: true,
-        icon: ICON_SHIELD
+        danger: true
       }, function () {
         commitChallenge(key, current.filter(function (p) { return p.toLowerCase() !== state.me.toLowerCase(); }));
       });
@@ -9308,8 +9324,7 @@
       title: becomingAdmin ? "Make " + name + " an admin?" : "Remove admin from " + name + "?",
       msg: becomingAdmin ? name + " will be able to manage members and admins." : name + " will lose access to the Admin tab.",
       ok: becomingAdmin ? "Make admin" : "Remove admin",
-      danger: !becomingAdmin,
-      icon: ICON_SHIELD
+      danger: !becomingAdmin
     }, function () {
       commitRoster(function () {
         if (becomingAdmin) cache.admins = admins().concat([name]);
@@ -9564,6 +9579,9 @@
           arr.push({ id: d.id, who: v.who, date: v.date, mins: v.mins, note: v.note || "", cid: v.cid || "", _hadCid: v.cid != null, _pending: waiting });
         });
         cachePending = pend;
+        state.activityLoaded = ActivityModel.snapshotReady(state.activityLoaded, snap.metadata.fromCache, arr.length);
+        state.activityFromCache = !!snap.metadata.fromCache;
+        state.activityLoadError = false;
         // No "ignore an empty cache result" guard here, unlike the challenges, members and
         // rounds listeners below. Entries are the one collection a user can legitimately
         // empty while offline (delete your last entry), and that has to show at once.
@@ -9572,7 +9590,10 @@
         entriesAll = arr;
         renderSync();
         applyActiveEntries();
-      }, function (err) { console.error("entries listener:", err); });
+      }, function (err) {
+        console.error("entries listener:", err);
+        state.activityLoadError = true;
+      });
 
       var rosterRef = fb.doc(fb.db, "meta", "roster");
       fb.onSnapshot(rosterRef, function (d) {
@@ -9662,7 +9683,6 @@
       }
     };
   })();
-
   // ---- Demo Store (localhost only) ------------------------------------------
   // Self-contained in-memory backend, used ONLY when served from localhost, so the
   // app can be run and clicked through with no Firebase / App Check. Seeds role-named
@@ -9764,6 +9784,8 @@
       add("User", "sidequest", "2026-08", [0, 20, 0, 50, 0, 0], ["", "walk", "", "walk", "", ""]);
       add("AdminOwner", "sidequest", "2026-08", [15, 0, 0, 0, 0, 40], ["walk", "", "", "", "", "run"]);
       entriesAll = e;
+      state.activityLoaded = true;
+      state.activityFromCache = false;
 
       rosterLoaded = true; netReady = true; entriesNetReady = true; setOffline(false);
       try { window.dispatchEvent(new Event("minutes-roster")); } catch (e) {}
@@ -10254,6 +10276,8 @@
       ["manageModal", "show", closeManageModal],
       ["editModal", "show", hideEdit],
       ["confirmModal", "show", hideConfirm],
+      ["activityGoalOptions", "show", closeActivityGoalMenu],
+      ["activityModal", "show", hideActivity],
       ["calPop", "show", closeCal],
       ["challModal", "show", hideChallModal],
       // calPop lives INSIDE addModal, so it has to peel first -- same reason it
@@ -10331,13 +10355,15 @@
       ["manageModal", closeManageModal],
       ["editModal", hideEdit],
       ["confirmModal", hideConfirm],
+      ["activityGoalOptions", closeActivityGoalMenu],
+      ["activityModal", hideActivity],
       ["calPop", closeCal],
       ["challModal", hideChallModal],
       ["addModal", hideAdd],
       ["accountMenu", closeAccountMenu],
       ["backofficeView", closeBackoffice]
     ];
-    var dialogs = ["manageModal", "editModal", "confirmModal", "challModal", "addModal"];
+    var dialogs = ["manageModal", "editModal", "confirmModal", "activityModal", "challModal", "addModal"];
     var openers = {};
 
     function shown(id) {
@@ -10414,6 +10440,253 @@
       }).observe(el, { attributes: true, attributeFilter: ["class"] });
     });
   }
+  state.activityDay = todayStr();
+  state.activityMonth = state.activityDay.slice(0, 7);
+  state.activitySelected = state.activityDay;
+  state.activityGoalRev = 0;
+  state.activityGoalNotice = "";
+  state.activityGoalSaved = false;
+  state.activityGoalMenuOpen = false;
+  state.activityGoalActive = 3;
+  state.activityDetailsOpen = false;
+  state.activityLoaded = false;
+  state.activityFromCache = true;
+  state.activityLoadError = false;
+  var activityGoals = [], activityCache = null;
+  var ACTIVITY_GOAL_KEY = "minutes-activity-goals-v1:";
+
+  function activityGoalKey() { return ACTIVITY_GOAL_KEY + encodeURIComponent(state.me || ""); }
+  function loadActivityGoal() {
+    closeActivityGoalMenu(false);
+    state.activityGoalSaved = false;
+    activityGoals = [];
+    state.activityGoalNotice = "";
+    try {
+      var saved = localStorage.getItem(activityGoalKey());
+      if (saved) {
+        var value = JSON.parse(saved);
+        if (!value || value.version !== 1 || !ActivityModel.validHistory(value.history)) throw new Error("Invalid saved weekly goal.");
+        activityGoals = value.history;
+      }
+    } catch (error) {
+      console.warn("Activity goal could not be read:", error);
+      state.activityGoalNotice = "Your saved goal couldn't be read. Showing the 3-day default; choose a goal to save it again.";
+    }
+    state.activityGoalRev++;
+  }
+  function activitySnapshot() {
+    var signature = [state.rev, state.me, state.activityDay, state.activityMonth, state.activityGoalRev].join("|");
+    if (!activityCache || activityCache.signature !== signature) {
+      activityCache = { signature: signature, value: ActivityModel.summarize(entriesAll, state.me, state.activityDay, activityGoals, state.activityMonth) };
+    }
+    return activityCache.value;
+  }
+  function activityDateLabel(date, options) {
+    return parseISO(date).toLocaleDateString(undefined, options || { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  }
+  function activityDayLabel(cell) {
+    var detail = cell.future ? "future date" : !state.activityLoaded ? "activity not loaded" :
+      cell.active ? cell.minutes + " minutes logged" + (cell.pending ? ", waiting to sync" : "") : "no minutes logged";
+    return activityDateLabel(cell.date) + ", " + detail + (cell.today ? ", today" : "");
+  }
+  view("activity", function () {
+    this.rev; this.me; this.signedIn; this.activityDay; this.activityMonth; this.activitySelected;
+    this.activityGoalRev; this.activityLoaded; this.activityFromCache; this.activityLoadError;
+    var result = activitySnapshot(), known = state.activityLoaded;
+    var selected = result.days[state.activitySelected];
+    var note = state.activityLoadError ? (known ? "Activity couldn't be refreshed. Showing saved entries; reload to try again." : "Activity couldn't be loaded. Reload to try again.") :
+      !known ? (navigator.onLine === false ? "Connect to load your activity history." : "Loading your activity history...") :
+      state.activityFromCache || offlineNow() ? "Saved history may be incomplete until connected." : "";
+    if (result.invalid) note += (note ? " " : "") + "Some entries have invalid dates or minutes and aren't counted.";
+    if (Object.keys(result.days).some(function (date) { return result.days[date].pending; })) {
+      note += (note ? " " : "") + "Includes entries waiting to sync.";
+    }
+    return {
+      show: state.signedIn && (myChallCount() > 0 || result.hasEntries),
+      known: known, note: note, goal: result.goal, activeDays: result.activeDays, goalMet: result.goalMet,
+      progress: known ? result.activeDays + " / " + result.goal : "-- / " + result.goal,
+      weekly: known ? result.weekly : null, daily: known ? result.daily : null,
+      weeklyLabel: !known ? (state.activityLoadError ? "History unavailable" : "History loading") : result.weekly ? result.weekly + "-week streak" : "Build your weekly streak",
+      dailyLabel: known && result.daily ? result.daily + " consecutive day" + (result.daily === 1 ? "" : "s") : "",
+      encouragement: !known ? "Your days will appear here" : result.goalMet ? "Weekly goal met" :
+        (result.goal - result.activeDays) + " more active day" + (result.goal - result.activeDays === 1 ? "" : "s") + " to your goal",
+      buttonLabel: "View your activity calendar. " + (known ? result.activeDays + " of " + result.goal + " active days this week. " : "") +
+        (known && result.weekly ? result.weekly + "-week streak." : ""),
+      week: result.weekDays.map(function (cell) {
+        return Object.assign({}, cell, { weekday: activityDateLabel(cell.date, { weekday: "short" }), label: activityDayLabel(cell) });
+      }),
+      calendar: result.calendar.map(function (cell) {
+        return Object.assign({}, cell, { label: activityDayLabel(cell) });
+      }),
+      monthTitle: activityDateLabel(state.activityMonth + "-01", { month: "long", year: "numeric" }),
+      monthSummary: !known ? "Activity not loaded" : result.monthActiveDays + " active day" + (result.monthActiveDays === 1 ? "" : "s"),
+      weekdays: result.weekDays.map(function (cell) { return activityDateLabel(cell.date, { weekday: "short" }); }),
+      prevOff: state.activityMonth <= result.earliestMonth, nextOff: state.activityMonth >= state.activityDay.slice(0, 7),
+      selectedTitle: activityDateLabel(state.activitySelected, { weekday: "long", day: "numeric", month: "long" }),
+      selectedText: !known ? "Activity history isn't available yet." : selected ?
+        selected.minutes + " minutes logged across " + selected.entries + " entr" + (selected.entries === 1 ? "y" : "ies") + "." : "No minutes logged.",
+      selectedPending: !!(selected && selected.pending)
+    };
+  });
+  function openActivity() {
+    state.activityDay = todayStr();
+    state.activityMonth = state.activityDay.slice(0, 7);
+    state.activitySelected = state.activityDay;
+    // Safari does not focus a button on tap; the shared dialog manager needs its opener.
+    document.getElementById("activityOpen").focus({ preventScroll: true });
+    document.getElementById("activityModal").classList.add("show");
+  }
+  function hideActivity() {
+    closeActivityGoalMenu(false);
+    state.activityGoalSaved = false;
+    state.activityDetailsOpen = false;
+    document.getElementById("activityModal").classList.remove("show");
+  }
+  function changeActivityMonth(delta) {
+    var date = keyToDate(state.activityMonth);
+    date.setMonth(date.getMonth() + delta);
+    var month = monthKeyOf(date), result = activitySnapshot();
+    if (month < result.earliestMonth || month > state.activityDay.slice(0, 7)) return;
+    var lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+    var chosenDay = Math.min(Number(state.activitySelected.slice(8)), lastDay);
+    var selected = month + "-" + pad(chosenDay);
+    if (selected > state.activityDay) selected = state.activityDay;
+    state.activityMonth = month;
+    state.activitySelected = selected;
+  }
+  function activityCalendarKey(event, date) {
+    var offsets = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 };
+    if (!Object.prototype.hasOwnProperty.call(offsets, event.key)) return;
+    event.preventDefault();
+    var next = ActivityModel.key(ActivityModel.day(date) + offsets[event.key]);
+    if (next > state.activityDay) return;
+    var result = activitySnapshot();
+    // Adjacent-month dates belong to this visible week, just like a pointer selection.
+    if (!result.calendar.some(function (cell) { return cell.date === next; })) {
+      if (next.slice(0, 7) < result.earliestMonth) return;
+      state.activityMonth = next.slice(0, 7);
+    }
+    state.activitySelected = next;
+    Alpine.nextTick(function () {
+      var button = document.querySelector('[data-activity-date="' + next + '"]');
+      if (button) button.focus();
+    });
+  }
+  function saveActivityGoal(goal) {
+    refreshActivityDay();
+    state.activityGoalSaved = false;
+    if (!ActivityModel.validGoal(goal)) {
+      state.activityGoalNotice = "Choose a goal between 1 and 7 active days.";
+      return;
+    }
+    if (goal === activitySnapshot().goal && !state.activityGoalNotice) return;
+    var history = ActivityModel.changeGoal(activityGoals, state.activityDay, goal);
+    try {
+      localStorage.setItem(activityGoalKey(), JSON.stringify({ version: 1, history: history }));
+    } catch (error) {
+      console.warn("Activity goal could not be saved:", error);
+      state.activityGoalNotice = "Your goal couldn't be saved on this device. The previous goal is unchanged.";
+      return;
+    }
+    activityGoals = history; state.activityGoalRev++; state.activityGoalNotice = "";
+    state.activityGoalSaved = true;
+  }
+  state.act.openActivity = openActivity;
+  state.act.closeActivity = hideActivity;
+  state.act.activityMonth = changeActivityMonth;
+  state.act.activitySelect = function (date) { state.activitySelected = date; };
+  state.act.activityCalendarKey = activityCalendarKey;
+  state.act.toggleActivityDetails = function () {
+    state.activityDetailsOpen = !state.activityDetailsOpen;
+  };
+  function closeActivityGoalMenu(restoreFocus) {
+    var wasOpen = state.activityGoalMenuOpen;
+    state.activityGoalMenuOpen = false;
+    if (wasOpen && restoreFocus !== false) document.getElementById("activityGoal").focus({ preventScroll: true });
+  }
+  function scrollActivityGoalOption() {
+    var menu = document.getElementById("activityGoalOptions");
+    var option = document.getElementById("activityGoalOption" + state.activityGoalActive);
+    if (!option) return;
+    if (option.offsetTop < menu.scrollTop) menu.scrollTop = option.offsetTop;
+    else if (option.offsetTop + option.offsetHeight > menu.scrollTop + menu.clientHeight) {
+      menu.scrollTop = option.offsetTop + option.offsetHeight - menu.clientHeight;
+    }
+  }
+  function openActivityGoalMenu(goal) {
+    document.getElementById("activityGoalOptions").style.visibility = "hidden";
+    state.activityGoalActive = goal || activitySnapshot().goal;
+    state.activityGoalMenuOpen = true;
+    document.getElementById("activityGoal").focus({ preventScroll: true });
+    Alpine.nextTick(function () {
+      if (!state.activityGoalMenuOpen) return;
+      var menu = document.getElementById("activityGoalOptions");
+      var control = document.getElementById("activityGoal").getBoundingClientRect();
+      var viewport = window.visualViewport;
+      var top = viewport ? viewport.offsetTop : 0;
+      var bottom = top + (viewport ? viewport.height : window.innerHeight);
+      var gap = parseFloat(getComputedStyle(menu).getPropertyValue("--sp-sm"));
+      var gutter = parseFloat(getComputedStyle(menu).getPropertyValue("--sheet-pad"));
+      var below = Math.max(0, bottom - control.bottom - gap - gutter);
+      var above = Math.max(0, control.top - top - gap - gutter);
+      var height = menu.scrollHeight + menu.offsetHeight - menu.clientHeight;
+      var up = below < height && above > below;
+      menu.classList.toggle("opens-up", up);
+      menu.style.setProperty("--activity-goal-room", Math.floor(up ? above : below) + "px");
+      scrollActivityGoalOption();
+      menu.style.visibility = "";
+    });
+  }
+  state.act.toggleActivityGoalMenu = function () {
+    if (state.activityGoalMenuOpen) closeActivityGoalMenu();
+    else openActivityGoalMenu();
+  };
+  state.act.chooseActivityGoal = function (goal) {
+    saveActivityGoal(goal);
+    closeActivityGoalMenu();
+  };
+  state.act.activityGoalKey = function (event) {
+    var key = event.key, open = state.activityGoalMenuOpen;
+    if (key === "Tab") {
+      if (open) { saveActivityGoal(state.activityGoalActive); closeActivityGoalMenu(false); }
+      return;
+    }
+    if (key === "Escape" || (event.altKey && key === "ArrowUp")) {
+      if (open) { event.preventDefault(); event.stopPropagation(); closeActivityGoalMenu(); }
+      return;
+    }
+    if (["ArrowDown", "ArrowUp", "Home", "End", "Enter", " "].indexOf(key) === -1 && !/^[1-7]$/.test(key)) return;
+    event.preventDefault();
+    if (open && (key === "Enter" || key === " ")) { state.act.chooseActivityGoal(state.activityGoalActive); return; }
+    var goal = state.activityGoalActive;
+    if (key === "Home") goal = 1;
+    else if (key === "End") goal = 7;
+    else if (/^[1-7]$/.test(key)) goal = Number(key);
+    else if (open) goal = Math.max(1, Math.min(7, goal + (key === "ArrowDown" ? 1 : -1)));
+    else goal = activitySnapshot().goal;
+    if (!open) openActivityGoalMenu(goal);
+    else { state.activityGoalActive = goal; Alpine.nextTick(scrollActivityGoalOption); }
+  };
+  document.addEventListener("pointerdown", function (event) {
+    if (state.activityGoalMenuOpen && !document.getElementById("activityGoalPicker").contains(event.target)) closeActivityGoalMenu(false);
+  });
+  document.getElementById("activityModal").addEventListener("scroll", function () { closeActivityGoalMenu(false); });
+  window.addEventListener("resize", function () { closeActivityGoalMenu(); });
+  document.getElementById("activityModal").addEventListener("click", function (event) {
+    if (event.target === this) hideActivity();
+  });
+  function refreshActivityDay() {
+    var day = todayStr();
+    if (day !== state.activityDay) state.activityDay = day;
+    if (state.activityMonth > day.slice(0, 7)) state.activityMonth = day.slice(0, 7);
+    if (state.activitySelected > day) state.activitySelected = day;
+  }
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden) refreshActivityDay();
+  });
+  window.addEventListener("storage", function (event) {
+    if (state.me && event.key === activityGoalKey()) loadActivityGoal();
+  });
   // ---- Boot ----
   function begin() {
     initChartResize();

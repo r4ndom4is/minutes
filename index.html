@@ -270,6 +270,8 @@
     --fs-4xl: 28px;   /* was 27 / 28 / 30 */
     --fs-5xl: 36px;   /* the challenge card's minute count */
     --fs-6xl: 40px;   /* display: the sign-in wordmark, and nothing else */
+    /* Align Inter's visible ink with H2's artwork, not their element boxes. */
+    --brand-wordmark-offset: .08em;
     /* ---- WEIGHT ------------------------------------------------------------
        The app was already disciplined here: 600 / 700 / 800 carry almost
        everything. Tokenised anyway, because a typeface change is the moment
@@ -718,7 +720,8 @@
   .login-card.onb .login-lead { flex: 0 0 auto; flex-direction: row; align-items: center;
     justify-content: flex-start; gap: var(--sp-sm); padding: 0; margin-bottom: var(--sp-6xl); }
   .login-card.onb .logo { width: 26px; height: 26px; margin: 0; }
-  .login-card.onb h1 { font-size: var(--fs-xl); margin: 0; }
+  .login-card.onb h1 { font-size: var(--fs-xl); margin: 0;
+    transform: translateY(var(--brand-wordmark-offset)); }
   .login-card.onb #loginSub { display: none; }
   .claim { margin-top: var(--sp-lg); text-align: left; }
   .claim-note { color: var(--muted); font-size: var(--fs-2xs); margin: var(--sp-sm) 0 0; line-height: var(--lh-relaxed); }
@@ -1006,15 +1009,19 @@
     opacity: 0; transform: translateY(-6px); pointer-events: none; transition: opacity .18s ease, transform .18s ease;
   }
   .cal-pop.show { opacity: 1; transform: none; pointer-events: auto; }
-  .cal-head { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-sm); margin: 0 var(--sp-lg) var(--sp-sm); }
+  .calendar-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center;
+    gap: var(--sp-sm); width: 100%; max-width: calc(7 * 44px); min-height: 44px;
+    margin-inline: auto; padding-inline: var(--sp-lg); }
+  .cal-head { margin-bottom: var(--sp-sm); }
+  .calendar-month-nav { display: flex; gap: var(--sp-2xs); }
   .cal-title, .activity-month-heading h3 { margin: 0; font-size: var(--fs-lg); font-weight: var(--fw-bold); line-height: var(--lh-snug); }
-  .cal-title { text-align: center; }
-  .cal-nav, .activity-month-nav button { flex: 0 0 44px; width: 44px; height: 44px; display: grid; place-items: center;
+  .cal-title, .calendar-head h3 { min-width: 0; text-align: left; overflow-wrap: anywhere; }
+  .cal-nav { flex: 0 0 44px; width: 44px; height: 44px; display: grid; place-items: center;
     padding: 0; border-radius: var(--r-pill); border: none; background: var(--card-2); color: var(--text); cursor: pointer; }
-  .cal-nav .ic, .activity-month-nav .ic { width: 18px; height: 18px; }
-  .cal-nav:hover:not(:disabled), .activity-month-nav button:hover:not(:disabled) { background: var(--accent-soft); color: var(--accent); }
-  .cal-nav:active:not(:disabled), .activity-month-nav button:active:not(:disabled) { background: var(--accent); color: var(--on-accent); }
-  .cal-nav:disabled, .activity-month-nav button:disabled { color: var(--muted); background: none; cursor: default; }
+  .cal-nav .ic { width: 18px; height: 18px; }
+  .cal-nav:hover:not(:disabled) { background: var(--accent-soft); color: var(--accent); }
+  .cal-nav:active:not(:disabled) { background: var(--accent); color: var(--on-accent); }
+  .cal-nav:disabled { color: var(--muted); background: none; cursor: default; }
   .cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0; width: 100%; max-width: calc(7 * 44px); margin-inline: auto; }
   .calendar-weekdays { padding-block: var(--sp-sm); color: var(--muted); font-size: var(--fs-3xs);
     font-weight: var(--fw-md); line-height: var(--lh-normal); text-align: center; }
@@ -2721,7 +2728,7 @@
     border-radius: var(--r-xl); background: none; color: var(--text); text-align: left;
     font: inherit; cursor: pointer; }
   .activity-overview:focus-visible { outline: 3px solid var(--accent); outline-offset: 5px; }
-  .activity-heading, .activity-month-heading { display: flex; align-items: center;
+  .activity-heading { display: flex; align-items: center;
     justify-content: space-between; gap: var(--sp-md); }
   .activity-progress { display: block; font-size: var(--fs-3xl);
     font-weight: var(--fw-bold); letter-spacing: var(--ls-tight); font-variant-numeric: tabular-nums; }
@@ -2747,10 +2754,9 @@
   .activity-daily { font-size: var(--fs-xs); color: var(--muted); }
   .activity-note { margin: var(--sp-sm) 0 0; font-size: var(--fs-xs); color: var(--muted); line-height: var(--lh-normal); }
   .activity-modal { margin-block: 0; line-height: var(--lh-normal); }
-  .activity-modal .activity-month-heading { margin: var(--sp-5xl) 0 var(--sp-xl); }
-  .activity-month-heading > div:first-child { min-width: 0; }
-  .activity-month-heading .activity-note { display: block; margin-top: var(--sp-2xs); }
-  .activity-month-nav { display: flex; flex-shrink: 0; gap: var(--sp-2xs); }
+  .activity-month-heading { margin: var(--sp-5xl) calc(-1 * var(--sp-4xl)) var(--sp-sm); }
+  .activity-month-heading .activity-note { display: block; width: 100%; max-width: calc(7 * 44px);
+    margin: var(--sp-2xs) auto 0; padding-inline: var(--sp-lg); }
   .activity-calendar { display: grid; justify-items: center; margin-inline: calc(-1 * var(--sp-4xl)); }
   .activity-weekdays, .activity-dates { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr));
     width: 100%; max-width: calc(7 * 44px); gap: 0; }
@@ -3413,18 +3419,18 @@
       <h2 class="modal-title" id="activityTitle">Your activity</h2>
       <p class="activity-note" role="status" x-show="$store.s.activity.note" x-text="$store.s.activity.note"></p>
       <div class="activity-month-heading">
-        <div>
+        <div class="calendar-head">
           <h3 id="activityMonthTitle" x-text="$store.s.activity.monthTitle"></h3>
-          <span class="activity-note" x-text="$store.s.activity.monthSummary"></span>
+          <div class="calendar-month-nav activity-month-nav">
+            <button type="button" class="cal-nav" id="activityPrev" aria-label="Previous activity month" :disabled="$store.s.activity.prevOff" @click="$store.s.act.activityMonth(-1)">
+              <svg class="ic" aria-hidden="true"><use href="#i-caret-left"/></svg>
+            </button>
+            <button type="button" class="cal-nav" id="activityNext" aria-label="Next activity month" :disabled="$store.s.activity.nextOff" @click="$store.s.act.activityMonth(1)">
+              <svg class="ic" aria-hidden="true"><use href="#i-caret-right"/></svg>
+            </button>
+          </div>
         </div>
-        <div class="activity-month-nav">
-          <button type="button" id="activityPrev" aria-label="Previous activity month" :disabled="$store.s.activity.prevOff" @click="$store.s.act.activityMonth(-1)">
-            <svg class="ic" aria-hidden="true"><use href="#i-caret-left"/></svg>
-          </button>
-          <button type="button" id="activityNext" aria-label="Next activity month" :disabled="$store.s.activity.nextOff" @click="$store.s.act.activityMonth(1)">
-            <svg class="ic" aria-hidden="true"><use href="#i-caret-right"/></svg>
-          </button>
-        </div>
+        <span class="activity-note" x-text="$store.s.activity.monthSummary"></span>
       </div>
       <div class="activity-calendar">
         <div class="activity-weekdays calendar-weekdays" aria-hidden="true">
@@ -3554,10 +3560,12 @@
               <span class="dp-ic"><svg class="ic" aria-hidden="true"><use href="#i-calendar"/></svg></span>
             </button>
             <div class="cal-pop" id="calPop">
-              <div class="cal-head">
-                <button type="button" class="cal-nav" id="calPrev" aria-label="Previous month" :disabled="$store.s.cal.prevOff" @click.stop="$store.s.act.calPrev()"><svg class="ic" aria-hidden="true"><use href="#i-caret-left"/></svg></button>
+              <div class="cal-head calendar-head">
                 <div class="cal-title" id="calTitle" x-text="$store.s.cal.title"></div>
-                <button type="button" class="cal-nav" id="calNext" aria-label="Next month" :disabled="$store.s.cal.nextOff" @click.stop="$store.s.act.calNext()"><svg class="ic" aria-hidden="true"><use href="#i-caret-right"/></svg></button>
+                <div class="calendar-month-nav">
+                  <button type="button" class="cal-nav" id="calPrev" aria-label="Previous month" :disabled="$store.s.cal.prevOff" @click.stop="$store.s.act.calPrev()"><svg class="ic" aria-hidden="true"><use href="#i-caret-left"/></svg></button>
+                  <button type="button" class="cal-nav" id="calNext" aria-label="Next month" :disabled="$store.s.cal.nextOff" @click.stop="$store.s.act.calNext()"><svg class="ic" aria-hidden="true"><use href="#i-caret-right"/></svg></button>
+                </div>
               </div>
               <div class="cal-grid cal-dow calendar-weekdays" id="calDow" aria-hidden="true"><template x-for="(d, index) in $store.s.cal.dow" :key="index"><div class="cal-dow-cell" x-text="d"></div></template></div>
               <div class="cal-grid" id="calDays">
@@ -3857,7 +3865,7 @@
   var ACTIVECID_KEY = "minutes_active_cid";
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
-  var VERSION = "15.29";
+  var VERSION = "15.30";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -4395,6 +4403,7 @@
   var HUB_CACHE_KEY = "minutes-hub-v1:";
   var hubCatalogReady = false, hubErrors = {};
   var hubOwner = null, hubSaved = null, hubStored = "", hubComputed = null;
+  state.hubLoadSlow = false;
 
   function hubDataReady() {
     return hubCatalogReady && !Object.keys(hubErrors).length && state.activityLoaded &&
@@ -4485,11 +4494,14 @@
 
   view("hubReady", function () { this.rev; this.activityLoaded; return hubDataReady(); });
   view("hubNotice", function () {
-    this.rev; this.me; this.signedIn;
+    this.rev; this.me; this.signedIn; this.hubLoadSlow;
     var saved = hubDisplay();
     if (Object.keys(hubErrors).length) return saved
       ? "Challenges couldn't be refreshed. Showing your saved view; reload to try again."
       : "Challenges couldn't be loaded. Reload to try again.";
+    if (this.hubLoadSlow && !hubDataReady()) return saved
+      ? "Challenges are taking longer to refresh. Showing your saved view; check your connection or reload to try again."
+      : "Challenges are taking longer to load. Check your connection or reload to try again.";
     if (saved) return "";
     return navigator.onLine === false ? "Connect to load your challenges." : "Loading your challenges...";
   });
@@ -5388,13 +5400,20 @@
   // it is enabled does nothing. disableNetwork -> enableNetwork forces a fresh attempt.
   // Backed off so a genuinely offline device isn't spinning the radio every 4 seconds.
   var RETRY_MS = [4000, 8000, 15000, 30000, 60000];
-  var retryStep = 0, retryTimer = 0;
+  var retryStep = 0, retryTimer = 0, reconnecting = null;
   function nudgeConnection() {
     var fb = window.__FB;
-    if (!fb || !fb.disableNetwork || !fb.enableNetwork) return Promise.resolve();
-    return fb.disableNetwork(fb.db)
-             .then(function () { return fb.enableNetwork(fb.db); })
-             .catch(function () {});
+    if (!fb || !fb.disableNetwork || !fb.enableNetwork) return Promise.resolve(false);
+    if (reconnecting) return reconnecting;
+    reconnecting = fb.disableNetwork(fb.db)
+      .then(function () { return fb.enableNetwork(fb.db); })
+      .then(function () { reconnecting = null; return true; }, function (error) {
+        reconnecting = null;
+        console.warn("Data reconnection failed:", error);
+        state.hubLoadSlow = true;
+        return false;
+      });
+    return reconnecting;
   }
   function stopRetry() {
     retryStep = 0;
@@ -5420,7 +5439,6 @@
   function monthKeyOf(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1); }
   function isCurrentMonth(d) { var n = new Date(); return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth(); }
   function niceDate(s) { var p = s.split("-"); return new Date(+p[0], (+p[1]) - 1, +p[2]).toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" }); }
-
   // Generated by scripts/build-brand.mjs; H2 entrance only, no Stack motion.
   var WELCOME_MOTION = {
   "duration": 640,
@@ -9549,6 +9567,33 @@
   var Store = (function () {
     var fb = null;
     var cidSubbed = {};        // cid -> true (avoid duplicate subcollection listeners)
+    var failedListeners = {};
+
+    function listen(key, ref, options, next, failed) {
+      var unsubscribe = null, generation = 0;
+      function attach() {
+        if (unsubscribe) unsubscribe();
+        delete failedListeners[key];
+        var current = ++generation;
+        unsubscribe = fb.onSnapshot(ref, options, function (snap) {
+          if (current === generation) next(snap);
+        }, function (error) {
+          if (current !== generation) return;
+          failedListeners[key] = attach;
+          failed(error);
+        });
+      }
+      attach();
+    }
+    function retryFailedListeners() {
+      Object.keys(failedListeners).forEach(function (key) {
+        if (/^(members|rounds):/.test(key) && !challMeta[key.split(":")[1]]) {
+          delete failedListeners[key];
+          return;
+        }
+        failedListeners[key]();
+      });
+    }
 
     function isMonthId(id) { return /^\d{4}-\d{2}$/.test(id); }
     function challengesTabActive() { var el = document.getElementById("tab-challenges"); return el && el.classList.contains("active"); }
@@ -9622,7 +9667,7 @@
     function subscribeCid(cid) {
       if (cidSubbed[cid]) return;
       cidSubbed[cid] = true;
-      fb.onSnapshot(fb.collection(fb.db, "challenges", cid, "members"), { includeMetadataChanges: true }, function (snap) {
+      listen("members:" + cid, fb.collection(fb.db, "challenges", cid, "members"), { includeMetadataChanges: true }, function (snap) {
         var m = {};
         snap.forEach(function (d) { var v = d.data() || {}; m[d.id] = { handle: v.handle || d.id, role: v.role || "member", status: v.status || "approved", ts: v.ts || 0 }; });
         // Same guard as the challenges listener: an empty roster from cache is "not loaded",
@@ -9636,7 +9681,7 @@
         console.error("members listener (" + cid + "):", err);
         if (challMeta[cid]) hubDataFailed("members:" + cid);
       });
-      fb.onSnapshot(fb.collection(fb.db, "challenges", cid, "rounds"), { includeMetadataChanges: true }, function (snap) {
+      listen("rounds:" + cid, fb.collection(fb.db, "challenges", cid, "rounds"), { includeMetadataChanges: true }, function (snap) {
         var r = {};
         snap.forEach(function (d) { var v = d.data() || {}; r[d.id] = roundSavePayload(roundFlagsFromData(v), v.participants || []); });
         if (!snap.size && snap.metadata.fromCache) return;
@@ -9661,7 +9706,7 @@
       // includeMetadataChanges: without it the listener does not re-fire when a
       // queued write is finally acknowledged, so the per-row "waiting to sync"
       // markers would never clear.
-      fb.onSnapshot(fb.collection(fb.db, "entries"), { includeMetadataChanges: true }, function (snap) {
+      listen("entries", fb.collection(fb.db, "entries"), { includeMetadataChanges: true }, function (snap) {
         if (!snap.metadata.fromCache) { netReady = true; entriesNetReady = true; setOffline(false); }
         var arr = [], pend = 0;
         snap.forEach(function (d) {
@@ -9693,7 +9738,7 @@
       });
 
       var rosterRef = fb.doc(fb.db, "meta", "roster");
-      fb.onSnapshot(rosterRef, function (d) {
+      listen("roster", rosterRef, { includeMetadataChanges: true }, function (d) {
         if (!d.metadata.fromCache) { netReady = true; setOffline(false); }
         if (d.exists()) {
           var v = d.data();
@@ -9703,7 +9748,7 @@
 
       // Top-level "challenges" holds challenge metadata docs (id="founding", …).
       // Any stray legacy "YYYY-MM" month docs are ignored (pre-migration data, no longer used).
-      fb.onSnapshot(fb.collection(fb.db, "challenges"), { includeMetadataChanges: true }, function (snap) {
+      listen("challenges", fb.collection(fb.db, "challenges"), { includeMetadataChanges: true }, function (snap) {
         var meta = {};
         snap.forEach(function (d) {
           if (isMonthId(d.id)) return;
@@ -9736,6 +9781,7 @@
     return {
       init: function (f) { fb = f; },
       start: function () { if (fb) fbStart(); },
+      retryFailed: retryFailedListeners,
       // Whether this device can hold writes offline (persistent IndexedDB cache).
       // False on a storage-blocked browser, where offline writes must stay refused.
       durable: function () { return !!(fb && fb.durable); },
@@ -10800,6 +10846,13 @@
     if (state.me && event.key === activityGoalKey()) loadActivityGoal();
   });
   // ---- Boot ----
+  var began = false, storeStarted = false;
+  function startStore() {
+    if (storeStarted || (!IS_DEMO && !window.__FB)) return;
+    if (window.__FB) Store.init(window.__FB);
+    Store.start();
+    storeStarted = true;
+  }
   function begin() {
     initChartResize();
     initTheme();
@@ -10810,7 +10863,12 @@
     console.log("Minutes v" + VERSION);
     // Bridge for the pull-to-refresh script (separate scope): re-render live data without a page teardown.
     window.__APP_VERSION = VERSION;
-    window.__minutesRefresh = function () { try { renderAll(); } catch (e) {} };
+    window.__minutesRefresh = function () {
+      startStore();
+      if (Store.retryFailed) Store.retryFailed();
+      nudgeConnection();
+      renderAll();
+    };
     // Same bridge pattern, for the feedback surfaces. The app body is an IIFE, so
     // without this there is no handle for the harness (or the console) to drive a
     // failure or an offline state that the happy path never produces. `sync` drives
@@ -10831,8 +10889,12 @@
     // and sheetOpen() directly, which are private to this IIFE, so every touch in
     // the installed app threw ReferenceError and the gesture never ran at all.
     window.__minutesLayer = { scroller: activeScroller, sheetOpen: sheetOpen };
-    if (window.__FB) Store.init(window.__FB);
-    Store.start();
+    startStore();
+    setTimeout(function () {
+      if (hubDataReady()) return;
+      state.hubLoadSlow = true;
+      console.warn("Challenge loading deadline exceeded; waiting for backend snapshots.");
+    }, 12000);
     // If we never receive real server data, say so. This is also the deadline the
     // banner has been waiting on: up to here a silent connection is still "asking",
     // past here it is "failed", and only now may it be announced. Viewing works,
@@ -10864,11 +10926,20 @@
     document.documentElement.classList.remove("has-session");
     LoginWelcome.start();
   }
-  var began = false;
-  function tryBegin() { if (began) return; began = true; begin(); }
+  function tryBegin() {
+    if (began) { startStore(); return; }
+    began = true;
+    begin();
+  }
+  window.addEventListener("minutes-auth", function () {
+    var auth = window.__AUTH;
+    if (!storeStarted || !auth || !auth.resolved || !auth.user) return;
+    if (Store.retryFailed) Store.retryFailed();
+    if (!hubDataReady()) nudgeConnection();
+  });
+  window.addEventListener("minutes-fb-ready", tryBegin);
   if (window.__FB) { tryBegin(); }
   else {
-    window.addEventListener("minutes-fb-ready", tryBegin);
     setTimeout(tryBegin, 6000); // fall back to localStorage if Firebase never loads
   }
 })();
@@ -11144,9 +11215,8 @@ ${r?'Expression: "'+r+`"
       reset();
     }, { passive: true });
 
-    // Data is live via Firestore snapshots, so a full page reload is unnecessary and causes
-    // an empty-then-repopulated flash. Instead re-render in place, and only hard-reload when a
-    // genuinely newer app version has been deployed.
+    // Reconnect live data and retry failed listeners in place. Only hard-reload
+    // for a newer app version; preserve the local session and pending writes.
     function softRefresh() {
       var started = Date.now();
       var finish = function () {

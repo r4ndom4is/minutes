@@ -42,7 +42,7 @@
       // user doesn't see a flash of the login card before JS restores their view.
       if (localStorage.getItem("minutes_session_v3")) {
         document.documentElement.classList.add("has-session");
-        if (location.hash === "#/challenges" || (!location.hash && localStorage.getItem("minutes-nav") === "challenges")) {
+        if (!location.hash || location.hash === "#/challenges") {
           document.documentElement.classList.add("hub-active");
         }
       } else {
@@ -698,7 +698,8 @@
   #login .btn:hover:not(:disabled) { background: var(--accent-hover); }
   #login .btn:active:not(:disabled) { background: var(--accent-pressed); }
   #login .btn:disabled { opacity: 1; background: var(--card-2); color: var(--muted-2); cursor: default; }
-  #login .btn-oauth { display: flex; align-items: center; justify-content: center; gap: var(--sp-md); }
+  #login .btn-oauth { display: flex; align-items: center; justify-content: center; gap: var(--sp-md);
+    width: fit-content; max-width: 100%; align-self: center; }
   .btn.btn-oauth svg { width: 18px; height: 18px; flex: 0 0 auto; background: #fff;
     border-radius: var(--r-pill); padding: var(--sp-3xs); box-sizing: content-box; }
   #login .btn-ghost, #login .btn-oauth[data-mode="out"] { background: transparent; color: var(--text);
@@ -987,6 +988,7 @@
   input:focus { border-color: var(--accent); }
 
   /* Custom date field */
+  #addModal .modal { container-type: inline-size; }
   .datepick { position: relative; }
   .dp-trigger {
     width: 100%; display: flex; align-items: center; justify-content: space-between;
@@ -997,37 +999,44 @@
   .dp-trigger .dp-ic { color: var(--muted); display: flex; }
   .dp-trigger .dp-ic svg { width: 18px; height: 18px; display: block; }
   .cal-pop {
-    position: absolute; top: calc(100% + 8px); left: 0; z-index: 30;
-    width: 280px; max-width: 86vw; background: var(--card); border: 1px solid var(--border-2);
-    border-radius: var(--r-xl); padding: var(--sp-lg); box-shadow: var(--shadow-pop);
+    --calendar-pop-width: min(calc(7 * 44px + 2 * var(--sp-lg) + 2px), calc(100cqw + 2 * var(--sp-4xl)));
+    position: absolute; top: calc(100% + var(--sp-sm)); left: calc((100cqw - var(--calendar-pop-width)) / 2); z-index: 30;
+    width: var(--calendar-pop-width); background: var(--card); border: 1px solid var(--border-2);
+    border-radius: var(--r-xl); padding: var(--sp-lg) 0; box-shadow: var(--shadow-pop);
     opacity: 0; transform: translateY(-6px); pointer-events: none; transition: opacity .18s ease, transform .18s ease;
   }
   .cal-pop.show { opacity: 1; transform: none; pointer-events: auto; }
-  .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--sp-md); }
-  .cal-title { font-size: var(--fs-sm); font-weight: var(--fw-bold); }
-  /* .cal-nav and .rh-back are both a chevron in a box, and they had drifted apart
-     on every axis: 32/36/40 px, two radii, two backgrounds, and only .rh-back had
-     a hover. They share one definition now. (.mb-nav, the third member, went away
-     with the month stepper when the wheel replaced it.) */
-  .cal-nav { width: 36px; height: 36px; border-radius: var(--r-pill); border: none; background: var(--card-2); color: var(--text); font-size: var(--fs-xl); cursor: pointer; line-height: var(--lh-none); transition: background .15s ease, color .15s ease; }
-  /* The hover used to move border-color. With no border it moves the fill,
-     which is the same signal through the surface instead of an outline. */
-  .cal-nav:hover:not(:disabled) { background: var(--border); }
-  .cal-nav:active { background: var(--accent); color: #fff; }
-  .cal-nav:disabled { opacity: .4; cursor: default; }
-  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--sp-3xs); }
-  .cal-dow-cell { text-align: center; font-size: var(--fs-4xs); font-weight: var(--fw-bold); color: var(--muted); padding: var(--sp-2xs) 0; text-transform: uppercase; }
-  .cal-cell { aspect-ratio: 1 / 1; border: none; background: none; color: var(--text); font-size: var(--fs-xs); border-radius: 9px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-  .cal-cell:hover { background: var(--card-2); }
-  .cal-cell.blank { visibility: hidden; cursor: default; }
-  .cal-cell.future { color: var(--muted-2); cursor: not-allowed; }
-  .cal-cell.future:hover { background: none; }
-  .cal-cell.today { box-shadow: inset 0 0 0 1px var(--accent); color: var(--tint-accent-fg); }
-  .cal-cell.sel { background: var(--accent); color: #fff; font-weight: var(--fw-bold); }
-  .cal-cell.sel:hover { background: var(--accent); }
-  .cal-foot { margin-top: var(--sp-md); }
-  .cal-foot button { width: 100%; padding: var(--sp-sm); border-radius: 9px; border: 1px solid var(--border-2); background: var(--card-2); color: var(--text); font-weight: var(--fw-sm-bold); font-size: var(--fs-xs); cursor: pointer; }
-  .cal-foot button:active { background: var(--accent); border-color: var(--accent); }
+  .cal-head { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-sm); margin: 0 var(--sp-lg) var(--sp-sm); }
+  .cal-title, .activity-month-heading h3 { margin: 0; font-size: var(--fs-lg); font-weight: var(--fw-bold); line-height: var(--lh-snug); }
+  .cal-title { text-align: center; }
+  .cal-nav, .activity-month-nav button { flex: 0 0 44px; width: 44px; height: 44px; display: grid; place-items: center;
+    padding: 0; border-radius: var(--r-pill); border: none; background: var(--card-2); color: var(--text); cursor: pointer; }
+  .cal-nav .ic, .activity-month-nav .ic { width: 18px; height: 18px; }
+  .cal-nav:hover:not(:disabled), .activity-month-nav button:hover:not(:disabled) { background: var(--accent-soft); color: var(--accent); }
+  .cal-nav:active:not(:disabled), .activity-month-nav button:active:not(:disabled) { background: var(--accent); color: var(--on-accent); }
+  .cal-nav:disabled, .activity-month-nav button:disabled { color: var(--muted); background: none; cursor: default; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0; width: 100%; max-width: calc(7 * 44px); margin-inline: auto; }
+  .calendar-weekdays { padding-block: var(--sp-sm); color: var(--muted); font-size: var(--fs-3xs);
+    font-weight: var(--fw-md); line-height: var(--lh-normal); text-align: center; }
+  .calendar-date { width: 100%; min-width: 0; min-height: 44px; padding: 0; border: 0; background: none;
+    color: var(--text); font: inherit; font-size: var(--fs-sm); font-variant-numeric: tabular-nums;
+    display: grid; place-items: center; cursor: pointer; }
+  .calendar-day { width: 32px; height: 32px; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; border-radius: var(--r-pill); }
+  .calendar-number { line-height: var(--lh-normal); font-weight: var(--fw-sm-bold); }
+  .calendar-date.is-today .calendar-day { outline: 1px solid var(--accent); outline-offset: 2px; }
+  .calendar-date.is-selected .calendar-day { box-shadow: 0 0 0 2px var(--calendar-selection-surface, var(--card)), 0 0 0 4px var(--text); }
+  .modal .calendar-date:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: var(--r-md); }
+  .calendar-date:disabled { color: var(--muted); cursor: default; }
+  .calendar-date:not(:disabled):not(.future):not(.is-active):hover .calendar-day { background: var(--accent-soft); color: var(--accent); }
+  .cal-cell.blank { visibility: hidden; cursor: default; padding: 0; }
+  .cal-cell.future { color: var(--muted); cursor: not-allowed; }
+  .cal-foot { margin: var(--sp-sm) var(--sp-lg) 0; }
+  .cal-foot button { width: 100%; min-height: 44px; padding: var(--sp-sm) var(--sp-lg); border-radius: var(--r-pill);
+    border: 1px solid var(--border-2); background: var(--card-2); color: var(--text); font: inherit;
+    font-weight: var(--fw-sm-bold); font-size: var(--fs-sm); line-height: var(--lh-normal); cursor: pointer; }
+  .cal-foot button:hover { background: var(--accent-soft); color: var(--accent); }
+  .cal-foot button:active { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
 
   /* Custom minutes stepper - native spinners removed */
   input[type=number] { -webkit-appearance: textfield; -moz-appearance: textfield; appearance: textfield; }
@@ -1140,8 +1149,8 @@
      became an inversion the moment names dropped to regular: the nested detail
      would have outweighed the member it belongs to. They keep a little more
      weight than the names only because they are much smaller. */
-  .lb-tagname { font-weight: var(--fw-md); font-size: var(--fs-sm); }
-  .lb-tagmeta { font-size: var(--fs-2xs); color: var(--muted); font-weight: var(--fw-regular); margin-left: var(--sp-xs); font-variant-numeric: tabular-nums; }
+  .lb-tagname { min-width: 0; overflow-wrap: anywhere; font-weight: var(--fw-md); font-size: var(--fs-sm); line-height: var(--lh-normal); }
+  .lb-tagmeta { flex: 0 0 auto; font-size: var(--fs-2xs); color: var(--muted); font-weight: var(--fw-regular); margin-left: var(--sp-xs); font-variant-numeric: tabular-nums; }
   .lb-tagmins { font-size: var(--fs-xs); color: var(--muted); font-weight: var(--fw-md); width: 50px; text-align: right; font-variant-numeric: tabular-nums; }
   /* Round total. This deliberately rebuilds a member row's right side, chevron
      included and merely made invisible, so the sum lands in the same 66px tabular
@@ -1509,7 +1518,7 @@
   .msg:empty { display: none; }
   .msg .m-ic { width: 15px; height: 15px; flex: 0 0 auto; margin-top: var(--sp-hair);
     fill: currentColor; stroke: none; }
-  .msg .m-tx { flex: 1 1 auto; min-width: 0; }
+  .msg .m-tx { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
   /* A message that names an action has to hand over the control for it. "Reconnect"
      was previously an instruction with no handle anywhere on the signed-in screen:
      the only real recovery is a fresh load, which until now was reachable only from
@@ -1518,8 +1527,10 @@
     border: 1px solid color-mix(in srgb, var(--f) 35%, transparent);
     background: transparent; color: var(--f); border-radius: var(--r-pill);
     padding: var(--sp-2xs) var(--sp-md); font: inherit; font-size: var(--fs-2xs); font-weight: var(--fw-bold);
+    min-width: 44px; min-height: 44px;
     line-height: var(--lh-snug); white-space: nowrap; cursor: pointer; }
   .msg .m-act:hover { background: color-mix(in srgb, var(--f) 12%, transparent); }
+  .msg .m-act:focus-visible { outline: 2px solid var(--f); outline-offset: 3px; }
   .msg--quiet:not(:empty) { margin: var(--sp-3xs) 0 var(--sp-xs); }
   .msg--boxed:not(:empty) { background: var(--b); border: 1px solid var(--o);
     border-radius: var(--r-md); padding: var(--sp-md) var(--sp-lg); margin-bottom: var(--sp-lg); }
@@ -1583,11 +1594,14 @@
   }
   .pop.show { opacity: 1; transform: none; pointer-events: auto; }
   .pop .pop-ic { width: 18px; height: 18px; flex: 0 0 auto; fill: var(--f); stroke: none; }
-  .pop .pop-tx { flex: 1 1 auto; min-width: 0; font-size: var(--fs-xs); line-height: var(--lh-normal);
+  .pop .pop-tx { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; font-size: var(--fs-xs); line-height: var(--lh-normal);
     color: var(--text); }
   .pop .pop-act { background: none; border: none; color: var(--f); font-weight: var(--fw-black);
     font-size: var(--fs-2xs); cursor: pointer; text-transform: uppercase; letter-spacing: var(--ls-wider);
-    flex: 0 0 auto; font-family: inherit; padding: 0; }
+    flex: 0 0 auto; min-width: 44px; min-height: 44px; border-radius: var(--r-pill);
+    font-family: inherit; line-height: var(--lh-snug); padding: 0; }
+  .pop .pop-act:hover { background: color-mix(in srgb, var(--f) 12%, transparent); }
+  .pop .pop-act:focus-visible { outline: 2px solid var(--f); outline-offset: 3px; }
   /* Inset from the rounded ends so the countdown reads as a deliberate rule
      rather than a bar clipped by the corner radius. */
   .pop .pop-bar { position: absolute; left: 15px; right: 15px; bottom: 4px; height: 2px;
@@ -2376,6 +2390,7 @@
   html[data-depth="pop"] .cr-edit,
   html[data-depth="pop"] .cr-act,
   html[data-depth="pop"] .cal-nav,
+  html[data-depth="pop"] .activity-month-nav button,
   html[data-depth="pop"] .cal-foot button,
   html[data-depth="pop"] .rh-back,
   html[data-depth="pop"] .rh-manage,
@@ -2672,12 +2687,12 @@
   html.challenge-active :is(#fabAdd, .jt-btn, .mbtn.primary, .btn:not(.ghost)):hover:not(:disabled) { background: var(--accent-hover); }
   html.challenge-active :is(#fabAdd, .jt-btn, .mbtn.primary, .btn:not(.ghost)):active:not(:disabled) { background: var(--accent-pressed); }
   html.challenge-active :is(#fabAdd, .jt-btn):disabled { color: var(--muted-2); background: var(--card-2); box-shadow: none; opacity: 1; cursor: not-allowed; }
-  html.challenge-active :is(#sheetBody, .modal-overlay) :is(button, input):focus-visible,
+  html.challenge-active :is(#sheetBody, .modal-overlay) :is(button:where(:not(.calendar-date)), input):focus-visible,
   html.challenge-active #fabAdd:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
   html.challenge-active .rh-manage .cr-reqdot { background: var(--d-bg); color: var(--d-fg); }
   html.challenge-active .modal :is(input, .dp-trigger) { min-height: 48px; border-color: var(--field-edge); caret-color: var(--accent); }
   html.challenge-active .modal input::placeholder { color: var(--muted); opacity: 1; }
-  html.challenge-active :is(.mbtn.primary, .btn:not(.ghost), .ar-approve, .mg-btn.on, .pe-chip.on, .cal-cell.sel, .cal-nav:active, .dot) { color: var(--on-accent); }
+  html.challenge-active :is(.mbtn.primary, .btn:not(.ghost), .ar-approve, .mg-btn.on, .pe-chip.on, .cal-nav:active, .dot) { color: var(--on-accent); }
   html.challenge-active .mbtn.danger { background: var(--d-bg); color: var(--d-fg); border-color: var(--d-fg); }
   html.challenge-active .modal :is(.pe-chip, .mg-btn, .ar-btn, .quick button) { min-width: 44px; }
   html.challenge-active .gtog .gtog-opt { height: 44px; }
@@ -2717,10 +2732,10 @@
   .activity-calendar-link .ic { width: 16px; height: 16px; }
   .activity-week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr));
     gap: var(--sp-2xs); margin: var(--sp-4xl) 0 var(--sp-3xl); }
-  .activity-day { display: grid; min-width: 0; grid-template-rows: auto 38px; justify-items: center;
+  .activity-day { display: grid; min-width: 0; grid-template-rows: auto 32px; justify-items: center;
     gap: var(--sp-sm); color: var(--muted); font-size: var(--fs-3xs); text-align: center; }
   .activity-weekday { width: 100%; line-height: var(--lh-normal); text-align: center; }
-  .activity-bead { width: 34px; height: 38px; display: grid; place-items: center; background: var(--card-2);
+  .activity-bead { width: 32px; height: 32px; display: grid; place-items: center; background: var(--card-2);
     border: 2px solid transparent; border-radius: var(--r-pill); font-size: var(--fs-sm);
     font-weight: var(--fw-sm-bold); font-variant-numeric: tabular-nums; color: var(--text); }
   .activity-bead .ic { width: 18px; height: 18px; }
@@ -2731,31 +2746,21 @@
   .activity-weekly { display: block; margin: 0; font-size: var(--fs-sm); font-weight: var(--fw-sm-bold); color: var(--accent); }
   .activity-daily { font-size: var(--fs-xs); color: var(--muted); }
   .activity-note { margin: var(--sp-sm) 0 0; font-size: var(--fs-xs); color: var(--muted); line-height: var(--lh-normal); }
-  .activity-modal { margin-block: 0; }
+  .activity-modal { margin-block: 0; line-height: var(--lh-normal); }
   .activity-modal .activity-month-heading { margin: var(--sp-5xl) 0 var(--sp-xl); }
-  .activity-month-heading h3 { margin: 0; font-size: var(--fs-lg); font-weight: var(--fw-bold); }
-  .activity-month-nav { display: flex; gap: var(--sp-2xs); }
-  .activity-month-nav button { width: 44px; height: 44px; display: grid; place-items: center;
-    padding: 0; border: 0; border-radius: var(--r-pill); background: var(--card-2); color: var(--text); cursor: pointer; }
-  .activity-month-nav button:disabled { color: var(--muted); background: none; cursor: default; }
-  .activity-month-nav .ic { width: 18px; height: 18px; }
-  .activity-month-nav button:not(:disabled):hover { background: var(--accent-soft); color: var(--accent); }
+  .activity-month-heading > div:first-child { min-width: 0; }
+  .activity-month-heading .activity-note { display: block; margin-top: var(--sp-2xs); }
+  .activity-month-nav { display: flex; flex-shrink: 0; gap: var(--sp-2xs); }
   .activity-calendar { display: grid; justify-items: center; margin-inline: calc(-1 * var(--sp-4xl)); }
   .activity-weekdays, .activity-dates { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr));
     width: 100%; max-width: calc(7 * 44px); gap: 0; }
   .activity-dates { grid-auto-rows: 44px; }
-  .activity-weekdays { padding: var(--sp-sm) 0; color: var(--muted); font-size: var(--fs-3xs); text-align: center; }
-  .activity-date { width: 100%; min-width: 0; min-height: 44px; padding: var(--sp-2xs) 0; border: 0; background: none;
-    color: var(--text); font: inherit; font-size: var(--fs-sm); font-variant-numeric: tabular-nums;
-    display: grid; place-items: center; cursor: pointer; }
-  .activity-date span { width: 32px; height: 32px; display: grid; place-items: center; border-radius: var(--r-pill); }
-  .activity-date.is-active span { background: var(--accent); color: var(--on-accent); font-weight: var(--fw-bold); }
-  .activity-date.is-outside { color: var(--muted); }
-  .activity-date.is-outside.is-active span { background: var(--accent-soft); color: var(--accent); }
-  .activity-date.is-today span { outline: 1px solid var(--accent); outline-offset: 2px; }
-  .activity-date.is-selected span { box-shadow: 0 0 0 2px var(--card), 0 0 0 4px var(--text); }
-  .activity-date:disabled { color: var(--muted); cursor: default; }
-  .activity-date:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: var(--r-md); }
+  .activity-date.is-active .calendar-day { background: var(--accent); color: var(--on-accent); }
+  .activity-date.is-active .calendar-number { font-weight: var(--fw-bold); }
+  .activity-date.is-outside { color: var(--muted); background: var(--card-2); --calendar-selection-surface: var(--card-2); }
+  .activity-date.is-outside-start { border-start-start-radius: var(--r-md); border-end-start-radius: var(--r-md); }
+  .activity-date.is-outside-end { border-start-end-radius: var(--r-md); border-end-end-radius: var(--r-md); }
+  .activity-date.is-outside:not(.is-active) .calendar-number { font-weight: var(--fw-regular); }
   .activity-day-detail { margin: var(--sp-4xl) 0; }
   .activity-day-detail strong { display: block; font-size: var(--fs-sm); font-weight: var(--fw-sm-bold); }
   .activity-day-detail p { margin: var(--sp-2xs) 0 0; font-size: var(--fs-xs); color: var(--muted); }
@@ -2796,6 +2801,8 @@
   html[data-depth="pop"] .activity-goal-menu { border: 2px solid var(--ink); box-shadow: var(--pop-sm) var(--pop-sm) 0 var(--pop-ink); }
   .activity-goal-help { font-size: var(--fs-xs); color: var(--muted); line-height: var(--lh-normal); margin: var(--sp-sm) 0 0; }
   .activity-goal-error { font-size: var(--fs-xs); color: var(--d-fg); line-height: var(--lh-normal); margin: var(--sp-sm) 0 0; }
+  .activity-modal .activity-note, .activity-day-detail p, .activity-goal-help, .activity-goal-error { line-height: var(--lh-relaxed); }
+  .activity-day-detail, .activity-disclosure-body { overflow-wrap: anywhere; }
   html[data-depth="pop"] .activity-day.is-active .activity-bead { border-color: var(--on-accent); }
 </style>
 </head>
@@ -2951,16 +2958,16 @@
       </div>
     </template>
 
-    <section class="tab-panel active" id="tab-challenges">
-      <section class="activity-home" x-show="$store.s.activity.show" aria-labelledby="activityHomeTitle">
+    <section class="tab-panel active" id="tab-challenges" :aria-busy="$store.s.hubReady ? 'false' : 'true'">
+      <section class="activity-home" x-show="$store.s.hubActivity.show" aria-labelledby="activityHomeTitle">
         <h2 class="slabel" id="activityHomeTitle">Your activity</h2>
-        <button type="button" class="activity-overview" id="activityOpen" :aria-label="$store.s.activity.buttonLabel" @click="$store.s.act.openActivity()">
+        <button type="button" class="activity-overview" id="activityOpen" :aria-label="$store.s.hubActivity.buttonLabel" :disabled="!$store.s.activity.known" @click="$store.s.act.openActivity()">
           <span class="activity-heading">
-            <span class="activity-progress"><span x-text="$store.s.activity.progress"></span> <small>days this week</small></span>
+            <span class="activity-progress"><span x-text="$store.s.hubActivity.progress"></span> <small>days this week</small></span>
             <span class="activity-calendar-link">Calendar <svg class="ic" aria-hidden="true"><use href="#i-caret-right"/></svg></span>
           </span>
           <span class="activity-week">
-            <template x-for="day in $store.s.activity.week" :key="day.date">
+            <template x-for="day in $store.s.hubActivity.week" :key="day.date">
               <span class="activity-day" :data-week-date="day.date" :class="{ 'is-active': day.active, 'is-today': day.today, 'is-future': day.future }" :aria-label="day.label">
                 <span class="activity-weekday" x-text="day.weekday"></span>
                 <span class="activity-bead">
@@ -2970,11 +2977,12 @@
               </span>
             </template>
           </span>
-          <span class="activity-weekly" x-text="$store.s.activity.weeklyLabel"></span>
+          <span class="activity-weekly" x-text="$store.s.hubActivity.weeklyLabel"></span>
         </button>
-        <p class="activity-note" role="status" x-show="$store.s.activity.note" x-text="$store.s.activity.note"></p>
+        <p class="activity-note" role="status" x-show="$store.s.hubActivity.note" x-text="$store.s.hubActivity.note"></p>
         <p class="activity-goal-error" role="status" x-show="$store.s.activityGoalNotice" x-text="$store.s.activityGoalNotice"></p>
       </section>
+      <p class="sub-note" id="hubStatus" role="status" x-show="$store.s.hubNotice" x-text="$store.s.hubNotice"></p>
       <template x-for="sec in $store.s.challSections" :key="sec.id">
         <div class="sect">
           <div class="slabel" x-text="sec.label"></div>
@@ -2997,10 +3005,11 @@
                    :style="{ '--pa': c.pastel, '--pa-tonal': 'var(--pa-' + c.color + '-tonal)' }"
                    :class="{ 'active-cid': c.active, 'tappable': c.approved }"
                    :role="c.approved ? 'button' : null"
-                   :tabindex="c.approved ? 0 : null"
-                   @click="c.approved && $store.s.act.openChallenge(c.cid)"
-                   @keydown.enter.prevent="c.approved && $store.s.act.openChallenge(c.cid)"
-                   @keydown.space.prevent="c.approved && $store.s.act.openChallenge(c.cid)">
+                   :tabindex="c.approved && c.ready ? 0 : null"
+                   :aria-disabled="c.approved && !c.ready ? 'true' : null"
+                   @click="c.approved && c.ready && $store.s.act.openChallenge(c.cid)"
+                   @keydown.enter.prevent="c.approved && c.ready && $store.s.act.openChallenge(c.cid)"
+                   @keydown.space.prevent="c.approved && c.ready && $store.s.act.openChallenge(c.cid)">
                 <!-- Your standing in this challenge, as the card's watermark.
                      aria-hidden because the pill beside it already says it in
                      words ("Leading", "#2 of 5", "New round", "Requested"). -->
@@ -3017,7 +3026,7 @@
                       </template>
                       <template x-if="c.pending"><span class="cr-standing pend">Requested</span></template>
                       <template x-if="!c.approved && !c.pending">
-                        <button class="cr-act" aria-label="Request to join" @click.stop="$store.s.act.join(c.cid)">Request to join</button>
+                        <button class="cr-act" aria-label="Request to join" :disabled="!c.ready" @click.stop="c.ready && $store.s.act.join(c.cid)">Request to join</button>
                       </template>
                     </div>
                     <template x-if="c.total">
@@ -3121,10 +3130,8 @@
     <div class="sheet-body" id="sheetBody">
       <div class="msg msg--banner amb" role="status" aria-live="polite"></div>
 
-      <!-- Second copy of the nudge. The base layer's banner is behind this sheet,
-           and an approved member lands straight in here, so a single banner on the
-           base layer would be invisible to exactly the people who need it. Mirrors
-           how .amb is duplicated per layer. -->
+      <!-- Keep the account nudge reachable while a challenge is open, just as
+           the connection banner is available in either layer. -->
       <template x-if="$store.s.claimNudge.show">
         <div class="nudge">
           <div class="nudge-tx">
@@ -3420,21 +3427,23 @@
         </div>
       </div>
       <div class="activity-calendar">
-        <div class="activity-weekdays" aria-hidden="true">
+        <div class="activity-weekdays calendar-weekdays" aria-hidden="true">
           <template x-for="(label, index) in $store.s.activity.weekdays" :key="index"><span x-text="label"></span></template>
         </div>
         <p id="activityCalendarHelp" class="sr-only">Use the arrow keys to move between dates.</p>
         <div class="activity-dates" role="group" aria-labelledby="activityMonthTitle" aria-describedby="activityCalendarHelp">
           <template x-for="day in $store.s.activity.calendar" :key="day.key">
             <div>
-              <button type="button" class="activity-date" :data-activity-date="day.date" :aria-label="day.label"
+              <button type="button" class="activity-date calendar-date" :data-activity-date="day.date" :aria-label="day.label"
                       :disabled="day.future" :aria-current="day.today ? 'date' : null"
                       :aria-pressed="day.date === $store.s.activitySelected"
                       :tabindex="day.date === $store.s.activitySelected ? 0 : -1"
-                      :class="{ 'is-active': day.active, 'is-outside': day.outsideMonth, 'is-today': day.today, 'is-selected': day.date === $store.s.activitySelected }"
+                      :class="{ 'is-active': day.active, 'is-outside': day.outsideMonth, 'is-outside-start': day.outsideStart, 'is-outside-end': day.outsideEnd, 'is-today': day.today, 'is-selected': day.date === $store.s.activitySelected }"
                       @click="$store.s.act.activitySelect(day.date)"
                       @keydown="$store.s.act.activityCalendarKey($event, day.date)">
-                <span x-text="day.number"></span>
+                <span class="calendar-day">
+                  <span class="calendar-number" x-text="day.number"></span>
+                </span>
               </button>
             </div>
           </template>
@@ -3550,10 +3559,17 @@
                 <div class="cal-title" id="calTitle" x-text="$store.s.cal.title"></div>
                 <button type="button" class="cal-nav" id="calNext" aria-label="Next month" :disabled="$store.s.cal.nextOff" @click.stop="$store.s.act.calNext()"><svg class="ic" aria-hidden="true"><use href="#i-caret-right"/></svg></button>
               </div>
-              <div class="cal-grid cal-dow" id="calDow"><template x-for="d in $store.s.cal.dow" :key="d"><div class="cal-dow-cell" x-text="d"></div></template></div>
+              <div class="cal-grid cal-dow calendar-weekdays" id="calDow" aria-hidden="true"><template x-for="(d, index) in $store.s.cal.dow" :key="index"><div class="cal-dow-cell" x-text="d"></div></template></div>
               <div class="cal-grid" id="calDays">
                 <template x-for="d in $store.s.cal.days" :key="d.key">
-                  <button type="button" class="cal-cell" :class="{ blank: d.blank, sel: d.selected, today: d.today, future: d.blocked }" :disabled="d.blank" @click="!d.blank && !d.blocked && $store.s.act.pickCal(d.iso)"><span x-text="d.blank ? '' : d.day"></span></button>
+                  <button type="button" class="cal-cell calendar-date"
+                          :class="{ blank: d.blank, sel: d.selected, today: d.today, future: d.blocked, 'is-selected': d.selected, 'is-today': d.today }"
+                          :disabled="d.blank" :aria-disabled="d.blocked ? 'true' : null"
+                          :aria-label="d.blank ? null : d.label" :aria-current="d.today ? 'date' : null"
+                          :aria-pressed="d.selected ? 'true' : 'false'"
+                          @click="!d.blank && !d.blocked && $store.s.act.pickCal(d.iso)">
+                    <span class="calendar-day"><span class="calendar-number" x-text="d.blank ? '' : d.day"></span></span>
+                  </button>
                 </template>
               </div>
               <div class="cal-foot"><button type="button" id="calToday" @click.stop="$store.s.act.calToday()">Today</button></div>
@@ -3841,8 +3857,7 @@
   var ACTIVECID_KEY = "minutes_active_cid";
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
-  var NAV_KEY = "minutes-nav";
-  var VERSION = "15.28";
+  var VERSION = "15.29";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -4349,7 +4364,7 @@
   // flash "Welcome" at an existing user during the empty first frame.
   function firstRun() {
     if (!state.signedIn || state.welcomed) return false;
-    if (!(rosterLoaded && Object.keys(membersByCid).length > 0)) return false;
+    if (!hubDataReady()) return false;
     if (myChallCount() > 0) { markWelcomed(); return false; }
     return true;
   }
@@ -4376,6 +4391,112 @@
     state.booted = true;
   });
 
+  // A saved hub is presentation only. It never populates membership, roles or entries.
+  var HUB_CACHE_KEY = "minutes-hub-v1:";
+  var hubCatalogReady = false, hubErrors = {};
+  var hubOwner = null, hubSaved = null, hubStored = "", hubComputed = null;
+
+  function hubDataReady() {
+    return hubCatalogReady && !Object.keys(hubErrors).length && state.activityLoaded &&
+      Object.keys(challMeta).every(function (cid) {
+        return Object.prototype.hasOwnProperty.call(membersByCid, cid) &&
+          Object.prototype.hasOwnProperty.call(roundsByCid, cid);
+      });
+  }
+  function hubDataArrived(key) { delete hubErrors[key]; }
+  function hubDataFailed(key) { hubErrors[key] = true; bump(); }
+
+  function validHubSnapshot(value) {
+    function text(v) { return typeof v === "string"; }
+    function flag(v) { return typeof v === "boolean"; }
+    return value && value.version === 1 && value.name === state.me &&
+      value.month === monthKeyOf(new Date()) &&
+      value.hello && text(value.hello.sub) &&
+      Array.isArray(value.sections) && value.sections.length === 2 &&
+      value.sections.every(function (section, index) {
+        return section && section.id === (index ? "disc" : "mine") &&
+          section.listId === (index ? "discoverList" : "myChallList") &&
+          text(section.label) && text(section.note) && text(section.empty) &&
+          (!section.welcome || (text(section.welcome.title) && text(section.welcome.body))) &&
+          Array.isArray(section.rows) && section.rows.every(function (row) {
+            return row && /^[A-Za-z0-9_-]{1,64}$/.test(row.cid) &&
+              CHALL_COLORS.indexOf(row.color) >= 0 &&
+              ["name", "meta", "wm", "total", "mins"].every(function (key) { return text(row[key]); }) &&
+              ["approved", "pending", "active"].every(function (key) { return flag(row[key]); }) &&
+              (!row.pill || (["muted", "lead", "rank"].indexOf(row.pill.cls) >= 0 && text(row.pill.text)));
+          });
+      }) &&
+      value.activity && flag(value.activity.show) &&
+      ["progress", "weeklyLabel", "buttonLabel", "note"].every(function (key) { return text(value.activity[key]); }) &&
+      Array.isArray(value.activity.week) && value.activity.week.length === 7 &&
+      value.activity.week.every(function (day) {
+        return day && ["date", "weekday", "label"].every(function (key) { return text(day[key]); }) &&
+          Number.isInteger(day.number) &&
+          ["active", "today", "future"].every(function (key) { return flag(day[key]); });
+      });
+  }
+
+  function readHubSnapshot() {
+    if (hubOwner === state.me) return;
+    hubOwner = state.me;
+    hubSaved = null; hubStored = ""; hubComputed = null;
+    if (!state.me) return;
+    try {
+      var raw = localStorage.getItem(HUB_CACHE_KEY + encodeURIComponent(state.me));
+      if (!raw) return;
+      var value = JSON.parse(raw);
+      if (!validHubSnapshot(value)) throw new Error("Invalid or outdated challenge preview.");
+      hubSaved = value;
+      hubStored = raw;
+    } catch (error) {
+      console.warn("Saved challenge preview could not be read:", error);
+    }
+  }
+
+  function hubDisplay() {
+    state.rev; state.me; state.signedIn; state.activeCid; state.welcomed; state.hourRev;
+    state.activityDay; state.activityGoalRev; state.activityLoaded; state.activityLoadError; state.activityFromCache;
+    readHubSnapshot();
+    if (!state.signedIn) return null;
+    if (!hubDataReady()) return hubSaved;
+    var signature = [state.rev, state.me, state.activeCid, state.welcomed, state.hourRev,
+      state.activityDay, state.activityGoalRev, state.activityFromCache, state.activityLoadError,
+      offlineNow(), cachePending].join("|");
+    if (hubComputed && hubComputed.signature === signature) return hubComputed.value;
+    var activity = state.activity;
+    var value = {
+      version: 1, name: state.me, month: monthKeyOf(new Date()),
+      hello: buildHello(), sections: buildChallengeSections(),
+      activity: {
+        show: activity.show, progress: activity.progress, weeklyLabel: activity.weeklyLabel,
+        buttonLabel: activity.buttonLabel, note: activity.note, week: activity.week
+      }
+    };
+    hubSaved = value;
+    hubComputed = { signature: signature, value: value };
+    var raw = JSON.stringify(value);
+    if (raw !== hubStored) {
+      hubStored = raw;
+      try { localStorage.setItem(HUB_CACHE_KEY + encodeURIComponent(state.me), raw); }
+      catch (error) { console.warn("Challenge preview could not be saved:", error); }
+    }
+    return value;
+  }
+
+  view("hubReady", function () { this.rev; this.activityLoaded; return hubDataReady(); });
+  view("hubNotice", function () {
+    this.rev; this.me; this.signedIn;
+    var saved = hubDisplay();
+    if (Object.keys(hubErrors).length) return saved
+      ? "Challenges couldn't be refreshed. Showing your saved view; reload to try again."
+      : "Challenges couldn't be loaded. Reload to try again.";
+    if (saved) return "";
+    return navigator.onLine === false ? "Connect to load your challenges." : "Loading your challenges...";
+  });
+  view("hubActivity", function () {
+    var saved = hubDisplay();
+    return saved ? saved.activity : { show: false, week: [], progress: "", weeklyLabel: "", buttonLabel: "", note: "" };
+  });
   // ---- View models -----------------------------------------------------------
   // Templates read these. Each one calls the SAME pure logic the old imperative
   // renderers called, so there is exactly one source of truth for a rule and the
@@ -4411,8 +4532,7 @@
   function ordinal(n) {
     return ORDINALS[n] || ("#" + n);
   }
-  view("hello", function () {
-    this.rev; this.me; this.signedIn; this.welcomed; this.hourRev; this.activeCid;
+  function buildHello() {
     var name = state.me || "you";
     var word = firstRun() ? "Welcome" : dayPart().word;
 
@@ -4436,6 +4556,14 @@
     else if (st.leading) tail = "You are leading this month.";
     else tail = "You are " + ordinal(st.rank) + " this month.";
     return { word: word, name: name, sub: count + " " + tail };
+  }
+  view("hello", function () {
+    var saved = hubDisplay();
+    return {
+      word: firstRun() ? "Welcome" : dayPart().word,
+      name: this.me || "you",
+      sub: saved ? saved.hello.sub : ""
+    };
   });
   view("chall", function () {
     this.rev; this.me; this.activeCid;
@@ -4458,8 +4586,7 @@
 
   // Challenges screen: both lists come from one section list so the row markup
   // is written once rather than duplicated per list.
-  view("challSections", function () {
-    this.rev; this.me; this.activeCid; this.welcomed; this.signedIn;
+  function buildChallengeSections() {
     // Oldest first, and only ever this one key. The ACTIVE challenge is hoisted
     // to the top of its list by CSS (`.chall-row.active-cid { order: -1 }`)
     // rather than by sorting, so nothing here needs to know about it.
@@ -4554,6 +4681,14 @@
         note: "Public challenges you can join. Whoever runs the challenge lets you in.",
         empty: "No new challenges to discover right now." }
     ];
+  }
+  view("challSections", function () {
+    var saved = hubDisplay(), ready = hubDataReady();
+    return saved ? saved.sections.map(function (section) {
+      return Object.assign({}, section, { rows: section.rows.map(function (row) {
+        return Object.assign({}, row, { ready: ready, pastel: "var(--pa-" + row.color + ")" });
+      }) });
+    }) : [];
   });
 
   // Your entries: one view model covers both groupings, so the row markup is
@@ -4856,14 +4991,18 @@
     for (var day = 1; day <= daysInMonth; day++) {
       var cellISO = y + "-" + pad(m + 1) + "-" + pad(day);
       var blocked = cellISO > todayISO || cellISO < minISO;
-      days.push({ key: cellISO, blank: false, iso: cellISO, day: day, selected: cellISO === selectedISO, today: cellISO === todayISO, blocked: blocked });
+      days.push({ key: cellISO, blank: false, iso: cellISO, day: day,
+        label: activityDateLabel(cellISO),
+        selected: cellISO === selectedISO, today: cellISO === todayISO, blocked: blocked });
     }
     // keep calendar navigation within the loggable window
     var minMonth = new Date(minStart.getFullYear(), minStart.getMonth(), 1);
     var curMonth = firstOfMonth(new Date());
     return {
       title: calView.toLocaleString(undefined, { month: "long", year: "numeric" }),
-      dow: ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
+      dow: [0, 1, 2, 3, 4, 5, 6].map(function (offset) {
+        return activityDateLabel(iso(new Date(y, m, 1 - startDay + offset)), { weekday: "short" });
+      }),
       days: days,
       prevOff: (new Date(y, m, 1).getTime() <= minMonth.getTime()),
       nextOff: (new Date(y, m, 1).getTime() >= curMonth.getTime())
@@ -5396,36 +5535,12 @@
     return null;
   }
 
-  // Where to land after login: resume the last challenge if the user has an approved
-  // membership; brand-new / not-yet-approved users start on the Challenges hub to pick one.
+  // Keep the selected challenge, but let everyone choose when to open it.
   function landingTab() {
     var approved = Object.keys(challMeta).filter(function (c) { return myStatus(c) === "approved"; });
-    if (approved.length) {
-      if (myStatus(state.activeCid) !== "approved") {
-        state.activeCid = approved[0];
-        try { localStorage.setItem(ACTIVECID_KEY, approved[0]); } catch (e) {}
-      }
-      // Resume the layer the user left, not the one we would have picked for them.
-      // Refreshing on the hub used to re-open the active challenge every time, which
-      // undid a deliberate close. Only a first run has nothing stored, and there the
-      // challenge is still the right landing: most people have exactly one.
-      var last = null;
-      try { last = localStorage.getItem(NAV_KEY); } catch (e) {}
-      if (last === "challenges") return "challenges";
-      if (last === "you") return "you";
-      return "stats";
-    }
-    // No approved membership known. Before the data lands, resume the layer the user
-    // actually left rather than the optimistic default. The boot pass runs against an
-    // empty membersByCid (the per-challenge subcollections are not cached, only the
-    // roster is), so guessing "stats" here is what re-opened the active challenge on
-    // every refresh, even right after a deliberate close.
-    var loaded = rosterLoaded && Object.keys(membersByCid).length > 0;
-    if (!loaded) {
-      var pre = null;
-      try { pre = localStorage.getItem(NAV_KEY); } catch (e) {}
-      if (pre === "challenges" || pre === "you") return pre;
-      return "stats";
+    if (approved.length && myStatus(state.activeCid) !== "approved") {
+      state.activeCid = approved[0];
+      try { localStorage.setItem(ACTIVECID_KEY, approved[0]); } catch (e) {}
     }
     return "challenges";
   }
@@ -5570,11 +5685,8 @@
     paintAvatars();
     setDate(todayStr());
     refreshAdminAccess();
-    // The URL wins over the remembered layer: a link the user followed is a more
-    // deliberate statement of intent than wherever this device happened to be
-    // last. With no hash nothing below changes and the localStorage restore is
-    // exactly what it always was -- which is also what an installed launch gets,
-    // since start_url carries no hash of its own.
+    // Explicit links and refreshes keep their destination. Plain launches,
+    // including the installed start_url, always start on Challenges.
     var route = routeLanding();
     if (route && route.cid) {
       state.activeCid = route.cid;
@@ -5587,18 +5699,9 @@
     // view back to the default round a moment after the link opened, which is
     // the whole bug that made a refresh lose which round you were reading.
     if (routeMonth) { state.viewTouched = true; state.landingResolved = true; }
-    var land = route ? route.tab : landingTab();   // read first: switchTab writes NAV_KEY, which this reads
-    restoringNav = true;       // and the restore itself must not overwrite that intent
+    var land = route ? route.tab : landingTab();
     switchTab("challenges");
     switchTab(land);
-    restoringNav = false;
-    // A URL the user followed is a deliberate choice, so it is remembered like
-    // one. rememberNav is suppressed above for the restore itself (see NAV_KEY),
-    // which is why this is written here rather than left to switchTab -- without
-    // it a deep link and a later hash-less launch would disagree about where the
-    // user is. The round is not stored: localStorage never carried one, and the
-    // URL is now the thing that does.
-    if (route) rememberNav(route.tab);
     // Only now may the URL be written: the two switchTab calls above pass through
     // a layer the user is not staying on.
     routeReady = true;
@@ -5616,7 +5719,6 @@
     state.activityGoalNotice = "";
     state.me = null;
     localStorage.removeItem(SESSION_KEY);
-    localStorage.removeItem(NAV_KEY);   // the next person to sign in gets the default landing
     clearRoute();                       // and does not inherit this one's challenge in the URL
     closeBackoffice();
     state.signedIn = false;
@@ -6939,19 +7041,6 @@
   }
   var REORDER_MS = msToken("--reorder-ms", 420);
   var HOLD_MS = msToken("--l1-hold", 260);
-  // Where the user actually was, so a refresh resumes there instead of always
-  // forcing the challenge sheet open. switchTab is the only way a layer changes,
-  // so recording it there covers the chevron, the edge swipe and browser back.
-  /* NAV_KEY records where the user CHOSE to be. Restoring a session is not a choice,
-     so it must not write: doLogin runs twice in production (an optimistic pass at
-     boot, then again once the roster is authoritative), and the first pass persisting
-     its guess is what silently erased a deliberate "challenges" and dropped the user
-     back into the challenge on every refresh. */
-  var restoringNav = false;
-  function rememberNav(v) {
-    if (restoringNav) return;
-    try { localStorage.setItem(NAV_KEY, v); } catch (e) {}
-  }
   // The page no longer scrolls: each layer owns a scroller, so anything that used to
   // call window.scrollTo has to target the one that is actually on screen.
   // The backoffice counts. It is a position:fixed, inset:0, own-overflow layer at
@@ -7071,7 +7160,6 @@
   function switchTab(tab) {
     if (tab === "stats" || tab === "log" || tab === "you") {
       setSheetView(tab === "log" ? "stats" : tab);   // sets state.sheet -> #app gets .l1
-      rememberNav(tab === "log" ? "stats" : tab);
       var sb = document.getElementById("sheetBody");
       if (sb) sb.scrollTop = 0;
       resetTimelineHeader();
@@ -7081,7 +7169,6 @@
     }
     state.sheet = "";                                // drops back to the base layer
     syncBaseInert();
-    rememberNav("challenges");
     renderChallenges();
     var bw = document.getElementById("baseWrap"); if (bw) bw.scrollTop = 0;
     resetTimelineHeader();
@@ -9535,23 +9622,31 @@
     function subscribeCid(cid) {
       if (cidSubbed[cid]) return;
       cidSubbed[cid] = true;
-      fb.onSnapshot(fb.collection(fb.db, "challenges", cid, "members"), function (snap) {
+      fb.onSnapshot(fb.collection(fb.db, "challenges", cid, "members"), { includeMetadataChanges: true }, function (snap) {
         var m = {};
         snap.forEach(function (d) { var v = d.data() || {}; m[d.id] = { handle: v.handle || d.id, role: v.role || "member", status: v.status || "approved", ts: v.ts || 0 }; });
         // Same guard as the challenges listener: an empty roster from cache is "not loaded",
         // not "everyone left". Accepting it would drop the user's own membership and flip
         // their role and admin badge for as long as the connection was down.
-        if (!snap.size && snap.metadata.fromCache && membersByCid[cid] && Object.keys(membersByCid[cid]).length) return;
+        if (!snap.size && snap.metadata.fromCache) return;
         membersByCid[cid] = m;
+        hubDataArrived("members:" + cid);
         onCidData();
-      }, function (err) { console.error("members listener (" + cid + "):", err); });
-      fb.onSnapshot(fb.collection(fb.db, "challenges", cid, "rounds"), function (snap) {
+      }, function (err) {
+        console.error("members listener (" + cid + "):", err);
+        if (challMeta[cid]) hubDataFailed("members:" + cid);
+      });
+      fb.onSnapshot(fb.collection(fb.db, "challenges", cid, "rounds"), { includeMetadataChanges: true }, function (snap) {
         var r = {};
         snap.forEach(function (d) { var v = d.data() || {}; r[d.id] = roundSavePayload(roundFlagsFromData(v), v.participants || []); });
-        if (!snap.size && snap.metadata.fromCache && roundsByCid[cid] && Object.keys(roundsByCid[cid]).length) return;
+        if (!snap.size && snap.metadata.fromCache) return;
         roundsByCid[cid] = r;
+        hubDataArrived("rounds:" + cid);
         onCidData();
-      }, function (err) { console.error("rounds listener (" + cid + "):", err); });
+      }, function (err) {
+        console.error("rounds listener (" + cid + "):", err);
+        if (challMeta[cid]) hubDataFailed("rounds:" + cid);
+      });
     }
     function onCidData() {
       renderAll();
@@ -9582,6 +9677,7 @@
         state.activityLoaded = ActivityModel.snapshotReady(state.activityLoaded, snap.metadata.fromCache, arr.length);
         state.activityFromCache = !!snap.metadata.fromCache;
         state.activityLoadError = false;
+        hubDataArrived("entries");
         // No "ignore an empty cache result" guard here, unlike the challenges, members and
         // rounds listeners below. Entries are the one collection a user can legitimately
         // empty while offline (delete your last entry), and that has to show at once.
@@ -9593,6 +9689,7 @@
       }, function (err) {
         console.error("entries listener:", err);
         state.activityLoadError = true;
+        hubDataFailed("entries");
       });
 
       var rosterRef = fb.doc(fb.db, "meta", "roster");
@@ -9606,7 +9703,7 @@
 
       // Top-level "challenges" holds challenge metadata docs (id="founding", …).
       // Any stray legacy "YYYY-MM" month docs are ignored (pre-migration data, no longer used).
-      fb.onSnapshot(fb.collection(fb.db, "challenges"), function (snap) {
+      fb.onSnapshot(fb.collection(fb.db, "challenges"), { includeMetadataChanges: true }, function (snap) {
         var meta = {};
         snap.forEach(function (d) {
           if (isMonthId(d.id)) return;
@@ -9617,15 +9714,23 @@
         // that every challenge was deleted. Trusting it is what renamed the header to the
         // raw cid ("founding") mid-session whenever the connection dropped. A server
         // confirmed empty result is a real deletion, so that one is still allowed through.
-        if (!Object.keys(meta).length && snap.metadata.fromCache && Object.keys(challMeta).length) return;
+        if (!Object.keys(meta).length && snap.metadata.fromCache) return;
         challMeta = meta;
+        hubCatalogReady = true;
+        hubDataArrived("challenges");
+        Object.keys(hubErrors).forEach(function (key) {
+          if (/^(members|rounds):/.test(key) && !challMeta[key.split(":")[1]]) hubDataArrived(key);
+        });
         persistChallCache();
         Object.keys(challMeta).forEach(subscribeCid);
         renderAll();
         renderChallChip();
         if (challengesTabActive()) renderChallenges();
         updateAdminBadge();
-      }, function (err) { console.error("challenges listener:", err); });
+      }, function (err) {
+        console.error("challenges listener:", err);
+        hubDataFailed("challenges");
+      });
     }
 
     return {
@@ -9746,6 +9851,7 @@
         "2026-08": { locked: false, participants: ["AdminOwner", "Owner", "Admin", "User", "Rookie"] }
       };
       roundsByCid["sidequest"] = { "2026-08": { locked: false, participants: ["Owner", "User", "AdminOwner"] } };
+      roundsByCid["readathon"] = {};
 
       var e = [];
       // Tags are optional and index-aligned with the minutes, so a person's
@@ -9787,6 +9893,7 @@
       state.activityLoaded = true;
       state.activityFromCache = false;
 
+      hubCatalogReady = true;
       rosterLoaded = true; netReady = true; entriesNetReady = true; setOffline(false);
       try { window.dispatchEvent(new Event("minutes-roster")); } catch (e) {}
     }
@@ -9860,6 +9967,7 @@
       },
       createChallenge: function (cid, name, color) {
         challMeta[cid] = { name: name, color: color || "", owner: state.me, createdTs: Date.now() };
+        roundsByCid[cid] = {};
         membersByCid[cid] = {}; membersByCid[cid][state.me] = mk(state.me, "owner", "approved", 0);
         refreshCid();
         return Promise.resolve();
@@ -10515,8 +10623,12 @@
       week: result.weekDays.map(function (cell) {
         return Object.assign({}, cell, { weekday: activityDateLabel(cell.date, { weekday: "short" }), label: activityDayLabel(cell) });
       }),
-      calendar: result.calendar.map(function (cell) {
-        return Object.assign({}, cell, { label: activityDayLabel(cell) });
+      calendar: result.calendar.map(function (cell, index) {
+        return Object.assign({}, cell, {
+          label: activityDayLabel(cell),
+          outsideStart: cell.outsideMonth && (index % 7 === 0 || !result.calendar[index - 1].outsideMonth),
+          outsideEnd: cell.outsideMonth && (index === result.calendar.length - 1 || index % 7 === 6 || !result.calendar[index + 1].outsideMonth)
+        });
       }),
       monthTitle: activityDateLabel(state.activityMonth + "-01", { month: "long", year: "numeric" }),
       monthSummary: !known ? "Activity not loaded" : result.monthActiveDays + " active day" + (result.monthActiveDays === 1 ? "" : "s"),

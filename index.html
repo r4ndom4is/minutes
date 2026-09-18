@@ -331,9 +331,8 @@
     --ls-tighter: -1px; --ls-tight: -.5px; --ls-snug: -.2px;
     --ls-wide: .2px; --ls-wider: .5px; --ls-caps: .04em; --ls-caps-lg: .06em;
     --ls-numeral: -.07em;
-    /* radius scale. --r-2xl is the challenge card's own round; it is a rung above
-       the rest of the app on purpose, because the card is the largest single
-       object on the page and 16px on a 334px card reads as square. */
+    /* Main content cards share a shape across screens and depth modes. */
+    --r-card: 20px;
     --r-pill: 999px; --r-2xl: 26px; --r-xl: 16px; --r-lg: 14px; --r-md: 12px; --r-sm: 10px; --r-xs: 8px;
     /* Frame geometry. The modal has to line up with the level-1 page's content
        column, and that column is now just the page's own padding: the page is
@@ -935,7 +934,7 @@
     box-shadow: 0 0 0 2px var(--card-2); pointer-events: none;
   }
 
-  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--r-xl); padding: var(--sp-3xl); margin-bottom: var(--sp-2xl); }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--r-card); padding: var(--sp-3xl); margin-bottom: var(--sp-2xl); }
   .card-head { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-md); }
   .ch-title { display: flex; align-items: center; gap: var(--sp-sm); min-width: 0; min-height: 26px; }
   /* Roster lock — surfaced here (next to Members) so it clearly means joining, not logging. */
@@ -977,7 +976,7 @@
   /* .stats' bottom margin collapsed through .statsblock and leaked into the page flow,
      stacking on top of .slabel's padding. Section rhythm is owned by .slabel alone. */
   .statsblock > :last-child { margin-bottom: 0; }
-  .tile { background: var(--card); border: 1px solid var(--border); border-radius: var(--r-xl); padding: var(--sp-2xl); position: relative; }
+  .tile { background: var(--card); border: 1px solid var(--border); border-radius: var(--r-card); padding: var(--sp-2xl); position: relative; }
   .tile .label { font-size: var(--fs-3xs); color: var(--muted); margin-bottom: var(--sp-xs); display: flex; align-items: center; gap: var(--sp-xs); min-height: 18px; }
   .tile .label .badge { background: var(--tint-accent); color: var(--tint-accent-fg); font-weight: var(--fw-black); font-size: var(--fs-4xs); letter-spacing: var(--ls-wider); padding: var(--sp-3xs) var(--sp-xs); border-radius: var(--r-xs); text-transform: uppercase; }
   .tile .value { font-size: var(--fs-4xl); font-weight: var(--fw-black); letter-spacing: var(--ls-tighter); }
@@ -986,7 +985,7 @@
   /* Lock the stats-tile height so the two-tile row and the wide join tile are pixel-identical (no jump when joining opens/closes) */
   .stats .tile { min-height: var(--tile-min-h); }
   /* Join tile — replaces the two dead 0-min "You" tiles when you're not in the round */
-  .jointile { grid-column: 1 / -1; min-height: 95px; background: var(--tile-accent-bg); border: 1px solid var(--tile-accent-bd); border-radius: var(--r-xl); padding: var(--sp-2xl) var(--sp-3xl); display: flex; align-items: center; justify-content: space-between; gap: var(--sp-xl); }
+  .jointile { grid-column: 1 / -1; min-height: 95px; background: var(--tile-accent-bg); border: 1px solid var(--tile-accent-bd); border-radius: var(--r-card); padding: var(--sp-2xl) var(--sp-3xl); display: flex; align-items: center; justify-content: space-between; gap: var(--sp-xl); }
   .jointile .jt-tx { min-width: 0; }
   .jointile .jt-head { display: flex; align-items: center; gap: var(--sp-xs); margin-bottom: var(--sp-xs); }
   .jointile .jt-head .badge { background: var(--tint-accent); color: var(--tint-accent-fg); font-weight: var(--fw-black); font-size: var(--fs-4xs); letter-spacing: var(--ls-wider); padding: var(--sp-3xs) var(--sp-xs); border-radius: var(--r-xs); text-transform: uppercase; }
@@ -1224,79 +1223,36 @@
 
      The previous version stated 156 and 160 as literals with the arithmetic in
      prose. Both drifted. See the token file for the full history. */
-  /* ---- Winner card, design "tighter, 3 rows" -------------------------------
-     Personal, per-viewer result card for a finished round. Everyone who took
-     part sees their OWN standing, tier-colored:
-       1st gold, 2nd silver, 3rd bronze, 4th+ a neutral "finisher".
-     Layout (3 content rows + footer):
-       kicker   July · Nth of 5            (tier fg + trophy/medal glyph)
-       headline "2nd place · 455 min"      (your place + your minutes, tinted)
-       champ    "425 behind AdminOwner, who won on 880"  (margin + winner total,
-                                                          no glyph — see .rc-champ)
-       footer   You | Best day 200 min | 9 active days   (single line)
-     A large angled trophy(top 3) / medal(4th+) ghost sits in the upper-right,
-     light icon weight + theme-aware alpha so it reads as a delicate outline, not
-     a muddy slab. The whole thing is built from flat app tokens, no gradient, no
-     illustration: the tier is carried by the wash bg, the border, the tinted
-     minutes and kicker, and the ghost.
-     Tier vars (--rc-fg/-bg/-bd/-ring) are set inline per card by winnerCardHtml. */
+  /* Completed-round summary A: personal minutes lead on a neutral surface. */
   .rescard { position: relative; overflow: hidden;
     --mv-bd-w: 1px;
     min-height: calc(var(--tile-min-h) + var(--sp-2xl)
                      + 2 * var(--sp-md) + 2 * var(--mv-bd-w) + var(--motiv-line-h));
     display: flex; flex-direction: column; cursor: pointer;
-    background: var(--rc-bg, var(--card));
-    border: 1px solid var(--rc-bd, var(--border)); border-radius: var(--r-xl); }
+    background: var(--card); color: var(--text);
+    border: 1px solid var(--border); border-radius: var(--r-card);
+    font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
   html[data-depth="pop"] .rescard { --mv-bd-w: 2px; }
-  html[data-theme="dark"]  .rescard { --rc-wm-a: 32%; --rc-wm-a-medal: 24%; }
-  html[data-theme="light"] .rescard { --rc-wm-a: 14%; --rc-wm-a-medal: 10%; }
-  .rescard .rc-wm { position: absolute; z-index: 0; pointer-events: none;
-    width: 132px; height: 132px; right: -22px; top: -14px; transform: rotate(-16deg);
-    fill: currentColor;
-    color: color-mix(in srgb, var(--rc-ring) var(--rc-wm-a), transparent); }
-  /* The medal shape carries more ink than the thin trophy, so the finisher ghost
-     gets a softer alpha to weigh the same. */
-  .rescard.finisher .rc-wm { color: color-mix(in srgb, var(--rc-ring) var(--rc-wm-a-medal), transparent); }
   .rescard .rc-in { position: relative; z-index: 1; flex: 1;
-    display: flex; flex-direction: column; padding: var(--sp-xl) var(--sp-2xl) var(--sp-lg); }
-  .rescard .rc-kick { display: flex; align-items: center; gap: var(--sp-xs); font-size: var(--fs-4xs);
-    font-weight: var(--fw-black); letter-spacing: var(--ls-caps-lg); text-transform: uppercase; color: var(--rc-fg, var(--gold-fg)); }
-  .rescard .rc-kick .ic { width: 13px; height: 13px; }
-  /* The three text rows and the footer share one fixed 156px box, and .rc-note is
-     margin-top:auto, so every pixel NOT spent on a row margin silently pools as
-     dead space above the divider. It had pooled to 20px there while the rows ran
-     at 3px and 6px, which read as cramped text in a half-empty card. These two
-     margins spend 10px of that pool; the box height is untouched because the
-     pool absorbs the change. Keep (3px + 6px) + these increases under 20px total
-     or the card grows and the view changes length when a round closes. */
-  .rescard .rc-name { font-size: var(--fs-xl); font-weight: var(--fw-black); letter-spacing: var(--ls-tight); margin-top: var(--sp-sm);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text);
-    font-variant-numeric: tabular-nums; }
-  .rescard .rc-name .mins { color: var(--rc-fg, var(--gold-fg)); }
-  /* One trophy, not three. The watermark is the decoration and the kicker glyph
-     badges the rank ("1st of 5"); this row states a margin against another
-     player, so the third copy of the same glyph was pure repetition. Dropping it
-     also lets the headline and this line share a flush-left edge, leaving the
-     kicker as the only indented row. No gap: there is a single child now. */
-  .rescard .rc-champ { display: flex; align-items: center; margin-top: var(--sp-md);
-    font-size: var(--fs-2xs); font-weight: var(--fw-bold); color: var(--muted); font-variant-numeric: tabular-nums;
-    min-width: 0; }
-  .rescard .rc-champ span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .rescard .rc-champ b { color: var(--text); font-weight: var(--fw-black); }
-  .rescard .rc-note { display: flex; align-items: center; gap: var(--sp-sm); margin-top: auto;
-    padding-top: var(--sp-md); border-top: 1px solid var(--rc-bd, var(--border));
-    font-size: var(--fs-2xs); font-weight: var(--fw-sm-bold); color: var(--muted); font-variant-numeric: tabular-nums; }
-  .rescard .rc-note .ytag { flex: 0 0 auto; font-size: var(--fs-4xs); font-weight: var(--fw-black); letter-spacing: var(--ls-caps-lg);
-    text-transform: uppercase; color: var(--muted); background: var(--card-2);
-    padding: var(--sp-2xs) var(--sp-xs); border-radius: var(--r-xs); }
-  .rescard .rc-note b { color: var(--text); font-weight: var(--fw-black); }
-  .rescard .rc-note .r { margin-left: auto; flex: 0 0 auto; padding-left: var(--sp-md); white-space: nowrap; }
-  html[data-depth="pop"] .rescard .rc-note { border-top-color: var(--ink); }
-  .rescard .rc-confetti { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+    display: flex; flex-direction: column; gap: var(--sp-sm); padding: var(--sp-xl) var(--sp-2xl); }
+  .rescard p { margin: 0; }
+  .rescard .rc-context { display: flex; justify-content: space-between; flex-wrap: wrap; gap: var(--sp-2xs) var(--sp-md);
+    color: var(--muted); font-size: var(--fs-2xs); line-height: var(--lh-normal); font-weight: var(--fw-md); }
+  .rescard .rc-primary { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: var(--sp-md); }
+  .rescard .rc-total { font-size: var(--fs-4xl); font-weight: var(--fw-black); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); }
+  .rescard .rc-total small { font-size: var(--fs-sm); font-weight: var(--fw-sm-bold); letter-spacing: normal; color: var(--muted); }
+  .rescard .rc-standing { margin-left: auto; font-size: var(--fs-sm); line-height: var(--lh-snug); font-weight: var(--fw-bold); }
+  .rescard .rc-champ { font-size: var(--fs-2xs); line-height: var(--lh-relaxed); color: var(--muted); font-weight: var(--fw-md); }
+  .rescard .rc-champ b { font-weight: var(--fw-bold); color: var(--text); }
+  .rescard .rc-facts { display: flex; flex-wrap: wrap; gap: var(--sp-2xs) var(--sp-xl); margin-top: auto; padding-top: var(--sp-2xs);
+    font-size: var(--fs-2xs); line-height: var(--lh-normal); color: var(--muted); }
+  .rescard .rc-facts b { color: var(--text); font-weight: var(--fw-sm-bold); }
+  .rescard:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .rescard .rc-confetti { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 3; pointer-events: none; }
 
   .motiv { position: relative; display: flex; align-items: center; width: 100%; text-align: left;
     --mv-bg: var(--card); --mv-bd: var(--border);
-    background: var(--mv-bg); border: 1px solid var(--mv-bd); border-radius: var(--r-md);
+    background: var(--mv-bg); border: 1px solid var(--mv-bd); border-radius: var(--r-card);
     padding: var(--sp-md) var(--sp-lg); margin: var(--sp-2xl) 0 0; cursor: pointer;
     font-family: inherit; -webkit-tap-highlight-color: transparent;
     transition: background .45s ease, border-color .45s ease; }
@@ -1824,6 +1780,9 @@
   #headAvatar:not([data-photo]) { background-color: var(--accent) !important; color: var(--on-accent); }
   #layerBase .tab-badge { background: var(--text); color: var(--bg); }
   #layerBase .chall-row { --ink: var(--pa-ink); --pop-ink: var(--pa-ink); }
+  html[data-theme="dark"][data-depth="pop"] #layerBase .chall-row {
+    --pop-ink: var(--text); border-color: var(--pop-ink);
+  }
   #layerBase .ver-tag { opacity: 1; }
   #layerBase :is(button, [role="button"]):focus-visible {
     outline: 2px solid var(--accent); outline-offset: 3px;
@@ -1880,12 +1839,12 @@
      coloured card, so they keep the neutral card surface the wrapper used to
      provide. Without this they would sit naked on the page. */
   .chall-list > .blank, .chall-list > .onb-welcome {
-    background: var(--card); border: 1px solid var(--border); border-radius: var(--r-xl);
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--r-card);
     padding: var(--sp-3xl) var(--sp-xl);
   }
   .chall-row {
     position: relative; overflow: hidden; display: flex; flex-direction: column;
-    padding: var(--sp-3xl); border: none; border-radius: var(--r-2xl);
+    padding: var(--sp-3xl); border: none; border-radius: var(--r-card);
     background: var(--pa, var(--card)); color: var(--pa-ink);
   }
   .chall-row.active-cid { order: -1; }
@@ -2351,11 +2310,6 @@
   html[data-depth="pop"] #sheet.timeline-stable[data-mode="stats"] > .sheet-chrome::before { box-shadow: 0 2px 0 var(--ink); }
   html[data-depth="pop"] .card,
   html[data-depth="pop"] .jointile,
-  html[data-depth="pop"] .rescard {
-    border-radius: var(--r-md);
-  }
-  html[data-depth="pop"] .card,
-  html[data-depth="pop"] .jointile,
   html[data-depth="pop"] .rescard,
   html[data-depth="pop"] .chall-row,
   html[data-depth="pop"] .chall-list > .blank,
@@ -2491,7 +2445,7 @@
   html[data-layout="c"] .lb-person,
   html[data-layout="c"] .mgroup,
   html[data-layout="c"] #entries > .entry {
-    border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden;
+    border: 1px solid var(--border); border-radius: var(--r-card); overflow: hidden;
   }
   html[data-layout="c"] .lb-person + .lb-person,
   html[data-layout="c"] .mgroup + .mgroup { border-top: none; }
@@ -2501,7 +2455,7 @@
   html[data-layout="c"][data-depth="pop"] .lb-person,
   html[data-layout="c"][data-depth="pop"] .mgroup,
   html[data-layout="c"][data-depth="pop"] #entries > .entry {
-    border: 2px solid var(--ink); border-radius: var(--r-md);
+    border: 2px solid var(--ink); border-radius: var(--r-card);
     box-shadow: var(--pop-sm) var(--pop-sm) 0 var(--pop-ink); margin-right: var(--pop-sm);
   }
   /* Controls and empty-state rows count as content; truly empty wrappers stay hidden. */
@@ -2512,11 +2466,11 @@
      the message floats on the page background in one layout and sits in a card
      in the other two. */
   html[data-layout="c"] .card.list-card .blank {
-    background: var(--card); border: 1px solid var(--border); border-radius: var(--r-lg);
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--r-card);
   }
   html[data-layout="c"][data-depth="soft"] .card.list-card .blank { box-shadow: var(--elev-sm); }
   html[data-layout="c"][data-depth="pop"] .card.list-card .blank {
-    border: 2px solid var(--ink); border-radius: var(--r-md);
+    border: 2px solid var(--ink); border-radius: var(--r-card);
     box-shadow: var(--pop-sm) var(--pop-sm) 0 var(--pop-ink); margin-right: var(--pop-sm);
   }
 
@@ -2740,7 +2694,8 @@
   .mg-chev .ic, .lb-chev .ic { width: 15px; height: 15px; display: block; }
   /* These two carried a text glyph before, sized by font-size. */
   .mg-chev, .lb-chev { display: inline-flex; align-items: center; }
-  .activity-home { margin: 0 0 var(--sp-lg); }
+  .activity-home { margin: 0 0 var(--sp-lg); padding-inline: var(--sp-3xl); }
+  html[data-depth="pop"] .activity-home { margin-right: var(--pop-sm); }
   .activity-home > .slabel { margin: 0; }
   .activity-overview { display: block; width: 100%; border: 0; padding: 0;
     border-radius: var(--r-xl); background: none; color: var(--text); text-align: left;
@@ -3173,17 +3128,31 @@
       <section class="tab-panel" id="tab-stats" :class="{ active: $store.s.sheet !== 'you' }">
       <div class="statsblock" id="statsblockView">
         <template x-if="$store.s.statsBlock.mode === 'winner'">
-          <div class="rescard" :class="{ finisher: $store.s.statsBlock.win.finisher }"
-               :style="$store.s.statsBlock.win.style"
+          <div class="rescard" role="button" tabindex="0"
+               aria-description="Celebrate this completed round"
                x-effect="$store.s.act.winnerCardMounted($el, $store.s.statsBlock.win)"
-               @click="$store.s.act.celebrate($el)">
+               @click="$store.s.act.celebrate($el)"
+               @keydown.enter.prevent="$store.s.act.celebrate($el)"
+               @keydown.space.prevent="$store.s.act.celebrate($el)">
             <canvas class="rc-confetti" aria-hidden="true"></canvas>
-            <svg class="rc-wm" viewBox="0 0 256 256" aria-hidden="true"><use :href="'#' + $store.s.statsBlock.win.wm"/></svg>
             <div class="rc-in">
-              <div class="rc-kick"><svg class="ic" aria-hidden="true"><use :href="'#' + $store.s.statsBlock.win.glyph"/></svg><span x-html="$store.s.statsBlock.win.kick"></span></div>
-              <div class="rc-name" x-html="$store.s.statsBlock.win.headline"></div>
-              <div class="rc-champ"><span x-html="$store.s.statsBlock.win.champ"></span></div>
-              <div class="rc-note" x-html="$store.s.statsBlock.win.foot"></div>
+              <div class="rc-context"><span><span x-text="$store.s.statsBlock.win.personal ? 'You' : 'Top score'"></span> &middot; <span x-text="$store.s.statsBlock.win.month"></span></span><span x-text="$store.s.statsBlock.win.placement"></span></div>
+              <div class="rc-primary">
+                <p class="rc-total"><span x-text="$store.s.statsBlock.win.minutes"></span> <small>min</small></p>
+                <p class="rc-standing" x-text="$store.s.statsBlock.win.outcome"></p>
+              </div>
+              <p class="rc-champ" x-html="$store.s.statsBlock.win.champ"></p>
+              <div class="rc-facts">
+                <template x-if="$store.s.statsBlock.win.personal">
+                  <span>Best day <b x-text="$store.s.statsBlock.win.bestDay"></b> min</span>
+                </template>
+                <template x-if="$store.s.statsBlock.win.personal">
+                  <span><b x-text="$store.s.statsBlock.win.activeDays"></b> active <span x-text="$store.s.statsBlock.win.activeDays === 1 ? 'day' : 'days'"></span></span>
+                </template>
+                <template x-if="!$store.s.statsBlock.win.personal">
+                  <span>You did not take part this round.</span>
+                </template>
+              </div>
             </div>
           </div>
         </template>
@@ -3883,7 +3852,7 @@
   var ACTIVECID_KEY = "minutes_active_cid";
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
-  var VERSION = "16.0";
+  var VERSION = "16.1";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -7796,9 +7765,7 @@
       t2val: monthTotal };
   }
   // ---- Winner card -------------------------------------------------------
-  // A finished round has one headline and it is who won, so in a past round this
-  // card takes the top of the tab and the You tiles and motivation bubble come out.
-  // See the .rescard CSS for why it replaces both and how its height is derived.
+  // The completed-round summary replaces the You tiles and motivation together.
 
   function ordinalOf(n) {
     var s = ["th", "st", "nd", "rd"], v = n % 100;
@@ -7857,45 +7824,21 @@
     // Rank by competition ranking, not array index: two people on the same total
     // must be told the same position. Index order would have given the Owner "2nd"
     // and the Admin "3rd" off identical minutes.
-    var myRank = 0, myMins = 0, myTied = false;
+    var myRank = 0, myMins = 0;
     arr.forEach(function (r) { if (r.name === state.me) myMins = r.mins; });
     if (iAmIn) {
       myRank = arr.filter(function (r) { return r.mins > myMins; }).length + 1;
-      myTied = arr.filter(function (r) { return r.mins === myMins; }).length > 1;
     }
 
-    // ---- Design "tighter, 3 rows": a personal, tier-colored result card. ----
-    // Everyone who took part sees their OWN standing. Tier by competition rank:
-    // 1 gold, 2 silver, 3 bronze, 4+ a neutral "finisher"; a non-participant
-    // admin/owner viewing (tier 0) gets the neutral, non-personal variant.
-    var tier = iAmIn ? (myRank <= 3 ? myRank : 4) : 0;
-    var TIERS = {
-      1: { fg: "var(--gold-fg)",   bg: "var(--gold-bg)",   bd: "var(--gold-bd)",   ring: "var(--gold)" },
-      2: { fg: "var(--silver-fg)", bg: "var(--silver-bg)", bd: "var(--silver-bd)", ring: "var(--silver-ring)" },
-      3: { fg: "var(--bronze-fg)", bg: "var(--bronze-bg)", bd: "var(--bronze-bd)", ring: "var(--bronze-ring)" },
-      4: { fg: "var(--muted)",     bg: "var(--card)",      bd: "var(--border)",    ring: "var(--muted-2)" },
-      0: { fg: "var(--muted)",     bg: "var(--card)",      bd: "var(--border)",    ring: "var(--muted-2)" }
-    };
-    var T = TIERS[tier];
-    var isMedal = (tier < 1 || tier > 3);                 // finisher / non-participant -> medal glyph + softer ghost
-    var glyph = isMedal ? "i-medal" : "i-trophy";
-    var wmPath = isMedal ? "p-medal-light" : "p-trophy-light";
     var winnerName = winners.length > 1 ? joinNames(winners) : escapeHtml(winners[0].name);
 
-    // Kicker: month + your placement (or the field size for a non-participant).
-    var kick = escapeHtml(monthNameOfKey(mKey)) + " &middot; " +
-      (iAmIn ? ordinalOf(myRank) + " of " + arr.length : arr.length + " players");
+    var outcome;
+    if (iWon && winners.length > 1) outcome = "You tied for 1st";
+    else if (iWon) outcome = "You won";
+    else if (iAmIn) outcome = ordinalOf(myRank) + " place";
+    else outcome = "Round complete";
 
-    // Headline: your place + YOUR minutes, tinted. Ties and non-participants handled.
-    var headline;
-    if (iWon && winners.length > 1) headline = "You tied for 1st";
-    else if (iWon) headline = "You won";
-    else if (iAmIn) headline = ordinalOf(myRank) + " place";
-    else headline = winnerName + " won";
-    headline += ' &middot; <span class="mins">' + (iAmIn ? myMins : topMins) + " min</span>";
-
-    // Champion line: margin AND the winning total on one line, so both numbers
-    // (yours in the headline, the winner's here) are always on the card.
+    // The margin retains escaped names and inline emphasis on the winning total.
     var champ;
     if (iWon && winners.length > 1) {
       champ = "Level with " + joinNames(winners.filter(function (r) { return r.name !== state.me; }));
@@ -7909,8 +7852,6 @@
       champ = "<b>" + winnerName + "</b> won with <b>" + topMins + "</b> min";
     }
 
-    // Footer, single line. A participant: your best day + how many days you showed
-    // up. A non-participant viewer: the winning score and the field size instead.
     // Best day is the best DAY's total, so two entries logged on the same day count
     // together, and active days is the number of distinct days with any minutes.
     var dayTot = {}, bestDay = 0, activeDays = 0;
@@ -7924,20 +7865,11 @@
         if (dayTot[d] > bestDay) bestDay = dayTot[d];
       });
     }
-    var footHtml = iAmIn
-      ? ('<span class="ytag">You</span><span>Best day <b>' + bestDay + '</b> min</span>' +
-         '<span class="r"><b>' + activeDays + '</b> active ' + (activeDays === 1 ? "day" : "days") + '</span>')
-      : ('<span>Top score <b>' + topMins + '</b> min</span>' +
-         '<span class="r"><b>' + arr.length + '</b> players</span>');
-
-    // Returns DATA, not markup: the .rescard template in #statsblockView renders it.
-    // headline/champ/foot stay HTML fragments because they carry inline emphasis
-    // (<span class="mins">, <b>) around numbers that the surrounding sentence owns;
-    // splitting those into elements would scatter one sentence across the template.
     return {
-      mKey: mKey, finisher: isMedal, glyph: glyph, wm: wmPath,
-      style: "--rc-fg:" + T.fg + ";--rc-bg:" + T.bg + ";--rc-bd:" + T.bd + ";--rc-ring:" + T.ring + ";",
-      kick: kick, headline: headline, champ: champ, foot: footHtml
+      mKey: mKey, month: monthNameOfKey(mKey), personal: iAmIn,
+      placement: iAmIn ? ordinalOf(myRank) + " of " + arr.length : arr.length + " players",
+      minutes: iAmIn ? myMins : topMins, outcome: outcome, champ: champ,
+      bestDay: bestDay, activeDays: activeDays, players: arr.length
     };
   }
 

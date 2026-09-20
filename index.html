@@ -1842,9 +1842,10 @@
     background: var(--card); border: 1px solid var(--border); border-radius: var(--r-card);
     padding: var(--sp-3xl) var(--sp-xl);
   }
+  .chall-row, .activity-overview { padding: var(--sp-3xl); border-radius: var(--r-card); }
   .chall-row {
     position: relative; overflow: hidden; display: flex; flex-direction: column;
-    padding: var(--sp-3xl); border: none; border-radius: var(--r-card);
+    border: none;
     background: var(--pa, var(--card)); color: var(--pa-ink);
   }
   .chall-row.active-cid { order: -1; }
@@ -1947,13 +1948,14 @@
   /* Standing pills sit ON the pastel, so they cannot use the app's tint tokens,
      which are all tuned against the dark page. A wash of the card's own ink is
      the only thing guaranteed to read on all six pastels at once. */
-  .chall-row .cr-standing {
+  .chall-row .cr-standing, .activity-weekly.is-streak {
     flex: 0 0 auto; font-size: var(--fs-3xs); font-weight: var(--fw-bold);
     line-height: var(--lh-none);
     border-radius: var(--r-pill); padding: var(--sp-xs) var(--sp-lg);
     white-space: nowrap; letter-spacing: normal;
-    background: rgba(0,0,0,.08); color: var(--pa-ink); border: none;
+    border: none;
   }
+  .chall-row .cr-standing { background: rgba(0,0,0,.08); color: var(--pa-ink); }
   .chall-row .cr-standing.lead { background: rgba(0,0,0,.14); color: var(--pa-ink); }
   .chall-row .cr-standing.pend { background: rgba(0,0,0,.06); color: var(--pa-ink); }
   .chall-row .cr-right { position: relative; display: flex; align-items: center; gap: var(--sp-sm); }
@@ -2694,11 +2696,11 @@
   .mg-chev .ic, .lb-chev .ic { width: 15px; height: 15px; display: block; }
   /* These two carried a text glyph before, sized by font-size. */
   .mg-chev, .lb-chev { display: inline-flex; align-items: center; }
-  .activity-home { margin: 0 0 var(--sp-lg); padding-inline: var(--sp-3xl); }
-  html[data-depth="pop"] .activity-home { margin-right: var(--pop-sm); }
+  .activity-home { margin: 0 0 var(--sp-lg); }
   .activity-home > .slabel { margin: 0; }
-  .activity-overview { display: block; width: 100%; border: 0; padding: 0;
-    border-radius: var(--r-xl); background: none; color: var(--text); text-align: left;
+  .activity-home > .activity-note, .activity-home > .activity-goal-error { padding-inline: var(--sp-3xl); }
+  .activity-overview { display: block; width: 100%; border: 0;
+    background: none; box-shadow: none; color: var(--text); text-align: left;
     font: inherit; cursor: pointer; }
   .activity-overview:focus-visible { outline: 3px solid var(--accent); outline-offset: 5px; }
   .activity-heading { display: flex; align-items: center;
@@ -2710,8 +2712,8 @@
   .activity-calendar-link { display: inline-flex; align-items: center; gap: var(--sp-2xs);
     font-size: var(--fs-xs); font-weight: var(--fw-sm-bold); color: var(--accent); }
   .activity-calendar-link .ic { width: 16px; height: 16px; }
-  .activity-week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr));
-    gap: var(--sp-2xs); margin: var(--sp-4xl) 0 var(--sp-3xl); }
+  .activity-week { display: grid; grid-template-columns: repeat(7, 32px);
+    justify-content: space-between; margin: var(--sp-4xl) 0 var(--sp-3xl); }
   .activity-day { display: grid; min-width: 0; grid-template-rows: auto 32px; justify-items: center;
     gap: var(--sp-sm); color: var(--muted); font-size: var(--fs-3xs); text-align: center; }
   .activity-weekday { width: 100%; line-height: var(--lh-normal); text-align: center; }
@@ -2721,18 +2723,23 @@
   .activity-bead .ic { width: 18px; height: 18px; }
   .activity-day.is-active .activity-bead { background: var(--accent); color: var(--on-accent); }
   .activity-day.is-today .activity-bead { outline: 2px solid var(--accent); outline-offset: 3px; }
+  @media (max-width: 380px) {
+    .activity-day.is-today .activity-bead { outline-offset: 2px; }
+  }
   .activity-day.is-future .activity-bead { background: none; color: var(--muted); border-color: var(--border); }
   .activity-day.is-today { color: var(--accent); font-weight: var(--fw-bold); }
   .activity-weekly { display: block; margin: 0; font-size: var(--fs-sm); font-weight: var(--fw-sm-bold); color: var(--accent); }
+  .activity-home .activity-weekly { color: var(--muted); }
+  .activity-weekly.is-streak { display: flex; width: fit-content; max-width: 100%; background: var(--card-2); color: var(--text); }
   .activity-daily { font-size: var(--fs-xs); color: var(--muted); }
   .activity-note { margin: var(--sp-sm) 0 0; font-size: var(--fs-xs); color: var(--muted); line-height: var(--lh-normal); }
   .activity-modal { margin-block: 0; line-height: var(--lh-normal); }
-  .activity-month-heading { margin: var(--sp-5xl) calc(-1 * var(--sp-4xl)) var(--sp-sm); }
-  .activity-month-heading .activity-note { display: block; width: 100%; max-width: calc(7 * 44px);
-    margin: var(--sp-2xs) auto 0; padding-inline: var(--sp-lg); }
-  .activity-calendar { display: grid; justify-items: center; margin-inline: calc(-1 * var(--sp-4xl)); }
+  .activity-month-heading { margin: var(--sp-lg) 0 var(--sp-sm); }
+  .activity-month-heading .calendar-head { max-width: none; padding-inline: 0; }
+  .activity-month-heading .activity-note { display: block; width: 100%; margin: var(--sp-2xs) 0 0; }
+  .activity-calendar { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; }
   .activity-weekdays, .activity-dates { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr));
-    width: 100%; max-width: calc(7 * 44px); gap: 0; }
+    width: max(100%, calc(7 * 40px)); gap: 0; }
   .activity-dates { grid-auto-rows: 44px; }
   .activity-date.is-active .calendar-day { background: var(--accent); color: var(--on-accent); }
   .activity-date.is-active .calendar-number { font-weight: var(--fw-bold); }
@@ -2740,7 +2747,7 @@
   .activity-date.is-outside-start { border-start-start-radius: var(--r-md); border-end-start-radius: var(--r-md); }
   .activity-date.is-outside-end { border-start-end-radius: var(--r-md); border-end-end-radius: var(--r-md); }
   .activity-date.is-outside:not(.is-active) .calendar-number { font-weight: var(--fw-regular); }
-  .activity-day-detail { margin: var(--sp-4xl) 0; }
+  .activity-day-detail { margin: var(--sp-lg) 0 var(--sp-4xl); }
   .activity-day-detail strong { display: block; font-size: var(--fs-sm); font-weight: var(--fw-sm-bold); }
   .activity-day-detail p { margin: var(--sp-2xs) 0 0; font-size: var(--fs-xs); color: var(--muted); }
   .activity-disclosure { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-md);
@@ -2956,7 +2963,7 @@
               </span>
             </template>
           </span>
-          <span class="activity-weekly" x-text="$store.s.hubActivity.weeklyLabel"></span>
+          <span class="activity-weekly" :class="{ 'is-streak': $store.s.hubActivity.weekly > 0 }" x-text="$store.s.hubActivity.weeklyLabel"></span>
         </button>
         <p class="activity-note" role="status" x-show="$store.s.hubActivity.note" x-text="$store.s.hubActivity.note"></p>
         <p class="activity-goal-error" role="status" x-show="$store.s.activityGoalNotice" x-text="$store.s.activityGoalNotice"></p>
@@ -3852,7 +3859,7 @@
   var ACTIVECID_KEY = "minutes_active_cid";
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
-  var VERSION = "16.1";
+  var VERSION = "16.2";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -4423,6 +4430,8 @@
           });
       }) &&
       value.activity && flag(value.activity.show) &&
+      (value.activity.weekly === undefined || value.activity.weekly === null ||
+        Number.isInteger(value.activity.weekly) && value.activity.weekly >= 0) &&
       ["progress", "weeklyLabel", "buttonLabel", "note"].every(function (key) { return text(value.activity[key]); }) &&
       Array.isArray(value.activity.week) && value.activity.week.length === 7 &&
       value.activity.week.every(function (day) {
@@ -4464,7 +4473,7 @@
       version: 1, name: state.me, month: monthKeyOf(new Date()),
       hello: buildHello(), sections: buildChallengeSections(),
       activity: {
-        show: activity.show, progress: activity.progress, weeklyLabel: activity.weeklyLabel,
+        show: activity.show, progress: activity.progress, weekly: activity.weekly, weeklyLabel: activity.weeklyLabel,
         buttonLabel: activity.buttonLabel, note: activity.note, week: activity.week
       }
     };
@@ -4494,7 +4503,7 @@
   });
   view("hubActivity", function () {
     var saved = hubDisplay();
-    return saved ? saved.activity : { show: false, week: [], progress: "", weeklyLabel: "", buttonLabel: "", note: "" };
+    return saved ? saved.activity : { show: false, week: [], progress: "", weekly: null, weeklyLabel: "", buttonLabel: "", note: "" };
   });
   // ---- View models -----------------------------------------------------------
   // Templates read these. Each one calls the SAME pure logic the old imperative

@@ -2895,12 +2895,12 @@
       <button type="button" class="onb-alt" id="onbSwitch">Not you? Use a different account</button>
 
       <!-- Signed in with Google and a name already bound, but the app session
-           has ended (deliberate log out, or cleared in another tab). Without
+           has ended (deliberate sign-out, or cleared in another tab). Without
            this the card would render completely empty with no way back in,
            because the typed-name fallback is gone. -->
       <div class="claim" id="claimResume" style="display:none">
         <button class="btn" id="resumeBtn">Continue as <span id="resumeName"></span></button>
-        <p class="claim-note">Not you? Log out above to use a different account.</p>
+        <p class="claim-note">Not you? Sign out above to use a different account.</p>
       </div>
 
       <p class="login-hint" id="authHint"></p>
@@ -2932,7 +2932,7 @@
         <div class="account-menu" id="accountMenu" role="menu" aria-label="Your account" hidden>
           <button type="button" role="menuitem" tabindex="-1" id="accountSettings">Settings</button>
           <button type="button" role="menuitem" tabindex="-1" id="accountBackoffice" x-show="$store.s.you.canAdmin">Backoffice</button>
-          <button type="button" role="menuitem" tabindex="-1" id="accountLogout" class="account-menu-logout">Log out</button>
+          <button type="button" role="menuitem" tabindex="-1" id="accountLogout" class="account-menu-logout">Sign out</button>
         </div>
       </div>
     </header>
@@ -3401,7 +3401,7 @@
           <span class="settings-hint">Manage challenges and members</span></span>
           <svg class="ic" aria-hidden="true"><use href="#i-caret-right"/></svg>
         </button>
-        <button type="button" class="settings-logout" id="youLogout">Log out</button>
+        <button type="button" class="settings-logout" id="youLogout">Sign out</button>
       </div>
       </section>
     </div>
@@ -3535,7 +3535,7 @@
         </div>
       </div>
       <div class="field">
-        <label for="editTag">Tag (optional)</label>
+        <label for="editTag">Category (optional)</label>
         <div class="pe-chips" id="editTagChips" style="margin-bottom:8px" x-show="$store.s.editTagChips.show">
           <template x-for="t in $store.s.editTagChips.chips" :key="t.tag">
             <button type="button" class="pe-chip" :class="{ on: t.on }" @click="$store.s.act.pickEditTag(t.tag)" x-text="t.label"></button>
@@ -3554,7 +3554,7 @@
   <div class="modal-overlay" id="addModal">
     <div class="modal add-modal" role="dialog" aria-modal="true" aria-labelledby="addModalTitle">
       <button class="modal-x" id="addClose" aria-label="Close"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
-      <div class="modal-title" id="addModalTitle">Log your time</div>
+      <div class="modal-title" id="addModalTitle">Add minutes</div>
       <div class="modal-msg" id="addModalSub"></div>
       <div class="row">
         <div class="field">
@@ -3611,7 +3611,7 @@
         </div>
       </div>
       <div class="field">
-        <label for="note">Tag (optional)</label>
+        <label for="note">Category (optional)</label>
         <div id="tagSuggest" x-show="$store.s.tagChips.show">
           <div class="pe-chips" id="tagChips">
             <template x-for="t in $store.s.tagChips.chips" :key="t.tag">
@@ -3871,7 +3871,7 @@
   var ACTIVECID_KEY = "minutes_active_cid";
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
-  var VERSION = "16.4";
+  var VERSION = "16.5";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -4530,6 +4530,7 @@
   function view(name, get) {
     Object.defineProperty(state, name, { get: get, configurable: true });
   }
+  var CHALLENGE_SECTION_LABELS = { mine: "Your challenges", disc: "Discover" };
 
   view("canCreate", function () { this.rev; this.me; return meIsAdmin(); });
 
@@ -4676,7 +4677,7 @@
       var s = myStatus(c);
       (s === "approved" || s === "pending" ? mine : disc).push(row(c));
     });
-    // "My challenges" holds two different kinds of card: ones you are IN, and one
+    // "Your challenges" holds two different kinds of card: ones you are IN, and one
     // you have merely asked to join. Sorted purely by creation date a request for
     // an old challenge landed above challenges you actually compete in, so the
     // list opened on a card with no standing, no minutes and nothing to tap.
@@ -4684,7 +4685,7 @@
     // creation order below is untouched.
     mine.sort(function (a, b) { return (a.pending ? 1 : 0) - (b.pending ? 1 : 0); });
     return [
-      { id: "mine", listId: "myChallList", label: "My challenges", note: "", rows: mine,
+      { id: "mine", listId: "myChallList", label: CHALLENGE_SECTION_LABELS.mine, note: "", rows: mine,
         // A newcomer's very first screen. The plain empty state reads as a
         // shortfall, which is the wrong note straight after being approved.
         welcome: (!mine.length && firstRun())
@@ -4693,7 +4694,7 @@
                   + "you in, then you can start logging minutes." }
           : null,
         empty: "You haven't joined a challenge yet. Pick one from Discover below." },
-      { id: "disc", listId: "discoverList", label: "Discover", rows: disc,
+      { id: "disc", listId: "discoverList", label: CHALLENGE_SECTION_LABELS.disc, rows: disc,
         // Not "an admin's OK". canApprove() is `meIsAdmin() || iOwn(cid)`, so the
         // person who created the challenge can wave you in without being an admin
         // at all, and for most challenges that is exactly who does it. The old
@@ -4705,7 +4706,7 @@
   view("challSections", function () {
     var saved = hubDisplay(), ready = hubDataReady();
     return saved ? saved.sections.map(function (section) {
-      return Object.assign({}, section, { rows: section.rows.map(function (row) {
+      return Object.assign({}, section, { label: CHALLENGE_SECTION_LABELS[section.id], rows: section.rows.map(function (row) {
         return Object.assign({}, row, { ready: ready, pastel: "var(--pa-" + row.color + ")" });
       }) });
     }) : [];
@@ -4718,7 +4719,7 @@
     var mk = monthKeyOf(state.viewMonth);
     var mine = myEntries().filter(function (e) { return e.date.indexOf(mk) === 0; });
     function row(e, hideTag) {
-      return { id: e.id, raw: e, date: niceDate(e.date), mins: e.mins + "m",
+      return { id: e.id, raw: e, date: niceDate(e.date), mins: e.mins + " min",
                pending: !!e._pending,
                tag: (!hideTag && e.note) ? capTag(e.note) : "" };
     }
@@ -4753,7 +4754,7 @@
         // it, and Vue fires that dep when the key is added.
         open: !!state.openCats[g.tag],
         meta: "\u00d7" + g.count + " \u00b7 " + pct + "%", pct: pct + "%",
-        color: catColor(g.tag), total: g.mins + "m",
+        color: catColor(g.tag), total: g.mins + " min",
         rows: g.entries.slice().sort(byDateDesc).map(function (e) { return row(e, true); })
       };
     }) };
@@ -4828,7 +4829,7 @@
     out.rows = arr.map(function (r) {
       var pe = byPerson[r.name] || [], ptot = r.mins || 1;
       return {
-        name: r.name, rank: rankOfMins[r.mins], mins: r.mins + "m",
+        name: r.name, rank: rankOfMins[r.mins], mins: r.mins + " min",
         me: r.name === state.me, pct: Math.round((r.mins / max) * 100) + "%",
         color: colorFor(r.name), hasDetail: pe.length > 0,
         open: !!lbOpen[r.name] && pe.length > 0,
@@ -4836,7 +4837,7 @@
           var gp = Math.round(g.mins / ptot * 100);
           return { tag: g.tag, name: capTag(g.tag), untagged: g.tag === CAT_UNTAG,
                    meta: "\u00d7" + g.count + " \u00b7 " + gp + "%", pct: gp + "%",
-                   color: catColor(g.tag), mins: g.mins + "m" };
+                   color: catColor(g.tag), mins: g.mins + " min" };
         })
       };
     });
@@ -4847,7 +4848,7 @@
     // under a control that changes which entries it counts, so a fixed "Total logged"
     // would show today's sum in the language of the whole round: the reader has no way
     // to tell a quiet day from a quiet month without first looking up at the segment.
-    out.total = arr.reduce(function (s, r) { return s + r.mins; }, 0) + "m";
+    out.total = arr.reduce(function (s, r) { return s + r.mins; }, 0) + " min";
     out.totalLabel = range === "today" ? "Today total" : (monthName + " total");
     return out;
   });
@@ -5751,7 +5752,7 @@
     LoginWelcome.sync();
     setMsg("loginErr", "");
     // One logout, like every other app that signs in with Google. This ends the
-    // Firebase session too, so "Log out" actually means logged out instead of
+    // Firebase session too, so "Sign out" actually means signed out instead of
     // leaving a one-tap way straight back in. Note this does NOT touch the user's
     // Google account, which stays signed in for Gmail and everything else; no web
     // app can or should sign you out of Google globally.
@@ -5813,7 +5814,7 @@
       if (u) {
         who.textContent = "Signed in as " + (u.email || u.name || "your Google account");
         who.style.display = "block";
-        label.textContent = "Log out";
+        label.textContent = "Sign out";
         btn.dataset.mode = "out";
         if (hint) hint.style.display = "none";
       } else {
@@ -8438,7 +8439,10 @@
 
   // Display-only: normalize to lowercase (fixes legacy capitalized tags) then capitalize first letter.
   // Storage and all matching stay lowercase.
-  function capTag(s) { s = (s || "").trim().toLowerCase(); return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+  function capTag(s) {
+    s = (s || "").trim().toLowerCase();
+    return s === CAT_UNTAG ? "No category" : s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+  }
 
   // distinct non-empty tags from my own entries, most-recent-first (case-insensitive de-dupe)
   function myTags() {
@@ -9875,7 +9879,7 @@
       // activity mix reads consistently across the month. They are stored
       // lowercase because that is the storage/matching form (capTag() only
       // capitalises for display), and several entries are deliberately left
-      // untagged so the "Untagged" category stays represented.
+      // untagged so the "No category" group stays represented.
       function add(who, cid, ym, mins, tags) {
         mins.forEach(function (m, i) {
           if (m > 0) e.push({ id: uid(), who: who, date: ym + "-" + pad(i + 1), mins: m,

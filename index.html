@@ -601,7 +601,7 @@
   /* Shared app surfaces use the approved palette without rewriting saved preferences. */
   :root { --welcome-bg: #161615; }
   html[data-theme="light"] { --welcome-bg: #f5f4f0; }
-  #login, #layerBase, #backofficeView,
+  #login, #layerBase, #backofficeView, .policy-page,
   html:has(#backofficeView.show) :is(.modal-overlay, #popDock, #ptr),
   html.hub-active :is(#challModal, #activityModal, #popDock, #ptr),
   html.settings-active :is(#sheet, #popDock, #ptr),
@@ -640,7 +640,7 @@
     --brand-rear: var(--accent-pressed); --brand-middle: var(--accent); --brand-front: var(--accent-hover);
     --logo-surface: var(--bg);
   }
-  html[data-theme="light"] :is(#login, #layerBase, #backofficeView),
+  html[data-theme="light"] :is(#login, #layerBase, #backofficeView, .policy-page),
   html[data-theme="light"]:has(#backofficeView.show) :is(.modal-overlay, #popDock, #ptr),
   html[data-theme="light"].hub-active :is(#challModal, #activityModal, #popDock, #ptr),
   html[data-theme="light"].settings-active :is(#sheet, #popDock, #ptr),
@@ -698,6 +698,11 @@
   #login ::selection { background: var(--accent-soft); color: var(--text); }
   #login button, #login input { font-family: inherit; }
   #login .ver-tag { opacity: 1; }
+  #login .login-legal { margin: 0; padding: 0 var(--sp-md); text-align: center; }
+  .login-legal a { display: inline-flex; align-items: center; min-height: 44px;
+    color: var(--muted); font-size: var(--fs-xs); line-height: var(--lh-normal);
+    padding: var(--sp-sm) var(--sp-md); border-radius: var(--r-pill); text-underline-offset: 3px; }
+  .login-legal a:hover { color: var(--text); }
   .login-card { flex: 1; display: flex; flex-direction: column; justify-content: center; text-align: center;
     background: none; border: none; padding: var(--sp-6xl) var(--sp-md) var(--sp-4xl); }
   .login-lead { flex: 0 0 auto; display: flex; flex-direction: column; justify-content: center;
@@ -770,7 +775,7 @@
   #login input:focus { border-color: var(--accent); }
   html[data-depth="pop"] #login input { border-width: 2px; border-color: var(--text); box-shadow: none; }
   #login .onb-card .field + .msg { min-height: 0; }
-  #login input:focus-visible, #login button:focus-visible, #login summary:focus-visible {
+  #login input:focus-visible, #login button:focus-visible, #login summary:focus-visible, #login a:focus-visible {
     outline: 2px solid var(--accent); outline-offset: 3px; }
 
   .onb-steps { display: flex; gap: var(--sp-sm); list-style: none; padding: 0; margin: var(--sp-5xl) 0 var(--sp-sm); }
@@ -2657,11 +2662,15 @@
     min-height: 48px; padding: var(--sp-sm) 0; border: none; background: transparent;
     color: var(--text); font-family: inherit; text-align: left; cursor: pointer; }
   .settings-admin:hover .settings-label { color: var(--accent); }
+  .settings-policy { display: inline-flex; align-items: center; align-self: flex-start;
+    min-height: 44px; color: var(--muted); font-size: var(--fs-sm);
+    line-height: var(--lh-normal); text-underline-offset: 3px; }
+  .settings-policy:hover { color: var(--text); }
   .settings-logout { align-self: flex-start; min-height: 48px; padding: var(--sp-lg) var(--sp-4xl);
     border: 1px solid var(--border-2); border-radius: var(--r-pill); background: transparent;
     color: var(--text); font-family: inherit; font-size: var(--fs-md); font-weight: var(--fw-bold); cursor: pointer; }
   .settings-logout:hover { background: var(--card-2); }
-  #youBack:focus-visible, #tab-you button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  #youBack:focus-visible, #tab-you :is(button, a):focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
   /* Current-flow challenge: the same cards and scroller, in the approved palette. */
   html.challenge-active, html.challenge-active body { background: var(--welcome-bg); }
   html.challenge-active #app { box-shadow: none; }
@@ -2912,6 +2921,8 @@
 
       <p class="login-hint" id="authHint"></p>
     </div>
+    <p class="login-legal"><a href="privacy.html" target="_blank" rel="noopener"
+      aria-label="Privacy policy (opens in a new tab)">Privacy policy</a></p>
     <div class="ver-tag"></div>
   </div>
 </div>
@@ -3421,6 +3432,8 @@
           <span class="settings-hint">Manage challenges and members</span></span>
           <svg class="ic" aria-hidden="true"><use href="#i-caret-right"/></svg>
         </button>
+        <a class="settings-policy" id="youPrivacy" href="privacy.html" target="_blank" rel="noopener"
+           aria-label="Privacy policy (opens in a new tab)">Privacy policy</a>
         <button type="button" class="settings-logout" id="youLogout">Sign out</button>
       </div>
       </section>
@@ -3895,7 +3908,7 @@
   var ACTIVECID_KEY = "minutes_active_cid";
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
-  var VERSION = "16.6";
+  var VERSION = "16.7";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -6193,6 +6206,7 @@
   // The payoff for claiming is that sign-in then logs you straight in by name.
   var Claims = (function () {
     var REQ_KEY = "minutes_claim_req";   // handle this device last asked for
+    var PERSONAL_LINK_HANDLE = "Gerli";
     var box     = document.getElementById("claimBox");
     var btn     = document.getElementById("claimBtn");
     var qEl     = document.getElementById("claimQ");
@@ -6734,9 +6748,11 @@
       }
       // A restored Google account may still be matching its existing name.
       if (u && !scoped() && sweptUid !== u.uid && !busy && !bannerOffline()) return { show: false };
+      var personal = !offlineNow() && low(h) === low(PERSONAL_LINK_HANDLE);
       return { show: true, waiting: false, busy: busy, disabled: busy || offlineNow(),
-        title: "Link Google to finish setup",
+        title: personal ? h + ", your minutes called." : "Link Google to finish setup",
         sub: offlineNow() ? "Reconnect to link Google to your Minutes account." :
+          personal ? "They\u2019d like a proper introduction. Link your Google account." :
           "Keep your minutes and challenges when you sign in on another device.",
         cta: busy ? "Linking\u2026" : "Link Google" };
     }

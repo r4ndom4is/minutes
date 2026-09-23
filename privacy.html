@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Privacy policy - Minutes</title>
+<meta name="description" content="How Minutes handles account details, logged minutes, shared challenges and device storage." />
+<link rel="canonical" href="https://r4ndom4is.github.io/minutes/privacy.html" />
+<link rel="icon" type="image/svg+xml" href="icons/favicon.svg" />
+<link rel="preload" as="font" type="font/woff2" href="fonts/inter-latin.woff2" crossorigin />
+<meta name="theme-color" content="#161615" />
+<script>
+  (function () {
+    var localStorage = window.__MINUTES_EMULATOR &&
+      (location.hostname === "localhost" || location.hostname === "127.0.0.1")
+      ? window.sessionStorage : window.localStorage;
+    try {
+      var t = localStorage.getItem("minutes-theme");
+      if (t !== "dark" && t !== "light") {
+        t = (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches) ? "light" : "dark";
+      }
+      document.documentElement.setAttribute("data-theme", t);
+      // Soft-shadow strength, applied before first paint so a lighter setting
+      // does not flash the heavier default ramp on load.
+      var el = parseInt(localStorage.getItem("minutes-elev"), 10);
+      document.documentElement.setAttribute("data-elev", (el >= 0 && el <= 6) ? String(el) : "2");
+      // The strength steps are scoped to soft depth, so data-depth has to be on the
+      // element before first paint or the scoped rules would not match yet.
+      document.documentElement.setAttribute("data-depth",
+        localStorage.getItem("minutes-depth") === "pop" ? "pop" : "soft");
+      // Pre-hide the login screen on reload if a session exists, so a logged-in
+      // user doesn't see a flash of the login card before JS restores their view.
+      if (localStorage.getItem("minutes_session_v3")) {
+        document.documentElement.classList.add("has-session");
+        if (!location.hash || location.hash === "#/challenges") {
+          document.documentElement.classList.add("hub-active");
+        }
+      } else {
+        document.documentElement.classList.add("welcome-active");
+      }
+    } catch (e) {
+      document.documentElement.setAttribute("data-theme", "dark");
+      document.documentElement.classList.add("welcome-active");
+    }
+  })();
+</script>
+<style>
+  /* ---- Inter -------------------------------------------------------------
+     Inter by Rasmus Andersson, SIL Open Font License 1.1.
+     Copyright (c) 2016 The Inter Project Authors (github.com/rsms/inter).
+     Full licence text ships alongside the font at fonts/OFL.txt, which is what
+     the OFL requires: the font may be bundled and redistributed, but not
+     without its notice.
+
+     WHY A WEBFONT AT ALL, when the system stack costs nothing
+     ---------------------------------------------------------
+     The system stack renders as SF Pro on iOS, Segoe UI on Windows and Roboto
+     on Android, so the app had three different typographic identities and none
+     of them was chosen. Inter was picked over the alternatives by rendering the
+     real app both ways and comparing (workspace/ab-font.py). It wins clearly on
+     the dense surfaces, the leaderboard and the month wheel, where its larger
+     x-height and open apertures keep 12px text legible and its figures line up
+     better in the minute columns.
+
+     It is NOT free. Inter's metrics are wider than Segoe UI's, so some copy
+     reflows. That was accepted with eyes open rather than discovered later; the
+     pixel baseline records the result.
+
+     NOT LOADED FROM A CDN, for the same reason Alpine is inlined: sw.js passes
+     every cross-origin request straight through and never caches it, so a
+     fonts.gstatic.com URL would leave the installed PWA with no typeface when
+     offline. These are same-origin files, listed in sw.js CORE, so they are
+     precached on install.
+
+     SHIPPED AS FILES, not base64 in the shell. index.html is network-first for
+     navigations, so every version bump re-downloads the whole document: folding
+     130KB of never-changing font into that payload would re-transfer it on each
+     release. As separate immutable files they are fetched once.
+
+     Two subsets, not one. latin alone would be enough for the interface, which
+     is English, but member names and entry notes are Estonian, and s-caron and
+     z-caron live in latin-ext. Without it those two letters alone would fall
+     back to the system font, mid-word. The browser downloads latin-ext only if
+     a character in its range is actually used.
+
+     `swap` rather than `block`: on a cold first visit the fallback shows for a
+     moment and then reflows, which is ugly but honest. `block` would hide the
+     text instead, and an app whose whole job is a quick glance at a number
+     should never render blank. After the first visit the service worker has it
+     and neither applies. */
+  @font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 400 800;
+    font-display: swap;
+    src: url('fonts/inter-latin.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6,
+                   U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F,
+                   U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  }
+  @font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 400 800;
+    font-display: swap;
+    src: url('fonts/inter-latin-ext.woff2') format('woff2');
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7,
+                   U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF,
+                   U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0,
+                   U+2113, U+2C60-2C7F, U+A720-A7FF;
+  }
+  :root {
+    color-scheme: dark;
+    /* Emoji render as flat monochrome glyphs, in the surrounding text colour,
+       not as colour bitmaps. The U+FE0E text-presentation selector in the
+       strings does the work; this is the CSS half of the same request, for
+       engines that honour the property but not the selector. Measured: 25 of
+       the 26 glyphs the app ships have a text presentation and flatten to
+       within 6-32 of the ink, against 84-229 in colour. The one that does not,
+       U+1FAAB, was swapped rather than left as the only colour glyph. */
+    font-variant-emoji: text;
+    /* ---- SPACE RAMP --------------------------------------------------------
+       Thirteen rungs, replacing 26 distinct literal values spread over 244
+       declarations of padding, margin and gap. The old set was every integer
+       from 1 to 18, plus 20, 22, 24, 26 and 34: 5px and 6px and 7px all in use,
+       9px and 10px and 11px all in use. That is not a scale, it is 26 separate
+       decisions nobody could hold in their head, re-made at every new element.
+
+       THIS IS THE FIRST OF TWO STEPS, and the split matters.
+
+       Step one, here, snaps the odd values onto their even neighbours. Every
+       literal moves by at most 2px, and the four values that move by the full
+       2px (20 and 24) have five uses between them. So the app should look
+       essentially unchanged, and the pixel baseline is what proves it rather
+       than assurance.
+
+       Step two, later and deliberately, retunes these thirteen numbers to open
+       the layout up toward the editorial rhythm in the Figma direction. That is
+       a VISIBLE change and gets reviewed as one. The entire point of doing step
+       one first is that step two then edits thirteen numbers in this file
+       instead of 244 declarations across seventeen.
+
+       A true 4px grid was considered and rejected for now. It is a better scale
+       (seven rungs, not thirteen) and every move would still be within 2px, but
+       10px alone has 43 uses and 6px, 12px and 14px have 82 between them, so
+       snapping them all would be a redesign wearing the clothes of a refactor.
+       Worse, `.rescard`'s 156px min-height is DERIVED from a tile height that is
+       itself padding plus content: the type ramp already broke that contract
+       once by moving a font-size 4px, and e2e:winner caught a 6px chart jump.
+       Spacing has more of those relationships, not fewer. Grid later, on
+       purpose, with the montage open.
+
+       Named by size rather than by role, matching --fs-* and --r-*. A role name
+       (--sp-card-pad) is a claim about where it may be used, and that claim rots
+       the first time a modal wants the same number.
+
+       1px keeps its own rung. It is not a small amount of space, it is the
+       hairline that pairs with a 1px border, and it should not drift to 2px when
+       somebody retunes the scale in step two. */
+    --sp-hair:  1px;
+    --sp-3xs:   2px;
+    --sp-2xs:   4px;   /* was 3 / 4 */
+    --sp-xs:    6px;   /* was 5 / 6 / 7 */
+    --sp-sm:    8px;   /* was 8 / 9 */
+    --sp-md:   10px;   /* was 10 / 11 */
+    --sp-lg:   12px;   /* was 12 / 13 */
+    --sp-xl:   14px;   /* was 14 / 15 */
+    --sp-2xl:  16px;   /* was 16 / 17 */
+    --sp-3xl:  18px;
+    --sp-4xl:  22px;   /* was 20 / 22 */
+    --sp-5xl:  26px;   /* was 24 / 26 */
+    --sp-6xl:  34px;
+
+    /* No spacing declaration keeps a raw px anywhere outside this file, not even
+       inside calc(). Four were expected to: the safe-area padding, the sticky
+       topbar, the month wheel's negative bleed and the toast dock's frame
+       centring. Each turned out to be a token plus real geometry rather than
+       geometry throughout, so each became `calc(var(--sp-*) + <geometry>)` and
+       the exception list emptied itself.
+
+       That matters for the guard. A bounded count ("at most six may keep raw
+       px") was planned; the absolute rule "none may" is strictly stronger, and
+       it is only available because nothing needed the loophole. check-repo.py
+       enforces the absolute form. */
+
+    /* ---- FAB geometry ------------------------------------------------------
+    The floating add button's size was written as a bare 56px in five places
+    across three files, and TWO separate contracts were derived from it by
+    hand: the sheet's bottom scroll padding, so the last row can clear the
+    button, and the toast's bottom offset, so it sits above it. Neither
+    derivation was linked to the button, so resizing the FAB would have
+    silently left rows underneath it and a toast overlapping it.
+
+    These two tokens make both derivations self-maintaining. The icon size is
+    here for the same reason: the label's left padding is
+    (button - icon) / 2, which is optical centring maths that stops being
+    correct the moment either number moves. */
+    --fab-size: 56px;
+    --fab-ic:   26px;
+
+    /* ---- Winner-card height contract ---------------------------------------
+       `.rescard` replaces the You tile AND the motivation bubble in a closed
+       round, and must occupy exactly their combined height so the view does not
+       change length when a round closes. That total was written as a literal
+       156px and maintained by hand, with the arithmetic in a comment.
+
+       It rotted twice. The type ramp moved a font-size and the chart jumped 6px.
+       The space ramp moved `.motiv`'s vertical padding 11px -> 10px and the card
+       became 2px too tall. Worse, when it was measured properly, the `pop`
+       variant turned out to have been wrong by 2px ALREADY: it needed 158 and
+       said 160. Nobody saw it because e2e:winner only ever ran the default
+       depth, so the guard covered exactly one of the two cases it existed for.
+
+       So the height is now DERIVED in CSS rather than restated in a comment.
+       These two tokens are the parts that are not already tokens: the You tile's
+       floor, and the single line of text inside the motivation bubble. Every
+       other term in the sum is a --sp-* rung, so the card follows the ramp
+       automatically and step two of the space work cannot silently break it. */
+    --tile-min-h:   95px;
+    --motiv-line-h: 21px;
+    /* ---- TYPE RAMP ---------------------------------------------------------
+       Twelve rungs, replacing 25 distinct literal font-sizes spread over 141
+       declarations. The old set was every value from 9.5 to 30 plus 40, which
+       is not a scale, it is the absence of one: 9.5/10/10.5, 11/11.5, 12/12.5
+       and 13/13.5 all existed side by side, differences nobody can see but
+       every one of which had to be chosen, re-chosen and kept consistent by
+       hand at each new element.
+
+       The steps are deliberately UNEVEN, because the app is not evenly typed.
+       Below 16px it is dense UI, where 1px is a real difference and a ratio
+       scale would jump straight past the sizes the leaderboard needs, so those
+       rungs step by 1. Above 16px it is display text with room to breathe, so
+       those rungs step by roughly 1.2x. A single modular ratio across the whole
+       range would have forced a choice between too few small sizes or a pile of
+       unusable large ones.
+
+       Rungs are named by size, not by role (--fs-sm, not --fs-body), matching
+       --r-* above. A role name would be a claim about where it is allowed to be
+       used, and that claim would rot the first time a heading reused a body
+       size. The ramp says how big; the rule says what for.
+
+       NO LITERAL MOVES BY MORE THAN 2px, and that ceiling is not cosmetic. The
+       first attempt used a cleaner 1.2x ramp at the top (22/26/32/40), which
+       pushed `.tile .value` from 28px to 32px. That tile's height is what the
+       winner card's 156px min-height is DERIVED from, so the round-closed view
+       lost 6px against the round-open view and the chart jumped when a round
+       closed. e2e:winner caught it. A ramp that looks tidier in the token file
+       is worth nothing if it silently breaks a height contract three files away.
+       ------------------------------------------------------------------------ */
+    --fs-4xs: 10px;   /* was 9.5 / 10 / 10.5 */
+    --fs-3xs: 11px;   /* was 11 / 11.5 */
+    --fs-2xs: 12px;   /* was 12 / 12.5 */
+    --fs-xs:  13px;   /* was 13 / 13.5 */
+    --fs-sm:  14px;
+    --fs-md:  15px;
+    --fs-lg:  16px;   /* was 16 / 17 */
+    --fs-xl:  18px;   /* was 18 / 19 */
+    --fs-2xl: 22px;   /* was 20 / 22 / 23 */
+    --fs-3xl: 24px;   /* was 24 / 25 / 26 */
+    --fs-4xl: 28px;   /* was 27 / 28 / 30 */
+    --fs-5xl: 36px;   /* the challenge card's minute count */
+    --fs-6xl: 40px;   /* display: the sign-in wordmark, and nothing else */
+    /* Align Inter's visible ink with H2's artwork, not their element boxes. */
+    --brand-wordmark-offset: .08em;
+    /* ---- WEIGHT ------------------------------------------------------------
+       The app was already disciplined here: 600 / 700 / 800 carry almost
+       everything. Tokenised anyway, because a typeface change is the moment
+       weights get re-tuned, and one place to tune beats 98 declarations. */
+    /* --fw-regular is the ramp's floor and exists for ONE contract: in a member
+       list the logged-in user is marked by weight alone, so the other names have
+       to be genuinely regular. The app used to split 700 against 800, one step,
+       which is invisible at 15px. Regular against bold is four. */
+    --fw-regular: 400; --fw-md: 500; --fw-sm-bold: 600; --fw-bold: 700; --fw-black: 800;
+    /* ---- LEADING -----------------------------------------------------------
+       Was 11 values including a bare `0` and a `16px` LENGTH sitting among
+       otherwise unitless ratios. A length does not scale with the type, so that
+       one silently stopped being leading the moment its font-size changed. */
+    --lh-none: 1; --lh-tight: 1.15; --lh-snug: 1.25; --lh-normal: 1.35;
+    --lh-relaxed: 1.45; --lh-loose: 1.5;
+    /* Not leading: collapses the line box around a lone glyph (the login logo)
+       so it contributes no extra height. Named so the ramp above stays honest. */
+    --lh-flush: 0;
+    /* The count bubble is a circle, so its line-height IS its height: that is
+       how the digit centres. It was written as a bare `line-height: 16px`
+       sitting among unitless ratios, where it read as leading and would have
+       been "fixed" into a ratio by anyone tidying the file, silently
+       decentring the digit. One token now feeds min-width, height and
+       line-height, so the three cannot drift apart. */
+    --badge-h: 16px;
+    /* ---- TRACKING ----------------------------------------------------------
+       Was 16 values mixing px and em, including `-.5px` and `-0.5px` written as
+       two different declarations for the same number. px tracking does not
+       scale with type size, so it is kept only where the size is fixed; the em
+       values are the ones that belong to a ramp.
+
+       Negative tracking tightens large text, which needs it because tracking
+       designed for body sizes reads loose when scaled up. Positive tracking
+       opens up the small uppercase labels, which need the opposite. */
+    /* --ls-numeral is em-based because it is for DISPLAY numerals, not text. The
+       px rungs above are body-text corrections and are meaningless at 162px: the
+       card watermark wants -.07em, which is -11.3px there and -1px at 14px. A
+       fixed -1px would leave the numeral looking untracked. */
+    --ls-tighter: -1px; --ls-tight: -.5px; --ls-snug: -.2px;
+    --ls-wide: .2px; --ls-wider: .5px; --ls-caps: .04em; --ls-caps-lg: .06em;
+    --ls-numeral: -.07em;
+    /* Main content cards share a shape across screens and depth modes. */
+    --r-card: 20px;
+    --r-pill: 999px; --r-2xl: 26px; --r-xl: 16px; --r-lg: 14px; --r-md: 12px; --r-sm: 10px; --r-xs: 8px;
+    /* Frame geometry. The modal has to line up with the level-1 page's content
+       column, and that column is now just the page's own padding: the page is
+       full-screen, so it has no border for the column to clear. */
+    --frame-w: 480px; --sheet-pad: 16px;
+    /* Tokenised device insets let local browsers exercise safe-area geometry.
+       Each full-screen surface accounts for its own insets exactly once. */
+    --sat: env(safe-area-inset-top, 0px);
+    --sar: env(safe-area-inset-right, 0px);
+    --sab: env(safe-area-inset-bottom, 0px);
+    --sal: env(safe-area-inset-left, 0px);
+    /* Level-1 navigation. One duration and one curve for the page arriving and
+       the hub falling back behind it, because two numbers here means two
+       movements the eye has to reconcile.
+       The hub scales rather than sliding: a slide says "beside", a scale says
+       "behind", and the page is a drill-down. .93 and .82 are the shallowest
+       pair that still reads as depth on a phone; deeper looked like the sheet
+       presentation this replaced. */
+    --l1-ms: 380ms; --l1-ease: cubic-bezier(.32,.72,0,1);
+    --l1-scale: .93; --l1-dim: .82;
+    /* The hub reorders the tapped card to the top BEFORE the page arrives, so
+       the reorder needs its own, longer curve: it is the thing being watched,
+       not a background event. --l1-hold is when the page is released - short of
+       the full reorder on purpose, so the page arrives while the card is still
+       settling and the two read as one handover rather than two events. */
+    --reorder-ms: 420ms; --l1-hold: 260ms;
+    /* identity + status colors (shared across themes) */
+    --accent: #7c5cff;
+    --accent-2: #34d399;
+    --danger: #ff5c7c;
+    /* chrome - Minimal Dark (default) */
+    --bg: #0b0b0f;
+    --frame-outer: #040407;
+    --card: #17181f;
+    --card-2: #1f202a;
+    --text: #eef0ff;
+    --muted: #9aa0c8;
+    --muted-2: #5a6296;
+    --total: #cdd2f0;
+    --border: #23252f;
+    --border-2: #2d2e39;
+    --tint-accent: rgba(124,92,255,0.20);
+    --tint-accent-fg: #c9bdff;
+    --tint-danger: rgba(255,92,124,0.16);
+    --tint-live: rgba(52,211,153,0.15);
+    --live-fg: #7ff0c8;
+    --tint-done: var(--gold-bg);
+    --done-fg: var(--gold-fg);
+    --tile-accent-bg: #241f52;
+    --tile-accent-bd: #3a2f88;
+    --note-fg: #ffc2ce;
+    --note-bg: rgba(255,92,124,0.10);
+    --note-bd: #6a2a38;
+    /* ---- FEEDBACK TONE SCALE -----------------------------------------------
+       Four tones, three values each: foreground, wash, border. Every feedback
+       surface in the app reads only these, which is what lets one component
+       serve all four tones instead of each message type owning private colours.
+       Danger is the existing --note-* triplet verbatim, and light's warn
+       foreground is --gold-fg, so this is mostly a naming of colours the
+       palette already had. Only info is new.
+       Foregrounds are chosen for BODY TEXT, not badges: --live-fg reads at only
+       3.7:1 on light and cannot be reused here, so success gets its own darker
+       value. All eight clear 4.5:1 over their own wash.
+       ------------------------------------------------------------------------ */
+    --i-fg: #bfe8fb; --i-bg: rgba(56,189,248,0.12); --i-bd: #2a4d63;
+    --s-fg: #7ff0c8; --s-bg: rgba(52,211,153,0.12); --s-bd: #2f6b52;
+    --w-fg: #ffd98a; --w-bg: rgba(214,158,0,0.14);  --w-bd: #6b5320;
+    --d-fg: var(--note-fg); --d-bg: var(--note-bg); --d-bd: var(--note-bd);
+    --toast-bg: #2a3057;
+    --toast-bd: #3a4173;
+    --toast-bd-ok: #2f6b52;
+    --nav-bg: rgba(8,9,15,0.92);
+    --overlay: rgba(6,8,20,0.62);
+    --motiv-lead: #ffe4ad;
+    --motiv-warn: #ffc2ce;
+    --motiv-climb: #d7ccff;
+    --motiv-zero: #bfe8fb;
+    --chart-grid: #23252f;
+    --chart-grid-2: #1f202a;
+    --chart-node-ring: #0b0b0f;
+    --shadow-pop: 0 calc(18px * var(--ez)) calc(44px * var(--ez)) calc(-14px * var(--ez)) rgba(0,0,0,calc(.7 * var(--ea)));
+    --shadow-toast: 0 calc(14px * var(--ez)) calc(34px * var(--ez)) calc(-12px * var(--ez)) rgba(0,0,0,calc(.65 * var(--ea)));
+    --shadow-modal: 0 calc(24px * var(--ez)) calc(60px * var(--ez)) calc(-18px * var(--ez)) rgba(0,0,0,calc(.7 * var(--ea)));
+    --shadow-sheet: 0 calc(-8px * var(--ez)) calc(40px * var(--ez)) calc(-6px * var(--ez)) rgba(0,0,0,calc(.55 * var(--ea)));
+    /* depth system: soft elevation, and the hard offset used by Pop.
+       Three rungs, not one. Elevation is a claim about how far a surface sits
+       off the page, so it has to scale with the object: a full-width card and a
+       36px icon button casting the identical shadow is what makes everything
+       read as floating at once.
+         --elev     section-owning cards
+         --elev-sm  small or secondary surfaces (tiles, banner, list rows)
+         --elev-xs  the pressed floating action, not ordinary controls
+       Dark used to run a bigger geometry than light (8px/20px against 5px/14px)
+       on top of much higher alpha, so it spread further and read heavy. It now
+       shares light's geometry and only the alpha differs, which is the part that
+       genuinely has to differ: a black shadow on a near-black page needs more
+       alpha to register at all. */
+    /* ---- ELEVATION CONTRACT -------------------------------------------------
+       Every drop shadow in this app is an ELEVATION and must come from one of the
+       tokens below, never from a literal box-shadow on a rule:
+
+         --elev-xs / --elev-sm / --elev   floating action, tiles, rows, cards
+         --head-shadow                    the sticky sheet header
+         --shadow-pop / -toast / -modal / -sheet   overlays
+         --shadow-fab                     the floating action button
+
+       They are all built from two multipliers, so the whole system is dialled by
+       one retained preference (html[data-elev]): --ea scales
+       opacity, --ez scales geometry (offset/blur/spread). Both default to 1, which
+       reproduces the authored ramp byte for byte; step 0 sets them to 0 for a flat
+       look. Scaling BOTH matters: dropping alpha alone leaves a wide washed-out
+       haze instead of a genuinely lighter shadow.
+
+       NOT covered on purpose, because they are not elevation:
+         - inset shadows (rails, focus rings, the tab-strip seam cover) = geometry
+         - pop depth's hard offsets (--pop/--pop-ink) = a different visual language
+         - status/identity glows (the live-dot pulse, the guard-toggle thumb) = meaning
+
+       -------------------------------------------------------------------------- */
+    --ea: 1; --ez: 1;
+    --shadow-fab: 0 calc(6px * var(--ez)) calc(18px * var(--ez)) rgba(124,92,255,calc(.45 * var(--ea)));
+    --shadow-fab-active: 0 calc(3px * var(--ez)) calc(10px * var(--ez)) rgba(124,92,255,calc(.4 * var(--ea)));
+    --elev-xs: 0 1px calc(2px * var(--ez)) rgba(0,0,0,calc(.35 * var(--ea)));
+    --elev-sm: 0 1px calc(2px * var(--ez)) rgba(0,0,0,calc(.3 * var(--ea))),
+               0 calc(2px * var(--ez)) calc(6px * var(--ez)) calc(-2px * var(--ez)) rgba(0,0,0,calc(.38 * var(--ea)));
+    --elev: 0 1px calc(2px * var(--ez)) rgba(0,0,0,calc(.4 * var(--ea))),
+            0 calc(5px * var(--ez)) calc(14px * var(--ez)) calc(-4px * var(--ez)) rgba(0,0,0,calc(.5 * var(--ea)));
+    --head-shadow: 0 1px 0 rgba(0,0,0,calc(.5 * var(--ea))),
+                   0 calc(6px * var(--ez)) calc(14px * var(--ez)) calc(-4px * var(--ez)) rgba(0,0,0,calc(.6 * var(--ea)));
+    --ink: #eef0ff; --pop-ink: #d9d9d9; --pop: 10px; --pop-sm: 6px; --gap: 8px;
+    /* Medal palette for the winner card. Only the winning step takes a solid
+       fill; the other two stay as washes. When the steps are the only ornament
+       on the card, a ~0.13 wash is too faint to read as first place. */
+    --gold: #ffd15c; --gold-bg: rgba(255,209,92,0.13); --gold-bd: rgba(255,209,92,0.34);
+    --gold-fg: #ffd15c;
+    --silver-bg: rgba(205,214,245,0.11); --silver-bd: rgba(205,214,245,0.26);
+    --bronze-bg: rgba(224,151,90,0.13); --bronze-bd: rgba(224,151,90,0.32);
+    /* Readable per-tier foreground for the winner card's tinted minutes/kicker.
+       Silver/bronze need their own value like gold does: the wash colors are too
+       pale to double as text, and they must flip darker on the light theme. */
+    --silver-fg: #cdd6f5; --bronze-fg: #e0975a;
+    --silver-ring: #c3cae6; --bronze-ring: #e0975a;
+    /* ---- CHALLENGE CARD ----------------------------------------------------
+       Six pastels, one per challenge card, named after the reference design's
+       colour-block family rather than numbered. The NAME is what gets stored
+       against a challenge, never the hex, so the palette can be retuned later
+       without stranding every existing challenge on a colour that moved.
+
+       They are a fixed palette rather than theme-aware values: the card is a
+       coloured object, so its ink has to stay dark whatever the page does, and
+       --pa-ink is therefore a literal and not var(--text). This is the same
+       pattern .rescard already uses for its --rc-* tier colours.
+
+       A challenge with no colour set falls back to a hash of its CID, never to
+       its index in the list. Index would mean everyone's card silently changed
+       colour the moment somebody joined or left a challenge above it.
+
+       --chall-wm is DERIVED, not chosen. A numeral's ink fills 0.72 of its font
+       size and Inter 800's line box is 1.21 of it, so the largest numeral that
+       fits a card of height h without clipping is (h - 4px) / (0.72 x 1.21).
+       Writing it as a calc means the watermark cannot drift out of the card the
+       next time the card's height is tuned. */
+    --pa-mint:  #c8e6cd; --pa-coral: #f3c9b6; --pa-lime: #dceeb1;
+    --pa-lilac: #c5b0f4; --pa-cream: #f4ecd6; --pa-pink: #efd4d4;
+    /* Selected Tonal colour / Subtle: explicit sRGB stops, exact pastel at 52%. */
+    --pa-mint-tonal: linear-gradient(155deg, #cfebd5 0%, var(--pa-mint) 52%, #bbdebf 100%);
+    --pa-coral-tonal: linear-gradient(155deg, #f6d0bd 0%, var(--pa-coral) 52%, #efbda9 100%);
+    --pa-lime-tonal: linear-gradient(155deg, #e4f3b8 0%, var(--pa-lime) 52%, #cfe6a2 100%);
+    --pa-lilac-tonal: linear-gradient(155deg, #c7b7f9 0%, var(--pa-lilac) 52%, #c0a4ed 100%);
+    --pa-cream-tonal: linear-gradient(155deg, #faf2df 0%, var(--pa-cream) 52%, #ebe2c5 100%);
+    --pa-pink-tonal: linear-gradient(155deg, #f3dbda 0%, var(--pa-pink) 52%, #ebc8c9 100%);
+    --pa-ink: #14162b;
+    --pa-tonal-label-opacity: .75;
+    /* Semantic tints for use ON a pastel. The round pill in the challenge sheet's
+       header carries live/done state, and --tint-live / --done-fg are tuned
+       against the PAGE: in dark mode --live-fg is #7ff0c8, a pale mint that all
+       but disappears on lime. A pastel is a light surface in both themes, so
+       like --pa-ink these are fixed at their light-theme values rather than
+       following the page. Same reasoning, same place in the file. */
+    --pa-live-bg: rgba(52,211,153,0.16); --pa-live-fg: #0f9268;
+    --pa-done-bg: rgba(214,158,0,0.16);  --pa-done-fg: #8a6600;
+    --chall-card-h: 145px;
+    --chall-wm: calc((var(--chall-card-h) - 4px) / 0.8712);
+    /* The resting cards are shorter than the active one and have no fixed
+       height to derive from, so their watermark is expressed as a ratio of the
+       active one rather than as a second magic number. Both then move together
+       if the card height is ever retuned. */
+    --chall-wm-sm: calc(var(--chall-wm) * 0.79);
+    /* Every glyph in the watermark slot is cap-height except "+", which is a
+       maths symbol drawn on the maths axis: measured in Inter 800 it paints 84
+       units of ink against a digit's 122, so it appeared 31% short and floating.
+       1.525 is 122/80, the ink-height parity, and it is a property of the
+       TYPEFACE at a given weight, so it lives here with the other derived numbers
+       rather than inline beside the rule that needs it. Re-derive if the face or
+       the plus's weight ever changes:
+         ctx.measureText(ch).actualBoundingBoxAscent + ...Descent, for "8" at 800
+         and "+" at the weight the slot actually uses.
+       Declared as finished sizes rather than a bare ratio because every
+       font-size in the app resolves to a single var() by contract. */
+    --chall-wm-plus:    calc(var(--chall-wm) * 1.525);
+    --chall-wm-plus-sm: calc(var(--chall-wm-sm) * 1.525);
+  }
+  [data-theme="light"] {
+    color-scheme: light;
+    /* Light gold drops hard in luminance: the dark value is a highlight and
+       disappears on white, so light gets its own darker gold and a separate
+       readable foreground. */
+    --gold: #d69e00; --gold-bg: rgba(214,158,0,0.13); --gold-bd: rgba(214,158,0,0.36);
+    --gold-fg: #8a6600;
+    --silver-bg: rgba(120,130,160,0.12); --silver-bd: rgba(120,130,160,0.30);
+    --bronze-bg: rgba(190,110,50,0.12); --bronze-bd: rgba(190,110,50,0.32);
+    --silver-fg: #5c6480; --bronze-fg: #b5641f;
+    --silver-ring: #8794b8; --bronze-ring: #be6e32;
+    --bg: #f4f5fa;
+    --frame-outer: #e4e7f0;
+    --card: #ffffff;
+    --card-2: #f0f1f7;
+    --text: #1c1e2e;
+    --muted: #6b7194;
+    --muted-2: #a2a7c0;
+    --total: #3a4068;
+    --border: #e6e8f2;
+    --border-2: #dfe2ee;
+    --tint-accent: rgba(124,92,255,0.14);
+    --tint-accent-fg: #6746c9;
+    --tint-danger: rgba(255,92,124,0.12);
+    --tint-live: rgba(52,211,153,0.16);
+    --live-fg: #0f9268;
+    --tint-done: var(--gold-bg);
+    --done-fg: var(--gold-fg);
+    --tile-accent-bg: #efeaff;
+    --tile-accent-bd: #ddd2fb;
+    --note-fg: #b3243f;
+    --note-bg: rgba(255,92,124,0.10);
+    --note-bd: #f2ccd3;
+    /* Tone scale, light. See the dark block for what these are. */
+    --i-fg: #1d6f95; --i-bg: rgba(56,189,248,0.13); --i-bd: #b9dcec;
+    --s-fg: #0f7a58; --s-bg: rgba(52,211,153,0.13); --s-bd: #bfe6d2;
+    --w-fg: #8a6600; --w-bg: rgba(214,158,0,0.13);  --w-bd: #ecd9a3;
+    --d-fg: var(--note-fg); --d-bg: var(--note-bg); --d-bd: var(--note-bd);
+    --toast-bg: #ffffff;
+    --toast-bd: #e6e8f2;
+    --toast-bd-ok: #bfe6d2;
+    --nav-bg: rgba(255,255,255,0.92);
+    --overlay: rgba(30,34,70,0.28);
+    --motiv-lead: #b26a00;
+    --motiv-warn: #c0344d;
+    --motiv-climb: #6b4fd0;
+    --motiv-zero: #1d84b5;
+    --chart-grid: #e6e8f2;
+    --chart-grid-2: #eef0f6;
+    --chart-node-ring: #ffffff;
+    --shadow-pop: 0 calc(18px * var(--ez)) calc(44px * var(--ez)) calc(-14px * var(--ez)) rgba(30,34,70,calc(.18 * var(--ea)));
+    --shadow-toast: 0 calc(14px * var(--ez)) calc(34px * var(--ez)) calc(-12px * var(--ez)) rgba(30,34,70,calc(.16 * var(--ea)));
+    --shadow-modal: 0 calc(24px * var(--ez)) calc(60px * var(--ez)) calc(-18px * var(--ez)) rgba(30,34,70,calc(.22 * var(--ea)));
+    --shadow-sheet: 0 calc(-8px * var(--ez)) calc(40px * var(--ez)) calc(-6px * var(--ez)) rgba(17,17,17,calc(.18 * var(--ea)));
+    --elev-xs: 0 1px calc(2px * var(--ez)) rgba(17,17,17,calc(.06 * var(--ea)));
+    --elev-sm: 0 1px calc(2px * var(--ez)) rgba(17,17,17,calc(.04 * var(--ea))),
+               0 calc(2px * var(--ez)) calc(6px * var(--ez)) calc(-2px * var(--ez)) rgba(17,17,17,calc(.06 * var(--ea)));
+    --elev: 0 1px calc(2px * var(--ez)) rgba(17,17,17,calc(.05 * var(--ea))),
+            0 calc(5px * var(--ez)) calc(14px * var(--ez)) calc(-4px * var(--ez)) rgba(17,17,17,calc(.10 * var(--ea)));
+    --head-shadow: 0 1px 0 rgba(28,30,60,calc(.05 * var(--ea))),
+                   0 calc(6px * var(--ez)) calc(14px * var(--ez)) calc(-4px * var(--ez)) rgba(28,30,60,calc(.12 * var(--ea)));
+    --ink: #1c1e2e; --pop-ink: #131313;
+  }
+  /* Shared app surfaces use the approved palette without rewriting saved preferences. */
+  :root { --welcome-bg: #161615; }
+  html[data-theme="light"] { --welcome-bg: #f5f4f0; }
+  #login, #layerBase, #backofficeView, .policy-page,
+  html:has(#backofficeView.show) :is(.modal-overlay, #popDock, #ptr),
+  html.hub-active :is(#challModal, #activityModal, #popDock, #ptr),
+  html.settings-active :is(#sheet, #popDock, #ptr),
+  html.challenge-active :is(#sheet, .modal-overlay, #popDock, #ptr) {
+    --bg: var(--welcome-bg); --card: #232321; --card-2: #2e2e2a;
+    --text: #efefea; --muted: #b8b8ae; --muted-2: #a0a095;
+    --border: #3d3d37; --border-2: #55554b; --field-edge: #828274;
+    --accent: #dfb4cf; --on-accent: #321c2c;
+    --accent-hover: #ecc8df; --accent-pressed: #cfa0be; --accent-soft: #3c2a38;
+    --s-fg: #a4d6c9; --s-bg: #203631;
+    --d-fg: #ffb8a7; --d-bg: #442c28;
+    --w-fg: #dfcc8d; --w-bg: #393423;
+    --i-fg: #b1cbe8; --i-bg: #283442;
+    --s-bd: var(--s-fg); --d-bd: var(--d-fg);
+    --w-bd: var(--w-fg); --i-bd: var(--i-fg);
+    --danger: var(--d-fg); --ink: var(--text);
+    --pop-ink: var(--text); --tint-accent: var(--accent-soft);
+    --tint-accent-fg: var(--accent); --tint-danger: var(--d-bg);
+    --note-fg: var(--d-fg); --note-bg: var(--d-bg); --note-bd: var(--d-fg);
+    --live-fg: var(--s-fg); --tint-live: var(--s-bg); --total: var(--text);
+    --tile-accent-bg: var(--card); --tile-accent-bd: var(--border);
+    --motiv-lead: var(--w-fg); --motiv-warn: var(--d-fg);
+    --motiv-climb: var(--accent); --motiv-zero: var(--i-fg);
+    --chart-grid: #393933; --chart-grid-2: #2d2d28; --chart-node-ring: var(--card);
+    --chart-a: #84cfc3; --chart-b: #dfbc77; --chart-c: #99b9ef; --chart-d: #f0a791;
+    --series-0: var(--chart-a); --series-1: var(--accent); --series-2: var(--chart-b);
+    --series-3: var(--chart-c); --series-4: var(--chart-d); --series-5: var(--accent-hover);
+    --series-6: var(--s-fg); --series-7: var(--w-fg); --series-8: var(--i-fg);
+    --series-9: var(--accent-pressed); --series-10: var(--d-fg); --series-11: var(--chart-a);
+    --toast-bg: var(--card); --toast-bd: var(--border);
+    --overlay: rgba(0,0,0,.62);
+    --shadow-fab: 0 calc(6px * var(--ez)) calc(18px * var(--ez)) rgba(0,0,0,calc(.45 * var(--ea)));
+    --shadow-fab-active: 0 calc(3px * var(--ez)) calc(10px * var(--ez)) rgba(0,0,0,calc(.4 * var(--ea)));
+    --shadow-modal: 0 calc(24px * var(--ez)) calc(60px * var(--ez)) calc(-18px * var(--ez)) rgba(0,0,0,calc(.7 * var(--ea)));
+    --shadow-toast: 0 calc(14px * var(--ez)) calc(34px * var(--ez)) calc(-12px * var(--ez)) rgba(0,0,0,calc(.65 * var(--ea)));
+    --brand-rear: var(--accent-pressed); --brand-middle: var(--accent); --brand-front: var(--accent-hover);
+    --logo-surface: var(--bg);
+  }
+  html[data-theme="light"] :is(#login, #layerBase, #backofficeView, .policy-page),
+  html[data-theme="light"]:has(#backofficeView.show) :is(.modal-overlay, #popDock, #ptr),
+  html[data-theme="light"].hub-active :is(#challModal, #activityModal, #popDock, #ptr),
+  html[data-theme="light"].settings-active :is(#sheet, #popDock, #ptr),
+  html[data-theme="light"].challenge-active :is(#sheet, .modal-overlay, #popDock, #ptr) {
+    --card: #fffefa; --card-2: #eeede7;
+    --text: #292925; --muted: #64645d; --muted-2: #6b6b62;
+    --border: #deded5; --border-2: #cacac0; --field-edge: #858578;
+    --accent: #81506e; --on-accent: #ffffff;
+    --accent-hover: #6f3f5c; --accent-pressed: #5a314b; --accent-soft: #f4eaf0;
+    --s-fg: #276b60; --s-bg: #eaf3ef;
+    --d-fg: #b13c2e; --d-bg: #fbeee9;
+    --w-fg: #756012; --w-bg: #f7f1df;
+    --i-fg: #456888; --i-bg: #ecf1f7;
+    --chart-grid: #e8e8df; --chart-grid-2: #f2f2eb;
+    --chart-a: #20736d; --chart-b: #94631e; --chart-c: #4463a3; --chart-d: #b04d38;
+    --overlay: rgba(0,0,0,.28);
+    --shadow-fab: 0 calc(6px * var(--ez)) calc(18px * var(--ez)) rgba(0,0,0,calc(.2 * var(--ea)));
+    --shadow-fab-active: 0 calc(3px * var(--ez)) calc(10px * var(--ez)) rgba(0,0,0,calc(.16 * var(--ea)));
+    --shadow-modal: 0 calc(24px * var(--ez)) calc(60px * var(--ez)) calc(-18px * var(--ez)) rgba(0,0,0,calc(.22 * var(--ea)));
+    --shadow-toast: 0 calc(14px * var(--ez)) calc(34px * var(--ez)) calc(-12px * var(--ez)) rgba(0,0,0,calc(.16 * var(--ea)));
+    --brand-middle: var(--accent-hover); --brand-front: var(--accent);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; }
+  button, input, select, textarea { font-family: inherit; }
+  /* Only suppress the browser's native pull-to-refresh when installed standalone (where our
+     custom gesture takes over). In a normal tab, leave the native refresh intact. */
+  @media (display-mode: standalone) { html, body { overscroll-behavior-y: contain; } }
+  body {
+    /* Inter first, then the platform stack. The fallbacks are not decoration:
+       they are what renders during `font-display: swap` on a cold load, and
+       what renders permanently if the font file ever fails to arrive. */
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  .wrap { max-width: var(--frame-w); margin: 0 auto; padding: calc(var(--sp-4xl) + var(--sat)) var(--sheet-pad) 0; }
+
+  /* Pull-to-refresh (standalone PWA loses the native one) */
+  #ptr { position: fixed; top: calc(var(--sat) + 6px); left: 0; right: 0; display: flex; justify-content: center; pointer-events: none; z-index: 60; transform: translateY(-48px); opacity: 0; will-change: transform, opacity; }
+  #ptr .ptr-spinner { width: 26px; height: 26px; border-radius: 50%; border: 2.5px solid var(--border-2); border-top-color: var(--accent); box-sizing: border-box; transition: transform .15s ease; }
+  #ptr.ready .ptr-spinner { transform: scale(1.15); border-color: var(--accent); border-top-color: var(--accent); }
+  #ptr.spin .ptr-spinner { animation: ptrspin .7s linear infinite; }
+  @keyframes ptrspin { to { transform: rotate(360deg); } }
+  .policy { max-width: 68ch; margin: 0 auto;
+    padding: calc(var(--sp-4xl) + var(--sat)) var(--sp-3xl) calc(var(--sp-6xl) + env(safe-area-inset-bottom));
+    font-size: var(--fs-lg); line-height: var(--lh-loose); overflow-wrap: anywhere; }
+  .policy ::selection { background: var(--accent-soft); color: var(--text); }
+  .policy a { color: var(--accent); text-underline-offset: 3px; }
+  .policy a:hover { color: var(--text); }
+  .policy a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .policy .policy-back { display: inline-flex; align-items: center; min-height: 44px;
+    padding: var(--sp-sm) var(--sp-lg); margin-left: calc(-1 * var(--sp-lg));
+    border-radius: var(--r-pill); font-size: var(--fs-sm); }
+  .policy h1 { margin: var(--sp-4xl) 0 var(--sp-md); font-size: var(--fs-5xl);
+    font-weight: var(--fw-bold); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); }
+  .policy h2 { margin: 0 0 var(--sp-lg); font-size: var(--fs-2xl);
+    font-weight: var(--fw-bold); line-height: var(--lh-snug); letter-spacing: var(--ls-snug); }
+  .policy .policy-updated { color: var(--muted); font-size: var(--fs-sm); margin: 0 0 var(--sp-4xl); }
+  .policy section { margin-top: var(--sp-6xl); }
+  .policy p { margin: 0 0 var(--sp-lg); }
+  .policy ul { margin: 0 0 var(--sp-lg); padding-left: var(--sp-4xl); }
+  .policy li + li { margin-top: var(--sp-md); }
+  .policy footer { margin-top: var(--sp-6xl); }
+</style>
+</head>
+<body class="policy-page">
+<div class="policy">
+  <nav aria-label="Minutes"><a class="policy-back" href="./">Back to Minutes</a></nav>
+  <main>
+    <h1>Privacy policy</h1>
+    <p class="policy-updated">Last updated <time datetime="2026-09-23">23 September 2026</time></p>
+    <p>Minutes is a personally run project for logging time and taking part in shared challenges. This notice explains what the app uses, where information goes and how to ask for help with your data.</p>
+
+    <section aria-labelledby="contact">
+      <h2 id="contact">Who to contact</h2>
+      <p>The Minutes administrator maintains the app and handles privacy requests. For questions, access to your information, corrections or deletion requests, email <a href="mailto:minutes.app@outlook.com">minutes.app@outlook.com</a>.</p>
+    </section>
+
+    <section aria-labelledby="information">
+      <h2 id="information">Information the app uses</h2>
+      <ul>
+        <li><strong>Account information:</strong> your participant name, account identifier, roles and account-link or approval requests. Google sign-in supplies an identifier, email address and verification status, and can supply a display name and profile-photo URL.</li>
+        <li><strong>Activity and challenges:</strong> dates, minutes, optional notes or activity labels, challenge details, memberships, round participation and results.</li>
+        <li><strong>Existing participant records:</strong> historical minutes and participant identifiers can exist before Google linking. The administrator may reserve a known email address to connect an existing participant with their account.</li>
+        <li><strong>Device and security information:</strong> saved preferences, cached app data and sign-in state. Hosting and security providers can also process technical information such as IP addresses, browser details and request or abuse-prevention signals.</li>
+      </ul>
+      <p>Minutes does not request access to your Gmail messages or Google contacts, and does not receive your Google password.</p>
+    </section>
+
+    <section aria-labelledby="uses">
+      <h2 id="uses">How information is used</h2>
+      <p>Information is used to recognise participants, link existing history, manage access and approvals, record minutes, calculate results, display shared activity, synchronise devices and maintain the service.</p>
+      <p>The app has no advertising integration or separate audience-analytics service. Security checks and providers' operational logging are different from audience analytics.</p>
+    </section>
+
+    <section aria-labelledby="visibility">
+      <h2 id="visibility">Shared activity, not a private journal</h2>
+      <p>Participant names, challenge participation, logged minutes and notes are used in shared views. Administrators can access information needed to manage the app, accounts and approval requests.</p>
+      <p><strong>The current version retains legacy data access during account migration.</strong> Activity records are not strictly isolated by challenge membership. Do not treat a challenge as a private group or put confidential or sensitive health information in names or notes.</p>
+      <p>Linking Google verifies your sign-in; it does not, by itself, make your activity history private.</p>
+    </section>
+
+    <section aria-labelledby="providers">
+      <h2 id="providers">Services that help run Minutes</h2>
+      <ul>
+        <li><strong>Google Firebase</strong> provides authentication and the cloud database. Account details and app records are processed using those services. See <a href="https://firebase.google.com/support/privacy">Firebase's privacy and security information</a>.</li>
+        <li><strong>Google reCAPTCHA v3, through Firebase App Check,</strong> helps detect abuse. It can process device and security signals, including through cookies or similar storage, when the app loads, before you sign in. Google's <a href="https://policies.google.com/privacy">Privacy Policy</a> and <a href="https://policies.google.com/terms">Terms of Service</a> apply to reCAPTCHA.</li>
+        <li><strong>GitHub Pages</strong> hosts the website and can process technical request information when you visit. See the <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">GitHub General Privacy Statement</a>.</li>
+      </ul>
+      <p>These providers operate internationally, so their processing may involve countries outside your own. Their notices describe their practices and applicable safeguards. Emailing the privacy contact also involves your email provider and Microsoft Outlook.</p>
+      <p>This policy page itself does not initialise Firebase, Google sign-in or reCAPTCHA. The app does.</p>
+    </section>
+
+    <section aria-labelledby="storage">
+      <h2 id="storage">Storage on your device</h2>
+      <p>Minutes uses browser storage for sign-in state, preferences, cached records and the offline app. Where supported, Firestore stores pending changes on your device and sends them when the connection returns.</p>
+      <p>Signing out does not necessarily erase cached records. Removing the app or clearing browser storage does not delete cloud records, and can remove changes that have not synced. Let pending changes finish syncing before clearing storage, especially on a shared device.</p>
+    </section>
+
+    <section aria-labelledby="retention">
+      <h2 id="retention">Keeping, correcting and deleting information</h2>
+      <p>There is no automatic expiry period for account and activity records at present. They remain until removed using the available app controls or by the administrator. The administrator also keeps migration and recovery backups; deleting a live entry or signing out does not automatically remove those copies.</p>
+      <p>To request a copy, a correction or deletion, contact the address above. Please identify the participant and the information concerned, including backup copies if relevant. The administrator may need to verify that the request is yours and review shared records and any applicable requirements. Do not send passwords or sign-in codes.</p>
+      <p>Depending on the law that applies, you may have additional rights over your personal information or the right to contact a data-protection authority. This notice does not limit those rights.</p>
+    </section>
+
+    <section aria-labelledby="changes">
+      <h2 id="changes">Changes to this notice</h2>
+      <p>Updates will appear on this page with a new date. The notice will need reviewing if the app's audience, access controls or handling of information changes.</p>
+    </section>
+  </main>
+  <footer><a class="policy-back" href="./">Back to Minutes</a></footer>
+</div>
+<script>
+document.querySelector('meta[name="theme-color"]').setAttribute("content",
+  getComputedStyle(document.body).getPropertyValue("--bg").trim());
+
+  // Register service worker (PWA install + offline shell). Secure-context only.
+  if ("serviceWorker" in navigator && location.protocol !== "file:") {
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register("sw.js").catch(function (e) {
+        console.warn("SW registration failed:", e);
+      });
+    });
+  }
+</script>
+</body>
+</html>

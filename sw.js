@@ -5,10 +5,11 @@
    - Query-string requests (the pull-to-refresh version poll): network only.
    - Other same-origin static assets (icons, manifest, svg): cache-first.
    - Cross-origin (Firebase, gstatic, reCAPTCHA): passthrough, never cached. */
-var CACHE = "minutes-v48";  // Bump whenever the cached shell or assets change.
+var CACHE = "minutes-v49";  // Bump whenever the cached shell or assets change.
 var CORE = [
   "./",
   "./index.html",
+  "./privacy.html",
   "./manifest.webmanifest",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
@@ -76,14 +77,19 @@ self.addEventListener("fetch", function (e) {
         // "./index.html" here, so a second page opened alongside the shell
         // overwrote the shell's offline copy with its own markup, and every
         // later request for ./index.html, including the update poll, was
-        // answered with the wrong document. The app is a single page again, but
-        // "./" and "./index.html" are still two distinct cache keys, so the
-        // per-url form stays correct.
+        // answered with the wrong document. The privacy page and app entry
+        // points must keep their own cache keys.
         caches.open(CACHE).then(function (c) { c.put(req, copy); });
         return res;
       }).catch(function () {
         return caches.match(req).then(function (m) {
-          return m || caches.match("./index.html");
+          if (m) return m;
+          if (url.pathname === new URL("./privacy.html", self.location.href).pathname) {
+            return new Response("Privacy policy unavailable offline. Reconnect and reload this page.", {
+              status: 503, headers: { "Content-Type": "text/plain; charset=utf-8" }
+            });
+          }
+          return caches.match("./index.html");
         });
       })
     );

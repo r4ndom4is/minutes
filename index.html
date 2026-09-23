@@ -731,6 +731,12 @@
   #authHint:empty { display: none; }
   #login .msg { text-align: left; }
   #login .msg:not(:empty) { margin: var(--sp-sm) 0 var(--sp-2xl); }
+  #login .login-card:not(.onb) > .msg, .login-status {
+    width: 100%; max-width: 30ch; align-self: center; overflow-wrap: anywhere; }
+  #login #loginRetry { width: fit-content; max-width: 100%; align-self: center;
+    margin: 0 0 var(--sp-2xl); background: var(--card-2); color: var(--text); text-decoration: none; }
+  #login #loginRetry:hover:not(:disabled) { background: var(--card); }
+  #login #loginRetry:disabled { color: var(--muted-2); }
 
   /* The same identity becomes a compact header once there is a task. */
   .login-card.onb #googleBtn, .login-card.onb #authWho, .login-card.onb #authHint { display: none !important; }
@@ -1598,7 +1604,8 @@
 
   /* Ambient: describes a state, not an event, so it never auto-hides. Sits
      under the sticky header, above the scrolling content. */
-  .amb { margin: 0 0 var(--sp-lg); }
+  .amb { margin: 0; }
+  .sheet-body > .amb:not(:empty) { margin-top: var(--sp-3xl); }
   .amb:empty { display: none; }
 
   /* Row echo: the pill says what happened, this says where it landed. A wash
@@ -1779,13 +1786,9 @@
   html.hub-active #app { box-shadow: none; }
   #layerBase { color: var(--text); }
   #layerBase ::selection { background: var(--accent-soft); color: var(--text); }
-  #layerBase .fab, #layerBase .nudge-btn { color: var(--on-accent); }
-  #layerBase .fab:hover, #layerBase .nudge-btn:hover:not(:disabled) { background: var(--accent-hover); }
-  #layerBase .fab:active, #layerBase .nudge-btn:active:not(:disabled) { background: var(--accent-pressed); }
-  #layerBase .nudge { box-shadow: none; }
-  #layerBase .nudge-btn, #layerBase .nudge-x { min-height: 44px; }
-  #layerBase .nudge-x { min-width: 44px; }
-  #layerBase .nudge-btn:disabled { color: var(--muted); }
+  #layerBase .fab { color: var(--on-accent); }
+  #layerBase .fab:hover { background: var(--accent-hover); }
+  #layerBase .fab:active { background: var(--accent-pressed); }
   #layerBase .head-you { min-width: 44px; min-height: 44px; align-items: center; justify-content: center; }
   #headAvatar { width: 52px; height: 52px; font-size: var(--fs-2xl); }
   /* Avatar colours elsewhere still identify people; this is the account control. */
@@ -1814,6 +1817,13 @@
     #layerBase .head-you:hover { transform: none; }
   }
   .sub-note { color: var(--muted); font-size: var(--fs-xs); margin: calc(-1 * var(--sp-3xs)) 0 var(--sp-lg); }
+  #hubStatus { margin: 0; line-height: var(--lh-normal); overflow-wrap: anywhere; }
+  #hubStatus.after-activity,
+  .base-wrap:has(> .amb:not(:empty), > .nudge) #hubStatus { margin-top: var(--sp-4xl); }
+  .scoped-discovery, .round-status { margin-top: var(--sp-4xl); }
+  :is(.scoped-discovery, .round-status) .sub-note { margin: 0 0 var(--sp-lg); line-height: var(--lh-normal); }
+  :is(.scoped-discovery, .round-status) .btn { min-height: 48px; border-radius: var(--r-pill); }
+  .round-cache-note { margin: var(--sp-4xl) 0 0; line-height: var(--lh-normal); }
   .btn.ghost { background: var(--card-2); color: var(--text); border: 1px solid var(--border-2); }
   .btn.ghost:disabled { opacity: .55; cursor: default; }
   /* ---- CHALLENGE CARD ------------------------------------------------------
@@ -2006,24 +2016,22 @@
     color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent);
     vertical-align: middle; }
 
-  /* Account-linking nudge - a dismissible banner at the top of each layer. The
-     action runs in place: nobody gets logged out to link an account. Kept on the
-     neutral card surface with the app's left accent rail rather than the tinted
-     tile look, so it doesn't compete with the join tile it can sit next to. */
-  .nudge { display: flex; align-items: center; gap: var(--sp-lg); margin: 0 0 var(--sp-lg);
+  /* One neutral account reminder in both layers; linking never blocks logging. */
+  .nudge { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-lg) var(--sp-2xl); margin: 0;
     background: var(--card); border: 1px solid var(--border);
-    box-shadow: inset 3px 0 0 var(--accent);
-    border-radius: var(--r-xl); padding: var(--sp-lg) var(--sp-xl) var(--sp-lg) var(--sp-2xl); }
-  .nudge-tx { flex: 1; min-width: 0; }
+    border-radius: var(--r-xl); padding: var(--sp-2xl) var(--sp-3xl); }
+  .sheet-body > .nudge { margin-top: var(--sp-3xl); }
+  :is(.base-wrap, .sheet-body):has(> .amb:not(:empty)) > .nudge { margin-top: var(--sp-lg); }
+  .nudge-tx { flex: 1 1 200px; min-width: 0; overflow-wrap: anywhere; }
   .nudge-title { font-weight: var(--fw-black); font-size: var(--fs-sm); letter-spacing: var(--ls-snug); }
-  .nudge-sub { color: var(--muted); font-size: var(--fs-2xs); line-height: var(--lh-relaxed); margin-top: var(--sp-3xs); }
-  .nudge-btn { flex: 0 0 auto; background: var(--accent); color: #fff; border: none;
-    border-radius: var(--r-pill); font-weight: var(--fw-black); font-size: var(--fs-xs); padding: var(--sp-sm) var(--sp-2xl); cursor: pointer; }
+  .nudge-sub { color: var(--muted); font-size: var(--fs-2xs); line-height: var(--lh-relaxed); margin-top: var(--sp-2xs); }
+  .nudge-btn { flex: 0 0 auto; min-height: 44px; background: var(--accent); color: var(--on-accent); border: none;
+    border-radius: var(--r-pill); font-family: inherit; font-weight: var(--fw-black); font-size: var(--fs-xs);
+    line-height: var(--lh-normal); padding: var(--sp-sm) var(--sp-2xl); cursor: pointer; }
+  .nudge-btn:hover:not(:disabled) { background: var(--accent-hover); }
+  .nudge-btn:active:not(:disabled) { background: var(--accent-pressed); }
+  .nudge-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
   .nudge-btn:disabled { background: var(--border-2); color: var(--muted); cursor: default; }
-  .nudge-x { flex: 0 0 auto; width: 28px; height: 28px; border: none; background: transparent;
-    color: var(--muted); border-radius: var(--r-pill); display: inline-flex; align-items: center;
-    justify-content: center; cursor: pointer; }
-  .nudge-x svg { width: 14px; height: 14px; }
   .guard-row { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-lg); }
   .guard-row + .guard-row { margin-top: var(--sp-md); }
   /* Every other group lets its heading own the heading-to-content gap. Without
@@ -2304,7 +2312,6 @@
   html[data-depth="soft"] .onb-welcome { box-shadow: var(--elev); }
   html[data-depth="soft"] .tile,
   html[data-depth="soft"] .motiv,
-  html[data-depth="soft"] #layerBase .nudge,
   html[data-depth="soft"] .bo-chall,
   html[data-depth="soft"] .msg--boxed:not(:empty),
   html[data-depth="soft"] .msg--banner:not(:empty) { box-shadow: var(--elev-sm); }
@@ -2820,8 +2827,8 @@
       </div>
       <div class="msg msg--quiet" id="loginErr" aria-live="polite"></div>
       <div class="msg msg--quiet" id="loginNetwork" role="status" aria-live="polite"></div>
-      <div class="login-status" id="loginStatus" style="display:none"><span class="login-spin"></span><span id="loginStatusText">Connecting to the server…</span></div>
-      <button class="btn btn-ghost" id="loginRetry" style="display:none">Retry connection</button>
+      <div class="login-status" id="loginStatus" role="status" aria-live="polite" style="display:none"><span class="login-spin" aria-hidden="true"></span><span id="loginStatusText">Connecting to the server…</span></div>
+      <button type="button" class="btn" id="loginRetry" style="display:none">Retry connection</button>
       <div class="login-who" id="authWho" style="display:none"></div>
       <button class="btn btn-oauth" id="googleBtn">
         <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false">
@@ -2939,20 +2946,18 @@
 
     <div class="msg msg--banner amb" role="status" aria-live="polite"></div>
 
-    <!-- Account-linking nudge. Deliberately a banner, not a gate: the user stays
-         where they are and the claim runs in place. Dismissing snoozes it rather
-         than killing it, because Phase 4 turns claiming from optional into required. -->
+    <!-- Persistent reminder, not an access gate. -->
     <template x-if="$store.s.claimNudge.show">
-      <div class="nudge">
+      <div class="nudge" role="region" aria-label="Account setup">
         <div class="nudge-tx">
           <div class="nudge-title" x-text="$store.s.claimNudge.title"></div>
           <div class="nudge-sub" x-text="$store.s.claimNudge.sub"></div>
         </div>
-        <button class="nudge-btn" x-show="!$store.s.claimNudge.waiting"
-                :disabled="$store.s.claimNudge.busy"
+        <button type="button" class="nudge-btn" x-show="!$store.s.claimNudge.waiting"
+                :disabled="$store.s.claimNudge.disabled"
+                :aria-busy="$store.s.claimNudge.busy"
                 @click="$store.s.act.claimConnect()"
                 x-text="$store.s.claimNudge.cta"></button>
-        <button class="nudge-x" aria-label="Dismiss" @click="$store.s.act.claimSnooze()"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
       </div>
     </template>
 
@@ -2980,7 +2985,7 @@
         <p class="activity-note" role="status" x-show="$store.s.hubActivity.note" x-text="$store.s.hubActivity.note"></p>
         <p class="activity-goal-error" role="status" x-show="$store.s.activityGoalNotice" x-text="$store.s.activityGoalNotice"></p>
       </section>
-      <p class="sub-note" id="hubStatus" role="status" x-show="$store.s.hubNotice" x-text="$store.s.hubNotice"></p>
+      <p class="sub-note" id="hubStatus" role="status" :class="{ 'after-activity': $store.s.hubActivity.show }" x-show="$store.s.hubNotice" x-text="$store.s.hubNotice"></p>
       <template x-for="sec in $store.s.challSections" :key="sec.id">
         <div class="sect">
           <div class="slabel" x-text="sec.label"></div>
@@ -3000,14 +3005,15 @@
             <template x-if="!sec.rows.length && !sec.welcome"><div class="blank" x-text="sec.empty"></div></template>
             <template x-for="c in sec.rows" :key="c.cid">
               <div class="chall-row"
+                   x-init="$store.s.act.observeChallenge($el, c.cid)"
                    :style="{ '--pa': c.pastel, '--pa-tonal': 'var(--pa-' + c.color + '-tonal)' }"
                    :class="{ 'active-cid': c.active, 'tappable': c.approved }"
                    :role="c.approved ? 'button' : null"
                    :tabindex="c.approved && c.ready ? 0 : null"
                    :aria-disabled="c.approved && !c.ready ? 'true' : null"
                    @click="c.approved && c.ready && $store.s.act.openChallenge(c.cid)"
-                   @keydown.enter.prevent="c.approved && c.ready && $store.s.act.openChallenge(c.cid)"
-                   @keydown.space.prevent="c.approved && c.ready && $store.s.act.openChallenge(c.cid)">
+                   @keydown.enter.self.prevent="c.approved && c.ready && $store.s.act.openChallenge(c.cid)"
+                   @keydown.space.self.prevent="c.approved && c.ready && $store.s.act.openChallenge(c.cid)">
                 <!-- Your standing in this challenge, as the card's watermark.
                      aria-hidden because the pill beside it already says it in
                      words ("Leading", "#2 of 5", "New round", "Requested"). -->
@@ -3023,6 +3029,9 @@
                         <span class="cr-standing" :class="c.pill.cls" x-text="c.pill.text"></span>
                       </template>
                       <template x-if="c.pending"><span class="cr-standing pend">Requested</span></template>
+                      <template x-if="c.failed">
+                        <button class="cr-act" aria-label="Retry challenge details" @click.stop="$store.s.act.retryRound()">Retry</button>
+                      </template>
                       <template x-if="!c.approved && !c.pending">
                         <button class="cr-act" aria-label="Request to join" :disabled="!c.ready" @click.stop="c.ready && $store.s.act.join(c.cid)">Request to join</button>
                       </template>
@@ -3039,6 +3048,12 @@
           </div>
         </div>
       </template>
+      <div class="scoped-discovery" x-show="$store.s.discoverMore || $store.s.discoverError" x-cloak>
+        <p class="sub-note" role="status" x-show="$store.s.discoverError" x-text="$store.s.discoverError"></p>
+        <button class="btn ghost" type="button" :disabled="$store.s.discoverLoading"
+          :aria-busy="$store.s.discoverLoading" @click="$store.s.act.discoverMore()"
+          x-text="$store.s.discoverLoading ? 'Loading challenges...' : ($store.s.discoverError ? 'Try again' : 'Show more challenges')"></button>
+      </div>
     </section>
 
       <div class="ver-tag"></div>
@@ -3131,20 +3146,25 @@
       <!-- Keep the account nudge reachable while a challenge is open, just as
            the connection banner is available in either layer. -->
       <template x-if="$store.s.claimNudge.show">
-        <div class="nudge">
+        <div class="nudge" role="region" aria-label="Account setup">
           <div class="nudge-tx">
             <div class="nudge-title" x-text="$store.s.claimNudge.title"></div>
             <div class="nudge-sub" x-text="$store.s.claimNudge.sub"></div>
           </div>
-          <button class="nudge-btn" x-show="!$store.s.claimNudge.waiting"
-                  :disabled="$store.s.claimNudge.busy"
+          <button type="button" class="nudge-btn" x-show="!$store.s.claimNudge.waiting"
+                  :disabled="$store.s.claimNudge.disabled"
+                  :aria-busy="$store.s.claimNudge.busy"
                   @click="$store.s.act.claimConnect()"
                   x-text="$store.s.claimNudge.cta"></button>
-          <button class="nudge-x" aria-label="Dismiss" @click="$store.s.act.claimSnooze()"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
         </div>
       </template>
 
-      <section class="tab-panel" id="tab-stats" :class="{ active: $store.s.sheet !== 'you' }">
+      <div class="round-status" x-show="$store.s.sheet === 'stats' && !$store.s.roundReady" x-cloak role="status">
+        <p class="sub-note" x-text="$store.s.roundLoadFailed ? 'This round couldn\u0027t be loaded. Try again.' : 'Loading this round...'"></p>
+        <button class="btn ghost" type="button" x-show="$store.s.roundLoadFailed" @click="$store.s.act.retryRound()">Try again</button>
+      </div>
+      <p class="sub-note round-cache-note" x-show="$store.s.sheet === 'stats' && $store.s.roundReady && $store.s.roundFromCache" x-cloak role="status">Showing cached minutes. Standings may be incomplete until synced.</p>
+      <section class="tab-panel" id="tab-stats" :class="{ active: $store.s.sheet !== 'you' }" x-show="$store.s.roundReady">
       <div class="statsblock" id="statsblockView">
         <template x-if="$store.s.statsBlock.mode === 'winner'">
           <div class="rescard" role="button" tabindex="0"
@@ -3405,7 +3425,7 @@
       </div>
       </section>
     </div>
-    <button class="fab" id="fabAdd" aria-label="Add minutes" title="Add minutes"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg><span class="fab-label" aria-hidden="true">Minutes</span></button>
+    <button class="fab" id="fabAdd" :disabled="!$store.s.roundReady" aria-label="Add minutes" title="Add minutes"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg><span class="fab-label" aria-hidden="true">Minutes</span></button>
   </div>
 
   <div class="pop-dock" id="popDock">
@@ -3739,7 +3759,7 @@
     <div class="modal manage-modal" role="dialog" aria-modal="true" aria-labelledby="manageTitle">
       <button class="modal-x" id="manageX" aria-label="Close"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
       <div class="modal-title" id="manageTitle" x-text="$store.s.manage.title">Manage</div>
-      <button type="button" class="mbtn manage-details" id="manageRename" x-show="$store.s.manage.canRename"
+      <button type="button" class="mbtn manage-details" id="manageRename" x-show="$store.s.manage.canRename && $store.s.manageReady"
               aria-labelledby="manageDetailsLabel" aria-describedby="manageColour"
               @click="$store.s.act.openManageRename()">
         <span id="manageDetailsLabel">Name &amp; colour</span>
@@ -3749,7 +3769,11 @@
         </span>
         <svg class="ic" aria-hidden="true"><use href="#i-caret-right"/></svg>
       </button>
-      <div id="manageBody">
+      <div class="round-status" x-show="!$store.s.manageReady" role="status">
+        <p class="sub-note" x-text="$store.s.manageLoadFailed ? 'Challenge details couldn\u0027t be loaded. Try again.' : 'Loading challenge details...'"></p>
+        <button class="btn ghost" type="button" x-show="$store.s.manageLoadFailed" @click="$store.s.act.retryRound()">Try again</button>
+      </div>
+      <div id="manageBody" x-show="$store.s.manageReady">
         <!-- Everything that governs this challenge now lives behind the one gear,
              in the order you act on it: this round first, then who is waiting,
              then who is in. Leaving and editing the roster used to be two more
@@ -3840,7 +3864,7 @@
         </template>
       </div>
       <div class="msg msg--quiet" id="manageErr" aria-live="polite"></div>
-      <div class="modal-actions" x-show="$store.s.manage.isActive && $store.s.manage.canLeave">
+      <div class="modal-actions" x-show="$store.s.manageReady && $store.s.manage.isActive && $store.s.manage.canLeave">
         <!-- Members keep Leave separate from the owner/admin controls. -->
         <button class="mbtn" id="manageLeave" x-show="$store.s.manage.isActive && $store.s.manage.canLeave"
                 @click="$store.s.act.leaveRound()"
@@ -3871,7 +3895,7 @@
   var ACTIVECID_KEY = "minutes_active_cid";
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
-  var VERSION = "16.5";
+  var VERSION = "16.6";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -3913,6 +3937,11 @@
   function myRole(cid) { var e = (membersByCid[cid] || {})[state.me]; return e ? e.role : null; }
   // Current round number for a specific challenge, derived from its earliest entry month.
   function challRoundNumber(cid) {
+    if (challMeta[cid] && challMeta[cid].schemaVersion === 2) {
+      var first = challMeta[cid].firstMonth, current = monthKeyOf(new Date());
+      return Math.max(1, (+current.slice(0, 4) - +first.slice(0, 4)) * 12 +
+        (+current.slice(5, 7) - +first.slice(5, 7)) + 1);
+    }
     var earliest = null;
     entriesAll.forEach(function (e) {
       if (cidOf(e) === cid) { var k = e.date.slice(0, 7); if (!earliest || k < earliest) earliest = k; }
@@ -4088,6 +4117,9 @@
   // NB: we intentionally do NOT anchor on roster-only/empty month docs — a stray empty month
   // (e.g. a leftover challenges/YYYY-MM doc with participants but no entries) must not become Round 1.
   function minNavMonth() {
+    if (challMeta[activeCid()] && challMeta[activeCid()].schemaVersion === 2) {
+      return keyToDate(challMeta[activeCid()].firstMonth);
+    }
     var minKey = monthKeyOf(new Date());
     state.entries.forEach(function (e) { var k = e.date.slice(0, 7); if (k < minKey) minKey = k; });
     return keyToDate(minKey);
@@ -4195,7 +4227,7 @@
     // simply never be seen. Gating on entries-specific server-readiness (not the
     // shared netReady, which the roster also sets, and not entries.length, which a
     // stale cache can satisfy) closes both the race and the stale-cache hole.
-    if (!state.landingResolved && !state.viewTouched && entriesNetReady) {
+    if (!state.landingResolved && !state.viewTouched && entriesNetReady && (!Store.landingReady || Store.landingReady())) {
       state.viewMonth = keyToDate(defaultViewKey());
       state.landingResolved = true;
     }
@@ -4332,7 +4364,12 @@
   state.tagRev = 0;           // tag inputs are DOM fields; this ticks their chip views
   state.editTagRev = 0;
   state.manageCid = null;
+  state.discoverMore = false;
+  state.discoverLoading = false;
+  state.discoverError = "";
   state.claimRev = 0;         // identity/claim data ticks (see the Claims module)
+  state.connectionOffline = offlineNow();
+  state.connectionSettled = netSettled;
   // Ticks only when the greeting's time-of-day bucket actually changes, so a page
   // left open overnight still reads correctly without re-rendering every minute.
   state.hourRev = 0;
@@ -4412,6 +4449,7 @@
   state.hubLoadSlow = false;
 
   function hubDataReady() {
+    if (Store && Store.modelVersion === 2) return Store.hubReady();
     return hubCatalogReady && !Object.keys(hubErrors).length && state.activityLoaded &&
       Object.keys(challMeta).every(function (cid) {
         return Object.prototype.hasOwnProperty.call(membersByCid, cid) &&
@@ -4473,12 +4511,13 @@
   function hubDisplay() {
     state.rev; state.me; state.signedIn; state.activeCid; state.welcomed; state.hourRev;
     state.activityDay; state.activityGoalRev; state.activityLoaded; state.activityLoadError; state.activityFromCache;
+    state.connectionOffline; state.connectionSettled;
     readHubSnapshot();
     if (!state.signedIn) return null;
     if (!hubDataReady()) return hubSaved;
     var signature = [state.rev, state.me, state.activeCid, state.welcomed, state.hourRev,
       state.activityDay, state.activityGoalRev, state.activityFromCache, state.activityLoadError,
-      offlineNow(), cachePending].join("|");
+      offlineNow(), netSettled, cachePending].join("|");
     if (hubComputed && hubComputed.signature === signature) return hubComputed.value;
     var activity = state.activity;
     var value = {
@@ -4489,8 +4528,10 @@
         buttonLabel: activity.buttonLabel, note: activity.note, week: activity.week
       }
     };
-    hubSaved = value;
     hubComputed = { signature: signature, value: value };
+    // Keep the saved view until all requested data, including history, has arrived.
+    if (Store.hubComplete && !Store.hubComplete()) return value;
+    hubSaved = value;
     var raw = JSON.stringify(value);
     if (raw !== hubStored) {
       hubStored = raw;
@@ -4503,19 +4544,28 @@
   view("hubReady", function () { this.rev; this.activityLoaded; return hubDataReady(); });
   view("hubNotice", function () {
     this.rev; this.me; this.signedIn; this.hubLoadSlow;
+    this.connectionOffline; this.connectionSettled;
     var saved = hubDisplay();
+    if (!hubDataReady() && bannerOffline()) return saved
+      ? "Showing your saved view. Updates will appear when connected."
+      : "Connect to load your challenges.";
+    if (Store && Store.modelVersion === 2 && hubDataReady()) {
+      return Object.keys(hubErrors).some(function (key) { return key !== "discovery" && !/^(members|rounds|entries|mine):/.test(key); })
+        ? "Some challenge details couldn't be loaded. Reload to try again." : "";
+    }
     if (Object.keys(hubErrors).length) return saved
       ? "Challenges couldn't be refreshed. Showing your saved view; reload to try again."
       : "Challenges couldn't be loaded. Reload to try again.";
     if (this.hubLoadSlow && !hubDataReady()) return saved
-      ? "Challenges are taking longer to refresh. Showing your saved view; check your connection or reload to try again."
+      ? "Challenges are taking longer to refresh. Showing your saved view."
       : "Challenges are taking longer to load. Check your connection or reload to try again.";
     if (saved) return "";
     return navigator.onLine === false ? "Connect to load your challenges." : "Loading your challenges...";
   });
   view("hubActivity", function () {
     var saved = hubDisplay();
-    return saved ? saved.activity : { show: false, week: [], progress: "", weekly: null, weeklyLabel: "", buttonLabel: "", note: "" };
+    return saved ? Object.assign({}, saved.activity, { note: this.activityLoaded ? this.activity.note : "" }) :
+      { show: false, week: [], progress: "", weekly: null, weeklyLabel: "", buttonLabel: "", note: "" };
   });
   // ---- View models -----------------------------------------------------------
   // Templates read these. Each one calls the SAME pure logic the old imperative
@@ -4531,6 +4581,26 @@
     Object.defineProperty(state, name, { get: get, configurable: true });
   }
   var CHALLENGE_SECTION_LABELS = { mine: "Your challenges", disc: "Discover" };
+  view("roundReady", function () {
+    this.rev; this.activeCid; this.viewMonth;
+    return !Store || !Store.roundReady || Store.roundReady();
+  });
+  view("roundLoadFailed", function () {
+    this.rev; this.activeCid; this.viewMonth;
+    return !!Store && !!Store.roundFailed && Store.roundFailed();
+  });
+  view("roundFromCache", function () {
+    this.rev; this.activeCid; this.viewMonth;
+    return !!Store && !!Store.roundCached && Store.roundCached();
+  });
+  view("manageReady", function () {
+    this.rev; this.manageCid;
+    return !Store.challengeReady || Store.challengeReady(this.manageCid);
+  });
+  view("manageLoadFailed", function () {
+    this.rev; this.manageCid;
+    return !!Store.challengeFailed && Store.challengeFailed(this.manageCid);
+  });
 
   view("canCreate", function () { this.rev; this.me; return meIsAdmin(); });
 
@@ -4571,6 +4641,7 @@
     var count = joined.length === 1
       ? "One challenge running."
       : (COUNTS[joined.length] || joined.length) + " challenges running.";
+    if (Store.standingReady && !Store.standingReady(cid)) return { word: word, name: name, sub: count };
     var tail;
     if (!st || !st.anyMins) tail = "Nobody has logged anything yet.";
     else if (!st.mins) tail = "You are yet to log a minute.";
@@ -4617,7 +4688,10 @@
     function row(cid) {
       var status = myStatus(cid), approved = status === "approved";
       var n = approvedHandles(cid).length;
-      var st = approved ? challStanding(cid) : null;
+      if (challMeta[cid].schemaVersion === 2) n = challMeta[cid].memberCount;
+      var loading = approved && !!Store.standingReady && !Store.standingReady(cid);
+      var failed = approved && !!Store.challengeFailed && Store.challengeFailed(cid);
+      var st = approved && !loading ? challStanding(cid) : null;
       var canManage = admin || iOwn(cid);
       var pend = canManage ? pendingFor(cid).length : 0;
       var pill = null;
@@ -4626,6 +4700,7 @@
         else if (st.leading) pill = { cls: "lead", text: "Leading" };
         else pill = { cls: st.mins > 0 ? "rank" : "muted", text: "#" + st.rank + " of " + st.of };
       }
+      if (loading) pill = { cls: "muted", text: failed ? "Standings unavailable" : "Loading standings..." };
       return {
         cid: cid, name: challName(cid),
         // The watermark is YOUR STANDING, so it only ever shows a rank numeral or
@@ -4650,7 +4725,7 @@
         // has started, so it cannot stand in for the joined-but-unstarted case.
         wm: (st && st.anyMins) ? String(st.rank)
             : status === "pending" ? "?"
-            : st ? ""
+            : approved ? ""
             : "+",
         pastel: challPastel(cid), color: challColor(cid),        // The pending count rides the kicker line rather than a badge on a
         // floating control. It is the card's metadata row, so it aligns with
@@ -4658,7 +4733,7 @@
         // the sheet header where managing a challenge actually belongs.
         meta: n + " member" + (n === 1 ? "" : "s") + " \u00b7 Round " + challRoundNumber(cid)
               + (pend ? " \u00b7 " + pend + " request" + (pend === 1 ? "" : "s") : ""),
-        active: cid === act, approved: approved, pending: status === "pending",
+        active: cid === act, approved: approved, pending: status === "pending", failed: failed,
         pill: pill, mins: st ? st.mins.toLocaleString() + " min this round" : "",
         // The card shows the bare number with a small unit beside it, so it needs
         // the value on its own. `mins` keeps the sentence form for screen readers
@@ -4700,14 +4775,19 @@
         // at all, and for most challenges that is exactly who does it. The old
         // line was both wrong and a role name the joiner has no reason to learn.
         note: "Public challenges you can join. Whoever runs the challenge lets you in.",
-        empty: "No new challenges to discover right now." }
+        empty: Store.discoveryReady && !Store.discoveryReady()
+          ? (state.discoverError ? "Discover is unavailable right now." : "Loading Discover...")
+          : "No new challenges to discover right now." }
     ];
   }
   view("challSections", function () {
     var saved = hubDisplay(), ready = hubDataReady();
     return saved ? saved.sections.map(function (section) {
       return Object.assign({}, section, { label: CHALLENGE_SECTION_LABELS[section.id], rows: section.rows.map(function (row) {
-        return Object.assign({}, row, { ready: ready, pastel: "var(--pa-" + row.color + ")" });
+        return Object.assign({}, row, {
+          ready: ready && (!Store.cardActionReady || Store.cardActionReady(row.cid)),
+          pastel: "var(--pa-" + row.color + ")"
+        });
       }) });
     }) : [];
   });
@@ -5070,7 +5150,7 @@
 
   // In-app prompt for a user who has never linked a Google account to their name.
   view("claimNudge", function () {
-    this.rev; this.me; this.signedIn; this.claimRev;
+    this.rev; this.me; this.signedIn; this.claimRev; this.connectionOffline;
     var C = window.__CLAIMS;
     return (C && C.nudge) ? C.nudge() : { show: false };
   });
@@ -5138,6 +5218,8 @@
 
   // Behaviour reachable from templates.
   state.act = {
+    discoverMore: function () { if (Store.loadMore) Store.loadMore(); },
+    retryRound: function () { if (Store.retryFailed) Store.retryFailed(); },
     // x-effect runs when the card element is created and whenever the model
     // changes, which is exactly the old "did we just put a result on screen"
     // moment. Marking it seen here keeps the grace window honest, and the
@@ -5167,6 +5249,7 @@
     toggleCat: function (tag, open) { state.openCats[tag] = !open; },
     setEntriesGroup: function (g) { state.entriesGroup = g; },
     openChallenge: function (cid) { switchChallenge(cid); },
+    observeChallenge: function (element, cid) { if (Store.observeCard) Store.observeCard(element, cid); },
     join: function (cid) { requestJoinChallenge(cid); },
     manage: function (cid) { openManageChallenge(cid); },
     newChallenge: function () { openChallModal("create"); },
@@ -5250,7 +5333,6 @@
     },
     // ---- name claims (Phase 3) ----
     claimConnect: function () { if (window.__CLAIMS && window.__CLAIMS.connect) window.__CLAIMS.connect(); },
-    claimSnooze: function () { if (window.__CLAIMS && window.__CLAIMS.snooze) window.__CLAIMS.snooze(); },
     approveClaim: function (ev, handle) {
       if (!requireConnection()) return;
       var row = ev && ev.currentTarget && ev.currentTarget.parentNode;
@@ -5306,8 +5388,13 @@
   // so a returning user whose cache predates that month still lands on the real
   // result once the authoritative entries arrive (see clampViewMonth).
   var entriesNetReady = false;
+  function expectsDataConnection() {
+    var config = window.__FB || window.__MINUTES_EMULATOR;
+    // Scoped private listeners start after authentication, not on the sign-in screen.
+    return !config || config.modelVersion !== 2 || !!(window.__AUTH && window.__AUTH.user);
+  }
   function requireConnection() {
-    if (netReady) return true;
+    if (!offlineNow()) return true;
     // Admin actions are deliberately NOT queued. Approving a request, editing the
     // roster or renaming a challenge offline is a decision taken against data that
     // may already have moved on, and Firestore's last-write-wins would happily
@@ -5322,7 +5409,7 @@
   // with nothing, and they go into Firestore's durable offline queue. So they are not
   // gated at all - unless this device could not give us that queue, in which case the
   // old refusal is still the honest answer instead of a promise we can't keep.
-  function canQueueWrites() { return netReady || Store.durable(); }
+  function canQueueWrites() { return !offlineNow() || Store.durable(); }
   function requireEntryWrite() {
     if (canQueueWrites()) return true;
     showToast("Not connected, and this device can't store changes offline.", "danger");
@@ -5367,22 +5454,13 @@
     } catch (e) {}
     return false;
   }
-  // Login connection recovery (first run on a device, no cached roster yet).
-  // Name-only auth has a hard dependency on the server roster: with nothing cached there's
-  // nothing local to check a name against, so login can't proceed until Firestore answers
-  // once. Instead of dead-ending, show a passive, self-healing "connecting" state that
-  // clears the instant the roster arrives, auto-recovers when the network returns, and
-  // offers a one-tap Retry (a fresh load re-inits Firebase - what "close and reopen" did).
+  // LoginWelcome owns presentation so recovery cannot show both failed and connecting.
   var loginConnecting = false;
   function setLoginConnecting(on, msg) {
     loginConnecting = !!on;
-    var s = document.getElementById("loginStatus");
-    var r = document.getElementById("loginRetry");
     var t = document.getElementById("loginStatusText");
     if (t && msg) t.textContent = msg;
-    if (s) s.style.display = on ? "flex" : "none";
-    if (r) r.style.display = on ? "block" : "none";
-    if (on) setMsg("loginErr", "");
+    LoginWelcome.sync();
   }
   function reloadToReconnect() {
     // Reachable from the signed-in screens now, where the login status row is not
@@ -5412,7 +5490,7 @@
   var retryStep = 0, retryTimer = 0, reconnecting = null;
   function nudgeConnection() {
     var fb = window.__FB;
-    if (!fb || !fb.disableNetwork || !fb.enableNetwork) return Promise.resolve(false);
+    if (!expectsDataConnection() || !fb || !fb.disableNetwork || !fb.enableNetwork) return Promise.resolve(false);
     if (reconnecting) return reconnecting;
     reconnecting = fb.disableNetwork(fb.db)
       .then(function () { return fb.enableNetwork(fb.db); })
@@ -5429,12 +5507,13 @@
     if (retryTimer) { clearTimeout(retryTimer); retryTimer = 0; }
   }
   function scheduleRetry() {
+    if (!expectsDataConnection()) { stopRetry(); return; }
     if (retryTimer || netReady) return;
     var wait = RETRY_MS[Math.min(retryStep, RETRY_MS.length - 1)];
     retryStep++;
     retryTimer = setTimeout(function () {
       retryTimer = 0;
-      if (netReady) { retryStep = 0; return; }
+      if (netReady || !expectsDataConnection()) { retryStep = 0; return; }
       nudgeConnection();
       scheduleRetry();
     }, wait);
@@ -5531,17 +5610,30 @@
 
       var pending = document.getElementById("claimPending").style.display === "block";
       var claiming = document.getElementById("claimBox").style.display === "block";
+      var offline = navigator.onLine === false;
+      var authReady = !!(window.__AUTH && window.__AUTH.ready);
+      var expectsData = expectsDataConnection();
+      var recovery = !state.signedIn && !card.classList.contains("landing");
+      var error = document.getElementById("loginErr").textContent ||
+        document.getElementById("authErr").textContent;
+      if (!expectsData && authReady) loginConnecting = false;
       var text = "";
-      if (!state.signedIn && !card.classList.contains("landing") && bannerOffline()) {
-        var reason = navigator.onLine === false ? "You're offline. " : "Not connected. ";
+      if (recovery && !error && (offline || (expectsData && bannerOffline()))) {
+        var reason = offline ? "You're offline. " : "Not connected. ";
         text = reason + (pending ? "Your request is still waiting. Reconnect for approval updates."
           : claiming ? "Your name draft is kept here. Reconnect before requesting approval."
           : "Reconnect to continue.");
       }
       if (network.textContent !== text) setMsg(network, text, "warn");
+      document.getElementById("loginStatus").style.display =
+        recovery && loginConnecting && !offline && !text && !error ? "flex" : "none";
+      var retry = document.getElementById("loginRetry");
+      retry.style.display = recovery && (loginConnecting || text) ? "block" : "none";
+      retry.disabled = offline;
       var google = document.getElementById("googleBtn");
-      google.disabled = (google.dataset.mode === "out" && google.getAttribute("aria-busy") === "true") ||
-        (google.dataset.mode !== "out" && navigator.onLine === false);
+      google.disabled = !authReady ||
+        (google.dataset.mode === "out" && google.getAttribute("aria-busy") === "true") ||
+        (google.dataset.mode !== "out" && offline);
       var request = document.getElementById("claimBtn");
       request.disabled = request.getAttribute("aria-busy") === "true" ||
         !document.getElementById("claimNewName").value.trim() || offlineNow();
@@ -5795,6 +5887,7 @@
       var message = errText(e);
       if (message) console.error(attempt.signingOut ? "Google sign-out:" : "Google sign-in:", e);
       setMsg("authErr", message);
+      LoginWelcome.sync();
     }
 
     // Auth failures here are nearly always one of a few config gaps, and the raw
@@ -5832,6 +5925,7 @@
     btn.onclick = function () {
       if (!window.__AUTH || !window.__AUTH.ready) {
         setMsg("authErr", "Sign-in isn't available right now.");
+        LoginWelcome.sync();
         return;
       }
       var signingOut = btn.dataset.mode === "out";
@@ -5842,8 +5936,8 @@
       // reach Firebase, which replaces the previous popup request.
       btn.disabled = signingOut;
       btn.setAttribute("aria-busy", "true");
-      LoginWelcome.sync();
       setMsg("authErr", "");
+      LoginWelcome.sync();
       try {
         // Call synchronously to preserve the click's popup permission.
         var p = signingOut ? window.__AUTH.signOut() : window.__AUTH.signInGoogle();
@@ -6128,21 +6222,30 @@
     var sweeping = false;
     var lastUid = null;
     var prefilled = false;
+    var scopedUid = null, scopedProfile = null, identityStop = null, requestsStop = null;
+
+    function scoped() { return window.__FB && window.__FB.modelVersion === 2; }
+    function resetScopedWatch() {
+      if (identityStop) identityStop();
+      if (requestsStop) requestsStop();
+      identityStop = null; requestsStop = null; scopedProfile = null; scopedUid = null;
+      subscribed = false; reqSubscribed = false; reqsLive = false;
+      idents = {}; reqs = {}; identsLoaded = false; autoLoggedIn = false;
+    }
+    function saveIdentity(fb, handle, data) {
+      if (!scoped()) return fb.setDoc(fb.doc(fb.db, "identities", handle), data);
+      var batch = fb.writeBatch(fb.db);
+      batch.set(fb.doc(fb.db, "identities", handle), data);
+      batch.set(fb.doc(fb.db, "profiles", data.uid), {
+        uid: data.uid, handle: data.handle, displayName: data.handle, role: "member", ts: data.ts
+      });
+      return batch.commit();
+    }
 
     // Anything the app's Alpine store renders from this module has to announce
     // itself: the store cannot see module-local variables, so it ticks a revision
     // on this event and re-reads through window.__CLAIMS.
     function emit() { window.dispatchEvent(new Event("minutes-claims")); }
-
-    // Dismissing the nudge snoozes it rather than killing it. Phase 4 makes
-    // claiming mandatory, so a permanent "never show again" would just turn into
-    // a lockout later.
-    var NUDGE_KEY = "minutes_claim_snooze";
-    var SNOOZE_MS = 3 * 24 * 60 * 60 * 1000;
-    function snoozed() {
-      try { return Date.now() < Number(localStorage.getItem(NUDGE_KEY) || 0); }
-      catch (e) { return false; }
-    }
 
     function me() { return (window.__AUTH && window.__AUTH.user) || null; }
     function low(h) { return String(h || "").trim().toLowerCase(); }
@@ -6212,6 +6315,32 @@
     // ---- backend ------------------------------------------------------------
 
     function watch() {
+      if (scoped()) {
+        var account = me();
+        if (!account) return;
+        if (scopedUid !== account.uid) resetScopedWatch();
+        if (subscribed) return;
+        subscribed = true;
+        scopedUid = account.uid;
+        var epoch = scopedUid, backend = window.__FB;
+        identityStop = backend.onSnapshot(backend.doc(backend.db, "profiles", epoch),
+          { includeMetadataChanges: true }, function (snapshot) {
+            if (scopedUid !== epoch || !me() || me().uid !== epoch || snapshot.metadata.hasPendingWrites) return;
+            idents = {};
+            scopedProfile = snapshot.exists() ? snapshot.data() : null;
+            if (scopedProfile && scopedProfile.archived === true) {
+              scopedProfile = null;
+              setMsg("authErr", "This historical identity cannot sign in. Use your own account.");
+            }
+            if (scopedProfile) idents[low(scopedProfile.handle)] = scopedProfile;
+            identsLoaded = !snapshot.metadata.fromCache || snapshot.exists();
+            emit(); render();
+          }, function (error) {
+            console.error("Account profile listener:", error);
+            setMsg("authErr", "Your account couldn't be loaded. Reconnect and try again.");
+          });
+        return;
+      }
       if (subscribed) return;
       subscribed = true;
       if (usingDemo()) { idents = demo.idents; identsLoaded = true; emit(); render(); return; }
@@ -6250,13 +6379,18 @@
     // the approvals section simply never appears for them - no separate role lookup,
     // and no chance of the UI and the rules disagreeing.
     function watchRequests() {
+      if (scoped() && (!scopedProfile || scopedProfile.role !== "admin")) {
+        if (requestsStop) requestsStop();
+        requestsStop = null; reqSubscribed = false; reqsLive = false; reqs = {};
+        return;
+      }
       if (reqSubscribed) return;
       if (usingDemo()) { reqSubscribed = true; reqs = demo.reqs; reqsLive = true; emit(); return; }
       if (!me() || !window.__FB) return;   // the rules need a token before this can succeed
       reqSubscribed = true;
       var fb = window.__FB;
       try {
-        fb.onSnapshot(fb.collection(fb.db, "claimRequests"), function (snap) {
+        requestsStop = fb.onSnapshot(fb.collection(fb.db, "claimRequests"), function (snap) {
           var next = {};
           snap.forEach(function (d) { next[d.id] = d.data() || {}; });
           reqs = next;
@@ -6351,7 +6485,7 @@
         });
       }
       var fb = window.__FB;
-      return fb.setDoc(fb.doc(fb.db, "identities", low(handle)), claimDoc(handle, u));
+      return saveIdentity(fb, low(handle), claimDoc(handle, u));
     }
 
     // Silent email match. The rules compare our verified email against claimSeeds,
@@ -6365,6 +6499,7 @@
     function sweep() {
       var u = me();
       if (!u || sweeping || sweptUid === u.uid) return Promise.resolve(false);
+      if (scoped()) { sweptUid = u.uid; return Promise.resolve(false); }
       var names = unclaimed();
       sweeping = true;
       var i = 0;
@@ -6564,9 +6699,7 @@
     }
 
     // ---- in-app nudge -------------------------------------------------------
-    // For someone already using the app under a typed name who has never linked a
-    // Google account. The convention is a dismissible banner that performs the
-    // action in place, not a forced sign-out, so nobody loses their session over it.
+    // Linking stays visible until completed, without blocking the saved session.
 
     function nudge() {
       var h = state.me;
@@ -6591,25 +6724,21 @@
       if (idents[low(h)]) return { show: false };      // this name is already bound
       var u = me();
       if (u && myHandle()) return { show: false };     // this account owns another name
-      if (snoozed()) return { show: false };
-
       var asked = null;
       try { asked = localStorage.getItem(REQ_KEY); } catch (e) {}
       if (asked && asked === low(h)) {
         return { show: true, waiting: true, busy: false,
-          title: "Waiting for approval",
-          sub: "An admin has to confirm that " + h + " is you. Nothing else to do.",
+          title: "Account linking is awaiting approval",
+          sub: "An admin will confirm this account belongs to " + h + ". You can keep logging minutes.",
           cta: "" };
       }
-      return { show: true, waiting: false, busy: busy,
-        title: "Link your Google account",
-        sub: "Keeps the name " + h + " yours, and signs you in automatically next time.",
-        cta: busy ? "Linking\u2026" : "Link account" };
-    }
-
-    function snooze() {
-      try { localStorage.setItem(NUDGE_KEY, String(Date.now() + SNOOZE_MS)); } catch (e) {}
-      emit();
+      // A restored Google account may still be matching its existing name.
+      if (u && !scoped() && sweptUid !== u.uid && !busy && !bannerOffline()) return { show: false };
+      return { show: true, waiting: false, busy: busy, disabled: busy || offlineNow(),
+        title: "Link Google to finish setup",
+        sub: offlineNow() ? "Reconnect to link Google to your Minutes account." :
+          "Keep your minutes and challenges when you sign in on another device.",
+        cta: busy ? "Linking\u2026" : "Link Google" };
     }
 
     // The in-app half of the claim flow. The app already knows which name this user
@@ -6696,6 +6825,10 @@
       // Already bound: skip the whole prompt and sign the user straight in.
       var mine = myHandle();
       if (mine) {
+        if (scoped() && Store.modelVersion === 2 && !Store.loginReady()) {
+          if (pendEl.style.display !== "block") hideAll();
+          return;
+        }
         if (state.signedIn) { hideAll(); return; }
         // The latch stops a deliberate log out from being undone instantly.
         if (!autoLoggedIn) {
@@ -6721,6 +6854,7 @@
       try { asked = localStorage.getItem(REQ_KEY); } catch (e) {}
       if (asked) {
         readRequest(asked).then(function (r) {
+          if (!me() || me().uid !== u.uid || myHandle()) return;
           if (r && r.uid === u.uid) showPending(r.handle || asked);
           else {
             try { localStorage.removeItem(REQ_KEY); } catch (e) {}
@@ -6831,7 +6965,11 @@
       };
     }
 
-    window.addEventListener("minutes-auth", function () { render(); });
+    window.addEventListener("minutes-auth", function () {
+      if (scoped() && (!me() || me().uid !== scopedUid)) resetScopedWatch();
+      render();
+    });
+    window.addEventListener("minutes-scoped-ready", function () { render(); });
     window.addEventListener("minutes-roster", function () { if (me()) render(); else emit(); });
     window.addEventListener("minutes-fb-ready", function () { boot(); if (me()) render(); });
 
@@ -6846,7 +6984,6 @@
       // In-app claim surface (the nudge banner reads these through window.__CLAIMS).
       nudge: nudge,
       connect: connect,
-      snooze: snooze,
       // Rows for the backoffice review queue. Empty for anyone the rules will not
       // let list claimRequests, which is what keeps the section admin-only.
       pending: pendingList,
@@ -6892,7 +7029,7 @@
           // own device, so if it landed first they could arrive before the roster
           // knew about them and show up nowhere.
           return addToRoster(display).then(function () {
-            return fb.setDoc(fb.doc(fb.db, "identities", h), {
+            return saveIdentity(fb, h, {
               handle: display, uid: who, ts: Date.now(), via: "admin"
             });
           });
@@ -6933,7 +7070,6 @@
         for (var b in demo.reqs) delete demo.reqs[b];
         demo.seeds = { user: "*", owner: "*" };
         try { localStorage.removeItem(REQ_KEY); } catch (e) {}
-        try { localStorage.removeItem(NUDGE_KEY); } catch (e) {}
         emit();
         render();
         return Promise.resolve("demo claim state cleared");
@@ -6945,24 +7081,19 @@
   })();
   window.__CLAIMS = Claims;
 
-  // The typed-name login is gone: a Google account plus a claimed handle is the only
-  // way in now. The connection-health UI stays, because a wedged first connection is
-  // still possible and the claim chips need the roster before they can render.
+  // Reconnect data only when this authentication state expects data listeners.
   (function () {
     var retry = document.getElementById("loginRetry");
     if (retry) retry.onclick = function () { reloadToReconnect(); };
     window.addEventListener("online", function () {
       stopRetry();
       renderSync();
+      if (!expectsDataConnection()) return;
       nudgeConnection();
-      // A first-ever launch with no cached roster is the one case that genuinely
-      // cannot proceed in place: name-only auth has nothing local to check a name
-      // against, so the server has to answer once. That case still earns a reload
-      // if the nudge doesn't take. Everything else now recovers where it stands,
-      // and a signed-in user keeps logging into the offline queue meanwhile.
+      // Recover legacy first-run startup without reloading a healthy scoped sign-in.
       if (!netReady && !rosterLoaded && !state.me) {
         setTimeout(function () {
-          if (!netReady && !rosterLoaded && !state.me) autoReloadOnce();
+          if (expectsDataConnection() && !netReady && !rosterLoaded && !state.me) autoReloadOnce();
         }, 6000);
       } else scheduleRetry();
     });
@@ -8858,18 +8989,22 @@
   }
 
   function renderSync() {
+    state.connectionOffline = offlineNow();
+    state.connectionSettled = netSettled;
     var off = bannerOffline(), n = unsyncedCount();
     var text = "", tone = "warn";
+    var connection = navigator.onLine === false ? "You're offline." : "Not connected to Minutes.";
+    var changes = n + " change" + (n === 1 ? "" : "s");
     if (off && !Store.durable()) {
-      // No durable queue on this device (private browsing, storage-blocked webview).
-      // Promising a later sync would be a lie, so the old warning is still the true one.
-      text = "Not connected. Changes won't save.";
+      text = connection + (n
+        ? " " + changes + " waiting to sync. Keep Minutes open until connected; offline saving isn't available."
+        : " Offline saving isn't available. Reconnect before adding or changing minutes.");
     } else if (off && n) {
-      text = "Offline. " + n + " change" + (n === 1 ? "" : "s") + " saved on this device, syncing when you're back.";
+      text = connection + " " + changes + (n === 1 ? " is" : " are") + " saved on this device and will sync when connected.";
     } else if (off) {
-      text = "Offline. You can keep logging, your minutes save on this device.";
+      text = connection + " You can keep logging. Minutes save on this device and sync when connected.";
     } else if (n) {
-      text = "Syncing " + n + " change" + (n === 1 ? "" : "s") + "…";
+      text = "Syncing " + changes + "…";
       tone = "info";
     }
     // Two mount points, one state: the base screen and the challenge sheet are
@@ -9041,12 +9176,12 @@
       var tId = target.id, tPrev = target.mins;
       writePromise = Store.updateEntry(tId, { mins: tPrev + newMins }).then(function () { return Store.deleteEntry(id); });
       undoFn = function () {
-        Store.updateEntry(tId, { mins: tPrev }).catch(warnSaveFail);
-        Store.putEntry({ id: id, who: ent.who, date: ent.date, mins: prevMins, note: prevNote, cid: ent.cid }).catch(warnSaveFail);
+        Store.updateEntry(tId, { mins: tPrev }, ent.cid).catch(warnSaveFail);
+        Store.putEntry({ id: id, uid: ent.uid, who: ent.who, date: ent.date, mins: prevMins, note: prevNote, cid: ent.cid }).catch(warnSaveFail);
       };
     } else {
       writePromise = Store.updateEntry(id, { mins: newMins, note: newTag });
-      undoFn = function () { Store.updateEntry(id, { mins: prevMins, note: prevNote }).catch(warnSaveFail); };
+      undoFn = function () { Store.updateEntry(id, { mins: prevMins, note: prevNote }, ent.cid).catch(warnSaveFail); };
     }
 
     writePromise.then(function () {
@@ -9064,7 +9199,7 @@
     if (!editId) return;
     var ent = findEntry(editId);
     if (!ent) { hideEdit(); return; }
-    var removed = { id: ent.id, who: ent.who, date: ent.date, mins: ent.mins, note: ent.note, cid: ent.cid };
+    var removed = { id: ent.id, uid: ent.uid, who: ent.who, date: ent.date, mins: ent.mins, note: ent.note, cid: ent.cid };
     hideEdit();
     showConfirm({ title: "Delete entry?", msg: niceDate(removed.date) + " · " + removed.mins + " min" + (removed.note ? " · " + capTag(removed.note) : ""), ok: "Delete" }, function () {
       Store.deleteEntry(removed.id).then(function () {
@@ -9201,18 +9336,18 @@
       var e = state.entries[i];
       if (e.who === state.me && e.date === date && sameTag(e.note, tag)) { existing = e; break; }
     }
-    var undoFn, writePromise, savedId;
+    var undoFn, writePromise, savedId, entryCid = activeCid();
     if (existing) {
       var id = existing.id, prevMins = existing.mins;
       savedId = id;
       var newMins = existing.mins + mins;
       writePromise = Store.updateEntry(id, { mins: newMins });
-      undoFn = function () { Store.updateEntry(id, { mins: prevMins }).catch(warnSaveFail); };
+      undoFn = function () { Store.updateEntry(id, { mins: prevMins }, entryCid).catch(warnSaveFail); };
     } else {
       var newId = uid();
       savedId = newId;
       writePromise = Store.addEntry({ id: newId, who: state.me, date: date, mins: mins, note: tag });
-      undoFn = function () { Store.deleteEntry(newId).catch(warnSaveFail); };
+      undoFn = function () { Store.deleteEntry(newId, entryCid).catch(warnSaveFail); };
     }
 
     // The sheet shows one round at a time, so if the entry lands in a different
@@ -9537,12 +9672,662 @@
   document.getElementById("newMember").addEventListener("keydown", function (e) {
     if (e.key === "Enter") document.getElementById("addMemberBtn").click();
   });
+  // Model 2 is opt-in until existing identities and history have been migrated.
+  function createScopedStore(fb, settle) {
+    var PAGE_SIZE = 24;
+    var METADATA_BATCH_SIZE = 10;
+    var HISTORY_CONCURRENCY = 4;
+    var listeners = {}, buckets = {}, own = {}, profiles = {}, denied = {}, currentUser = null;
+    var profile = null, membershipReady = false, catalogReady = false, pageCursor = null;
+    var catalogIds = {}, pendingPages = false, generation = 0, adminRoster = null, adminPending = {};
+    var notifyQueued = false, renderTimer = null, scopeTimer = null;
+    var cardObserver = null, cardIds = new WeakMap(), visibleCards = {}, metadataKeys = {}, historyStarted = false;
+    state.discoverMore = false;
+    state.discoverLoading = false;
+    state.discoverError = "";
+
+    function reference() { return fb.doc.apply(null, [fb.db].concat([].slice.call(arguments))); }
+    function collection() { return fb.collection.apply(null, [fb.db].concat([].slice.call(arguments))); }
+    function signedUid() { return currentUser && currentUser.uid; }
+    function administrator() { return !!profile && profile.role === "admin"; }
+    function failure(message) { return Promise.reject(new Error(message)); }
+    function renderSoon() {
+      if (renderTimer !== null) return;
+      // Snapshot bursts share a paint; a timer also runs in background tabs.
+      renderTimer = setTimeout(function () {
+        renderTimer = null;
+        renderSync();
+        renderAll();
+        notifyReady();
+        if (api.hubReady() && !catalogReady && !pendingPages && !state.discoverError) page();
+      }, 16);
+    }
+    function ready(key) {
+      return !!listeners[key] && listeners[key].ready && !listeners[key].failed;
+    }
+    function personalReady() {
+      return !!profile && ready("profile") && membershipReady && ready("memberships") &&
+        Object.keys(own).every(function (cid) { return !!challMeta[cid] && ready(metadataKeys[cid]); });
+    }
+    function scopesSoon() {
+      if (scopeTimer !== null) return;
+      scopeTimer = setTimeout(function () { scopeTimer = null; syncScopes(); }, 0);
+    }
+    function notifyReady() {
+      if (state.signedIn || !rosterLoaded || notifyQueued) return;
+      notifyQueued = true;
+      queueMicrotask(function () {
+        notifyQueued = false;
+        window.dispatchEvent(new Event("minutes-scoped-ready"));
+      });
+    }
+    function stop(key) {
+      var listener = listeners[key];
+      if (!listener) return;
+      delete listeners[key];
+      if (listener.off) listener.off();
+      delete buckets[key];
+      delete hubErrors[key];
+    }
+    function watch(key, target, receive) {
+      if (listeners[key]) return;
+      var record = { target: target, receive: receive, ready: false, failed: false, fromCache: true, serverReady: false, off: null };
+      listeners[key] = record;
+      function attach() {
+        var epoch = generation;
+        if (record.off) record.off();
+        record.failed = false;
+        record.serverReady = false;
+        record.off = fb.onSnapshot(target, { includeMetadataChanges: true }, function (snapshot) {
+          if (epoch !== generation || listeners[key] !== record) return;
+          record.fromCache = snapshot.metadata.fromCache;
+          if (!record.fromCache) record.serverReady = true;
+          record.ready = record.ready || !snapshot.metadata.fromCache ||
+            (typeof snapshot.size === "number" ? snapshot.size > 0 : snapshot.exists());
+          record.failed = false;
+          hubDataArrived(key);
+          if (!snapshot.metadata.fromCache && (!netReady || !netSettled)) setOffline(false);
+          receive(snapshot);
+          if (key.indexOf("mine:") === 0) scopesSoon();
+          notifyReady();
+          renderSoon();
+        }, function (error) {
+          if (epoch !== generation || listeners[key] !== record) return;
+          record.failed = true;
+          console.error("Scoped " + key + " listener:", error);
+          hubDataFailed(key);
+          if (!state.signedIn) setMsg("authErr", "Your challenges couldn't be loaded. Reconnect and try again.");
+          if (key.indexOf("mine:") === 0) state.activityLoadError = true;
+          if (key.indexOf("mine:") === 0) scopesSoon();
+          if (error.code === "permission-denied" && /^(members|rounds|mine|entries):/.test(key)) {
+            var cid = key.split(":")[1];
+            denied[cid] = true;
+            clearChallenge(cid);
+            hubDataFailed("access:" + cid);
+            syncScopes();
+          }
+        });
+      }
+      record.attach = attach;
+      attach();
+    }
+    function reset() {
+      generation++;
+      clearTimeout(renderTimer); renderTimer = null;
+      clearTimeout(scopeTimer); scopeTimer = null;
+      if (cardObserver) cardObserver.disconnect();
+      cardIds = new WeakMap(); visibleCards = {}; metadataKeys = {}; historyStarted = false;
+      Object.keys(listeners).forEach(stop);
+      buckets = {}; own = {}; profiles = {}; denied = {}; profile = null;
+      catalogIds = {}; pageCursor = null; adminRoster = null; adminPending = {};
+      membershipReady = false; catalogReady = false; pendingPages = false;
+      state.discoverMore = false; state.discoverLoading = false; state.discoverError = "";
+      entriesAll = []; state.entries = []; challMeta = {}; membersByCid = {}; roundsByCid = {};
+      cache = { members: [], admins: [] };
+      rosterLoaded = false; entriesNetReady = false; hubCatalogReady = false; hubErrors = {};
+      hubOwner = null; hubSaved = null; hubStored = ""; hubComputed = null;
+      state.activityLoaded = false; state.activityFromCache = true; state.activityLoadError = false;
+      state.landingResolved = false; cachePending = 0;
+      state.me = null; state.signedIn = false;
+      closeBackoffice();
+      hideActivity();
+      LoginWelcome.sync();
+      bump();
+    }
+    function mergeProfile(data) {
+      profiles[data.uid] = data;
+      var names = Object.keys(profiles).map(function (id) { return profiles[id].handle; });
+      Object.keys(membersByCid).forEach(function (cid) {
+        Object.keys(membersByCid[cid]).forEach(function (handle) {
+          if (names.indexOf(handle) === -1) names.push(handle);
+        });
+      });
+      cache.members = names;
+      cache.admins = Object.keys(profiles).filter(function (id) { return profiles[id].role === "admin"; })
+        .map(function (id) { return profiles[id].handle; });
+      if (administrator() && adminRoster) {
+        cache.members = adminRoster.members.slice();
+        cache.admins = adminRoster.admins.slice();
+      }
+      rosterLoaded = true;
+      setLoginConnecting(false);
+    }
+    function metadata(cid, data) {
+      if (data.schemaVersion !== 2) throw new Error("Challenge " + cid + " has not been migrated to model 2.");
+      challMeta[cid] = {
+        name: data.name, color: data.color, createdTs: data.createdTs, owner: "",
+        memberCount: data.memberCount, firstMonth: data.firstMonth, schemaVersion: 2
+      };
+      if (!membersByCid[cid]) membersByCid[cid] = {};
+      if (!roundsByCid[cid]) roundsByCid[cid] = {};
+    }
+    function syncMetadata() {
+      var ids = Array.from(new Set(Object.keys(own).concat(Object.keys(adminPending)))).sort(), desired = {};
+      metadataKeys = {};
+      // Named-document disjunctions also consume the emulator's rules lookup budget.
+      for (var start = 0; start < ids.length; start += METADATA_BATCH_SIZE) {
+        listenBatch(ids.slice(start, start + METADATA_BATCH_SIZE));
+      }
+      function listenBatch(group) {
+        var key = "metadata:" + group.join(",");
+        desired[key] = true;
+        group.forEach(function (cid) { metadataKeys[cid] = key; });
+        watch(key, fb.query(collection("challenges"), fb.where("schemaVersion", "==", 2),
+          fb.where("visibility", "==", "public"), fb.where(fb.documentId(), "in", group), fb.limit(PAGE_SIZE)),
+        function (snapshot) {
+          var found = {};
+          snapshot.forEach(function (doc) { found[doc.id] = true; metadata(doc.id, doc.data()); });
+          if (!snapshot.metadata.fromCache) group.forEach(function (cid) {
+            if (!found[cid]) { delete challMeta[cid]; clearChallenge(cid); }
+          });
+          syncScopes();
+        });
+      }
+      Object.keys(listeners).forEach(function (key) {
+        if (key.indexOf("metadata:") === 0 && !desired[key]) stop(key);
+      });
+    }
+    function clearChallenge(cid) {
+      Object.keys(listeners).forEach(function (key) {
+        if (key === "members:" + cid || key === "rounds:" + cid ||
+            key === "mine:" + cid || key.indexOf("entries:" + cid + ":") === 0) stop(key);
+      });
+      membersByCid[cid] = administrator() && adminPending[cid] ? Object.assign({}, adminPending[cid]) : {};
+      if (own[cid] && !denied[cid]) membersByCid[cid][own[cid].handle] = own[cid];
+      roundsByCid[cid] = {};
+    }
+    function page() {
+      if (!profile || pendingPages || (catalogReady && !state.discoverMore)) return;
+      pendingPages = true;
+      state.discoverLoading = true;
+      state.discoverError = "";
+      var args = [
+        collection("challenges"), fb.where("schemaVersion", "==", 2),
+        fb.where("visibility", "==", "public"), fb.orderBy("createdTs"), fb.orderBy(fb.documentId())
+      ];
+      if (pageCursor) args.push(fb.startAfter(pageCursor));
+      args.push(fb.limit(PAGE_SIZE));
+      var epoch = generation;
+      fb.getDocs(fb.query.apply(null, args)).then(function (snapshot) {
+        if (epoch !== generation) return;
+        snapshot.forEach(function (doc) {
+          catalogIds[doc.id] = true;
+          metadata(doc.id, doc.data());
+        });
+        pageCursor = snapshot.docs.length ? snapshot.docs[snapshot.docs.length - 1] : pageCursor;
+        state.discoverMore = snapshot.size === PAGE_SIZE;
+        hubDataArrived("discovery");
+        catalogReady = true;
+        hubCatalogReady = true;
+        state.discoverLoading = false;
+        pendingPages = false;
+        syncScopes();
+      }).catch(function (error) {
+        if (epoch !== generation) return;
+        console.error("Challenge discovery failed:", error);
+        pendingPages = false; state.discoverLoading = false;
+        state.discoverError = "Challenges couldn't be loaded. Try again.";
+        if (!catalogReady) hubDataFailed("discovery");
+        bump();
+      });
+    }
+    function publishEntries() {
+      var merged = {};
+      Object.keys(buckets).sort(function (a, b) {
+        return (a.indexOf("mine:") === 0 ? 0 : 1) - (b.indexOf("mine:") === 0 ? 0 : 1);
+      }).forEach(function (key) {
+        buckets[key].forEach(function (entry) { merged[entry.cid + "/" + entry.id] = entry; });
+      });
+      entriesAll = Object.keys(merged).map(function (key) { return merged[key]; });
+      state.entries = entriesAll.filter(function (entry) { return entry.cid === activeCid(); });
+      cachePending = entriesAll.filter(function (entry) { return entry._pending; }).length;
+      var joined = Object.keys(own).filter(function (cid) { return own[cid].status === "approved"; });
+      state.activityLoaded = membershipReady && joined.every(function (cid) { return ready("mine:" + cid); });
+      state.activityFromCache = joined.some(function (cid) { return !listeners["mine:" + cid] || listeners["mine:" + cid].fromCache; });
+      state.activityLoadError = joined.some(function (cid) {
+        return !!denied[cid] || !!listeners["mine:" + cid] && listeners["mine:" + cid].failed;
+      });
+      renderSoon();
+      notifyReady();
+    }
+    function entrySnapshot(key, cid, snapshot) {
+      var rows = [];
+      snapshot.forEach(function (document) {
+        var data = document.data();
+        rows.push({
+          id: document.id, uid: data.uid, who: data.who, cid: cid, date: data.date,
+          mins: data.mins, note: data.note, _hadCid: true, _pending: document.metadata.hasPendingWrites
+        });
+      });
+      buckets[key] = rows;
+      if (!snapshot.metadata.fromCache) entriesNetReady = true;
+      publishEntries();
+    }
+    function subscribeMembers(cid) {
+      watch("members:" + cid, fb.query(collection("challenges", cid, "members"), fb.where("uid", "!=", "")), function (snapshot) {
+        if (!snapshot.size && snapshot.metadata.fromCache) return;
+        var members = {};
+        snapshot.forEach(function (document) {
+          var data = document.data();
+          members[data.handle] = data;
+        });
+        membersByCid[cid] = members;
+        if (profile) mergeProfile(profile);
+      });
+    }
+    function subscribeRounds(cid) {
+      watch("rounds:" + cid, collection("challenges", cid, "rounds"), function (snapshot) {
+        if (!snapshot.size && snapshot.metadata.fromCache) return;
+        var rounds = {};
+        snapshot.forEach(function (document) {
+          var data = document.data();
+          rounds[document.id] = roundSavePayload(roundFlagsFromData(data),
+            data.participants.map(function (id) { return data.names[id]; }));
+        });
+        roundsByCid[cid] = rounds;
+      });
+    }
+    function syncScopes() {
+      if (!profile) return;
+      if (personalReady() && !catalogReady && !pendingPages && !state.discoverError) page();
+      var allowed = {};
+      Object.keys(own).forEach(function (cid) { if (own[cid].status === "approved" && !denied[cid]) allowed[cid] = true; });
+      if (administrator() && state.manageCid && challMeta[state.manageCid] && !denied[state.manageCid]) allowed[state.manageCid] = true;
+      Object.keys(membersByCid).forEach(function (cid) {
+        if (!allowed[cid]) clearChallenge(cid);
+      });
+      if (state.signedIn && state.sheet === "stats" && !allowed[activeCid()]) switchTab("challenges");
+      if (personalReady() && (state.sheet === "stats" || state.manageCid)) historyStarted = true;
+      var desired = {};
+      Object.keys(allowed).forEach(function (cid) {
+        var detail = (cid === activeCid() && state.sheet === "stats") || cid === state.manageCid;
+        var summary = !!visibleCards[cid] || detail;
+        if (summary) {
+          desired["members:" + cid] = true; subscribeMembers(cid);
+          desired["rounds:" + cid] = true; subscribeRounds(cid);
+        }
+        if (own[cid] && own[cid].status === "approved") {
+          var months = summary ? [monthKeyOf(new Date())] : [];
+          if (detail) {
+            months.push(monthKeyOf(state.viewMonth));
+            // The existing five-day result landing needs the just-finished round.
+            if (new Date().getDate() <= RESULT_GRACE_DAYS) {
+              var previous = new Date(); previous.setDate(1); previous.setMonth(previous.getMonth() - 1);
+              months.push(monthKeyOf(previous));
+            }
+          }
+          months.forEach(function (month) {
+            var key = "entries:" + cid + ":" + month;
+            desired[key] = true;
+            watch(key, fb.query(collection("challenges", cid, "entries"),
+              fb.where("date", ">=", month + "-01"), fb.where("date", "<=", month + "-31")),
+            function (snap) { entrySnapshot(key, cid, snap); });
+          });
+        }
+      });
+      // Bound initial history reads so cached reloads cannot flood the SDK's query queue.
+      var historyInFlight = Object.keys(listeners).filter(function (key) {
+        return key.indexOf("mine:") === 0 && !listeners[key].serverReady && !listeners[key].failed;
+      }).length;
+      if (historyStarted) Object.keys(allowed).forEach(function (cid) {
+        if (!own[cid] || own[cid].status !== "approved") return;
+        var key = "mine:" + cid;
+        desired[key] = true;
+        if (listeners[key]) return;
+        if (navigator.onLine !== false && historyInFlight >= HISTORY_CONCURRENCY) return;
+        historyInFlight++;
+        watch(key, fb.query(collection("challenges", cid, "entries"), fb.where("uid", "==", signedUid())),
+          function (snapshot) { entrySnapshot(key, cid, snapshot); });
+      });
+      Object.keys(listeners).forEach(function (key) {
+        if (/^(members|rounds|mine|entries):/.test(key) && !desired[key]) {
+          var cid = key.split(":")[1];
+          stop(key);
+          if (key.indexOf("members:") === 0) {
+            membersByCid[cid] = {};
+            if (own[cid]) membersByCid[cid][own[cid].handle] = own[cid];
+          }
+          if (key.indexOf("rounds:") === 0) roundsByCid[cid] = {};
+        }
+      });
+      mergeProfile(profile);
+      publishEntries();
+    }
+    function authChanged() {
+      var next = window.__AUTH && window.__AUTH.user;
+      if ((next && next.uid) === signedUid()) return;
+      reset();
+      currentUser = next || null;
+      if (!currentUser) return;
+      watch("profile", reference("profiles", currentUser.uid), function (snapshot) {
+        rosterLoaded = true;
+        var archived = snapshot.exists() && snapshot.data().archived === true;
+        if (!snapshot.exists() || archived) {
+          if (!archived && snapshot.metadata.fromCache && profile) return;
+          if (profile) {
+            Object.keys(listeners).forEach(function (key) { if (key !== "profile") stop(key); });
+            own = {}; buckets = {}; membersByCid = {}; roundsByCid = {};
+            cache = { members: [], admins: [] };
+            membershipReady = false; catalogReady = false; hubCatalogReady = false;
+            state.me = null; state.signedIn = false;
+            publishEntries();
+          }
+          profile = null; setLoginConnecting(false);
+          if (archived) setMsg("authErr", "This historical identity cannot sign in. Use your own account.");
+          window.dispatchEvent(new Event("minutes-scoped-ready"));
+          return;
+        }
+        if (snapshot.metadata.hasPendingWrites) return;
+        profile = snapshot.data();
+        mergeProfile(profile);
+        if (administrator()) {
+          watch("admin-roster", reference("meta", "roster"), function (snap) {
+            if (!snap.exists()) return;
+            adminRoster = snap.data();
+            mergeProfile(profile);
+            refreshAdminAccess(); bump();
+          });
+          watch("admin-pending", fb.query(fb.collectionGroup(fb.db, "members"),
+            fb.where("status", "==", "pending"), fb.where("uid", "!=", "")), function (snap) {
+            adminPending = {};
+            snap.forEach(function (document) {
+              var member = document.data();
+              if (!adminPending[member.cid]) adminPending[member.cid] = {};
+              adminPending[member.cid][member.handle] = member;
+            });
+            syncMetadata();
+            syncScopes();
+          });
+        } else {
+          stop("admin-roster"); stop("admin-pending"); adminPending = {}; adminRoster = null;
+        }
+        watch("memberships", fb.query(fb.collectionGroup(fb.db, "members"), fb.where("uid", "==", signedUid())), function (snap) {
+          if (!snap.size && snap.metadata.fromCache && membershipReady) return;
+          var nextOwn = {};
+          snap.forEach(function (document) {
+            var member = document.data();
+            if (document.metadata.hasPendingWrites && member.status === "approved") {
+              if (own[member.cid]) nextOwn[member.cid] = own[member.cid];
+              return;
+            }
+            nextOwn[member.cid] = member;
+          });
+          Object.keys(own).forEach(function (cid) {
+            if (!nextOwn[cid] || nextOwn[cid].status !== "approved") clearChallenge(cid);
+          });
+          own = nextOwn;
+          Object.keys(denied).forEach(function (cid) {
+            if (!own[cid] || own[cid].status !== "approved") {
+              delete denied[cid];
+              hubDataArrived("access:" + cid);
+            }
+          });
+          Object.keys(own).forEach(function (cid) {
+            if (!membersByCid[cid]) membersByCid[cid] = {};
+            membersByCid[cid][own[cid].handle] = own[cid];
+          });
+          membershipReady = !snap.metadata.fromCache || snap.size > 0;
+          syncMetadata();
+          syncScopes();
+        });
+        syncScopes();
+      });
+    }
+    function findEntry(id, cid) {
+      return entriesAll.find(function (entry) { return entry.id === id && entry.cid === (cid || activeCid()); });
+    }
+    function entryPayload(entry) {
+      var id = entry.uid || signedUid();
+      return { uid: id, who: entry.who, date: entry.date, mins: entry.mins, note: entry.note || "" };
+    }
+    function uidFor(handle, cid) {
+      var known = (membersByCid[cid] || {})[handle];
+      if (known) return Promise.resolve(known.uid);
+      if (profile && profile.handle === handle) return Promise.resolve(profile.uid);
+      return fb.getDoc(reference("identities", handle.toLowerCase())).then(function (snap) {
+        if (!snap.exists()) throw new Error("That person needs an approved account first.");
+        return snap.data().uid;
+      });
+    }
+    function changeMember(cid, handle, data) {
+      return uidFor(handle, cid).then(function (memberUid) {
+        var memberRef = reference("challenges", cid, "members", memberUid);
+        var challengeRef = reference("challenges", cid);
+        return fb.runTransaction(fb.db, function (transaction) {
+          return Promise.all([transaction.get(memberRef), transaction.get(challengeRef)]).then(function (snapshots) {
+            if (!snapshots[1].exists()) throw new Error("The challenge no longer exists.");
+            var before = snapshots[0].exists() && snapshots[0].data().status === "approved" ? 1 : 0;
+            var after = data && data.status === "approved" ? 1 : 0;
+            if (data) transaction.set(memberRef, Object.assign({}, data, { uid: memberUid, cid: cid }));
+            else transaction.delete(memberRef);
+            if (after !== before) transaction.update(challengeRef, {
+              memberCount: snapshots[1].data().memberCount + after - before
+            });
+          });
+        });
+      });
+    }
+    var api = {
+      modelVersion: 2,
+      start: function () {
+        window.addEventListener("minutes-auth", authChanged);
+        document.addEventListener("alpine:init", function () {
+          Alpine.effect(function () {
+            state.activeCid; state.viewMonth; state.manageCid; state.sheet;
+            scopesSoon();
+          });
+        });
+        if (window.Alpine && state.booted) {
+          Alpine.effect(function () {
+            state.activeCid; state.viewMonth; state.manageCid; state.sheet;
+            scopesSoon();
+          });
+        }
+        authChanged();
+      },
+      durable: function () { return !!fb.durable; },
+      observeCard: function (element, cid) {
+        if (!cardObserver) cardObserver = new IntersectionObserver(function (changes) {
+          changes.forEach(function (change) {
+            var id = cardIds.get(change.target);
+            if (!id) return;
+            if (change.isIntersecting) visibleCards[id] = true;
+            else delete visibleCards[id];
+          });
+          if (personalReady()) historyStarted = true;
+          scopesSoon();
+        }, { root: document.getElementById("baseWrap"), rootMargin: "160px 0px" });
+        cardIds.set(element, cid);
+        cardObserver.observe(element);
+      },
+      loginReady: personalReady,
+      hubReady: personalReady,
+      hubComplete: function () {
+        return catalogReady && membershipReady && !!profile && state.activityLoaded && !Object.keys(hubErrors).length &&
+          Object.keys(listeners).every(function (key) { return listeners[key].ready; });
+      },
+      challengeReady: function (cid) {
+        return !denied[cid] && ready("members:" + cid) && ready("rounds:" + cid);
+      },
+      cardActionReady: function (cid) {
+        return personalReady() && !denied[cid];
+      },
+      standingReady: function (cid) {
+        return !denied[cid] && ready("members:" + cid) && ready("entries:" + cid + ":" + monthKeyOf(new Date()));
+      },
+      challengeFailed: function (cid) {
+        return !!denied[cid] || ["members:" + cid, "rounds:" + cid, "entries:" + cid + ":" + monthKeyOf(new Date())]
+          .some(function (key) { return !!listeners[key] && listeners[key].failed; });
+      },
+      discoveryReady: function () { return catalogReady; },
+      landingReady: function () {
+        var keys = ["members:" + activeCid(), "rounds:" + activeCid(),
+          "entries:" + activeCid() + ":" + monthKeyOf(new Date())];
+        if (new Date().getDate() <= RESULT_GRACE_DAYS) {
+          var previous = new Date(); previous.setDate(1); previous.setMonth(previous.getMonth() - 1);
+          keys.push("entries:" + activeCid() + ":" + monthKeyOf(previous));
+        }
+        return keys.every(function (key) { return ready(key) && !listeners[key].fromCache; });
+      },
+      retryFailed: function () {
+        Object.keys(denied).forEach(function (cid) { hubDataArrived("access:" + cid); });
+        denied = {};
+        Object.keys(listeners).forEach(function (key) { if (listeners[key].failed) listeners[key].attach(); });
+        syncScopes();
+        if (!catalogReady) page();
+      },
+      loadMore: page,
+      roundReady: function () {
+        var key = "entries:" + activeCid() + ":" + monthKeyOf(state.viewMonth);
+        return api.challengeReady(activeCid()) && ready(key);
+      },
+      roundFailed: function () {
+        var key = "entries:" + activeCid() + ":" + monthKeyOf(state.viewMonth);
+        return api.challengeFailed(activeCid()) || !!listeners[key] && listeners[key].failed;
+      },
+      roundCached: function () {
+        var key = "entries:" + activeCid() + ":" + monthKeyOf(state.viewMonth);
+        return !!listeners[key] && listeners[key].fromCache;
+      },
+      addEntry: function (entry) {
+        if (!profile) return failure("Sign in before adding minutes.");
+        var id = entry.id || uid(), cid = entry.cid || activeCid();
+        return settle(fb.setDoc(reference("challenges", cid, "entries", id), entryPayload(entry)), id);
+      },
+      updateEntry: function (id, fields, cid) {
+        var entry = findEntry(id, cid);
+        if (!entry) return failure("The entry is not loaded. Reopen its round before editing.");
+        return settle(fb.updateDoc(reference("challenges", entry.cid, "entries", id), fields));
+      },
+      deleteEntry: function (id, cid) {
+        var entry = findEntry(id, cid);
+        if (!entry) return failure("The entry is not loaded. Reopen its round before deleting.");
+        return settle(fb.deleteDoc(reference("challenges", entry.cid, "entries", id)));
+      },
+      putEntry: function (entry) {
+        return settle(fb.setDoc(reference("challenges", entry.cid || activeCid(), "entries", entry.id), entryPayload(entry)));
+      },
+      requestJoin: function (cid) {
+        if (!profile) return failure("Sign in before requesting membership.");
+        return fb.setDoc(reference("challenges", cid, "members", profile.uid), {
+          uid: profile.uid, cid: cid, handle: profile.handle, role: "member", status: "pending", ts: Date.now()
+        });
+      },
+      setMember: changeMember,
+      removeMember: function (cid, handle) { return changeMember(cid, handle, null); },
+      saveRound: function (cid, key, data) {
+        return Promise.all(data.participants.map(function (handle) { return uidFor(handle, cid); })).then(function (ids) {
+          var names = {};
+          ids.forEach(function (id, index) { names[id] = data.participants[index]; });
+          var payload = Object.assign({}, data, { participants: ids, names: names });
+          var batch = fb.writeBatch(fb.db);
+          batch.set(reference("challenges", cid, "rounds", key), payload);
+          if (ids.length && challMeta[cid] && key < challMeta[cid].firstMonth) {
+            batch.update(reference("challenges", cid), { firstMonth: key });
+          }
+          return batch.commit();
+        });
+      },
+      createChallenge: function (cid, name, color) {
+        if (!profile) return failure("Sign in before creating a challenge.");
+        var batch = fb.writeBatch(fb.db), month = monthKeyOf(new Date()), names = {};
+        names[profile.uid] = profile.handle;
+        batch.set(reference("challenges", cid), {
+          schemaVersion: 2, name: name, color: color, createdTs: Date.now(), firstMonth: month,
+          memberCount: 1, type: "monthly", visibility: "public"
+        });
+        batch.set(reference("challenges", cid, "members", profile.uid), {
+          uid: profile.uid, cid: cid, handle: profile.handle, role: "owner", status: "approved", ts: Date.now()
+        });
+        batch.set(reference("challenges", cid, "rounds", month), {
+          participants: [profile.uid], names: names, joinOpen: true, logOpen: true, locked: false
+        });
+        return batch.commit();
+      },
+      renameChallenge: function (cid, data) { return fb.updateDoc(reference("challenges", cid), data); },
+      saveRoster: function () {
+        if (!administrator()) return failure("Only an administrator can change accounts.");
+        var wantedMembers = cache.members.slice(), wantedAdmins = cache.admins.slice();
+        return fb.getDoc(reference("meta", "roster")).then(function (snap) {
+          if (!snap.exists()) throw new Error("The account directory is unavailable.");
+          var before = snap.data();
+          var changes = before.admins.concat(wantedAdmins).filter(function (name, index, names) {
+            return names.indexOf(name) === index && (before.admins.indexOf(name) >= 0) !== (wantedAdmins.indexOf(name) >= 0);
+          });
+          return Promise.all(changes.map(function (name) { return uidFor(name, ""); })).then(function (ids) {
+            var batch = fb.writeBatch(fb.db);
+            batch.set(reference("meta", "roster"), { members: wantedMembers, admins: wantedAdmins });
+            ids.forEach(function (id, index) {
+              batch.update(reference("profiles", id), { role: wantedAdmins.indexOf(changes[index]) >= 0 ? "admin" : "member" });
+            });
+            return batch.commit();
+          });
+        });
+      },
+      diagnostics: function () {
+        return {
+          modelVersion: 2, uid: signedUid(), subscriptions: Object.keys(listeners), catalogCount: Object.keys(catalogIds).length,
+          entryChallenges: Array.from(new Set(entriesAll.map(function (entry) { return entry.cid; }))),
+          membershipReady: membershipReady, catalogReady: catalogReady, profileLoaded: !!profile,
+          waiting: Object.keys(listeners).filter(function (key) { return !listeners[key].ready; }),
+          failed: Object.keys(listeners).filter(function (key) { return listeners[key].failed; }),
+          pendingBuckets: Object.keys(buckets).filter(function (key) {
+            return buckets[key].some(function (entry) { return entry._pending; });
+          })
+        };
+      }
+    };
+    return api;
+  }
   // ---- Data store: Firestore only ----
   var entriesAll = [];        // every entry across all challenges, each carrying its cid
   var Store = (function () {
     var fb = null;
     var cidSubbed = {};        // cid -> true (avoid duplicate subcollection listeners)
     var failedListeners = {};
+    var uidAliases = null, uidDirectoryError = "";
+
+    function participantUid(handle) {
+      return uidAliases && Object.prototype.hasOwnProperty.call(uidAliases, handle) ? uidAliases[handle] : "";
+    }
+    function participantUids(handles) {
+      if (!uidAliases || !handles.every(function (handle) { return !!participantUid(handle); })) return null;
+      return Object.fromEntries(handles.map(function (handle) { return [handle, participantUid(handle)]; }));
+    }
+    function memberPayload(cid, handle, data) {
+      var result = Object.assign({}, data), id = participantUid(handle);
+      if (id) { result.uid = id; result.cid = cid; }
+      return result;
+    }
+    function legacyEntryPayload(obj) {
+      var result = { who: obj.who, date: obj.date, mins: obj.mins, note: obj.note || "", cid: obj.cid || activeCid() };
+      var id = participantUid(obj.who);
+      if (id) {
+        if (obj.uid && obj.uid !== id) throw new Error("This entry's account reference needs administrator review.");
+        result.uid = id;
+      }
+      return result;
+    }
 
     function listen(key, ref, options, next, failed) {
       var unsubscribe = null, generation = 0;
@@ -9644,7 +10429,10 @@
       cidSubbed[cid] = true;
       listen("members:" + cid, fb.collection(fb.db, "challenges", cid, "members"), { includeMetadataChanges: true }, function (snap) {
         var m = {};
-        snap.forEach(function (d) { var v = d.data() || {}; m[d.id] = { handle: v.handle || d.id, role: v.role || "member", status: v.status || "approved", ts: v.ts || 0 }; });
+        snap.forEach(function (d) { var v = d.data() || {}; m[d.id] = {
+          handle: v.handle || d.id, uid: v.uid || participantUid(v.handle || d.id),
+          role: v.role || "member", status: v.status || "approved", ts: v.ts || 0
+        }; });
         // Same guard as the challenges listener: an empty roster from cache is "not loaded",
         // not "everyone left". Accepting it would drop the user's own membership and flip
         // their role and admin badge for as long as the connection was down.
@@ -9678,6 +10466,29 @@
     }
 
     function fbStart() {
+      listen("uid-directory", fb.doc(fb.db, "meta", "uidDirectory"), { includeMetadataChanges: true }, function (snapshot) {
+        if (!snapshot.exists() && snapshot.metadata.fromCache) return;
+        if (!snapshot.exists()) { uidAliases = null; uidDirectoryError = ""; return; }
+        var data = snapshot.data(), aliases = data.aliases;
+        var valid = data.schemaVersion === 1 && aliases && typeof aliases === "object" && !Array.isArray(aliases) &&
+          Object.keys(data).every(function (key) { return key === "schemaVersion" || key === "aliases"; }) &&
+          Object.keys(aliases).every(function (handle) {
+            return /^[A-Za-z][A-Za-z0-9 _-]{0,23}$/.test(handle) && typeof aliases[handle] === "string" &&
+              aliases[handle].length > 0 && aliases[handle].length <= 128 && aliases[handle].indexOf("/") === -1;
+          }) && new Set(Object.values(aliases)).size === Object.keys(aliases).length;
+        if (!valid) {
+          uidDirectoryError = "The participant UID directory is invalid.";
+          console.error(uidDirectoryError);
+          showToast("Account references need administrator review. Your current session is unchanged.", "danger");
+          return;
+        }
+        uidAliases = Object.assign(Object.create(null), aliases);
+        uidDirectoryError = "";
+        entriesAll.forEach(function (entry) { if (!entry.uid) entry.uid = participantUid(entry.who); });
+      }, function (error) {
+        uidDirectoryError = "The participant UID directory could not be refreshed.";
+        console.error(uidDirectoryError, error);
+      });
       // includeMetadataChanges: without it the listener does not re-fire when a
       // queued write is finally acknowledged, so the per-row "waiting to sync"
       // markers would never clear.
@@ -9691,7 +10502,7 @@
           // the queue it describes.
           var waiting = !!d.metadata.hasPendingWrites;
           if (waiting) pend++;
-          arr.push({ id: d.id, who: v.who, date: v.date, mins: v.mins, note: v.note || "", cid: v.cid || "", _hadCid: v.cid != null, _pending: waiting });
+          arr.push({ id: d.id, uid: v.uid || participantUid(v.who), who: v.who, date: v.date, mins: v.mins, note: v.note || "", cid: v.cid || "", _hadCid: v.cid != null, _pending: waiting });
         });
         cachePending = pend;
         state.activityLoaded = ActivityModel.snapshotReady(state.activityLoaded, snap.metadata.fromCache, arr.length);
@@ -9754,15 +10565,25 @@
     }
 
     return {
-      init: function (f) { fb = f; },
+      init: function (f) {
+        fb = f;
+        if (f.modelVersion === 2) Store = createScopedStore(f, settle);
+      },
       start: function () { if (fb) fbStart(); },
       retryFailed: retryFailedListeners,
       // Whether this device can hold writes offline (persistent IndexedDB cache).
       // False on a storage-blocked browser, where offline writes must stay refused.
       durable: function () { return !!(fb && fb.durable); },
+      diagnostics: function () {
+        return { modelVersion: 1, uidPreparation: {
+          prepared: !!uidAliases, error: uidDirectoryError, mappedParticipants: uidAliases ? Object.keys(uidAliases).length : 0
+        } };
+      },
       addEntry: function (obj) {
         var id = obj.id || uid();
-        return settle(fb.setDoc(fb.doc(fb.db, "entries", id), { who: obj.who, date: obj.date, mins: obj.mins, note: obj.note || "", cid: obj.cid || activeCid() }), id);
+        return Promise.resolve().then(function () {
+          return settle(fb.setDoc(fb.doc(fb.db, "entries", id), legacyEntryPayload(obj)), id);
+        });
       },
       updateEntry: function (id, fields) {
         return settle(fb.updateDoc(fb.doc(fb.db, "entries", id), fields));
@@ -9771,33 +10592,46 @@
         return settle(fb.deleteDoc(fb.doc(fb.db, "entries", id)));
       },
       putEntry: function (obj) {
-        return settle(fb.setDoc(fb.doc(fb.db, "entries", obj.id), { who: obj.who, date: obj.date, mins: obj.mins, note: obj.note || "", cid: obj.cid || activeCid() }));
+        return Promise.resolve().then(function () {
+          return settle(fb.setDoc(fb.doc(fb.db, "entries", obj.id), legacyEntryPayload(obj)));
+        });
       },
       saveRoster: function () {
-        return fb.setDoc(fb.doc(fb.db, "meta", "roster"), { members: cache.members, admins: cache.admins });
+        var data = { members: cache.members, admins: cache.admins };
+        var memberIds = participantUids(cache.members), adminIds = participantUids(cache.admins);
+        if (memberIds) data.memberUids = memberIds;
+        if (adminIds) data.adminUids = adminIds;
+        return fb.setDoc(fb.doc(fb.db, "meta", "roster"), data);
       },
       // Round metadata (joining/logging guards + participants) for the active challenge.
       saveRound: function (cid, key, data) {
         var f = roundFlagsFromData(data);
-        return fb.setDoc(fb.doc(fb.db, "challenges", cid, "rounds", key), roundSavePayload(f, data.participants || []));
+        var payload = roundSavePayload(f, data.participants || []), ids = participantUids(payload.participants);
+        if (ids) payload.participantUids = ids;
+        return fb.setDoc(fb.doc(fb.db, "challenges", cid, "rounds", key), payload);
       },
       // Membership writes (approval flow).
       requestJoin: function (cid) {
-        return fb.setDoc(fb.doc(fb.db, "challenges", cid, "members", state.me), { handle: state.me, role: "member", status: "pending", ts: Date.now() });
+        return fb.setDoc(fb.doc(fb.db, "challenges", cid, "members", state.me),
+          memberPayload(cid, state.me, { handle: state.me, role: "member", status: "pending", ts: Date.now() }));
       },
       setMember: function (cid, handle, data) {
-        return fb.setDoc(fb.doc(fb.db, "challenges", cid, "members", handle), data);
+        return fb.setDoc(fb.doc(fb.db, "challenges", cid, "members", handle), memberPayload(cid, handle, data));
       },
       removeMember: function (cid, handle) {
         return fb.deleteDoc(fb.doc(fb.db, "challenges", cid, "members", handle));
       },
       // Create a new challenge; creator becomes owner + approved.
       createChallenge: function (cid, name, color) {
-        return fb.setDoc(fb.doc(fb.db, "challenges", cid), {
+        var owner = state.me, data = {
           name: name, color: color || "", owner: state.me,
           type: "monthly", visibility: "public", createdTs: Date.now()
-        }).then(function () {
-          return fb.setDoc(fb.doc(fb.db, "challenges", cid, "members", state.me), { handle: state.me, role: "owner", status: "approved", ts: 0 });
+        };
+        var ownerId = participantUid(owner);
+        if (ownerId) data.ownerUid = ownerId;
+        return fb.setDoc(fb.doc(fb.db, "challenges", cid), data).then(function () {
+          return fb.setDoc(fb.doc(fb.db, "challenges", cid, "members", owner),
+            memberPayload(cid, owner, { handle: owner, role: "owner", status: "approved", ts: 0 }));
         });
       },
       // Rename / recolour an existing challenge.
@@ -10623,8 +11457,12 @@
     }
     return activityCache.value;
   }
+  var activityDateFormatters = {};
   function activityDateLabel(date, options) {
-    return parseISO(date).toLocaleDateString(undefined, options || { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+    var format = options || { weekday: "long", day: "numeric", month: "long", year: "numeric" };
+    var key = JSON.stringify(format);
+    if (!activityDateFormatters[key]) activityDateFormatters[key] = new Intl.DateTimeFormat(undefined, format);
+    return activityDateFormatters[key].format(parseISO(date));
   }
   function activityDayLabel(cell) {
     var detail = cell.future ? "future date" : !state.activityLoaded ? "activity not loaded" :
@@ -10634,10 +11472,12 @@
   view("activity", function () {
     this.rev; this.me; this.signedIn; this.activityDay; this.activityMonth; this.activitySelected;
     this.activityGoalRev; this.activityLoaded; this.activityFromCache; this.activityLoadError;
+    this.connectionOffline; this.connectionSettled;
     var result = activitySnapshot(), known = state.activityLoaded;
     var selected = result.days[state.activitySelected];
-    var note = state.activityLoadError ? (known ? "Activity couldn't be refreshed. Showing saved entries; reload to try again." : "Activity couldn't be loaded. Reload to try again.") :
-      !known ? (navigator.onLine === false ? "Connect to load your activity history." : "Loading your activity history...") :
+    var note = bannerOffline() ? (known ? "Saved history may be incomplete until connected." : "Connect to load your activity history.") :
+      state.activityLoadError ? (known ? "Activity couldn't be refreshed. Showing saved entries; reload to try again." : "Activity couldn't be loaded. Reload to try again.") :
+      !known ? "Loading your activity history..." :
       state.activityFromCache || offlineNow() ? "Saved history may be incomplete until connected." : "";
     if (result.invalid) note += (note ? " " : "") + "Some entries have invalid dates or minutes and aren't counted.";
     if (Object.keys(result.days).some(function (date) { return result.days[date].pending; })) {
@@ -10873,13 +11713,16 @@
       unsettled: function () { netReady = false; netSettled = false; renderSync(); },
       settled: function () { return netSettled; }
     };
+    window.__minutesBackend = function () {
+      return Store.diagnostics ? Store.diagnostics() : { modelVersion: 1 };
+    };
     // Third bridge, same reason. The pull-to-refresh script called activeScroller()
     // and sheetOpen() directly, which are private to this IIFE, so every touch in
     // the installed app threw ReferenceError and the gesture never ran at all.
     window.__minutesLayer = { scroller: activeScroller, sheetOpen: sheetOpen };
     startStore();
     setTimeout(function () {
-      if (hubDataReady()) return;
+      if (!expectsDataConnection() || hubDataReady()) return;
       state.hubLoadSlow = true;
       console.warn("Challenge loading deadline exceeded; waiting for backend snapshots.");
     }, 12000);
@@ -10892,24 +11735,27 @@
       renderSync();
       if (!netReady) scheduleRetry();
     }, 5000);
-    // First-run wedge: no cache, no server, not logged in. Surface a passive, self-healing
-    // connecting state (spinner + Retry) instead of a silent login screen the user is stuck
-    // on. It clears itself the moment the roster snapshot lands.
+    // Auth startup and authenticated data loading are separate recovery states.
     setTimeout(function () {
-      if (!netReady && !rosterLoaded && !state.me) setLoginConnecting(true, "Connecting to the server…");
+      if (state.me) return;
+      if (!window.__AUTH || !window.__AUTH.ready) {
+        setLoginConnecting(true, "Sign-in is taking longer to start.");
+      } else if (expectsDataConnection() && !netReady && !rosterLoaded) {
+        setLoginConnecting(true, "Connecting to the server…");
+      }
     }, 6000);
     // Seed the in-memory roster from the last-known cache so a returning user's saved
     // session (and typed name) resolve immediately - even if the live snapshot is slow or
     // the realtime socket came back stale after suspend. The server snapshot refreshes this.
-    hydrateRosterCache();
+    if (!window.__FB || window.__FB.modelVersion !== 2) hydrateRosterCache();
     // Same for challenge names/colours, so the header reads correctly from the first frame
     // instead of briefly (or, while offline, indefinitely) showing the raw cid. The repaint
     // matters: Alpine has already painted by now, and with no connection there is no
     // snapshot coming to trigger a second one, so without this the cache would be loaded
     // and still not shown.
-    if (hydrateChallCache()) renderChallChip();
+    if ((!window.__FB || window.__FB.modelVersion !== 2) && hydrateChallCache()) renderChallChip();
     var saved = localStorage.getItem(SESSION_KEY);
-    if (saved && resolveName(saved)) doLogin(resolveName(saved));
+    if ((!window.__FB || window.__FB.modelVersion !== 2) && saved && resolveName(saved)) doLogin(resolveName(saved));
     // Release the boot gate now that visibility is decided (restored -> app, else login).
     document.documentElement.classList.remove("has-session");
     LoginWelcome.start();
@@ -10952,7 +11798,8 @@ ${r?'Expression: "'+r+`"
            onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
            enableNetwork, disableNetwork,
-           collection, onSnapshot, setDoc, updateDoc, deleteDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+           collection, collectionGroup, onSnapshot, setDoc, updateDoc, deleteDoc, doc, getDoc, getDocs,
+           query, where, orderBy, documentId, startAfter, limit, writeBatch, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyAqaZ5b4txwYn1Ts57rwvGE3jRUWS9GDxA",
@@ -11071,7 +11918,8 @@ ${r?'Expression: "'+r+`"
       durable = false;
     }
     window.__FB = { db, durable, collection, onSnapshot, setDoc, updateDoc, deleteDoc, doc, getDoc,
-                    enableNetwork, disableNetwork };
+                    enableNetwork, disableNetwork, collectionGroup, query, where, orderBy, documentId,
+                    startAfter, limit, getDocs, writeBatch, runTransaction, modelVersion: 1 };
   } catch (e) {
     console.error("Firebase init failed - falling back to local storage:", e);
   }

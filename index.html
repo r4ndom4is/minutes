@@ -3941,7 +3941,7 @@
   var ACTIVECID_KEY = "minutes_active_cid";
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
-  var VERSION = "16.9";
+  var VERSION = "17.0";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -5536,7 +5536,8 @@
   var retryStep = 0, retryTimer = 0, reconnecting = null;
   function nudgeConnection() {
     var fb = window.__FB;
-    if (!expectsDataConnection() || !fb || !fb.disableNetwork || !fb.enableNetwork) return Promise.resolve(false);
+    if (navigator.onLine === false || !expectsDataConnection() ||
+        !fb || !fb.disableNetwork || !fb.enableNetwork) return Promise.resolve(false);
     if (reconnecting) return reconnecting;
     reconnecting = fb.disableNetwork(fb.db)
       .then(function () { return fb.enableNetwork(fb.db); })
@@ -5553,13 +5554,13 @@
     if (retryTimer) { clearTimeout(retryTimer); retryTimer = 0; }
   }
   function scheduleRetry() {
-    if (!expectsDataConnection()) { stopRetry(); return; }
+    if (navigator.onLine === false || !expectsDataConnection()) { stopRetry(); return; }
     if (retryTimer || netReady) return;
     var wait = RETRY_MS[Math.min(retryStep, RETRY_MS.length - 1)];
     retryStep++;
     retryTimer = setTimeout(function () {
       retryTimer = 0;
-      if (netReady || !expectsDataConnection()) { retryStep = 0; return; }
+      if (netReady || navigator.onLine === false || !expectsDataConnection()) { retryStep = 0; return; }
       nudgeConnection();
       scheduleRetry();
     }, wait);
@@ -7152,7 +7153,10 @@
         }, 6000);
       } else scheduleRetry();
     });
-    window.addEventListener("offline", function () { renderSync(); scheduleRetry(); });
+    window.addEventListener("offline", function () {
+      stopRetry();
+      setOffline(true);
+    });
     // Coming back to a suspended tab is the other moment the socket is typically
     // stale, and it fires no online event because the network never technically left.
     document.addEventListener("visibilitychange", function () {
@@ -11532,8 +11536,7 @@
     var selected = result.days[state.activitySelected];
     var note = bannerOffline() ? (known ? "Saved history may be incomplete until connected." : "Connect to load your activity history.") :
       state.activityLoadError ? (known ? "Activity couldn't be refreshed. Showing saved entries; reload to try again." : "Activity couldn't be loaded. Reload to try again.") :
-      !known ? "Loading your activity history..." :
-      state.activityFromCache || offlineNow() ? "Saved history may be incomplete until connected." : "";
+      !known ? "Loading your activity history..." : "";
     if (result.invalid) note += (note ? " " : "") + "Some entries have invalid dates or minutes and aren't counted.";
     if (Object.keys(result.days).some(function (date) { return result.days[date].pending; })) {
       note += (note ? " " : "") + "Includes entries waiting to sync.";
@@ -12016,7 +12019,7 @@ ${r?'Expression: "'+r+`"
               : (sheetEl && sheetIsOpen()) ? [sheetEl]
               : wraps;
     }
-    var startY = 0, pulling = false, dist = 0, clearTimer = 0;
+    var startY = 0, pulling = false, refreshing = false, dist = 0, clearTimer = 0;
     var THRESH = 95, MAX = 150, REST = 22, RESIST = 0.5;
 
     function atTop() {
@@ -12055,7 +12058,7 @@ ${r?'Expression: "'+r+`"
     }
 
     window.addEventListener("touchstart", function (e) {
-      if (e.touches.length !== 1 || !atTop()) { pulling = false; return; }
+      if (refreshing || e.touches.length !== 1 || !atTop()) { pulling = false; return; }
       // The page's chrome is a pinned bar, not part of the scroller: a pull that
       // starts there is not a pull on the list underneath it. The .grab handle this
       // also used to exclude is gone with the sheet.
@@ -12109,12 +12112,16 @@ ${r?'Expression: "'+r+`"
     // Reconnect live data and retry failed listeners in place. Only hard-reload
     // for a newer app version; preserve the local session and pending writes.
     function softRefresh() {
+      refreshing = true;
       var started = Date.now();
       var finish = function () {
         // keep the spinner visible for a minimum beat so the gesture feels intentional
         var wait = Math.max(0, 500 - (Date.now() - started));
-        setTimeout(function () { ptr.classList.remove("spin"); reset(); }, wait);
+        setTimeout(function () { refreshing = false; ptr.classList.remove("spin"); reset(); }, wait);
       };
+      // Data recovery must not wait for an unrelated app-update request.
+      if (window.__minutesRefresh) window.__minutesRefresh();
+      if (navigator.onLine === false) { finish(); return; }
       var current = window.__APP_VERSION || "";
       // Poll THIS document, not a hardcoded filename. The app once shipped as
       // two pages with independent VERSION values, and polling a hardcoded
@@ -12123,16 +12130,22 @@ ${r?'Expression: "'+r+`"
       // the check stays correct wherever the file is served from.
       // The cache buster is load-bearing too: it is what keeps the service
       // worker from answering the poll out of Cache Storage.
-      fetch(location.pathname + "?v=" + Date.now(), { cache: "no-store" })
-        .then(function (r) { return r.text(); })
+      var update = new AbortController();
+      var updateTimer = setTimeout(function () { update.abort(); }, 5000);
+      fetch(location.pathname + "?v=" + Date.now(), { cache: "no-store", signal: update.signal })
+        .then(function (r) {
+          if (!r.ok) throw new Error("App update check returned HTTP " + r.status);
+          return r.text();
+        })
         .then(function (t) {
           var m = t.match(/var VERSION\s*=\s*"([^"]+)"/);
           if (m && current && m[1] !== current) { location.reload(); return; }
-          if (window.__minutesRefresh) window.__minutesRefresh();
-          finish();
         })
-        .catch(function () {
-          if (window.__minutesRefresh) window.__minutesRefresh();
+        .catch(function (error) {
+          console.warn("App update check failed; data reconnection was requested independently:", error);
+        })
+        .finally(function () {
+          clearTimeout(updateTimer);
           finish();
         });
     }

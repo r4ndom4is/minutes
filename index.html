@@ -290,6 +290,9 @@
     --fs-6xl: 40px;   /* display: the sign-in wordmark, and nothing else */
     /* Align Inter's visible ink with H2's artwork, not their element boxes. */
     --brand-wordmark-offset: .08em;
+    --welcome-mark-size: clamp(160px, 36svh, 320px);
+    --welcome-recovery-mark-size: clamp(112px, 24svh, 192px);
+    --welcome-action-width: 360px;
     /* ---- WEIGHT ------------------------------------------------------------
        The app was already disciplined here: 600 / 700 / 800 carry almost
        everything. Tokenised anyway, because a typeface change is the moment
@@ -599,8 +602,8 @@
     --ink: #1c1e2e; --pop-ink: #131313;
   }
   /* Shared app surfaces use the approved palette without rewriting saved preferences. */
-  :root { --welcome-bg: #161615; }
-  html[data-theme="light"] { --welcome-bg: #f5f4f0; }
+  :root { --welcome-bg: #161615; --welcome-accent: #dfb4cf; --welcome-on-accent: #321c2c; }
+  html[data-theme="light"] { --welcome-bg: #f5f4f0; --welcome-accent: #81506e; --welcome-on-accent: #ffffff; }
   #login, #layerBase, #backofficeView, .policy-page,
   html:has(#backofficeView.show) :is(.modal-overlay, #popDock, #ptr),
   html.hub-active :is(#challModal, #activityModal, #popDock, #ptr),
@@ -609,7 +612,7 @@
     --bg: var(--welcome-bg); --card: #232321; --card-2: #2e2e2a;
     --text: #efefea; --muted: #b8b8ae; --muted-2: #a0a095;
     --border: #3d3d37; --border-2: #55554b; --field-edge: #828274;
-    --accent: #dfb4cf; --on-accent: #321c2c;
+    --accent: var(--welcome-accent); --on-accent: var(--welcome-on-accent);
     --accent-hover: #ecc8df; --accent-pressed: #cfa0be; --accent-soft: #3c2a38;
     --s-fg: #a4d6c9; --s-bg: #203631;
     --d-fg: #ffb8a7; --d-bg: #442c28;
@@ -648,7 +651,7 @@
     --card: #fffefa; --card-2: #eeede7;
     --text: #292925; --muted: #64645d; --muted-2: #6b6b62;
     --border: #deded5; --border-2: #cacac0; --field-edge: #858578;
-    --accent: #81506e; --on-accent: #ffffff;
+    --accent: var(--welcome-accent); --on-accent: var(--welcome-on-accent);
     --accent-hover: #6f3f5c; --accent-pressed: #5a314b; --accent-soft: #f4eaf0;
     --s-fg: #276b60; --s-bg: #eaf3ef;
     --d-fg: #b13c2e; --d-bg: #fbeee9;
@@ -742,6 +745,33 @@
     margin: 0 0 var(--sp-2xl); background: var(--card-2); color: var(--text); text-decoration: none; }
   #login #loginRetry:hover:not(:disabled) { background: var(--card); }
   #login #loginRetry:disabled { color: var(--muted-2); }
+
+  /* Only the signed-out entrance is full-bleed; account tasks retain their neutral surface. */
+  html.welcome-active:has(#login.login-welcome),
+  html.welcome-active:has(#login.login-welcome) body { background: var(--welcome-accent); }
+  #login.login-welcome { background: var(--accent); color: var(--on-accent); }
+  #login.login-welcome .login-card { padding: var(--sp-2xl) var(--sp-lg) var(--sp-5xl); }
+  #login.login-welcome .logo { width: min(100%, var(--welcome-mark-size));
+    height: auto; aspect-ratio: 1; margin-bottom: 0; color: var(--on-accent); }
+  #login.login-welcome:has(.msg:not(:empty)) .logo { width: min(100%, var(--welcome-recovery-mark-size)); }
+  #login.login-welcome :is(#loginSub, .msg, .login-status, .login-hint, .login-legal a, .ver-tag) {
+    color: var(--on-accent); }
+  #login.login-welcome #loginSub { margin-bottom: var(--sp-5xl); }
+  #login.login-welcome .btn-oauth { width: 100%; max-width: var(--welcome-action-width); min-height: 52px; }
+  #login.login-welcome .btn-oauth:not(:disabled) { background: var(--on-accent); color: var(--accent); }
+  #login.login-welcome .btn-oauth:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--on-accent) 94%, var(--accent)); }
+  #login.login-welcome .btn-oauth:active:not(:disabled) {
+    background: color-mix(in srgb, var(--on-accent) 88%, var(--accent)); }
+  #login.login-welcome #loginRetry { border: 1px solid currentColor; background: transparent; color: var(--on-accent); }
+  #login.login-welcome #loginRetry:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--on-accent) 12%, var(--accent)); }
+  #login.login-welcome #loginRetry:disabled { border-style: dashed; cursor: not-allowed; }
+  #login.login-welcome .login-spin { border-color: color-mix(in srgb, var(--on-accent) 35%, var(--accent));
+    border-top-color: var(--on-accent); }
+  #login.login-welcome :is(button, a):focus-visible { outline-color: var(--on-accent); }
+  #login.login-welcome ::selection { background: var(--on-accent); color: var(--accent); }
+  #login.login-welcome .ver-tag { margin-top: var(--sp-sm); }
 
   /* The same identity becomes a compact header once there is a task. */
   .login-card.onb #googleBtn, .login-card.onb #authWho, .login-card.onb #authHint { display: none !important; }
@@ -2826,7 +2856,7 @@
 <div id="ptr" aria-hidden="true"><div class="ptr-spinner"></div></div>
 
 <!-- LOGIN -->
-<div id="login" x-show="!$store.s.signedIn">
+<div id="login" class="login-welcome" x-show="!$store.s.signedIn">
   <div class="wrap">
     <div class="login-card">
       <div class="login-lead">
@@ -3911,7 +3941,7 @@
   var ACTIVECID_KEY = "minutes_active_cid";
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
-  var VERSION = "16.8";
+  var VERSION = "16.9";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -5615,12 +5645,17 @@
       var surface = !state.signedIn ? login : backoffice ? document.getElementById("backofficeView")
         : hub ? document.getElementById("layerBase")
         : settings || challenge ? document.getElementById("sheet") : document.documentElement;
-      if (meta) meta.setAttribute("content", getComputedStyle(surface).getPropertyValue("--bg").trim());
+      if (meta) {
+        var colours = getComputedStyle(surface);
+        meta.setAttribute("content", colours.getPropertyValue(surface === login &&
+          login.classList.contains("login-welcome") ? "--accent" : "--bg").trim());
+      }
     }
     function sync() {
       if (!started) return;
       var signin = !state.signedIn && !(window.__AUTH && window.__AUTH.user) &&
         !card.classList.contains("onb");
+      login.classList.toggle("login-welcome", signin);
       if (!signin || document.hidden) stop();
       else if (!played) play();
 

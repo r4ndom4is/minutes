@@ -262,6 +262,9 @@
     --fs-6xl: 40px;   /* display: the sign-in wordmark, and nothing else */
     /* Align Inter's visible ink with H2's artwork, not their element boxes. */
     --brand-wordmark-offset: .08em;
+    --welcome-mark-size: clamp(160px, 36svh, 320px);
+    --welcome-recovery-mark-size: clamp(112px, 24svh, 192px);
+    --welcome-action-width: 360px;
     /* ---- WEIGHT ------------------------------------------------------------
        The app was already disciplined here: 600 / 700 / 800 carry almost
        everything. Tokenised anyway, because a typeface change is the moment
@@ -571,8 +574,8 @@
     --ink: #1c1e2e; --pop-ink: #131313;
   }
   /* Shared app surfaces use the approved palette without rewriting saved preferences. */
-  :root { --welcome-bg: #161615; }
-  html[data-theme="light"] { --welcome-bg: #f5f4f0; }
+  :root { --welcome-bg: #161615; --welcome-accent: #dfb4cf; --welcome-on-accent: #321c2c; }
+  html[data-theme="light"] { --welcome-bg: #f5f4f0; --welcome-accent: #81506e; --welcome-on-accent: #ffffff; }
   #login, #layerBase, #backofficeView, .policy-page,
   html:has(#backofficeView.show) :is(.modal-overlay, #popDock, #ptr),
   html.hub-active :is(#challModal, #activityModal, #popDock, #ptr),
@@ -581,7 +584,7 @@
     --bg: var(--welcome-bg); --card: #232321; --card-2: #2e2e2a;
     --text: #efefea; --muted: #b8b8ae; --muted-2: #a0a095;
     --border: #3d3d37; --border-2: #55554b; --field-edge: #828274;
-    --accent: #dfb4cf; --on-accent: #321c2c;
+    --accent: var(--welcome-accent); --on-accent: var(--welcome-on-accent);
     --accent-hover: #ecc8df; --accent-pressed: #cfa0be; --accent-soft: #3c2a38;
     --s-fg: #a4d6c9; --s-bg: #203631;
     --d-fg: #ffb8a7; --d-bg: #442c28;
@@ -620,7 +623,7 @@
     --card: #fffefa; --card-2: #eeede7;
     --text: #292925; --muted: #64645d; --muted-2: #6b6b62;
     --border: #deded5; --border-2: #cacac0; --field-edge: #858578;
-    --accent: #81506e; --on-accent: #ffffff;
+    --accent: var(--welcome-accent); --on-accent: var(--welcome-on-accent);
     --accent-hover: #6f3f5c; --accent-pressed: #5a314b; --accent-soft: #f4eaf0;
     --s-fg: #276b60; --s-bg: #eaf3ef;
     --d-fg: #b13c2e; --d-bg: #fbeee9;

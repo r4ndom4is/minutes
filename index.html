@@ -710,7 +710,7 @@
   .login-card .logo { width: 80px; height: 80px; margin: 0 auto var(--sp-lg); flex: 0 0 auto; }
   .login-card .logo > svg { width: 100%; height: 100%; display: block; }
   .login-card h1 { font-size: var(--fs-6xl); font-weight: var(--fw-sm-bold); margin: 0 0 var(--sp-md);
-    letter-spacing: 0; line-height: var(--lh-tight); }
+    letter-spacing: 0; line-height: var(--lh-tight); overflow-wrap: anywhere; }
   .login-card p { color: var(--muted); font-size: var(--fs-sm); line-height: var(--lh-relaxed);
     margin: 0 auto var(--sp-5xl); max-width: 30ch; }
   .login-status { align-items: center; justify-content: center; gap: var(--sp-sm); color: var(--muted);
@@ -2826,20 +2826,20 @@
 <div id="ptr" aria-hidden="true"><div class="ptr-spinner"></div></div>
 
 <!-- LOGIN -->
-<div id="login" x-show="!$store.s.signedIn" x-cloak>
+<div id="login" x-show="!$store.s.signedIn">
   <div class="wrap">
     <div class="login-card">
       <div class="login-lead">
         <div class="logo" id="loginBrand" data-motion="settled" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" data-brand="h2" role="img" aria-label="Minutes H2, one-two-three joined hourglasses" color="currentColor"><g class="h2-column" data-column="0"><circle cx="35" cy="97" r="12" fill="currentColor"/></g><g class="h2-column" data-column="1"><path d="M64 56 A12 12 0 0 1 70.8829 77.8298 C68.5532 79.4611 67 80.1649 67 82.5 C67 84.8351 68.5532 85.5389 70.8829 87.1702 A12 12 0 1 1 57.1171 87.1702 C59.4468 85.5389 61 84.8351 61 82.5 C61 80.1649 59.4468 79.4611 57.1171 77.8298 A12 12 0 0 1 64 56 Z" fill="currentColor"/></g><g class="h2-column" data-column="2"><path d="M93 27 A12 12 0 0 1 99.8829 48.8298 C97.5532 50.4611 96 51.1649 96 53.5 C96 55.8351 97.5532 56.5389 99.8829 58.1702 A12 12 0 0 1 99.8829 77.8298 C97.5532 79.4611 96 80.1649 96 82.5 C96 84.8351 97.5532 85.5389 99.8829 87.1702 A12 12 0 1 1 86.1171 87.1702 C88.4468 85.5389 90 84.8351 90 82.5 C90 80.1649 88.4468 79.4611 86.1171 77.8298 A12 12 0 0 1 86.1171 58.1702 C88.4468 56.5389 90 55.8351 90 53.5 C90 51.1649 88.4468 50.4611 86.1171 48.8298 A12 12 0 0 1 93 27 Z" fill="currentColor"/></g></svg></div>
         <h1>Minutes</h1>
-        <p id="loginSub">Log your minutes and see where you stand against everyone else this month.</p>
+        <p id="loginSub">Track your daily minutes and compare monthly progress with friends.</p>
       </div>
       <div class="msg msg--quiet" id="loginErr" aria-live="polite"></div>
       <div class="msg msg--quiet" id="loginNetwork" role="status" aria-live="polite"></div>
       <div class="login-status" id="loginStatus" role="status" aria-live="polite" style="display:none"><span class="login-spin" aria-hidden="true"></span><span id="loginStatusText">Connecting to the server…</span></div>
       <button type="button" class="btn" id="loginRetry" style="display:none">Retry connection</button>
       <div class="login-who" id="authWho" style="display:none"></div>
-      <button class="btn btn-oauth" id="googleBtn">
+      <button class="btn btn-oauth" id="googleBtn" disabled>
         <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false">
           <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
           <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
@@ -2920,9 +2920,12 @@
       </div>
 
       <p class="login-hint" id="authHint"></p>
+      <noscript><p class="login-hint">JavaScript is needed to sign in, but not to read about Minutes or its privacy policy.</p></noscript>
     </div>
-    <p class="login-legal"><a href="privacy.html" target="_blank" rel="noopener"
-      aria-label="Privacy policy (opens in a new tab)">Privacy policy</a></p>
+    <p class="login-legal">
+      <a href="about.html" target="_blank" rel="noopener" aria-label="About Minutes (opens in a new tab)">About</a>
+      <a href="privacy.html" target="_blank" rel="noopener" aria-label="Privacy policy (opens in a new tab)">Privacy policy</a>
+    </p>
     <div class="ver-tag"></div>
   </div>
 </div>
@@ -3908,7 +3911,7 @@
   var ACTIVECID_KEY = "minutes_active_cid";
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
-  var VERSION = "16.7";
+  var VERSION = "16.8";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -6217,6 +6220,7 @@
     var resName = document.getElementById("resumeName");
     var newEl   = document.getElementById("claimNewName");
     var cardEl  = document.querySelector(".login-card");
+    var introduction = document.getElementById("loginSub").textContent;
     var onbMail = document.getElementById("onbMail");
     var pendingMail = document.getElementById("pendingMail");
     var switchEl = document.getElementById("onbSwitch");
@@ -6579,7 +6583,7 @@
       var sub = document.getElementById("loginSub");
       // The pitch, not an instruction. Someone arriving here has not been told
       // what Minutes is, and "sign in to open your tracker" does not tell them.
-      if (sub) sub.textContent = "Log your minutes and see where you stand against everyone else this month.";
+      if (sub) sub.textContent = introduction;
       WaitGame.stop();
       if (!me()) paintHero();
     }

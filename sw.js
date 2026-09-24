@@ -5,11 +5,12 @@
    - Query-string requests (the pull-to-refresh version poll): network only.
    - Other same-origin static assets (icons, manifest, svg): cache-first.
    - Cross-origin (Firebase, gstatic, reCAPTCHA): passthrough, never cached. */
-var CACHE = "minutes-v49";  // Bump whenever the cached shell or assets change.
+var CACHE = "minutes-v50";  // Bump whenever the cached shell or assets change.
 var CORE = [
   "./",
   "./index.html",
   "./privacy.html",
+  "./about.html",
   "./manifest.webmanifest",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
@@ -77,15 +78,17 @@ self.addEventListener("fetch", function (e) {
         // "./index.html" here, so a second page opened alongside the shell
         // overwrote the shell's offline copy with its own markup, and every
         // later request for ./index.html, including the update poll, was
-        // answered with the wrong document. The privacy page and app entry
+        // answered with the wrong document. Public pages and app entry
         // points must keep their own cache keys.
         caches.open(CACHE).then(function (c) { c.put(req, copy); });
         return res;
       }).catch(function () {
         return caches.match(req).then(function (m) {
           if (m) return m;
-          if (url.pathname === new URL("./privacy.html", self.location.href).pathname) {
-            return new Response("Privacy policy unavailable offline. Reconnect and reload this page.", {
+          var pageName = url.pathname === new URL("./privacy.html", self.location.href).pathname ? "Privacy policy" :
+            url.pathname === new URL("./about.html", self.location.href).pathname ? "About Minutes" : null;
+          if (pageName) {
+            return new Response(pageName + " unavailable offline. Reconnect and reload this page.", {
               status: 503, headers: { "Content-Type": "text/plain; charset=utf-8" }
             });
           }

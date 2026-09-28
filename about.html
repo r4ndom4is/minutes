@@ -576,7 +576,7 @@
   /* Shared app surfaces use the approved palette without rewriting saved preferences. */
   :root { --welcome-bg: #161615; --welcome-accent: #dfb4cf; --welcome-on-accent: #321c2c; }
   html[data-theme="light"] { --welcome-bg: #f5f4f0; --welcome-accent: #81506e; --welcome-on-accent: #ffffff; }
-  #login, #layerBase, #backofficeView, .policy-page,
+  #login, #layerBase, #backofficeView, #requiredLinkModal, .policy-page,
   html:has(#backofficeView.show) :is(.modal-overlay, #popDock, #ptr),
   html.hub-active :is(#challModal, #activityModal, #popDock, #ptr),
   html.settings-active :is(#sheet, #popDock, #ptr),
@@ -615,7 +615,7 @@
     --brand-rear: var(--accent-pressed); --brand-middle: var(--accent); --brand-front: var(--accent-hover);
     --logo-surface: var(--bg);
   }
-  html[data-theme="light"] :is(#login, #layerBase, #backofficeView, .policy-page),
+  html[data-theme="light"] :is(#login, #layerBase, #backofficeView, #requiredLinkModal, .policy-page),
   html[data-theme="light"]:has(#backofficeView.show) :is(.modal-overlay, #popDock, #ptr),
   html[data-theme="light"].hub-active :is(#challModal, #activityModal, #popDock, #ptr),
   html[data-theme="light"].settings-active :is(#sheet, #popDock, #ptr),

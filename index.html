@@ -604,7 +604,7 @@
   /* Shared app surfaces use the approved palette without rewriting saved preferences. */
   :root { --welcome-bg: #161615; --welcome-accent: #dfb4cf; --welcome-on-accent: #321c2c; }
   html[data-theme="light"] { --welcome-bg: #f5f4f0; --welcome-accent: #81506e; --welcome-on-accent: #ffffff; }
-  #login, #layerBase, #backofficeView, .policy-page,
+  #login, #layerBase, #backofficeView, #requiredLinkModal, .policy-page,
   html:has(#backofficeView.show) :is(.modal-overlay, #popDock, #ptr),
   html.hub-active :is(#challModal, #activityModal, #popDock, #ptr),
   html.settings-active :is(#sheet, #popDock, #ptr),
@@ -643,7 +643,7 @@
     --brand-rear: var(--accent-pressed); --brand-middle: var(--accent); --brand-front: var(--accent-hover);
     --logo-surface: var(--bg);
   }
-  html[data-theme="light"] :is(#login, #layerBase, #backofficeView, .policy-page),
+  html[data-theme="light"] :is(#login, #layerBase, #backofficeView, #requiredLinkModal, .policy-page),
   html[data-theme="light"]:has(#backofficeView.show) :is(.modal-overlay, #popDock, #ptr),
   html[data-theme="light"].hub-active :is(#challModal, #activityModal, #popDock, #ptr),
   html[data-theme="light"].settings-active :is(#sheet, #popDock, #ptr),
@@ -1698,6 +1698,21 @@
      confirm is the one reusable nested dialog (it can open over the manage modal),
      so it sits just above base modals but stays below toasts. */
   #confirmModal { z-index: 52; }
+  #requiredLinkModal { z-index: 54; }
+  #requiredLinkModal .modal { transform: none; }
+  .required-link { color: var(--text); }
+  .required-link .modal-title:focus { outline: none; }
+  .required-link :is(.modal-msg, .required-link-account, .required-link-status, .required-link-error) {
+    font-size: var(--fs-sm); line-height: var(--lh-relaxed); margin: 0 0 var(--sp-2xl); overflow-wrap: anywhere; }
+  .required-link-account { color: var(--muted); }
+  .required-link-status { color: var(--text); }
+  .required-link-error { color: var(--danger); }
+  .required-link-actions { display: flex; flex-direction: column; gap: var(--sp-md); }
+  .required-link .mbtn.primary { color: var(--on-accent); }
+  #requiredLinkContinue { display: flex; align-items: center; justify-content: center; gap: var(--sp-md); }
+  #requiredLinkContinue.required-link-google { background: #fff; color: #1f1f1f; border-color: #747775; }
+  .required-link-google-mark { width: 20px; height: auto; flex: none; }
+  #requiredLinkContinue span { min-width: 0; }
   .modal {
     width: 100%; max-width: calc(var(--frame-w) - 2 * var(--sheet-pad));
     margin: auto;
@@ -3919,6 +3934,34 @@
     </div>
   </div>
 </div>
+<div class="modal-overlay" id="requiredLinkModal" lang="et" x-cloak
+     x-effect="$store.s.act.syncRequiredLink($store.s.requiredLink.show)">
+  <section class="modal required-link" role="dialog" aria-modal="true"
+           aria-labelledby="requiredLinkTitle" aria-describedby="requiredLinkReason requiredLinkConnect requiredLinkKeep">
+    <h2 class="modal-title" id="requiredLinkTitle" tabindex="-1" data-modal-focus
+        x-text="$store.s.me + ', uuendame sisselogimist'"></h2>
+    <p class="modal-msg" id="requiredLinkReason">Uuendame Minuteid, et see oleks turvalisem ja töötaks hästi ka siis, kui kasutajaid ja väljakutseid lisandub.</p>
+    <p class="modal-msg" id="requiredLinkConnect">Jätkamiseks seo oma konto Google’i kontoga. Me ei kasuta seda reklaamide näitamiseks ega sinu tegevuse jälgimiseks mujal veebis.</p>
+    <p class="modal-msg" id="requiredLinkKeep">Kõik sinu senised minutid ja väljakutsed jäävad alles.</p>
+    <p class="required-link-account" x-show="$store.s.requiredLink.account" x-text="$store.s.requiredLink.account"></p>
+    <p class="required-link-status" role="status" x-show="$store.s.requiredLink.status" x-text="$store.s.requiredLink.status"></p>
+    <p class="required-link-error" role="alert" x-show="$store.s.requiredLink.error" x-text="$store.s.requiredLink.error"></p>
+    <div class="required-link-actions">
+      <button type="button" class="mbtn primary" id="requiredLinkContinue"
+              :class="{ 'required-link-google': $store.s.requiredLink.googleAction }"
+              :disabled="$store.s.requiredLink.busy" :aria-busy="!!$store.s.requiredLink.busy"
+              @click="$store.s.act.requiredLinkAction()">
+        <!-- Official Google mark, scaled proportionally from developers.google.com/static/identity/images/g-logo.png. Inlined for offline use. -->
+        <img class="required-link-google-mark" alt="" aria-hidden="true" width="50" height="51"
+             x-show="$store.s.requiredLink.googleAction"
+             src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAzCAYAAADVY1sUAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAA+KSURBVGhDzZh3eFTlusXHTQybYUomIfTOEUGKpACCdEgyJZNMwlCSACmAoFJE9B6vosA9SgKhN0FEUFB6r0lI7x1EkSKiVwVEkPtAgJRZ37rPTBKE0XNORPCwnmf9MX98735/z3q/79uzFYqHJBoMTYTB38SAobNhGLYdBr88YfA7B/2wy9D7XYU+4DIMhvPCaCwQRuNumEzzhClo+G1jaGvnWn+5aB2qEUa/CGHw2wv90Ks0+ZNmPRmoJ00BpLHWetJoIE1GMjCQDAomg0PI4FDCZLkhgoYniGDrC2L48EbOz3ikEiF+njAPni1MQ76j2d58AKkfRuE/lAgYCpvDw4AAPwi9H6D3h9AHQOj1EAYjYDABRjOEMYgMDCEto8jQcCJ41CURHPGeCBrdzPmZD1VUKJ4Q1gHTYBlwiaHDyMAhhH4woR8Cm/8QwH8o7CBwQAwD9HYQf0AfANgh9AbADmIMBIxBgCkYMIUApuFA4AgwOIy0RhOWsVdslqgZ9uc59/CnVTGudzcR0SeD4QPJ0AGEeQBgHAgYBgP6wbAFDHH4Loj+V5DaNBwQjjRqQSyAKRS2wBGoMo9ElXk0qoIiwJBIcuQkInR8ennQpM7OvTywxAteEYjpeZPRfcmRzxGhfYHg/kCgHWaQAwQOiF9BbAH2kboHxHAviNmRhs0UAlvgcNjMdpDRqDKHoyJoDCqDx6HSEkWOfJGwTv6lPHRyqHNPf1hiRte3Od2LfMGbYqwvENYbwtoHCHkeMPcHTDWpOBKpHS37HqndG9UgMNSOlQk2YxBsRgtsgaG0BVodaVSaR7PCHIGK4HEoD45EuSUGt0PGgyNeIiNeY7l1itG5tzqLbz0dy7e7ktO7EpO6Q8R4QYzpCTGqNzDcnkq/+1PR/xsQY/X+qAYJgc00HFWBVlSaR6HSHOZIozx4HO5Yoh0Qt0NfIMNfZcWIaXsYNsPDub86ScS1ncX4juSbHSlmdoaY0hXihWchor0hInpCjHwOCH0eCLonFfumd8DUnlj+pCGANBhIo5HCaKTNGEgHiMmCKlMoKgNHoMI8GhVB4SgPGos7lkjctsTgVshEB8Qd69RdDAmRnPurk8TqZmF8vzU5vy3FnPYQb3aEePUemCgfiPBewIg+gKUfqjf+IDsMafSrvkfM9jvD4ACBQV9lB6E5yHF3MNhKmkNZGTicFYEjHSB3giJwJ3gsbgVHoSxkAhn2SjXE7Nn1nPurk8QW907ik8ZlXNeMYkkLiLjWEHNrYBzJdIOY2AMi0hcirDdg7QtY+oOWIaTFnzAOuwaD3x6b3n+m0OsNwmDwEQZDV5pM3lUmk78tMGgqTJYttsDQSwwJJy3hLDePxu2gMbgVHIkySzQZNp23rVMeHILbFJLYqc3l3kYU6z0h1jSFWNYCYkEbiP+phXkGmNINmOANMbYnGN6XDB9EYRn0tQgaOuOWcUhz57q/pxsBwxvZzNbJVcGjv6I1kuXBY3kzOBIMm8Iy64u72P8BIewSR5VTmKEhd2optrhDfOwJ8UFTiOUtIOJbQ/yjHcRbNTAvdQcn+1JEPQeEPR9nf11xrlcX/TTQ2rDKEhFrC40mw6eyzDp5V8qfgWCq0kOkyVeY2pDioApijwZimxvEJg+ID5tArGwOsbA1xLvtId56CvzvrhTTe1wWE331zrUeRDct0RF3rJM2/6kk7BJ5ru/wpEyRLEMkKSEOKyH2qSF2ukF86g7xkSfE6uYQi1qBCztQzO34g5jZqYtznf+oRJ5CLfJcL7KoPkWmK0SaDAdQghLioBpitxZiqzvERk9wfTOKVa1viPmtvJzr/MclSuUInpHJvPpkbn2KbBkiQ4ZIlSGOKSGOqCD2acEd7uTuxhQbPMc413gsJErkAzzTgKJAhsN5MkSuDJElQ6TLEClKiAQVmKal2Ou2x3n9YyFxVtmIpfJ1fq6kKJIhCmucXwOUI4OZDciMhhTpqnKRpuzkXOOxkPhcZeRZFVnSkKJYCYeLalyodAAxV0mebEiRrdzqvP6xkTipmsMLWooSNaqtqnax6i4QixqSX6ooCpUG5/V1Ufd44dl7qejmGy+6PGw76i5gE4U44baT590oSrUQpZpq34VSQxSrwZMqihLVJZGnUTs3WRf5xIq3ei0T8I5D1cN2z6UCPnHYZAcp4BkdRakbfrUdqgasRAOe1VCcUB1xbrCu8p5ne6f3CtIn7uG75xLSOxa5CnFS9zW/cqco1aHavwXiBTeKE5qlzg3WVd7zbLN6LSO954mHbt940jsOpxXihO4Sv/xnINUw/NYOov4v5wbrqkcJ4rOA9IrFjwpRqrvKL5xH6540SrXkN1qKk+ppzg3WVY8UZL6j7lWFKNVe5pe1m93euIa/bvrqjc8LGtpONHw8E7GDvIdrCvG5+hxPaVjbtPMxjBIleF5FnFA+lnvEPlreseKiQhxvWMDTaooSJRyuuRRRrIStWIkq+z1ypgErS+U/c2o9MhD7ZveZL84qxIkGO3iu+lZHseywrVhGVZGMiiIZd4pcUXWiPsuKXS9dzVM82D0yD+/2+aD6qPwjth+vzo0723eR4/gtUIgTrnN4vgFRJMNmb7rIFRWFrrhT6IqyQlfcKHTF9cInefvUk7xS8uQD3execWKU7xJx2CcW+2vtdY9/77d3nNjjPU9c8Yn7bfP3uhoYuxRVx5808XR9VhW5shrABWWFLrhR6IJfClzwU4ELfsh3wbXTLjxbKP2l71pe83DOcU/8DkCtey9zjNZ7CnFW0aiy2OU6jj/JsgIX3CioBrhS4IIf8yVcyJdwJl/CF4X1WFIilRd9rnja+YGPQt7zRT+fhfY7QthHh97zfmP4zBPsZU9kAa2ORbdLXA7wtAt/KZDwc76Ei/kSvs2XcC5Pwhd5EoryJGTm1mPOl/V4oKDebueHPgp1XXhrY4+VZPe423w2rhw94irgFVcJ79iqu/adT/rE2u70XsI2jkU3S5+IsJ2px0v59fhdvoSv8yScypNQmichN1dCSq6EQzkSduS6cNtJV67Okx/pP8R2qy91eWrl9fJOS6/zmYXX0TX+BrrPL8Oz8++gR1w5vGIr4B1biV6L7WOFnLsL7afRD4XSxR+PS/wqT8KJPAkFeRIyciUk5ErYmyPhsxwJ67JdsKJQZlyR8sabOZpH8p991iw+0XLNN5ntP7zGDkt/wFOLf0LnhVfRJf7/0HXBTXSff6sGqIK9VpDe8bY37itwrlAx5+JZiYW5ErPuSWFnjoRNORLWZLtgUZYr5mYqMatYy2mFjb+PyW7x0L+ieK4//n7zzd+zxarTaLPiG7Rb9j2eWnIJTy/6GZ0X/uJIp9uCMvSIr6JXfGW572K2u6/A6SKFR2Gh9HNuicSEHAn7cyRsy5GwIVvCqmwXxNshsmS8nqnGS+kemFDckiPzOvxkyOz2UL5rKWan1NNsTl/jvu0kG60rYpM1J9Bi9VdoveJrtFv2Hf625CI6Lr6CzouuoUv8dfRYRXZfeGe7cxmHUvKlqTmnJe7KkfhptoQPsyWsyHbBgixXzHFAqPBypjuiMppiRFpbmPO6cHCOL3pmDozzSnqwL412ybu2+ip37M/U7M2mZmMKdeuz0GhdIZqsPYHmq0+h9cpzaLv8W9hHrePiy+i0+Bd2WX6Hzy661dO5lkPbqJB25ityd5+sx7VZEpZluyAuywWzs2S+nqnEy5luiM5ojFHprWBO64ghqd3RJ70PfYr9+XSG6XybDOuMljnWOn37VZAK1dGFfZQH31+v3PNxpXL/PjbcvIeqT45AszEFuvXZ8FhXiMZrjqPZ6i/RcuVZtF1+Ae2X/i+eXlfJjkuufuZc8j6tz1N0Xl8sla0sdOG8TBe8k2lPQokpGVqMT/dEWHoLWNI6wD+1C/ql+MInuT+eOeaHv2Va2KYgnE1TI655po7b45EeNVObEml0T43x0eZM7KpJn+ilTZg8WHts6nh14msr1UdnHVcdiaXq2Boq96yhvG0D5C1body8D6qPj0KzIRW6j2pg1tbCnEHbtT+y/apL19st/bGVc++/0eL8J8KXfu7K2Tn1HUlMydBgQoYHItKbITStLQypnTAw1Qu9kvuie/IQPHXMiDZJIWieNBJNUsbQMzeGjQom0j17AnWp0dSlxFTpkidQl/Eiddkz6Jb9BjXJs6g6OIfKvbFQ7l4GeccHkLdtgrxlB5SbD0D5SQI0G9Pgtj4b7usK4bm2FM3WnGKrT66w1coLkc49/1O9k+P6zpwvlJyWpeaEdHeMSW8Ca1prmFKrR6pvSi94JQ9A52MBaH8sCC2ThqNpUhg8EyPgkTQW7kmR0B2LpC45irrkaOqOxdAtaQLdEiZRe2QKNIdnQn3gTSj3/QPKPQsh71wFeft6yFs/g/zZLig3HYTy40SoN6RC64ApQJOt37PJB6fed+7132p6vipu2kl3RmY14ci0lghK6wC/1C7on+KDnsnPo1vyUHS8J43GieFolGiHGAedHeSuo6BLioYuMQZuCROhPfoSNIdfgfrg36HaPwf2VOTdSyHvWAN520bHiMmf7oFy0yGoPk6kZkMadTu/osfG4wcUKSkP9rU+Ott99rjSlgzNaU99SicMSu2B51J6o0fyIKc0Rlen8bsgNTAOkAlwO/oitIenQXPoNagPzKpJJR7yzpWQt39YPWKfbYe8eS+Um45QtbeYms15BxXbcmTn/v6QrDltx5pzO94MKOrB51N60ie5H7omD7s/jaQwNEocA/fE34OoBYmGW+IEuCVMgmO8Dr0K9cE3qlPZY09lCeQd70Pe/hHkLZ9C3r6XDfanU/40+aMHTsJZ/pldug/K8cnqVzKAXplD2elYAO1ptHJO41+B3DteR16C9vB0qA++DtX+t9Fw37us3isrIO9cR/nwLrru3FXmuu3Ay869/HltC5F6ZQ18pVuG/+XOxSFsmz6czZNGsklNGh6J4/4FiPN4TYb2yFRoDs2E+uCbUO2fC+W+BVQmrGWDwxso792032XX1of+CnSfuuQGNu6QZZnbOt36fYv8cWySG8VGKZF0TxpHXaJz884gNeN11D5eL1Nz9FVqjs2iOj2OqsPzKR9enqA8tPbhvPbUVa0zw9yaZo4Z2yh93H6PlMhrHtkT6J4/ie55E+meNYHu6THUpcVU3yVpMXRPH0/3DPv98iJ1uVPplvMqtYkzoE74+xeqhNnx6qR5vs7P+Mvlnj6xqUdajFmXFjVXlxq9Q5ccVaBLiTqvS4r8SZcYeU2XFHlFlxJ1QZc6vtQtafxRXcrk5drUqeO1yTO620fWud4f1f8DMachPG82wWwAAAAASUVORK5CYII=" />
+        <span x-text="$store.s.requiredLink.cta"></span>
+      </button>
+      <button type="button" class="mbtn ghost" id="requiredLinkSwitch"
+              x-show="$store.s.requiredLink.canSwitch" @click="$store.s.act.switchLinkAccount()">Vali teine Google’i konto</button>
+    </div>
+  </section>
+</div>
 <script>
 (function () {
   "use strict";
@@ -3941,7 +3984,7 @@
   var ACTIVECID_KEY = "minutes_active_cid";
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
-  var VERSION = "17.0";
+  var VERSION = "17.1";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -5200,6 +5243,11 @@
     var C = window.__CLAIMS;
     return (C && C.nudge) ? C.nudge() : { show: false };
   });
+  view("requiredLink", function () {
+    this.me; this.signedIn; this.claimRev; this.connectionOffline;
+    var C = window.__CLAIMS;
+    return C && C.requiredLink ? C.requiredLink() : { show: false };
+  });
 
   view("boChallenges", function () {
     this.rev; this.me;
@@ -5379,6 +5427,9 @@
     },
     // ---- name claims (Phase 3) ----
     claimConnect: function () { if (window.__CLAIMS && window.__CLAIMS.connect) window.__CLAIMS.connect(); },
+    syncRequiredLink: function (open) { if (window.__CLAIMS) window.__CLAIMS.syncRequiredLink(open); },
+    requiredLinkAction: function () { if (window.__CLAIMS) window.__CLAIMS.requiredLinkAction(); },
+    switchLinkAccount: function () { if (window.__CLAIMS) window.__CLAIMS.switchLinkAccount(); },
     approveClaim: function (ev, handle) {
       if (!requireConnection()) return;
       var row = ev && ev.currentTarget && ev.currentTarget.parentNode;
@@ -6240,9 +6291,8 @@
   //   1. the handle is pre-seeded with this exact verified email -> instant claim
   //   2. anything else -> a claimRequests doc for an admin to approve
   //
-  // Still deliberately non-enforcing. Every path here is skippable: the typed-name
-  // login keeps working, so a user who ignores this loses nothing until Phase 4.
-  // The payoff for claiming is that sign-in then logs you straight in by name.
+  // Legacy access remains compatible. One participant has an online-only UI
+  // linking requirement; this is not a replacement for protected backend rules.
   var Claims = (function () {
     var REQ_KEY = "minutes_claim_req";   // handle this device last asked for
     var PERSONAL_LINK_HANDLE = "Gerli";
@@ -6269,6 +6319,9 @@
     var reqsLive = false;   // true once the admin-only listener has actually attached
     var busy = false;
     var wantConnect = false;   // banner tapped before the Google popup came back
+    var popupBusy = false, linkError = "", requestChecking = false, requestPending = false, requestFailed = false;
+    var linkAttempt = null;
+    var identsFailed = false;
     var autoLoggedIn = false;
     var subscribed = false;
     var reqSubscribed = false;
@@ -6400,7 +6453,8 @@
       if (usingDemo()) { idents = demo.idents; identsLoaded = true; emit(); render(); return; }
       var fb = window.__FB;
       try {
-        fb.onSnapshot(fb.collection(fb.db, "identities"), { includeMetadataChanges: true }, function (snap) {
+        if (identityStop) identityStop();
+        identityStop = fb.onSnapshot(fb.collection(fb.db, "identities"), { includeMetadataChanges: true }, function (snap) {
           var next = {};
           snap.forEach(function (d) {
             // A claim appears locally before rules accept it. Do not sign in on
@@ -6413,18 +6467,22 @@
             next[d.id] = { handle: v.handle || d.id, uid: v.uid || "", ts: v.ts || 0, via: v.via || "" };
           });
           idents = next;
-          identsLoaded = true;
+          identsLoaded = identsLoaded || !snap.metadata.fromCache || Object.keys(next).length > 0;
+          identsFailed = false;
           emit();
           render();
         }, function (e) {
           console.warn("identities listener:", e);
           identsLoaded = true;
+          identsFailed = true;
           emit();
           render();
         });
       } catch (e) {
         console.warn("identities subscribe failed:", e);
         identsLoaded = true;
+        identsFailed = true;
+        emit();
       }
     }
 
@@ -6593,10 +6651,10 @@
     function readRequest(handle) {
       if (usingDemo()) return Promise.resolve(demo.reqs[low(handle)] || null);
       var fb = window.__FB;
-      if (!fb.getDoc) return Promise.resolve(null);
+      if (!fb.getDoc) return Promise.reject(new Error("Claim request reads are unavailable"));
       return fb.getDoc(fb.doc(fb.db, "claimRequests", low(handle))).then(function (s) {
         return s.exists() ? s.data() : null;
-      }).catch(function () { return null; });
+      });
     }
 
     // ---- ui -----------------------------------------------------------------
@@ -6753,11 +6811,111 @@
     }
 
     // ---- in-app nudge -------------------------------------------------------
-    // Linking stays visible until completed, without blocking the saved session.
+    // Most participants keep a reminder. The targeted online requirement uses
+    // the same account linking and never clears the legacy session or write queue.
+
+    function requiresLink() {
+      return !scoped() && state.signedIn && low(state.me) === low(PERSONAL_LINK_HANDLE);
+    }
+
+    function requiredLink() {
+      var u = me(), identity = idents[low(state.me)];
+      if (!requiresLink() || offlineNow() || !window.__AUTH || !window.__AUTH.resolved ||
+          !identsLoaded || u && identity && identity.uid === u.uid) return { show: false };
+      var working = busy || popupBusy || requestChecking;
+      var wrongAccount = !!u && (!!myHandle() || !!identity);
+      return {
+        show: true, busy: working, waiting: requestPending,
+        googleAction: !working && !identsFailed && !requestFailed && (wrongAccount || !requestPending),
+        error: linkError || (identsFailed ? "Konto seost ei saanud kontrollida. Palun proovi uuesti." : ""),
+        account: u && u.email ? "Google\u2019i konto: " + u.email : "",
+        status: requestChecking ? "Kontrollime taotluse olekut\u2026" :
+          requestFailed ? "" :
+          popupBusy ? "L\u00f5peta sisselogimine Google\u2019i aknas." :
+          busy ? "Seome sinu kontot\u2026" :
+          wrongAccount ? "Valitud Google\u2019i konto ei sobi selle Minutesi kontoga. Palun vali teine Google\u2019i konto." :
+          requestPending ? "Taotlus on saadetud. Administraator peab kinnitama, et see Google\u2019i konto kuulub sulle. P\u00e4rast kinnitamist saad j\u00e4tkata." : "",
+        cta: working ? "Palun oota\u2026" : identsFailed || requestFailed ? "Proovi uuesti" :
+          wrongAccount ? "Vali teine Google\u2019i konto" : requestPending ? "Kontrolli kinnitust" : "Seo Google\u2019i kontoga",
+        canSwitch: !!u && !working && !wrongAccount
+      };
+    }
+
+    var requiredOpen = false, requiredInert = false;
+    function syncRequiredLink(open) {
+      if (requiredOpen === open) return;
+      requiredOpen = open;
+      var app = document.getElementById("app");
+      if (open) {
+        requiredInert = app.inert;
+        app.inert = true;
+      } else app.inert = requiredInert;
+      document.getElementById("requiredLinkModal").classList.toggle("show", open);
+    }
+
+    function linkFailure(error, text, fallback) {
+      console.warn("Account linking:", error);
+      linkError = text;
+      emit();
+      if (!requiresLink()) showToast(fallback, "danger");
+    }
+
+    function signInToLink() {
+      if (busy || popupBusy || requestChecking || offlineNow()) return;
+      wantConnect = state.me;
+      popupBusy = true; linkError = "";
+      emit();
+      var auth = window.__AUTH, result, attempt = { away: false };
+      linkAttempt = attempt;
+      try {
+        if (!auth || !auth.signInGoogle) throw new Error("Google sign-in is unavailable");
+        // Open synchronously within the tap, including when choosing another account.
+        result = auth.signInGoogle();
+      } catch (error) { result = Promise.reject(error); }
+      Promise.resolve(result).then(function () {
+        if (linkAttempt !== attempt) return;
+        linkAttempt = null;
+        popupBusy = false;
+        render(); emit();
+      }).catch(function (error) {
+        if (linkAttempt !== attempt) return;
+        linkAttempt = null;
+        popupBusy = false; wantConnect = false;
+        var cancelled = error && (error.code === "auth/popup-closed-by-user" || error.code === "auth/cancelled-popup-request");
+        linkFailure(error, cancelled ? "Sisselogimine j\u00e4i pooleli. J\u00e4tkamiseks proovi uuesti." :
+          error && error.code === "auth/popup-blocked" ? "Brauser blokeeris Google\u2019i akna. Luba sellel lehel h\u00fcpikaknad ja proovi uuesti." :
+          "Google\u2019iga sisselogimine ei \u00f5nnestunud. Palun proovi uuesti.", "Google sign-in didn't finish. Please try again.");
+      });
+    }
+
+    function linkPopupAway() { if (linkAttempt) linkAttempt.away = true; }
+    function linkPopupReturned(restored) {
+      if (!linkAttempt || document.hidden || (!linkAttempt.away && !restored)) return;
+      linkAttempt.away = false;
+      popupBusy = false;
+      linkError = "Kui sisselogimine j\u00e4i pooleli, proovi uuesti.";
+      emit();
+    }
+    window.addEventListener("blur", linkPopupAway);
+    window.addEventListener("focus", function () { linkPopupReturned(false); });
+    window.addEventListener("pageshow", function (event) { linkPopupReturned(event.persisted); });
+    document.addEventListener("visibilitychange", function () {
+      if (document.hidden) linkPopupAway();
+      else linkPopupReturned(false);
+    });
+
+    function requiredLinkAction() {
+      if (!requiredLink().show || busy || popupBusy || requestChecking) return;
+      linkError = "";
+      if (identsFailed) { subscribed = false; watch(); nudgeConnection(); return; }
+      if (me() && (myHandle() || idents[low(state.me)])) signInToLink();
+      else if (requestPending || requestFailed) render();
+      else connect();
+    }
 
     function nudge() {
       var h = state.me;
-      if (!state.signedIn || !h) return { show: false };
+      if (!state.signedIn || !h || requiresLink()) return { show: false };
       if (!identsLoaded) return { show: false };
       // Auth resolution is a SEPARATE await from idents. me() reads
       // __AUTH.user, which is null both when nobody is signed in and when the
@@ -6788,61 +6946,100 @@
       }
       // A restored Google account may still be matching its existing name.
       if (u && !scoped() && sweptUid !== u.uid && !busy && !bannerOffline()) return { show: false };
-      var personal = !offlineNow() && low(h) === low(PERSONAL_LINK_HANDLE);
-      return { show: true, waiting: false, busy: busy, disabled: busy || offlineNow(),
-        title: personal ? h + ", your minutes called." : "Link Google to finish setup",
+      return { show: true, waiting: false, busy: busy || popupBusy, disabled: busy || popupBusy || offlineNow(),
+        title: "Link Google to finish setup",
         sub: offlineNow() ? "Reconnect to link Google to your Minutes account." :
-          personal ? "They\u2019d like a proper introduction. Link your Google account." :
           "Keep your minutes and challenges when you sign in on another device.",
-        cta: busy ? "Linking\u2026" : "Link Google" };
+        cta: busy || popupBusy ? "Linking\u2026" : "Link Google" };
     }
 
     // The in-app half of the claim flow. The app already knows which name this user
     // is, so there is nothing to pick: try the seeded fast path, fall back to filing
     // a request. Exactly the two branches the login-screen chip picker takes.
-    function connect() {
+    function checkRequest(handle, onMissing) {
+      if (requestChecking || offlineNow()) return;
+      var u = me(), session = state.me;
+      if (!u) return;
+      requestChecking = true; requestFailed = false; emit();
+      readRequest(handle).then(function (r) {
+        requestChecking = false;
+        if (!me() || me().uid !== u.uid || state.me !== session || myHandle()) { render(); emit(); return; }
+        requestPending = !!r && r.uid === u.uid;
+        if (requestPending) {
+          if (!state.signedIn) showPending(r.handle || handle);
+        } else {
+          try {
+            if (localStorage.getItem(REQ_KEY) === low(handle)) localStorage.removeItem(REQ_KEY);
+          } catch (e) {}
+          if (onMissing) onMissing();
+          else if (!state.signedIn) showClaim();
+        }
+        emit();
+      }).catch(function (error) {
+        requestChecking = false;
+        if (!me() || me().uid !== u.uid || state.me !== session) { render(); emit(); return; }
+        requestFailed = true;
+        linkFailure(error, "Taotluse olekut ei saanud kontrollida. Palun proovi uuesti.",
+          "Couldn't check your linking request. Please try again.");
+      });
+    }
+
+    function connect(checked) {
       var h = state.me;
-      if (!h || busy) return;
+      if (!h || busy || popupBusy || requestChecking || offlineNow()) return;
       var u = me();
       if (!u) {
-        // Sign in first, then resume automatically when the popup returns.
-        wantConnect = true;
-        if (window.__AUTH && window.__AUTH.signInGoogle) window.__AUTH.signInGoogle();
-        else showToast("Sign-in is unavailable right now", "danger");
+        signInToLink();
         return;
       }
       wantConnect = false;
       var bound = myHandle();
-      if (bound) { showToast("That Google account is already linked to " + bound, "danger"); return; }
+      if (bound) {
+        if (low(bound) !== low(h)) linkFailure(new Error("Google account already linked"),
+          "See Google\u2019i konto on juba seotud teise Minutesi kontoga. Palun vali teine konto.",
+          "That Google account is already linked to " + bound);
+        return;
+      }
+      var asked = null;
+      try { asked = localStorage.getItem(REQ_KEY); } catch (e) {}
+      if (asked === low(h) && !checked) {
+        checkRequest(h, function () { connect(true); });
+        return;
+      }
+      function current() { return me() && me().uid === u.uid && state.me === h; }
 
-      busy = true;
+      busy = true; linkError = "";
       emit();
       tryClaim(h).then(function () {
         busy = false;
+        if (!current()) { render(); emit(); return; }
+        requestPending = false;
         if (usingDemo()) idents = demo.idents;
         try { localStorage.removeItem(REQ_KEY); } catch (e) {}
         emit();
         render();
         showToast(h + " is now linked to your Google account", "success");
       }).catch(function (e) {
+        if (!current()) { busy = false; render(); emit(); return; }
         var code = (e && e.code) || "";
         if (code === "signed-out") { busy = false; emit(); return; }
         if (code === "permission-denied" || code === "PERMISSION_DENIED") {
           fileRequest(h).then(function () {
             busy = false;
+            if (!current()) { render(); emit(); return; }
+            requestPending = true;
             try { localStorage.setItem(REQ_KEY, low(h)); } catch (x) {}
             emit();
-            showToast("Request sent. An admin will confirm it.", "info");
+            if (!requiresLink()) showToast("Request sent. An admin will confirm it.", "info");
           }).catch(function (e2) {
             busy = false; emit();
+            if (!current()) { render(); return; }
             if (((e2 && e2.code) || "") === "signed-out") return;
-            console.error("claim request failed:", e2);
-            showToast("Couldn't send the request", "danger");
+            linkFailure(e2, "Taotluse saatmine ei \u00f5nnestunud. Palun proovi uuesti.", "Couldn't send the request");
           });
         } else {
           busy = false; emit();
-          console.error("claim failed:", e);
-          showToast("Couldn't link that name", "danger");
+          linkFailure(e, "Konto sidumine ei \u00f5nnestunud. Palun proovi uuesti.", "Couldn't link that name");
         }
       });
     }
@@ -6850,12 +7047,14 @@
     function render() {
       var u = me();
       if (!u) {
+        lastUid = null;
         autoLoggedIn = false; prefilled = false; newEl.value = "";
         newEl.removeAttribute("aria-invalid");
         setMsg("claimErr", "");
         cancelLanding();
         hideAll(); emit(); return;
       }
+      if (popupBusy) { hideAll(); emit(); return; }
 
       // A different account is a different person, so nothing typed for the previous
       // one should survive into their card.
@@ -6864,6 +7063,9 @@
         prefilled = false;
         newEl.value = "";
         setMsg("claimErr", "");
+        requestPending = false;
+        requestFailed = false;
+        linkError = "";
       }
 
       watch();
@@ -6876,7 +7078,11 @@
       if (landing) { emit(); return; }
 
       // Resuming the banner's flow after the Google popup returned.
-      if (wantConnect && identsLoaded) { connect(); }
+      if (wantConnect && identsLoaded) {
+        if (wantConnect === state.me) connect();
+        else wantConnect = false;
+      }
+      if (busy || wantConnect || requestChecking) { hideAll(); return; }
 
       // Already bound: skip the whole prompt and sign the user straight in.
       var mine = myHandle();
@@ -6909,14 +7115,7 @@
       var asked = null;
       try { asked = localStorage.getItem(REQ_KEY); } catch (e) {}
       if (asked) {
-        readRequest(asked).then(function (r) {
-          if (!me() || me().uid !== u.uid || myHandle()) return;
-          if (r && r.uid === u.uid) showPending(r.handle || asked);
-          else {
-            try { localStorage.removeItem(REQ_KEY); } catch (e) {}
-            showClaim();
-          }
-        });
+        checkRequest(asked);
         return;
       }
 
@@ -6924,7 +7123,7 @@
       // silently before asking for anything; the card stays hidden meanwhile so a
       // seeded member never sees it at all. Re-render either way: on a hit the
       // branch above logs them in, on a miss we fall through and ask for a name.
-      if (sweptUid !== u.uid) {
+      if (sweptUid !== u.uid && !requiresLink()) {
         if (!sweeping) sweep().then(function () { render(); });
         hideAll();
         return;
@@ -7023,9 +7222,12 @@
 
     window.addEventListener("minutes-auth", function () {
       if (scoped() && (!me() || me().uid !== scopedUid)) resetScopedWatch();
-      render();
+      if (linkAttempt && me()) { popupBusy = false; linkAttempt = null; }
+      if (!me()) { requestPending = false; requestFailed = false; linkError = ""; }
+      render(); emit();
     });
     window.addEventListener("minutes-scoped-ready", function () { render(); });
+    window.addEventListener("online", function () { if (requiresLink()) { render(); emit(); } });
     window.addEventListener("minutes-roster", function () { if (me()) render(); else emit(); });
     window.addEventListener("minutes-fb-ready", function () { boot(); if (me()) render(); });
 
@@ -7040,6 +7242,10 @@
       // In-app claim surface (the nudge banner reads these through window.__CLAIMS).
       nudge: nudge,
       connect: connect,
+      requiredLink: requiredLink,
+      syncRequiredLink: syncRequiredLink,
+      requiredLinkAction: requiredLinkAction,
+      switchLinkAccount: signInToLink,
       // Rows for the backoffice review queue. Empty for anyone the rules will not
       // let list claimRequests, which is what keeps the section admin-only.
       pending: pendingList,
@@ -11295,6 +11501,7 @@
     // level-1 sheet flips `l1` on #app. Ordered top-most first, so Back peels one
     // layer at a time and the sheet returns you to the hub instead of exiting.
     var layers = [
+      ["requiredLinkModal", "show", function () {}],
       ["manageModal", "show", closeManageModal],
       ["editModal", "show", hideEdit],
       ["confirmModal", "show", hideConfirm],
@@ -11344,6 +11551,8 @@
         return;
       }
       guard = false;
+      // Online linking is required; Back must not dismiss it or discard a draft underneath.
+      if (document.getElementById("requiredLinkModal").classList.contains("show")) { writeRoute(); sync(); return; }
       // The overlay stack gets first refusal, and a pop it consumed is finished
       // here. Only a pop that closed nothing can be history traversal, and only
       // then does the router look at the URL -- one listener, one owner per
@@ -11374,6 +11583,7 @@
     // past this list with backofficeView and the level-1 sheet, which are views
     // rather than dialogs; the overlay prefix is identical in both.
     var layers = [
+      ["requiredLinkModal", function () {}],
       ["manageModal", closeManageModal],
       ["editModal", hideEdit],
       ["confirmModal", hideConfirm],
@@ -11385,7 +11595,7 @@
       ["accountMenu", closeAccountMenu],
       ["backofficeView", closeBackoffice]
     ];
-    var dialogs = ["manageModal", "editModal", "confirmModal", "activityModal", "challModal", "addModal"];
+    var dialogs = ["requiredLinkModal", "manageModal", "editModal", "confirmModal", "activityModal", "challModal", "addModal"];
     var openers = {};
 
     // A pointer activation can inherit :focus-visible from the dialog's last keyboard opener.
@@ -11442,7 +11652,7 @@
       var f = reachable(dlg);
       if (!f.length) { e.preventDefault(); return; }
       var first = f[0], last = f[f.length - 1];
-      if (!dlg.contains(document.activeElement)) { e.preventDefault(); first.focus(); return; }
+      if (f.indexOf(document.activeElement) === -1) { e.preventDefault(); (e.shiftKey ? last : first).focus(); return; }
       if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
       else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
     });
@@ -11459,8 +11669,11 @@
           // Read before focus moves, so this is the control that opened it.
           var prev = document.activeElement;
           openers[id] = (prev && prev !== document.body && !el.contains(prev)) ? prev : null;
-          var f = reachable(el);
-          if (f.length) f[0].focus();
+          if (topDialog() === el) {
+            var preferred = el.querySelector("[data-modal-focus]"), f = reachable(el);
+            if (preferred) preferred.focus({ preventScroll: true });
+            else if (f.length) f[0].focus();
+          }
         } else {
           var back = openers[id];
           openers[id] = null;
@@ -11468,8 +11681,14 @@
           // The opener can itself have been torn down or hidden meanwhile --
           // Delete inside the edit dialog closes it before raising the confirm --
           // so focus only goes back to something still laid out and visible.
-          if (back && document.contains(back) && (back.offsetWidth || back.offsetHeight) &&
+          if (id !== "requiredLinkModal" && topDialog() && topDialog() !== el) return;
+          if (back && document.contains(back) && !back.closest("[inert]") && (back.offsetWidth || back.offsetHeight) &&
               getComputedStyle(back).visibility !== "hidden") back.focus();
+          else if (id === "requiredLinkModal" && state.signedIn) {
+            var previousDialog = topDialog();
+            var candidates = reachable(previousDialog || document.getElementById("app"));
+            if (candidates.length) candidates[0].focus();
+          }
           else if (inside && document.activeElement.blur) document.activeElement.blur();
         }
       }).observe(el, { attributes: true, attributeFilter: ["class"] });

@@ -1567,6 +1567,41 @@
   html[data-depth="pop"] .msg--boxed:not(:empty),
   html[data-depth="pop"] .msg--banner:not(:empty) { border: 2px solid var(--ink); }
 
+  .update-gate {
+    position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center;
+    padding: calc(var(--sat) + var(--sp-4xl)) max(var(--sp-2xl), var(--sal)) calc(var(--sab) + var(--sp-4xl)) max(var(--sp-2xl), var(--sar));
+    background:
+      radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 34rem),
+      var(--bg);
+    color: var(--text);
+  }
+  .update-card {
+    width: min(100%, 390px); background: var(--card); border: 1px solid var(--border-2);
+    border-radius: var(--r-2xl); padding: var(--sp-4xl); box-shadow: var(--shadow-modal);
+    text-align: left; outline: none;
+  }
+  html[data-depth="pop"] .update-card { border: 2px solid var(--ink); }
+  .update-card .brand-mini {
+    display: inline-flex; align-items: center; gap: var(--sp-sm); color: var(--muted);
+    font-size: var(--fs-xs); font-weight: var(--fw-bold); margin-bottom: var(--sp-4xl);
+  }
+  .update-card .brand-mini svg { width: 28px; height: 28px; fill: var(--accent); }
+  .update-card h1 {
+    margin: 0 0 var(--sp-md); font-size: var(--fs-3xl); line-height: var(--lh-tight);
+    font-weight: var(--fw-black); letter-spacing: var(--ls-tight);
+  }
+  .update-card p {
+    margin: 0 0 var(--sp-4xl); color: var(--muted); font-size: var(--fs-md);
+    line-height: var(--lh-relaxed);
+  }
+  .update-now {
+    width: 100%; min-height: 52px; margin-top: 0; border-radius: var(--r-pill);
+    background: var(--accent); color: var(--on-accent); border: none;
+  }
+  .update-now:hover { background: var(--accent-hover); }
+  .update-now:active { background: var(--accent-pressed); }
+  .update-now:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
   /* Empty state. Deliberately NOT a message: it reports the absence of content
      rather than an event, so it stays muted and never takes a tone wash. */
   .blank { display: flex; flex-direction: column; align-items: center;
@@ -2870,6 +2905,14 @@
 
 <div id="ptr" aria-hidden="true"><div class="ptr-spinner"></div></div>
 
+  <div id="updateGate" class="update-gate" x-show="$store.s.updateBlocked" x-cloak role="alertdialog" aria-modal="true" aria-labelledby="updateGateTitle" aria-describedby="updateGateBody">
+    <section class="update-card" tabindex="-1">
+      <div class="brand-mini" aria-hidden="true"><svg viewBox="0 0 128 128"><use href="#i-clock"></use></svg><span>Minutes</span></div>
+      <h1 id="updateGateTitle">Update Minutes</h1>
+      <p id="updateGateBody">A newer version is ready. Update to keep logging minutes.</p>
+      <button class="btn update-now" type="button" @click="$store.s.act.updateNow()">Update now</button>
+    </section>
+  </div>
 <!-- LOGIN -->
 <div id="login" class="login-welcome" x-show="!$store.s.signedIn">
   <div class="wrap">
@@ -3984,7 +4027,7 @@
   var ACTIVECID_KEY = "minutes_active_cid";
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
-  var VERSION = "17.1";
+  var VERSION = "17.2";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -4323,7 +4366,7 @@
     if (viewableMonthKeys().indexOf(monthKeyOf(state.viewMonth)) < 0) state.viewMonth = keyToDate(defaultViewKey());
   }
 
-  var state = { me: null, entries: [], lbRange: "today", hidden: {}, viewMonth: firstOfMonth(new Date()), entriesGroup: "date", openCats: {}, activeCid: (function () { try { return localStorage.getItem(ACTIVECID_KEY) || FOUNDING_CID; } catch (e) { return FOUNDING_CID; } })() };
+  var state = { me: null, entries: [], lbRange: "today", hidden: {}, viewMonth: firstOfMonth(new Date()), entriesGroup: "date", openCats: {}, updateBlocked: false, updateMinVersion: "", activeCid: (function () { try { return localStorage.getItem(ACTIVECID_KEY) || FOUNDING_CID; } catch (e) { return FOUNDING_CID; } })() };
   var ActivityModel = (function () {
     var DAY = 86400000;
     function day(value) {
@@ -5312,6 +5355,7 @@
 
   // Behaviour reachable from templates.
   state.act = {
+    updateNow: updateNow,
     discoverMore: function () { if (Store.loadMore) Store.loadMore(); },
     retryRound: function () { if (Store.retryFailed) Store.retryFailed(); },
     // x-effect runs when the card element is created and whenever the model
@@ -5491,6 +5535,10 @@
     return !config || config.modelVersion !== 2 || !!(window.__AUTH && window.__AUTH.user);
   }
   function requireConnection() {
+    if (appWritesBlocked && appWritesBlocked()) {
+      showToast("Update Minutes before making changes.", "warn");
+      return false;
+    }
     if (!offlineNow()) return true;
     // Admin actions are deliberately NOT queued. Approving a request, editing the
     // roster or renaming a challenge offline is a decision taken against data that
@@ -5508,6 +5556,10 @@
   // old refusal is still the honest answer instead of a promise we can't keep.
   function canQueueWrites() { return !offlineNow() || Store.durable(); }
   function requireEntryWrite() {
+    if (appWritesBlocked && appWritesBlocked()) {
+      showToast("Update Minutes before logging more minutes.", "warn");
+      return false;
+    }
     if (canQueueWrites()) return true;
     showToast("Not connected, and this device can't store changes offline.", "danger");
     return false;
@@ -5625,6 +5677,91 @@
   function monthKeyOf(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1); }
   function isCurrentMonth(d) { var n = new Date(); return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth(); }
   function niceDate(s) { var p = s.split("-"); return new Date(+p[0], (+p[1]) - 1, +p[2]).toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" }); }
+  // Static app policy: lets the release owner stop old clients from writing before
+  // a backend cutover, without depending on Firestore being readable.
+  var POLICY_URL = "app-policy.json";
+  var POLICY_INTERVAL_MS = 30 * 60 * 1000;
+  var policyTimer = 0;
+  var policyFetchNonce = 0;
+  var updateFocusTarget = null;
+
+  function compareVersions(a, b) {
+    var left = String(a || "").split(".").map(function (part) { return parseInt(part, 10) || 0; });
+    var right = String(b || "").split(".").map(function (part) { return parseInt(part, 10) || 0; });
+    var n = Math.max(left.length, right.length);
+    for (var i = 0; i < n; i++) {
+      var diff = (left[i] || 0) - (right[i] || 0);
+      if (diff) return diff < 0 ? -1 : 1;
+    }
+    return 0;
+  }
+
+  function appWritesBlocked() { return !!state.updateBlocked; }
+  function appWriteBlockedError() { return new Error("Update Minutes before making changes."); }
+  function requireAppWrite() { return appWritesBlocked() ? Promise.reject(appWriteBlockedError()) : null; }
+  function focusUpdateGate() {
+    if (!state.updateBlocked) return;
+    setTimeout(function () {
+      var card = document.querySelector("#updateGate .update-card");
+      if (card) card.focus({ preventScroll: true });
+    }, 0);
+  }
+  function applyAppPolicy(policy) {
+    var min = policy && typeof policy.minVersion === "string" ? policy.minVersion.trim() : "";
+    if (!/^\d+(?:\.\d+)*$/.test(min)) return;
+    var blocked = compareVersions(VERSION, min) < 0;
+    state.updateMinVersion = min;
+    if (state.updateBlocked !== blocked) {
+      state.updateBlocked = blocked;
+      if (blocked) updateFocusTarget = document.activeElement;
+      else if (updateFocusTarget && updateFocusTarget.focus) updateFocusTarget.focus({ preventScroll: true });
+      focusUpdateGate();
+      if (typeof renderSync === "function") renderSync();
+      if (typeof renderAll === "function") renderAll();
+    }
+  }
+  function checkAppPolicy() {
+    if (navigator.onLine === false) return Promise.resolve();
+    var controller = new AbortController();
+    var timer = setTimeout(function () { controller.abort(); }, 5000);
+    return fetch(POLICY_URL + "?v=" + Date.now() + "-" + (++policyFetchNonce), { cache: "no-store", signal: controller.signal })
+      .then(function (response) {
+        if (!response.ok) throw new Error("App policy returned HTTP " + response.status);
+        return response.json();
+      })
+      .then(applyAppPolicy)
+      .catch(function (error) { console.warn("App policy check failed; continuing with current app:", error); })
+      .finally(function () { clearTimeout(timer); });
+  }
+  function scheduleAppPolicy() {
+    clearInterval(policyTimer);
+    if (document.visibilityState !== "visible") return;
+    policyTimer = setInterval(function () {
+      if (document.visibilityState === "visible") checkAppPolicy();
+    }, POLICY_INTERVAL_MS);
+  }
+  function updateNow() {
+    Promise.resolve().then(function () {
+      if (!navigator.serviceWorker || !navigator.serviceWorker.getRegistration) return null;
+      return navigator.serviceWorker.getRegistration().then(function (registration) {
+        if (!registration) return null;
+        var updated = registration.update ? registration.update().catch(function () { return registration; }) : Promise.resolve(registration);
+        return updated.then(function (next) {
+          var waiting = (next && next.waiting) || registration.waiting;
+          if (waiting) waiting.postMessage({ type: "SKIP_WAITING" });
+        });
+      });
+    }).finally(function () { location.reload(); });
+  }
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "visible") checkAppPolicy();
+    scheduleAppPolicy();
+  });
+  window.addEventListener("online", function () { checkAppPolicy(); });
+  window.__minutesCheckAppPolicy = checkAppPolicy;
+  state.updateBlocked = false;
+  state.updateMinVersion = "";
+  setTimeout(function () { checkAppPolicy(); scheduleAppPolicy(); }, 0);
   // Generated by scripts/build-brand.mjs; H2 entrance only, no Stack motion.
   var WELCOME_MOTION = {
   "duration": 640,
@@ -5930,6 +6067,9 @@
     writeRoute();
     renderChallChip();
     renderAll();
+    if (Store.recordAppVersion) Store.recordAppVersion(name).catch(function (error) {
+      console.warn("App version could not be recorded:", error);
+    });
     scrollActiveTop();
   }
 
@@ -6332,6 +6472,7 @@
     var scopedUid = null, scopedProfile = null, identityStop = null, requestsStop = null;
 
     function scoped() { return window.__FB && window.__FB.modelVersion === 2; }
+    function guardClaimWrite() { return requireAppWrite ? requireAppWrite() : null; }
     function resetScopedWatch() {
       if (identityStop) identityStop();
       if (requestsStop) requestsStop();
@@ -6340,6 +6481,7 @@
       idents = {}; reqs = {}; identsLoaded = false; autoLoggedIn = false;
     }
     function saveIdentity(fb, handle, data) {
+      var blocked = guardClaimWrite(); if (blocked) return blocked;
       if (!scoped()) return fb.setDoc(fb.doc(fb.db, "identities", handle), data);
       var batch = fb.writeBatch(fb.db);
       batch.set(fb.doc(fb.db, "identities", handle), data);
@@ -6634,6 +6776,7 @@
     }
 
     function fileRequest(handle) {
+      var blocked = guardClaimWrite(); if (blocked) return blocked;
       var u = me();
       if (!u) return Promise.reject({ code: "signed-out" });
       var payload = { handle: handle, uid: u.uid, email: u.email || "", ts: Date.now() };
@@ -7262,6 +7405,7 @@
         });
       },
       approve: function (handle, uid) {
+        var blocked = guardClaimWrite(); if (blocked) return blocked;
         var h = low(handle);
         if (usingDemo()) {
           return new Promise(function (res, rej) {
@@ -7300,6 +7444,7 @@
         });
       },
       reject: function (handle) {
+        var blocked = guardClaimWrite(); if (blocked) return blocked;
         if (usingDemo()) {
           delete demo.reqs[low(handle)];
           emit();
@@ -9956,6 +10101,27 @@
     function signedUid() { return currentUser && currentUser.uid; }
     function administrator() { return !!profile && profile.role === "admin"; }
     function failure(message) { return Promise.reject(new Error(message)); }
+    function guardWrite() { return requireAppWrite ? requireAppWrite() : null; }
+    function appVersionKey(handle) { return "minutes_app_version_v1_" + String(handle || "").trim().toLowerCase(); }
+    function rememberAppVersion(handle) {
+      try { localStorage.setItem(appVersionKey(handle), JSON.stringify({ version: VERSION, day: todayStr() })); } catch (e) {}
+    }
+    function recentlyRecorded(handle) {
+      try {
+        var saved = JSON.parse(localStorage.getItem(appVersionKey(handle)) || "null");
+        return saved && saved.version === VERSION && saved.day === todayStr();
+      } catch (e) { return false; }
+    }
+    function recordAppVersion(handle) {
+      var blocked = guardWrite();
+      if (blocked) return blocked;
+      if (!handle || recentlyRecorded(handle)) return Promise.resolve();
+      if (!fb.setDoc || !fb.serverTimestamp) return Promise.resolve();
+      // Members cannot read appVersions (admin-only), so write blindly at most once a day.
+      var ref = reference("appVersions", String(handle).toLowerCase());
+      return fb.setDoc(ref, { version: VERSION, ts: fb.serverTimestamp() })
+        .then(function () { rememberAppVersion(handle); });
+    }
     function renderSoon() {
       if (renderTimer !== null) return;
       // Snapshot bursts share a paint; a timer also runs in background tabs.
@@ -10305,6 +10471,9 @@
         if (snapshot.metadata.hasPendingWrites) return;
         profile = snapshot.data();
         mergeProfile(profile);
+        recordAppVersion(profile.handle).catch(function (error) {
+          console.warn("App version could not be recorded:", error);
+        });
         if (administrator()) {
           watch("admin-roster", reference("meta", "roster"), function (snap) {
             if (!snap.exists()) return;
@@ -10375,6 +10544,7 @@
       });
     }
     function changeMember(cid, handle, data) {
+      var blocked = guardWrite(); if (blocked) return blocked;
       return uidFor(handle, cid).then(function (memberUid) {
         var memberRef = reference("challenges", cid, "members", memberUid);
         var challengeRef = reference("challenges", cid);
@@ -10475,24 +10645,29 @@
         return !!listeners[key] && listeners[key].fromCache;
       },
       addEntry: function (entry) {
+        var blocked = guardWrite(); if (blocked) return blocked;
         if (!profile) return failure("Sign in before adding minutes.");
         var id = entry.id || uid(), cid = entry.cid || activeCid();
         return settle(fb.setDoc(reference("challenges", cid, "entries", id), entryPayload(entry)), id);
       },
       updateEntry: function (id, fields, cid) {
+        var blocked = guardWrite(); if (blocked) return blocked;
         var entry = findEntry(id, cid);
         if (!entry) return failure("The entry is not loaded. Reopen its round before editing.");
         return settle(fb.updateDoc(reference("challenges", entry.cid, "entries", id), fields));
       },
       deleteEntry: function (id, cid) {
+        var blocked = guardWrite(); if (blocked) return blocked;
         var entry = findEntry(id, cid);
         if (!entry) return failure("The entry is not loaded. Reopen its round before deleting.");
         return settle(fb.deleteDoc(reference("challenges", entry.cid, "entries", id)));
       },
       putEntry: function (entry) {
+        var blocked = guardWrite(); if (blocked) return blocked;
         return settle(fb.setDoc(reference("challenges", entry.cid || activeCid(), "entries", entry.id), entryPayload(entry)));
       },
       requestJoin: function (cid) {
+        var blocked = guardWrite(); if (blocked) return blocked;
         if (!profile) return failure("Sign in before requesting membership.");
         return fb.setDoc(reference("challenges", cid, "members", profile.uid), {
           uid: profile.uid, cid: cid, handle: profile.handle, role: "member", status: "pending", ts: Date.now()
@@ -10501,6 +10676,7 @@
       setMember: changeMember,
       removeMember: function (cid, handle) { return changeMember(cid, handle, null); },
       saveRound: function (cid, key, data) {
+        var blocked = guardWrite(); if (blocked) return blocked;
         return Promise.all(data.participants.map(function (handle) { return uidFor(handle, cid); })).then(function (ids) {
           var names = {};
           ids.forEach(function (id, index) { names[id] = data.participants[index]; });
@@ -10514,6 +10690,7 @@
         });
       },
       createChallenge: function (cid, name, color) {
+        var blocked = guardWrite(); if (blocked) return blocked;
         if (!profile) return failure("Sign in before creating a challenge.");
         var batch = fb.writeBatch(fb.db), month = monthKeyOf(new Date()), names = {};
         names[profile.uid] = profile.handle;
@@ -10529,8 +10706,12 @@
         });
         return batch.commit();
       },
-      renameChallenge: function (cid, data) { return fb.updateDoc(reference("challenges", cid), data); },
+      renameChallenge: function (cid, data) {
+        var blocked = guardWrite(); if (blocked) return blocked;
+        return fb.updateDoc(reference("challenges", cid), data);
+      },
       saveRoster: function () {
+        var blocked = guardWrite(); if (blocked) return blocked;
         if (!administrator()) return failure("Only an administrator can change accounts.");
         var wantedMembers = cache.members.slice(), wantedAdmins = cache.admins.slice();
         return fb.getDoc(reference("meta", "roster")).then(function (snap) {
@@ -10549,6 +10730,7 @@
           });
         });
       },
+      recordAppVersion: recordAppVersion,
       diagnostics: function () {
         return {
           modelVersion: 2, uid: signedUid(), subscriptions: Object.keys(listeners), catalogCount: Object.keys(catalogIds).length,
@@ -10623,6 +10805,29 @@
     function isMonthId(id) { return /^\d{4}-\d{2}$/.test(id); }
     function challengesTabActive() { var el = document.getElementById("tab-challenges"); return el && el.classList.contains("active"); }
     function adminTabActive() { return !!document.getElementById("backofficeView") && document.getElementById("backofficeView").classList.contains("show"); }
+    function guardWrite() { return requireAppWrite ? requireAppWrite() : null; }
+    function appVersionKey(handle) { return "minutes_app_version_v1_" + String(handle || "").trim().toLowerCase(); }
+    function rememberAppVersion(handle) {
+      try {
+        localStorage.setItem(appVersionKey(handle), JSON.stringify({ version: VERSION, day: todayStr() }));
+      } catch (e) {}
+    }
+    function recentlyRecorded(handle) {
+      try {
+        var saved = JSON.parse(localStorage.getItem(appVersionKey(handle)) || "null");
+        return saved && saved.version === VERSION && saved.day === todayStr();
+      } catch (e) { return false; }
+    }
+    function recordAppVersion(handle) {
+      var blocked = guardWrite();
+      if (blocked) return blocked;
+      if (!fb || !handle || recentlyRecorded(handle)) return Promise.resolve();
+      if (!fb.setDoc || !fb.serverTimestamp) return Promise.resolve();
+      // Members cannot read appVersions (admin-only), so write blindly at most once a day.
+      var ref = fb.doc(fb.db, "appVersions", String(handle).toLowerCase());
+      return fb.setDoc(ref, { version: VERSION, ts: fb.serverTimestamp() })
+        .then(function () { rememberAppVersion(handle); });
+    }
 
     // ---- Write acknowledgement ------------------------------------------------
     // Firestore resolves a write promise only when the SERVER acknowledges it, so
@@ -10834,7 +11039,14 @@
         fb = f;
         if (f.modelVersion === 2) Store = createScopedStore(f, settle);
       },
-      start: function () { if (fb) fbStart(); },
+      start: function () {
+        if (!fb) return;
+        fbStart();
+        // Resumed sessions log in before Firebase loads; record the version once it is available.
+        if (state.signedIn && state.me) recordAppVersion(state.me).catch(function (error) {
+          console.warn("App version could not be recorded:", error);
+        });
+      },
       retryFailed: retryFailedListeners,
       // Whether this device can hold writes offline (persistent IndexedDB cache).
       // False on a storage-blocked browser, where offline writes must stay refused.
@@ -10845,23 +11057,28 @@
         } };
       },
       addEntry: function (obj) {
+        var blocked = guardWrite(); if (blocked) return blocked;
         var id = obj.id || uid();
         return Promise.resolve().then(function () {
           return settle(fb.setDoc(fb.doc(fb.db, "entries", id), legacyEntryPayload(obj)), id);
         });
       },
       updateEntry: function (id, fields) {
+        var blocked = guardWrite(); if (blocked) return blocked;
         return settle(fb.updateDoc(fb.doc(fb.db, "entries", id), fields));
       },
       deleteEntry: function (id) {
+        var blocked = guardWrite(); if (blocked) return blocked;
         return settle(fb.deleteDoc(fb.doc(fb.db, "entries", id)));
       },
       putEntry: function (obj) {
+        var blocked = guardWrite(); if (blocked) return blocked;
         return Promise.resolve().then(function () {
           return settle(fb.setDoc(fb.doc(fb.db, "entries", obj.id), legacyEntryPayload(obj)));
         });
       },
       saveRoster: function () {
+        var blocked = guardWrite(); if (blocked) return blocked;
         var data = { members: cache.members, admins: cache.admins };
         var memberIds = participantUids(cache.members), adminIds = participantUids(cache.admins);
         if (memberIds) data.memberUids = memberIds;
@@ -10870,6 +11087,7 @@
       },
       // Round metadata (joining/logging guards + participants) for the active challenge.
       saveRound: function (cid, key, data) {
+        var blocked = guardWrite(); if (blocked) return blocked;
         var f = roundFlagsFromData(data);
         var payload = roundSavePayload(f, data.participants || []), ids = participantUids(payload.participants);
         if (ids) payload.participantUids = ids;
@@ -10877,17 +11095,21 @@
       },
       // Membership writes (approval flow).
       requestJoin: function (cid) {
+        var blocked = guardWrite(); if (blocked) return blocked;
         return fb.setDoc(fb.doc(fb.db, "challenges", cid, "members", state.me),
           memberPayload(cid, state.me, { handle: state.me, role: "member", status: "pending", ts: Date.now() }));
       },
       setMember: function (cid, handle, data) {
+        var blocked = guardWrite(); if (blocked) return blocked;
         return fb.setDoc(fb.doc(fb.db, "challenges", cid, "members", handle), memberPayload(cid, handle, data));
       },
       removeMember: function (cid, handle) {
+        var blocked = guardWrite(); if (blocked) return blocked;
         return fb.deleteDoc(fb.doc(fb.db, "challenges", cid, "members", handle));
       },
       // Create a new challenge; creator becomes owner + approved.
       createChallenge: function (cid, name, color) {
+        var blocked = guardWrite(); if (blocked) return blocked;
         var owner = state.me, data = {
           name: name, color: color || "", owner: state.me,
           type: "monthly", visibility: "public", createdTs: Date.now()
@@ -10901,11 +11123,13 @@
       },
       // Rename / recolour an existing challenge.
       renameChallenge: function (cid, data) {
+        var blocked = guardWrite(); if (blocked) return blocked;
         var patch = {};
         if (data.name != null) patch.name = data.name;
         if (data.color != null) patch.color = data.color;
         return fb.updateDoc(fb.doc(fb.db, "challenges", cid), patch);
-      }
+      },
+      recordAppVersion: recordAppVersion
     };
   })();
   // ---- Demo Store (localhost only) ------------------------------------------
@@ -10919,6 +11143,7 @@
     function findEntry(id) { for (var i = 0; i < entriesAll.length; i++) { if (entriesAll[i].id === id) return entriesAll[i]; } return null; }
     function challTabActive() { var el = document.getElementById("tab-challenges"); return el && el.classList.contains("active"); }
     function boActive() { var el = document.getElementById("backofficeView"); return el && el.classList.contains("show"); }
+    function guardWrite() { return requireAppWrite ? requireAppWrite() : null; }
     function refreshEntries() {
       // Mirrors the Firestore listener: the unsynced count is derived from the rows
       // themselves, so the banner and the row dots can never disagree.
@@ -11038,42 +11263,52 @@
         if (any) refreshEntries();
       },
       addEntry: function (obj) {
+        var blocked = guardWrite(); if (blocked) return blocked;
         var id = obj.id || uid();
         entriesAll.push({ id: id, who: obj.who, date: obj.date, mins: obj.mins, note: obj.note || "", cid: obj.cid || activeCid(), _hadCid: true, _pending: offlineNow() });
         refreshEntries();
         return Promise.resolve(id);
       },
       updateEntry: function (id, fields) {
+        var blocked = guardWrite(); if (blocked) return blocked;
         var en = findEntry(id); if (en) { Object.keys(fields).forEach(function (k) { en[k] = fields[k]; }); if (offlineNow()) en._pending = true; }
         refreshEntries();
         return Promise.resolve();
       },
       deleteEntry: function (id) {
+        var blocked = guardWrite(); if (blocked) return blocked;
         entriesAll = entriesAll.filter(function (e) { return e.id !== id; });
         refreshEntries();
         return Promise.resolve();
       },
       putEntry: function (obj) {
+        var blocked = guardWrite(); if (blocked) return blocked;
         var en = findEntry(obj.id);
         if (en) { en.who = obj.who; en.date = obj.date; en.mins = obj.mins; en.note = obj.note || ""; en.cid = obj.cid || activeCid(); if (offlineNow()) en._pending = true; }
         else { entriesAll.push({ id: obj.id, who: obj.who, date: obj.date, mins: obj.mins, note: obj.note || "", cid: obj.cid || activeCid(), _hadCid: true, _pending: offlineNow() }); }
         refreshEntries();
         return Promise.resolve();
       },
-      saveRoster: function () { rosterLoaded = true; renderAll(); if (boActive()) renderBackoffice(); return Promise.resolve(); },
+      saveRoster: function () {
+        var blocked = guardWrite(); if (blocked) return blocked;
+        rosterLoaded = true; renderAll(); if (boActive()) renderBackoffice(); return Promise.resolve();
+      },
       saveRound: function (cid, key, data) {
+        var blocked = guardWrite(); if (blocked) return blocked;
         roundsByCid[cid] = roundsByCid[cid] || {};
         roundsByCid[cid][key] = roundSavePayload(roundFlagsFromData(data), data.participants || []);
         refreshCid();
         return Promise.resolve();
       },
       requestJoin: function (cid) {
+        var blocked = guardWrite(); if (blocked) return blocked;
         membersByCid[cid] = membersByCid[cid] || {};
         membersByCid[cid][state.me] = mk(state.me, "member", "pending", Date.now());
         refreshCid();
         return Promise.resolve();
       },
       setMember: function (cid, handle, data) {
+        var blocked = guardWrite(); if (blocked) return blocked;
         var v = data || {};
         membersByCid[cid] = membersByCid[cid] || {};
         membersByCid[cid][handle] = mk(v.handle || handle, v.role || "member", v.status || "approved", v.ts || 0);
@@ -11081,11 +11316,13 @@
         return Promise.resolve();
       },
       removeMember: function (cid, handle) {
+        var blocked = guardWrite(); if (blocked) return blocked;
         if (membersByCid[cid]) delete membersByCid[cid][handle];
         refreshCid();
         return Promise.resolve();
       },
       createChallenge: function (cid, name, color) {
+        var blocked = guardWrite(); if (blocked) return blocked;
         challMeta[cid] = { name: name, color: color || "", owner: state.me, createdTs: Date.now() };
         roundsByCid[cid] = {};
         membersByCid[cid] = {}; membersByCid[cid][state.me] = mk(state.me, "owner", "approved", 0);
@@ -11093,8 +11330,14 @@
         return Promise.resolve();
       },
       renameChallenge: function (cid, data) {
+        var blocked = guardWrite(); if (blocked) return blocked;
         if (challMeta[cid]) { if (data.name != null) challMeta[cid].name = data.name; if (data.color != null) challMeta[cid].color = data.color; }
         refreshCid();
+        return Promise.resolve();
+      },
+      recordAppVersion: function (handle) {
+        var blocked = guardWrite(); if (blocked) return blocked;
+        try { localStorage.setItem("minutes_demo_app_version_" + String(handle || "").toLowerCase(), VERSION); } catch (e) {}
         return Promise.resolve();
       }
     };
@@ -12077,6 +12320,7 @@ ${r?'Expression: "'+r+`"
            enableNetwork, disableNetwork,
            collection, collectionGroup, onSnapshot, setDoc, updateDoc, deleteDoc, doc, getDoc, getDocs,
            query, where, orderBy, documentId, startAfter, limit, writeBatch, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyAqaZ5b4txwYn1Ts57rwvGE3jRUWS9GDxA",
@@ -12196,7 +12440,7 @@ ${r?'Expression: "'+r+`"
     }
     window.__FB = { db, durable, collection, onSnapshot, setDoc, updateDoc, deleteDoc, doc, getDoc,
                     enableNetwork, disableNetwork, collectionGroup, query, where, orderBy, documentId,
-                    startAfter, limit, getDocs, writeBatch, runTransaction, modelVersion: 1 };
+                    startAfter, limit, getDocs, writeBatch, runTransaction, serverTimestamp, modelVersion: 1 };
   } catch (e) {
     console.error("Firebase init failed - falling back to local storage:", e);
   }

@@ -5,7 +5,7 @@
    - Query-string requests (the pull-to-refresh version poll): network only.
    - Other same-origin static assets (icons, manifest, svg): cache-first.
    - Cross-origin (Firebase, gstatic, reCAPTCHA): passthrough, never cached. */
-var CACHE = "minutes-v53";  // Bump whenever the cached shell or assets change.
+var CACHE = "minutes-v54";  // Bump whenever the cached shell or assets change.
 var CORE = [
   "./",
   "./index.html",
@@ -58,6 +58,8 @@ self.addEventListener("fetch", function (e) {
   // Cross-origin (Firebase / Google) — let the network handle it untouched.
   if (!sameOrigin) return;
 
+  if (url.pathname === new URL("./app-policy.json", self.location.href).pathname) return;
+
   // Anything with a query string goes straight to the network and is never
   // stored. This is what the pull-to-refresh version poll rides on: that poll is
   // a same-origin GET for the app document, but it is NOT mode:"navigate", so
@@ -90,6 +92,10 @@ self.addEventListener("fetch", function (e) {
           if (pageName) {
             return new Response(pageName + " unavailable offline. Reconnect and reload this page.", {
               status: 503, headers: { "Content-Type": "text/plain; charset=utf-8" }
+            });
+
+            self.addEventListener("message", function (event) {
+              if (event.data && event.data.type === "SKIP_WAITING") self.skipWaiting();
             });
           }
           return caches.match("./index.html");

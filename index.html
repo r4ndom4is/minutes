@@ -604,7 +604,7 @@
   /* Shared app surfaces use the approved palette without rewriting saved preferences. */
   :root { --welcome-bg: #161615; --welcome-accent: #dfb4cf; --welcome-on-accent: #321c2c; }
   html[data-theme="light"] { --welcome-bg: #f5f4f0; --welcome-accent: #81506e; --welcome-on-accent: #ffffff; }
-  #login, #layerBase, #backofficeView, #requiredLinkModal, .policy-page,
+  #login, #layerBase, #backofficeView, .policy-page,
   html:has(#backofficeView.show) :is(.modal-overlay, #popDock, #ptr),
   html.hub-active :is(#challModal, #activityModal, #popDock, #ptr),
   html.settings-active :is(#sheet, #popDock, #ptr),
@@ -643,7 +643,7 @@
     --brand-rear: var(--accent-pressed); --brand-middle: var(--accent); --brand-front: var(--accent-hover);
     --logo-surface: var(--bg);
   }
-  html[data-theme="light"] :is(#login, #layerBase, #backofficeView, #requiredLinkModal, .policy-page),
+  html[data-theme="light"] :is(#login, #layerBase, #backofficeView, .policy-page),
   html[data-theme="light"]:has(#backofficeView.show) :is(.modal-overlay, #popDock, #ptr),
   html[data-theme="light"].hub-active :is(#challModal, #activityModal, #popDock, #ptr),
   html[data-theme="light"].settings-active :is(#sheet, #popDock, #ptr),
@@ -1733,21 +1733,6 @@
      confirm is the one reusable nested dialog (it can open over the manage modal),
      so it sits just above base modals but stays below toasts. */
   #confirmModal { z-index: 52; }
-  #requiredLinkModal { z-index: 54; }
-  #requiredLinkModal .modal { transform: none; }
-  .required-link { color: var(--text); }
-  .required-link .modal-title:focus { outline: none; }
-  .required-link :is(.modal-msg, .required-link-account, .required-link-status, .required-link-error) {
-    font-size: var(--fs-sm); line-height: var(--lh-relaxed); margin: 0 0 var(--sp-2xl); overflow-wrap: anywhere; }
-  .required-link-account { color: var(--muted); }
-  .required-link-status { color: var(--text); }
-  .required-link-error { color: var(--danger); }
-  .required-link-actions { display: flex; flex-direction: column; gap: var(--sp-md); }
-  .required-link .mbtn.primary { color: var(--on-accent); }
-  #requiredLinkContinue { display: flex; align-items: center; justify-content: center; gap: var(--sp-md); }
-  #requiredLinkContinue.required-link-google { background: #fff; color: #1f1f1f; border-color: #747775; }
-  .required-link-google-mark { width: 20px; height: auto; flex: none; }
-  #requiredLinkContinue span { min-width: 0; }
   .modal {
     width: 100%; max-width: calc(var(--frame-w) - 2 * var(--sheet-pad));
     margin: auto;
@@ -2938,11 +2923,10 @@
       </button>
       <div class="msg msg--quiet" id="authErr" aria-live="polite"></div>
 
-      <!-- Handle claim. Only reached when the silent email match found nothing, so
-           whoever sees this could not be identified from their address: a member on
-           a different Google account, or a genuine newcomer. Either way an admin
-           approves. The roster is deliberately NOT listed here, because that would
-           show every member's name to anyone who signs in. -->
+      <!-- Handle claim. Only reached when the signed-in account has no profile.
+           New names continue immediately; reserved names ask an admin to connect
+           this Google account. The roster is deliberately NOT listed here, because
+           that would show every member's name to anyone who signs in. -->
       <div class="claim onb-card onb-in" id="claimBox" style="display:none">
         <h2 class="onb-title" id="claimHeading" tabindex="-1"><label id="claimQ" for="claimNewName">What should we call you?</label></h2>
         <div class="onb-account" aria-live="polite">
@@ -2953,12 +2937,12 @@
                  autocapitalize="words" maxlength="24" aria-describedby="onbHelp claimErr" />
         </div>
         <div class="msg msg--quiet" id="claimErr" aria-live="polite"></div>
-        <p class="onb-help" id="onbHelp">Start with a letter. Use 1–24 letters, numbers, spaces, underscores or hyphens. We'll review your name before you join a challenge.</p>
-        <button class="btn" id="claimBtn" disabled>Request approval</button>
+        <p class="onb-help" id="onbHelp">New names can continue right away. Challenge owners still approve challenge membership.</p>
+        <button class="btn" id="claimBtn" disabled>Continue</button>
         <ol class="onb-steps" aria-label="Name approval progress">
           <li class="onb-step done"><i aria-hidden="true"></i><span>Signed in</span></li>
           <li class="onb-step now" aria-current="step"><i aria-hidden="true"></i><span>Your name</span></li>
-          <li class="onb-step"><i aria-hidden="true"></i><span>Approval</span></li>
+          <li class="onb-step"><i aria-hidden="true"></i><span id="onbStepClaim3">Ready</span></li>
         </ol>
       </div>
 
@@ -3048,20 +3032,6 @@
 
     <div class="msg msg--banner amb" role="status" aria-live="polite"></div>
 
-    <!-- Persistent reminder, not an access gate. -->
-    <template x-if="$store.s.claimNudge.show">
-      <div class="nudge" role="region" aria-label="Account setup">
-        <div class="nudge-tx">
-          <div class="nudge-title" x-text="$store.s.claimNudge.title"></div>
-          <div class="nudge-sub" x-text="$store.s.claimNudge.sub"></div>
-        </div>
-        <button type="button" class="nudge-btn" x-show="!$store.s.claimNudge.waiting"
-                :disabled="$store.s.claimNudge.disabled"
-                :aria-busy="$store.s.claimNudge.busy"
-                @click="$store.s.act.claimConnect()"
-                x-text="$store.s.claimNudge.cta"></button>
-      </div>
-    </template>
 
     <section class="tab-panel active" id="tab-challenges" :aria-busy="$store.s.hubReady ? 'false' : 'true'">
       <section class="activity-home" x-show="$store.s.hubActivity.show" aria-labelledby="activityHomeTitle">
@@ -3245,21 +3215,6 @@
     <div class="sheet-body" id="sheetBody">
       <div class="msg msg--banner amb" role="status" aria-live="polite"></div>
 
-      <!-- Keep the account nudge reachable while a challenge is open, just as
-           the connection banner is available in either layer. -->
-      <template x-if="$store.s.claimNudge.show">
-        <div class="nudge" role="region" aria-label="Account setup">
-          <div class="nudge-tx">
-            <div class="nudge-title" x-text="$store.s.claimNudge.title"></div>
-            <div class="nudge-sub" x-text="$store.s.claimNudge.sub"></div>
-          </div>
-          <button type="button" class="nudge-btn" x-show="!$store.s.claimNudge.waiting"
-                  :disabled="$store.s.claimNudge.disabled"
-                  :aria-busy="$store.s.claimNudge.busy"
-                  @click="$store.s.act.claimConnect()"
-                  x-text="$store.s.claimNudge.cta"></button>
-        </div>
-      </template>
 
       <div class="round-status" x-show="$store.s.sheet === 'stats' && !$store.s.roundReady" x-cloak role="status">
         <p class="sub-note" x-text="$store.s.roundLoadFailed ? 'This round couldn\u0027t be loaded. Try again.' : 'Loading this round...'"></p>
@@ -3977,34 +3932,6 @@
     </div>
   </div>
 </div>
-<div class="modal-overlay" id="requiredLinkModal" lang="et" x-cloak
-     x-effect="$store.s.act.syncRequiredLink($store.s.requiredLink.show)">
-  <section class="modal required-link" role="dialog" aria-modal="true"
-           aria-labelledby="requiredLinkTitle" aria-describedby="requiredLinkReason requiredLinkConnect requiredLinkKeep">
-    <h2 class="modal-title" id="requiredLinkTitle" tabindex="-1" data-modal-focus
-        x-text="$store.s.me + ', uuendame sisselogimist'"></h2>
-    <p class="modal-msg" id="requiredLinkReason">Uuendame Minuteid, et see oleks turvalisem ja töötaks hästi ka siis, kui kasutajaid ja väljakutseid lisandub.</p>
-    <p class="modal-msg" id="requiredLinkConnect">Jätkamiseks seo oma konto Google’i kontoga. Me ei kasuta seda reklaamide näitamiseks ega sinu tegevuse jälgimiseks mujal veebis.</p>
-    <p class="modal-msg" id="requiredLinkKeep">Kõik sinu senised minutid ja väljakutsed jäävad alles.</p>
-    <p class="required-link-account" x-show="$store.s.requiredLink.account" x-text="$store.s.requiredLink.account"></p>
-    <p class="required-link-status" role="status" x-show="$store.s.requiredLink.status" x-text="$store.s.requiredLink.status"></p>
-    <p class="required-link-error" role="alert" x-show="$store.s.requiredLink.error" x-text="$store.s.requiredLink.error"></p>
-    <div class="required-link-actions">
-      <button type="button" class="mbtn primary" id="requiredLinkContinue"
-              :class="{ 'required-link-google': $store.s.requiredLink.googleAction }"
-              :disabled="$store.s.requiredLink.busy" :aria-busy="!!$store.s.requiredLink.busy"
-              @click="$store.s.act.requiredLinkAction()">
-        <!-- Official Google mark, scaled proportionally from developers.google.com/static/identity/images/g-logo.png. Inlined for offline use. -->
-        <img class="required-link-google-mark" alt="" aria-hidden="true" width="50" height="51"
-             x-show="$store.s.requiredLink.googleAction"
-             src="data:image/png;base64,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" />
-        <span x-text="$store.s.requiredLink.cta"></span>
-      </button>
-      <button type="button" class="mbtn ghost" id="requiredLinkSwitch"
-              x-show="$store.s.requiredLink.canSwitch" @click="$store.s.act.switchLinkAccount()">Vali teine Google’i konto</button>
-    </div>
-  </section>
-</div>
 <script>
 (function () {
   "use strict";
@@ -4027,7 +3954,7 @@
   var ACTIVECID_KEY = "minutes_active_cid";
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
-  var VERSION = "17.2";
+  var VERSION = "17.3";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -5280,18 +5207,6 @@
     };
   });
 
-  // In-app prompt for a user who has never linked a Google account to their name.
-  view("claimNudge", function () {
-    this.rev; this.me; this.signedIn; this.claimRev; this.connectionOffline;
-    var C = window.__CLAIMS;
-    return (C && C.nudge) ? C.nudge() : { show: false };
-  });
-  view("requiredLink", function () {
-    this.me; this.signedIn; this.claimRev; this.connectionOffline;
-    var C = window.__CLAIMS;
-    return C && C.requiredLink ? C.requiredLink() : { show: false };
-  });
-
   view("boChallenges", function () {
     this.rev; this.me;
     var cids = Object.keys(challMeta).sort(function (a, b) { return challName(a).localeCompare(challName(b)); });
@@ -5469,11 +5384,7 @@
         .then(function () { showToast(h + " denied", "info"); })
         .catch(function (e) { console.error(e); Array.prototype.forEach.call(bs, function (b) { b.disabled = false; }); showToast("Couldn't deny", "danger"); });
     },
-    // ---- name claims (Phase 3) ----
-    claimConnect: function () { if (window.__CLAIMS && window.__CLAIMS.connect) window.__CLAIMS.connect(); },
-    syncRequiredLink: function (open) { if (window.__CLAIMS) window.__CLAIMS.syncRequiredLink(open); },
-    requiredLinkAction: function () { if (window.__CLAIMS) window.__CLAIMS.requiredLinkAction(); },
-    switchLinkAccount: function () { if (window.__CLAIMS) window.__CLAIMS.switchLinkAccount(); },
+    // ---- name claims ----
     approveClaim: function (ev, handle) {
       if (!requireConnection()) return;
       var row = ev && ev.currentTarget && ev.currentTarget.parentNode;
@@ -5861,7 +5772,7 @@
       if (recovery && !error && (offline || (expectsData && bannerOffline()))) {
         var reason = offline ? "You're offline. " : "Not connected. ";
         text = reason + (pending ? "Your request is still waiting. Reconnect for approval updates."
-          : claiming ? "Your name draft is kept here. Reconnect before requesting approval."
+          : claiming ? "Your name draft is kept here. Reconnect before continuing."
           : "Reconnect to continue.");
       }
       if (network.textContent !== text) setMsg(network, text, "warn");
@@ -6427,19 +6338,19 @@
       }
     };
   })();
-  // Binds a Google uid to an app handle, mirroring firestore.phase3.rules:
-  //   1. the handle is pre-seeded with this exact verified email -> instant claim
-  //   2. anything else -> a claimRequests doc for an admin to approve
+  // Binds a Google uid to an app handle:
+  //   1. an existing seeded handle with this verified email -> instant claim
+  //   2. an existing reserved handle -> claimRequests doc for admin approval
+  //   3. a new unreserved handle -> atomic self-registration
   //
-  // Legacy access remains compatible. One participant has an online-only UI
-  // linking requirement; this is not a replacement for protected backend rules.
+  // Model 2 is the production path on this branch; legacy model-1 compatibility
+  // remains only for unreleased local comparisons.
   var Claims = (function () {
     var REQ_KEY = "minutes_claim_req";   // handle this device last asked for
-    var PERSONAL_LINK_HANDLE = "Gerli";
     var box     = document.getElementById("claimBox");
     var btn     = document.getElementById("claimBtn");
     var qEl     = document.getElementById("claimQ");
-    var noteEl  = document.getElementById("claimNote");
+    var noteEl  = document.getElementById("onbHelp");
     var pendEl  = document.getElementById("claimPending");
     var resEl   = document.getElementById("claimResume");
     var resBtn  = document.getElementById("resumeBtn");
@@ -6458,9 +6369,8 @@
     var reqs = {};          // lower(handle) -> { handle, uid, email, ts }  (admins only)
     var reqsLive = false;   // true once the admin-only listener has actually attached
     var busy = false;
-    var wantConnect = false;   // banner tapped before the Google popup came back
-    var popupBusy = false, linkError = "", requestChecking = false, requestPending = false, requestFailed = false;
-    var linkAttempt = null;
+    var requestChecking = false, requestPending = false;
+    var reservationChecks = {}, reservationKnown = {};
     var identsFailed = false;
     var autoLoggedIn = false;
     var subscribed = false;
@@ -6488,6 +6398,7 @@
       batch.set(fb.doc(fb.db, "profiles", data.uid), {
         uid: data.uid, handle: data.handle, displayName: data.handle, role: "member", ts: data.ts
       });
+      if (data.via === "admin") batch.delete(fb.doc(fb.db, "handleReservations", handle));
       return batch.commit();
     }
 
@@ -6512,7 +6423,8 @@
       idents: {},
       reqs: {},
       // Synthetic fixtures only; never put a member's real address in the app.
-      seeds: { adminowner: "adminowner@example.test", user: "*", owner: "*" }
+      seeds: { adminowner: "adminowner@example.test", user: "*", owner: "*" },
+      selfRegs: {}
     };
 
     // DEMO-only rehearsal switches, for walking the flow by hand on the dev server:
@@ -6943,248 +6855,110 @@
       if (pendingMail) pendingMail.textContent = account;
     }
 
+    function isReservedName(handle) {
+      var h = low(handle);
+      return !!h && (!!reservationKnown[h] || members().some(function (name) { return low(name) === h; }));
+    }
+
+    function refreshReservation(handle) {
+      var h = low(handle);
+      if (!h || reservationChecks[h] || reservationKnown.hasOwnProperty(h)) return;
+      if (usingDemo()) { reservationKnown[h] = isReservedName(handle); return; }
+      var fb = window.__FB;
+      if (!fb || !fb.getDoc) return;
+      reservationChecks[h] = true;
+      fb.getDoc(fb.doc(fb.db, "handleReservations", h)).then(function (snapshot) {
+        reservationKnown[h] = snapshot.exists();
+      }, function () {
+        reservationKnown[h] = false;
+      }).finally(function () {
+        delete reservationChecks[h];
+        if (low(newEl.value) === h) { paintChips(); emit(); }
+      });
+    }
+
     function paintChips() {
       if (!prefilled) { prefilled = true; newEl.value = suggestedName(); }
+      refreshReservation(newEl.value);
+      var reserved = isReservedName(newEl.value);
       qEl.textContent = "What should we call you?";
-      if (noteEl) noteEl.style.display = "";
-      btn.textContent = busy ? "Sending\u2026" : "Request approval";
+      if (noteEl) {
+        noteEl.style.display = "";
+        noteEl.textContent = reserved
+          ? "That name is already reserved. Request approval to connect it to this Google account."
+          : "New names can continue right away. Challenge owners still approve challenge membership.";
+      }
+      var step = document.getElementById("onbStepClaim3");
+      if (step) step.textContent = reserved ? "Approval" : "Ready";
+      btn.textContent = busy ? (reserved ? "Sending\u2026" : "Continuing\u2026")
+        : (reserved ? "Request approval" : "Continue");
       btn.disabled = busy || !newEl.value.trim() || offlineNow();
       btn.setAttribute("aria-busy", String(busy));
       paintHero();
     }
 
-    // ---- in-app nudge -------------------------------------------------------
-    // Most participants keep a reminder. The targeted online requirement uses
-    // the same account linking and never clears the legacy session or write queue.
-
-    function requiresLink() {
-      return !scoped() && state.signedIn && low(state.me) === low(PERSONAL_LINK_HANDLE);
+    function readReservation(handle) {
+      if (isReservedName(handle)) return Promise.resolve(true);
+      if (usingDemo()) return Promise.resolve(false);
+      var fb = window.__FB;
+      if (!fb || !fb.getDoc) return Promise.resolve(false);
+      return fb.getDoc(fb.doc(fb.db, "handleReservations", low(handle))).then(function (snapshot) {
+        reservationKnown[low(handle)] = snapshot.exists();
+        return snapshot.exists();
+      }, function () { return false; });
     }
 
-    function requiredLink() {
-      var u = me(), identity = idents[low(state.me)];
-      if (!requiresLink() || offlineNow() || !window.__AUTH || !window.__AUTH.resolved ||
-          !identsLoaded || u && identity && identity.uid === u.uid) return { show: false };
-      var working = busy || popupBusy || requestChecking;
-      var wrongAccount = !!u && (!!myHandle() || !!identity);
-      return {
-        show: true, busy: working, waiting: requestPending,
-        googleAction: !working && !identsFailed && !requestFailed && (wrongAccount || !requestPending),
-        error: linkError || (identsFailed ? "Konto seost ei saanud kontrollida. Palun proovi uuesti." : ""),
-        account: u && u.email ? "Google\u2019i konto: " + u.email : "",
-        status: requestChecking ? "Kontrollime taotluse olekut\u2026" :
-          requestFailed ? "" :
-          popupBusy ? "L\u00f5peta sisselogimine Google\u2019i aknas." :
-          busy ? "Seome sinu kontot\u2026" :
-          wrongAccount ? "Valitud Google\u2019i konto ei sobi selle Minutesi kontoga. Palun vali teine Google\u2019i konto." :
-          requestPending ? "Taotlus on saadetud. Administraator peab kinnitama, et see Google\u2019i konto kuulub sulle. P\u00e4rast kinnitamist saad j\u00e4tkata." : "",
-        cta: working ? "Palun oota\u2026" : identsFailed || requestFailed ? "Proovi uuesti" :
-          wrongAccount ? "Vali teine Google\u2019i konto" : requestPending ? "Kontrolli kinnitust" : "Seo Google\u2019i kontoga",
-        canSwitch: !!u && !working && !wrongAccount
-      };
-    }
-
-    var requiredOpen = false, requiredInert = false;
-    function syncRequiredLink(open) {
-      if (requiredOpen === open) return;
-      requiredOpen = open;
-      var app = document.getElementById("app");
-      if (open) {
-        requiredInert = app.inert;
-        app.inert = true;
-      } else app.inert = requiredInert;
-      document.getElementById("requiredLinkModal").classList.toggle("show", open);
-    }
-
-    function linkFailure(error, text, fallback) {
-      console.warn("Account linking:", error);
-      linkError = text;
-      emit();
-      if (!requiresLink()) showToast(fallback, "danger");
-    }
-
-    function signInToLink() {
-      if (busy || popupBusy || requestChecking || offlineNow()) return;
-      wantConnect = state.me;
-      popupBusy = true; linkError = "";
-      emit();
-      var auth = window.__AUTH, result, attempt = { away: false };
-      linkAttempt = attempt;
-      try {
-        if (!auth || !auth.signInGoogle) throw new Error("Google sign-in is unavailable");
-        // Open synchronously within the tap, including when choosing another account.
-        result = auth.signInGoogle();
-      } catch (error) { result = Promise.reject(error); }
-      Promise.resolve(result).then(function () {
-        if (linkAttempt !== attempt) return;
-        linkAttempt = null;
-        popupBusy = false;
-        render(); emit();
-      }).catch(function (error) {
-        if (linkAttempt !== attempt) return;
-        linkAttempt = null;
-        popupBusy = false; wantConnect = false;
-        var cancelled = error && (error.code === "auth/popup-closed-by-user" || error.code === "auth/cancelled-popup-request");
-        linkFailure(error, cancelled ? "Sisselogimine j\u00e4i pooleli. J\u00e4tkamiseks proovi uuesti." :
-          error && error.code === "auth/popup-blocked" ? "Brauser blokeeris Google\u2019i akna. Luba sellel lehel h\u00fcpikaknad ja proovi uuesti." :
-          "Google\u2019iga sisselogimine ei \u00f5nnestunud. Palun proovi uuesti.", "Google sign-in didn't finish. Please try again.");
+    function requestApproval(handle) {
+      return fileRequest(handle).then(function () {
+        try { localStorage.setItem(REQ_KEY, low(handle)); } catch (x) {}
+        emit();
+        showPending(handle);
       });
     }
 
-    function linkPopupAway() { if (linkAttempt) linkAttempt.away = true; }
-    function linkPopupReturned(restored) {
-      if (!linkAttempt || document.hidden || (!linkAttempt.away && !restored)) return;
-      linkAttempt.away = false;
-      popupBusy = false;
-      linkError = "Kui sisselogimine j\u00e4i pooleli, proovi uuesti.";
-      emit();
-    }
-    window.addEventListener("blur", linkPopupAway);
-    window.addEventListener("focus", function () { linkPopupReturned(false); });
-    window.addEventListener("pageshow", function (event) { linkPopupReturned(event.persisted); });
-    document.addEventListener("visibilitychange", function () {
-      if (document.hidden) linkPopupAway();
-      else linkPopupReturned(false);
-    });
-
-    function requiredLinkAction() {
-      if (!requiredLink().show || busy || popupBusy || requestChecking) return;
-      linkError = "";
-      if (identsFailed) { subscribed = false; watch(); nudgeConnection(); return; }
-      if (me() && (myHandle() || idents[low(state.me)])) signInToLink();
-      else if (requestPending || requestFailed) render();
-      else connect();
-    }
-
-    function nudge() {
-      var h = state.me;
-      if (!state.signedIn || !h || requiresLink()) return { show: false };
-      if (!identsLoaded) return { show: false };
-      // Auth resolution is a SEPARATE await from idents. me() reads
-      // __AUTH.user, which is null both when nobody is signed in and when the
-      // persisted session has not been restored yet. Without this guard the
-      // "this account already owns another name" test below runs against a
-      // null user, passes, and the banner renders for a frame or two before
-      // auth lands and takes it away again. That is the flash on refresh.
-      //
-      // The absent case has to be treated as unresolved, not as resolved.
-      // 30-firebase.js ships inside <script type="module">, which is deferred, so
-      // it runs AFTER every classic script and after Alpine has started: at first
-      // paint window.__AUTH does not exist yet. The earlier `__AUTH && !resolved`
-      // form short-circuited to false there and let the banner through, which is
-      // why the flash survived that fix. If auth never arrives at all the banner
-      // stays hidden, which is correct rather than unfortunate: linking needs
-      // __AUTH.signInGoogle, so without it there is nothing to offer.
-      if (!window.__AUTH || !window.__AUTH.resolved) return { show: false };
-      if (idents[low(h)]) return { show: false };      // this name is already bound
-      var u = me();
-      if (u && myHandle()) return { show: false };     // this account owns another name
-      var asked = null;
-      try { asked = localStorage.getItem(REQ_KEY); } catch (e) {}
-      if (asked && asked === low(h)) {
-        return { show: true, waiting: true, busy: false,
-          title: "Account linking is awaiting approval",
-          sub: "An admin will confirm this account belongs to " + h + ". You can keep logging minutes.",
-          cta: "" };
-      }
-      // A restored Google account may still be matching its existing name.
-      if (u && !scoped() && sweptUid !== u.uid && !busy && !bannerOffline()) return { show: false };
-      return { show: true, waiting: false, busy: busy || popupBusy, disabled: busy || popupBusy || offlineNow(),
-        title: "Link Google to finish setup",
-        sub: offlineNow() ? "Reconnect to link Google to your Minutes account." :
-          "Keep your minutes and challenges when you sign in on another device.",
-        cta: busy || popupBusy ? "Linking\u2026" : "Link Google" };
-    }
-
-    // The in-app half of the claim flow. The app already knows which name this user
-    // is, so there is nothing to pick: try the seeded fast path, fall back to filing
-    // a request. Exactly the two branches the login-screen chip picker takes.
-    function checkRequest(handle, onMissing) {
-      if (requestChecking || offlineNow()) return;
-      var u = me(), session = state.me;
-      if (!u) return;
-      requestChecking = true; requestFailed = false; emit();
-      readRequest(handle).then(function (r) {
+    function checkRequest(handle) {
+      var h = low(handle), u = me();
+      if (!h || !u || requestChecking) return;
+      requestChecking = true;
+      readRequest(h).then(function (request) {
         requestChecking = false;
-        if (!me() || me().uid !== u.uid || state.me !== session || myHandle()) { render(); emit(); return; }
-        requestPending = !!r && r.uid === u.uid;
-        if (requestPending) {
-          if (!state.signedIn) showPending(r.handle || handle);
+        if (request && request.uid === u.uid) {
+          showPending(request.handle || handle);
         } else {
-          try {
-            if (localStorage.getItem(REQ_KEY) === low(handle)) localStorage.removeItem(REQ_KEY);
-          } catch (e) {}
-          if (onMissing) onMissing();
-          else if (!state.signedIn) showClaim();
+          try { localStorage.removeItem(REQ_KEY); } catch (e) {}
+          render();
         }
         emit();
-      }).catch(function (error) {
+      }, function () {
         requestChecking = false;
-        if (!me() || me().uid !== u.uid || state.me !== session) { render(); emit(); return; }
-        requestFailed = true;
-        linkFailure(error, "Taotluse olekut ei saanud kontrollida. Palun proovi uuesti.",
-          "Couldn't check your linking request. Please try again.");
+        showPending(handle);
+        emit();
       });
     }
 
-    function connect(checked) {
-      var h = state.me;
-      if (!h || busy || popupBusy || requestChecking || offlineNow()) return;
-      var u = me();
-      if (!u) {
-        signInToLink();
-        return;
+    function selfRegister(handle) {
+      var u = me(), ts = Date.now(), h = low(handle);
+      if (!u) return Promise.reject({ code: "signed-out" });
+      if (u.emailVerified === false) return Promise.reject({ code: "unverified-email" });
+      if (usingDemo()) {
+        return new Promise(function (res, rej) {
+          setTimeout(function () {
+            if (demo.selfRegs[u.uid]) { rej({ code: "already-registered" }); return; }
+            if (demo.idents[h] || isReservedName(handle)) { rej({ code: "permission-denied" }); return; }
+            demo.selfRegs[u.uid] = { handle: handle, ts: ts };
+            demo.idents[h] = { handle: handle, uid: u.uid, ts: ts, via: "self" };
+            res();
+          }, 200);
+        });
       }
-      wantConnect = false;
-      var bound = myHandle();
-      if (bound) {
-        if (low(bound) !== low(h)) linkFailure(new Error("Google account already linked"),
-          "See Google\u2019i konto on juba seotud teise Minutesi kontoga. Palun vali teine konto.",
-          "That Google account is already linked to " + bound);
-        return;
-      }
-      var asked = null;
-      try { asked = localStorage.getItem(REQ_KEY); } catch (e) {}
-      if (asked === low(h) && !checked) {
-        checkRequest(h, function () { connect(true); });
-        return;
-      }
-      function current() { return me() && me().uid === u.uid && state.me === h; }
-
-      busy = true; linkError = "";
-      emit();
-      tryClaim(h).then(function () {
-        busy = false;
-        if (!current()) { render(); emit(); return; }
-        requestPending = false;
-        if (usingDemo()) idents = demo.idents;
-        try { localStorage.removeItem(REQ_KEY); } catch (e) {}
-        emit();
-        render();
-        showToast(h + " is now linked to your Google account", "success");
-      }).catch(function (e) {
-        if (!current()) { busy = false; render(); emit(); return; }
-        var code = (e && e.code) || "";
-        if (code === "signed-out") { busy = false; emit(); return; }
-        if (code === "permission-denied" || code === "PERMISSION_DENIED") {
-          fileRequest(h).then(function () {
-            busy = false;
-            if (!current()) { render(); emit(); return; }
-            requestPending = true;
-            try { localStorage.setItem(REQ_KEY, low(h)); } catch (x) {}
-            emit();
-            if (!requiresLink()) showToast("Request sent. An admin will confirm it.", "info");
-          }).catch(function (e2) {
-            busy = false; emit();
-            if (!current()) { render(); return; }
-            if (((e2 && e2.code) || "") === "signed-out") return;
-            linkFailure(e2, "Taotluse saatmine ei \u00f5nnestunud. Palun proovi uuesti.", "Couldn't send the request");
-          });
-        } else {
-          busy = false; emit();
-          linkFailure(e, "Konto sidumine ei \u00f5nnestunud. Palun proovi uuesti.", "Couldn't link that name");
-        }
+      var fb = window.__FB;
+      if (!fb || !fb.writeBatch) return Promise.reject(new Error("Account registration is unavailable"));
+      var batch = fb.writeBatch(fb.db);
+      batch.set(fb.doc(fb.db, "identities", h), { handle: handle, uid: u.uid, ts: ts, via: "self" });
+      batch.set(fb.doc(fb.db, "profiles", u.uid), {
+        uid: u.uid, handle: handle, displayName: handle, role: "member", ts: ts
       });
+      return batch.commit();
     }
 
     function render() {
@@ -7197,8 +6971,6 @@
         cancelLanding();
         hideAll(); emit(); return;
       }
-      if (popupBusy) { hideAll(); emit(); return; }
-
       // A different account is a different person, so nothing typed for the previous
       // one should survive into their card.
       if (u.uid !== lastUid) {
@@ -7207,8 +6979,6 @@
         newEl.value = "";
         setMsg("claimErr", "");
         requestPending = false;
-        requestFailed = false;
-        linkError = "";
       }
 
       watch();
@@ -7220,12 +6990,7 @@
       // button straight over the tick.
       if (landing) { emit(); return; }
 
-      // Resuming the banner's flow after the Google popup returned.
-      if (wantConnect && identsLoaded) {
-        if (wantConnect === state.me) connect();
-        else wantConnect = false;
-      }
-      if (busy || wantConnect || requestChecking) { hideAll(); return; }
+      if (busy || requestChecking) { hideAll(); return; }
 
       // Already bound: skip the whole prompt and sign the user straight in.
       var mine = myHandle();
@@ -7266,7 +7031,7 @@
       // silently before asking for anything; the card stays hidden meanwhile so a
       // seeded member never sees it at all. Re-render either way: on a hit the
       // branch above logs them in, on a miss we fall through and ask for a name.
-      if (sweptUid !== u.uid && !requiresLink()) {
+      if (sweptUid !== u.uid) {
         if (!sweeping) sweep().then(function () { render(); });
         hideAll();
         return;
@@ -7279,7 +7044,9 @@
     btn.onclick = function () {
       if (busy) return;
       if (offlineNow()) {
-        setMsg("claimErr", "Reconnect before requesting approval. Your name draft is kept here.", "warn");
+        setMsg("claimErr", isReservedName(newEl.value)
+          ? "Reconnect before requesting approval. Your name draft is kept here."
+          : "Reconnect before continuing. Your name draft is kept here.", "warn");
         return;
       }
       var handle = newEl.value.trim();
@@ -7313,16 +7080,29 @@
         var code = (e && e.code) || "";
         if (code === "signed-out") { busy = false; emit(); return; }
         if (code === "permission-denied" || code === "PERMISSION_DENIED") {
-          fileRequest(handle).then(function () {
+          readReservation(handle).then(function (reserved) {
+            return reserved ? requestApproval(handle) : selfRegister(handle).catch(function (selfError) {
+              var selfCode = (selfError && selfError.code) || "";
+              if (selfCode === "permission-denied" || selfCode === "PERMISSION_DENIED") return requestApproval(handle);
+              throw selfError;
+            });
+          }).then(function () {
             busy = false;
-            try { localStorage.setItem(REQ_KEY, low(handle)); } catch (x) {}
+            if (usingDemo()) idents = demo.idents;
             emit();
-            showPending(handle);
+            render();
+            if (!state.signedIn && myHandle()) doLogin(handle);
           }).catch(function (e2) {
             busy = false;
             if (((e2 && e2.code) || "") === "signed-out") { emit(); return; }
-            console.error("claim request failed:", e2);
-            setMsg("claimErr", "Couldn't send the request. Please try again.");
+            var c2 = (e2 && e2.code) || "";
+            if (c2 === "already-registered") setMsg("claimErr", "This Google account already has a Minutes name.");
+            else if (c2 === "already-exists") setMsg("claimErr", "That name is already taken.");
+            else if (c2 === "unverified-email") setMsg("claimErr", "Verify your Google email before continuing.");
+            else {
+              console.error("name setup failed:", e2);
+              setMsg("claimErr", "Couldn't finish name setup. Please try again.");
+            }
             paintChips();
           });
         } else {
@@ -7365,30 +7145,20 @@
 
     window.addEventListener("minutes-auth", function () {
       if (scoped() && (!me() || me().uid !== scopedUid)) resetScopedWatch();
-      if (linkAttempt && me()) { popupBusy = false; linkAttempt = null; }
-      if (!me()) { requestPending = false; requestFailed = false; linkError = ""; }
+      if (!me()) { requestPending = false; }
       render(); emit();
     });
     window.addEventListener("minutes-scoped-ready", function () { render(); });
-    window.addEventListener("online", function () { if (requiresLink()) { render(); emit(); } });
     window.addEventListener("minutes-roster", function () { if (me()) render(); else emit(); });
     window.addEventListener("minutes-fb-ready", function () { boot(); if (me()) render(); });
 
-    // identities is world-readable, so subscribe as soon as a backend exists rather
-    // than waiting for a Google sign-in. The in-app nudge has to know whether the
-    // current name is already claimed before anyone has touched the auth button.
+    // In legacy mode identities are readable enough to subscribe early. In scoped
+    // mode watch() waits for the signed-in account and listens only to its profile.
     function boot() { watch(); }
     if (window.__FB) boot();
 
     return {
       render: render,
-      // In-app claim surface (the nudge banner reads these through window.__CLAIMS).
-      nudge: nudge,
-      connect: connect,
-      requiredLink: requiredLink,
-      syncRequiredLink: syncRequiredLink,
-      requiredLinkAction: requiredLinkAction,
-      switchLinkAccount: signInToLink,
       // Rows for the backoffice review queue. Empty for anyone the rules will not
       // let list claimRequests, which is what keeps the section admin-only.
       pending: pendingList,
@@ -7431,10 +7201,10 @@
           var r = s.exists() ? s.data() : null;
           var display = (r && r.handle) || handle;
           var who = uid || r.uid;
-          // Roster first: the identity write is what logs the requester in on their
-          // own device, so if it landed first they could arrive before the roster
-          // knew about them and show up nowhere.
-          return addToRoster(display).then(function () {
+          // The legacy roster still needs the name before the identity lands.
+          // Scoped/model-2 accounts are profile-owned and do not need meta/roster
+          // for personal access.
+          return (scoped() ? Promise.resolve() : addToRoster(display)).then(function () {
             return saveIdentity(fb, h, {
               handle: display, uid: who, ts: Date.now(), via: "admin"
             });
@@ -7476,6 +7246,7 @@
         for (var a in demo.idents) delete demo.idents[a];
         for (var b in demo.reqs) delete demo.reqs[b];
         demo.seeds = { user: "*", owner: "*" };
+        for (var c in demo.selfRegs) delete demo.selfRegs[c];
         try { localStorage.removeItem(REQ_KEY); } catch (e) {}
         emit();
         render();
@@ -10086,7 +9857,7 @@
   function createScopedStore(fb, settle) {
     var PAGE_SIZE = 24;
     var METADATA_BATCH_SIZE = 10;
-    var HISTORY_CONCURRENCY = 4;
+    var HISTORY_CONCURRENCY = 12;
     var listeners = {}, buckets = {}, own = {}, profiles = {}, denied = {}, currentUser = null;
     var profile = null, membershipReady = false, catalogReady = false, pageCursor = null;
     var catalogIds = {}, pendingPages = false, generation = 0, adminRoster = null, adminPending = {};
@@ -10121,6 +9892,10 @@
       var ref = reference("appVersions", String(handle).toLowerCase());
       return fb.setDoc(ref, { version: VERSION, ts: fb.serverTimestamp() })
         .then(function () { rememberAppVersion(handle); });
+    }
+    function modelMember(document) {
+      var data = document.data();
+      return data && document.id === data.uid ? data : null;
     }
     function renderSoon() {
       if (renderTimer !== null) return;
@@ -10359,7 +10134,8 @@
         if (!snapshot.size && snapshot.metadata.fromCache) return;
         var members = {};
         snapshot.forEach(function (document) {
-          var data = document.data();
+          var data = modelMember(document);
+          if (!data) return;
           members[data.handle] = data;
         });
         membersByCid[cid] = members;
@@ -10485,7 +10261,8 @@
             fb.where("status", "==", "pending"), fb.where("uid", "!=", "")), function (snap) {
             adminPending = {};
             snap.forEach(function (document) {
-              var member = document.data();
+              var member = modelMember(document);
+              if (!member) return;
               if (!adminPending[member.cid]) adminPending[member.cid] = {};
               adminPending[member.cid][member.handle] = member;
             });
@@ -10499,7 +10276,8 @@
           if (!snap.size && snap.metadata.fromCache && membershipReady) return;
           var nextOwn = {};
           snap.forEach(function (document) {
-            var member = document.data();
+            var member = modelMember(document);
+            if (!member) return;
             if (document.metadata.hasPendingWrites && member.status === "approved") {
               if (own[member.cid]) nextOwn[member.cid] = own[member.cid];
               return;
@@ -10717,16 +10495,45 @@
         return fb.getDoc(reference("meta", "roster")).then(function (snap) {
           if (!snap.exists()) throw new Error("The account directory is unavailable.");
           var before = snap.data();
+          var added = wantedMembers.filter(function (name) { return before.members.indexOf(name) < 0; });
+          var removed = before.members.filter(function (name) { return wantedMembers.indexOf(name) < 0; });
           var changes = before.admins.concat(wantedAdmins).filter(function (name, index, names) {
             return names.indexOf(name) === index && (before.admins.indexOf(name) >= 0) !== (wantedAdmins.indexOf(name) >= 0);
           });
+          var addedLooks = added.map(function (name) {
+            var lower = name.toLowerCase();
+            return Promise.all([
+              fb.getDoc(reference("identities", lower)),
+              fb.getDoc(reference("handleReservations", lower))
+            ]).then(function (snaps) { return { name: name, identity: snaps[0], reservation: snaps[1] }; });
+          });
+          var removedLooks = removed.map(function (name) {
+            return fb.getDoc(reference("handleReservations", name.toLowerCase()))
+              .then(function (snap) { return { name: name, reservation: snap }; });
+          });
           return Promise.all(changes.map(function (name) { return uidFor(name, ""); })).then(function (ids) {
-            var batch = fb.writeBatch(fb.db);
-            batch.set(reference("meta", "roster"), { members: wantedMembers, admins: wantedAdmins });
-            ids.forEach(function (id, index) {
-              batch.update(reference("profiles", id), { role: wantedAdmins.indexOf(changes[index]) >= 0 ? "admin" : "member" });
+            return Promise.all([Promise.all(addedLooks), Promise.all(removedLooks)]).then(function (looks) {
+              var batch = fb.writeBatch(fb.db);
+              batch.set(reference("meta", "roster"), { members: wantedMembers, admins: wantedAdmins });
+              looks[0].forEach(function (record) {
+                if (!record.identity.exists() && !record.reservation.exists()) {
+                  batch.set(reference("handleReservations", record.name.toLowerCase()), {
+                    handle: record.name, ts: Date.now(), reason: "preadded"
+                  });
+                }
+              });
+              looks[1].forEach(function (record) {
+                if (record.reservation.exists() && record.reservation.data().reason === "preadded") {
+                  batch.delete(reference("handleReservations", record.name.toLowerCase()));
+                }
+              });
+              ids.forEach(function (id, index) {
+                batch.update(reference("profiles", id), {
+                  role: wantedAdmins.indexOf(changes[index]) >= 0 ? "admin" : "member"
+                });
+              });
+              return batch.commit();
             });
-            return batch.commit();
           });
         });
       },
@@ -11744,7 +11551,6 @@
     // level-1 sheet flips `l1` on #app. Ordered top-most first, so Back peels one
     // layer at a time and the sheet returns you to the hub instead of exiting.
     var layers = [
-      ["requiredLinkModal", "show", function () {}],
       ["manageModal", "show", closeManageModal],
       ["editModal", "show", hideEdit],
       ["confirmModal", "show", hideConfirm],
@@ -11795,7 +11601,6 @@
       }
       guard = false;
       // Online linking is required; Back must not dismiss it or discard a draft underneath.
-      if (document.getElementById("requiredLinkModal").classList.contains("show")) { writeRoute(); sync(); return; }
       // The overlay stack gets first refusal, and a pop it consumed is finished
       // here. Only a pop that closed nothing can be history traversal, and only
       // then does the router look at the URL -- one listener, one owner per
@@ -11826,7 +11631,6 @@
     // past this list with backofficeView and the level-1 sheet, which are views
     // rather than dialogs; the overlay prefix is identical in both.
     var layers = [
-      ["requiredLinkModal", function () {}],
       ["manageModal", closeManageModal],
       ["editModal", hideEdit],
       ["confirmModal", hideConfirm],
@@ -11838,7 +11642,7 @@
       ["accountMenu", closeAccountMenu],
       ["backofficeView", closeBackoffice]
     ];
-    var dialogs = ["requiredLinkModal", "manageModal", "editModal", "confirmModal", "activityModal", "challModal", "addModal"];
+    var dialogs = ["manageModal", "editModal", "confirmModal", "activityModal", "challModal", "addModal"];
     var openers = {};
 
     // A pointer activation can inherit :focus-visible from the dialog's last keyboard opener.
@@ -11924,14 +11728,9 @@
           // The opener can itself have been torn down or hidden meanwhile --
           // Delete inside the edit dialog closes it before raising the confirm --
           // so focus only goes back to something still laid out and visible.
-          if (id !== "requiredLinkModal" && topDialog() && topDialog() !== el) return;
+          if (topDialog() && topDialog() !== el) return;
           if (back && document.contains(back) && !back.closest("[inert]") && (back.offsetWidth || back.offsetHeight) &&
               getComputedStyle(back).visibility !== "hidden") back.focus();
-          else if (id === "requiredLinkModal" && state.signedIn) {
-            var previousDialog = topDialog();
-            var candidates = reachable(previousDialog || document.getElementById("app"));
-            if (candidates.length) candidates[0].focus();
-          }
           else if (inside && document.activeElement.blur) document.activeElement.blur();
         }
       }).observe(el, { attributes: true, attributeFilter: ["class"] });
@@ -12440,7 +12239,7 @@ ${r?'Expression: "'+r+`"
     }
     window.__FB = { db, durable, collection, onSnapshot, setDoc, updateDoc, deleteDoc, doc, getDoc,
                     enableNetwork, disableNetwork, collectionGroup, query, where, orderBy, documentId,
-                    startAfter, limit, getDocs, writeBatch, runTransaction, serverTimestamp, modelVersion: 1 };
+                    startAfter, limit, getDocs, writeBatch, runTransaction, serverTimestamp, modelVersion: 2 };
   } catch (e) {
     console.error("Firebase init failed - falling back to local storage:", e);
   }

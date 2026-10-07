@@ -576,7 +576,7 @@
   /* Shared app surfaces use the approved palette without rewriting saved preferences. */
   :root { --welcome-bg: #161615; --welcome-accent: #dfb4cf; --welcome-on-accent: #321c2c; }
   html[data-theme="light"] { --welcome-bg: #f5f4f0; --welcome-accent: #81506e; --welcome-on-accent: #ffffff; }
-  #login, #layerBase, #backofficeView, #requiredLinkModal, .policy-page,
+  #login, #layerBase, #backofficeView, .policy-page,
   html:has(#backofficeView.show) :is(.modal-overlay, #popDock, #ptr),
   html.hub-active :is(#challModal, #activityModal, #popDock, #ptr),
   html.settings-active :is(#sheet, #popDock, #ptr),
@@ -615,7 +615,7 @@
     --brand-rear: var(--accent-pressed); --brand-middle: var(--accent); --brand-front: var(--accent-hover);
     --logo-surface: var(--bg);
   }
-  html[data-theme="light"] :is(#login, #layerBase, #backofficeView, #requiredLinkModal, .policy-page),
+  html[data-theme="light"] :is(#login, #layerBase, #backofficeView, .policy-page),
   html[data-theme="light"]:has(#backofficeView.show) :is(.modal-overlay, #popDock, #ptr),
   html[data-theme="light"].hub-active :is(#challModal, #activityModal, #popDock, #ptr),
   html[data-theme="light"].settings-active :is(#sheet, #popDock, #ptr),
@@ -699,9 +699,9 @@
     <section aria-labelledby="information">
       <h2 id="information">Information the app uses</h2>
       <ul>
-        <li><strong>Account information:</strong> your participant name, account identifier, roles and account-link or approval requests. Google sign-in supplies an identifier, email address and verification status, and can supply a display name and profile-photo URL.</li>
+        <li><strong>Account information:</strong> your participant name, account identifier, roles and approval requests for reserved names. Google sign-in supplies an identifier, email address and verification status, and can supply a display name and profile-photo URL.</li>
         <li><strong>Activity and challenges:</strong> dates, minutes, optional notes or activity labels, challenge details, memberships, round participation and results.</li>
-        <li><strong>Existing participant records:</strong> historical minutes and participant identifiers can exist before Google linking. The administrator may reserve a known email address to connect an existing participant with their account.</li>
+        <li><strong>Existing participant records:</strong> historical minutes and participant identifiers can exist before a Google account is connected. The administrator may reserve a known account to connect an existing participant with their history.</li>
         <li><strong>Device and security information:</strong> saved preferences, cached app data and sign-in state. Hosting and security providers can also process technical information such as IP addresses, browser details and request or abuse-prevention signals.</li>
       </ul>
       <p>The app records which app version each member last used so required updates can be confirmed.</p>
@@ -718,7 +718,7 @@
       <h2 id="visibility">Shared activity, not a private journal</h2>
       <p>Participant names, challenge participation, logged minutes and notes are used in shared views. Administrators can access information needed to manage the app, accounts and approval requests.</p>
       <p><strong>The current version retains legacy data access during account migration.</strong> Activity records are not strictly isolated by challenge membership. Do not treat a challenge as a private group or put confidential or sensitive health information in names or notes.</p>
-      <p>Linking Google verifies your sign-in; it does not, by itself, make your activity history private.</p>
+      <p>Google sign-in verifies your account; it does not, by itself, make your activity history private.</p>
     </section>
 
     <section aria-labelledby="providers">

@@ -881,7 +881,7 @@
     font-size: var(--fs-2xl); line-height: var(--lh-tight);
   }
   /* The subtitle states two facts rather than labelling the page. It wraps,
-     because "Three challenges running. You are leading this month." will not
+     because "Three challenges running. You are leading Read-a-thon this month." will not
      fit one line on a narrow phone and truncating a sentence is worse than
      running it to two lines. */
   header .sub { font-size: var(--fs-2xs); color: var(--muted); line-height: var(--lh-normal);
@@ -3954,7 +3954,7 @@
   var ACTIVECID_KEY = "minutes_active_cid";
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
-  var VERSION = "17.3";
+  var VERSION = "17.4";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -4693,19 +4693,20 @@
       return { word: word, name: name, sub: "Pick a challenge below to get going." };
     }
     // Standing is quoted from the active challenge, which is the one pinned to
-    // the top of the list. Naming no challenge keeps the line short; quoting a
-    // rank across several at once would be meaningless.
+    // the top of the list, and the line names it. Unnamed, "Nobody has logged
+    // anything yet" read as a claim about every challenge while another one was
+    // busy; quoting a rank across several at once would be meaningless.
     var cid = joined.indexOf(activeCid()) >= 0 ? activeCid() : joined[0];
     var st = challStanding(cid);
     var count = joined.length === 1
       ? "One challenge running."
       : (COUNTS[joined.length] || joined.length) + " challenges running.";
     if (Store.standingReady && !Store.standingReady(cid)) return { word: word, name: name, sub: count };
-    var tail;
-    if (!st || !st.anyMins) tail = "Nobody has logged anything yet.";
-    else if (!st.mins) tail = "You are yet to log a minute.";
-    else if (st.leading) tail = "You are leading this month.";
-    else tail = "You are " + ordinal(st.rank) + " this month.";
+    var chall = challName(cid), tail;
+    if (!st || !st.anyMins) tail = "Nobody has logged in " + chall + " yet.";
+    else if (!st.mins) tail = "You are yet to log a minute in " + chall + ".";
+    else if (st.leading) tail = "You are leading " + chall + " this month.";
+    else tail = "You are " + ordinal(st.rank) + " in " + chall + " this month.";
     return { word: word, name: name, sub: count + " " + tail };
   }
   view("hello", function () {

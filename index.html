@@ -1010,6 +1010,44 @@
   .pe-chip { border: 1px solid var(--border-2); background: var(--card-2); color: var(--text); font-size: var(--fs-xs); font-weight: var(--fw-sm-bold); padding: var(--sp-xs) var(--sp-lg); border-radius: var(--r-pill); cursor: pointer; }
   .pe-chip:active { background: var(--accent); border-color: var(--accent); }
   .pe-chip.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+/* Add sheet: the challenge on screen is always logged to; others are optional copies. */
+/* Pencil first, then one line of pinned chips that scrolls sideways; the inset keeps focus rings unclipped. */
+  .log-pick { margin-bottom: var(--sp-4xl); }
+  .log-one { font-size: var(--fs-sm); font-weight: var(--fw-bold); color: var(--text); overflow-wrap: anywhere; }
+  .log-notes:not(:empty) { display: flex; flex-direction: column; gap: var(--sp-sm); margin-bottom: var(--sp-lg); }
+  .log-notes > .msg--boxed:not(:empty) { margin-bottom: 0; }
+.log-pick .log-count { color: var(--text); font-weight: var(--fw-sm-bold); }
+  .log-line { position: relative; display: flex; align-items: center; gap: var(--sp-sm); }
+  .log-edit { flex: 0 0 44px; width: 44px; height: 44px; padding: 0; border: none; border-radius: var(--r-pill); background: var(--card-2); color: var(--text); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .log-edit .ic { width: 18px; height: 18px; }
+  .log-edit:active { background: var(--border-2); }
+  .log-targets { flex: 1 1 auto; min-width: 0; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding: 4px; margin: -4px; }
+  .log-targets::-webkit-scrollbar { display: none; }
+  .log-targets .pe-chip { flex: 0 0 auto; white-space: nowrap; }
+.log-targets .pe-chip.current { cursor: default; }
+.log-targets .pe-chip:disabled { background: transparent; color: var(--muted-2); cursor: not-allowed; }
+.log-targets .pe-chip:disabled:active { background: transparent; border-color: var(--border-2); color: var(--muted-2); }
+/* The pencil list opens like the date picker: a floating panel with plain rows. */
+.log-pop {
+  position: absolute; top: calc(100% + var(--sp-sm)); left: 0; right: 0; z-index: 30;
+  max-height: min(22rem, 60vh); overflow-y: auto; overscroll-behavior: contain;
+  background: var(--card); border: 1px solid var(--border-2); border-radius: var(--r-xl); padding: var(--sp-sm) 0; box-shadow: var(--shadow-pop);
+  opacity: 0; visibility: hidden; transform: translateY(-6px); pointer-events: none;
+  transition: opacity .18s ease, transform .18s ease, visibility 0s linear .18s;
+}
+.log-pop.show { opacity: 1; visibility: visible; transform: none; pointer-events: auto; transition-delay: 0s; }
+@media (prefers-reduced-motion: reduce) { .log-pop { transform: none; } }
+.log-opt { width: 100%; min-height: 48px; display: flex; align-items: center; gap: var(--sp-lg); padding: var(--sp-xs) var(--sp-xl); border: none; background: transparent; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.log-opt:active { background: var(--card-2); }
+.log-opt.current { cursor: default; }
+.log-opt.current:active { background: transparent; }
+.log-opt-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.log-opt-name { font-size: var(--fs-sm); font-weight: var(--fw-sm-bold); line-height: 1.25; }
+.log-opt-sub { font-size: var(--fs-2xs); color: var(--muted); }
+.log-tick { flex: 0 0 24px; width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid var(--border-2); display: flex; align-items: center; justify-content: center; color: transparent; }
+.log-tick .ic { width: 13px; height: 13px; }
+.log-opt[aria-pressed="true"] .log-tick { background: var(--accent); border-color: var(--accent); color: var(--on-accent, #fff); }
+.log-opt.current .log-tick { background: var(--border-2); border-color: var(--border-2); color: var(--muted); }
   .pe-add { display: flex; gap: var(--sp-sm); margin-top: var(--sp-sm); }
   .pe-add input { flex: 1; min-width: 0; }
   .pe-add button { flex: 0 0 auto; padding: 0 var(--sp-3xl); border-radius: var(--r-pill); border: 1px solid var(--border-2); background: var(--card-2); color: var(--text); font-weight: var(--fw-bold); font-size: var(--fs-sm); cursor: pointer; }
@@ -1116,9 +1154,13 @@
   .stepper input { flex: 1 1 auto; width: 100%; min-width: 6ch; text-align: center; padding-left: var(--sp-2xs); padding-right: var(--sp-2xs); }
   .row { display: flex; gap: var(--sp-md); }
   .row .field { flex: 1; }
-  @container (max-width: 340px) {
-    #addModal .row { flex-direction: column; }
-  }
+  /* Date fills the space beside the stepper; it wraps below only when its fixed minimum cannot fit. */
+  #addModal .row { flex-direction: row; flex-wrap: wrap; }
+  #addModal .row .field:first-child { flex: 999 1 9.25rem; min-width: 9.25rem; }
+  #addModal .row .field:last-child { flex: 1 0 auto; }
+  #addModal .dp-trigger { gap: var(--sp-sm); padding-left: var(--sp-lg); padding-right: var(--sp-lg); }
+  #addModal #dpLabel { white-space: nowrap; }
+  #addModal .stepper input { flex: 1 0 auto; width: calc(4ch + 16px); min-width: calc(4ch + 16px); }
   .quick { display: flex; gap: var(--sp-sm); flex-wrap: wrap; margin-top: var(--sp-2xs); }
   .quick button { flex: 1; min-width: 56px; padding: var(--sp-md); border-radius: var(--r-md); border: 1px solid var(--border-2); background: var(--card-2); color: var(--text); font-weight: var(--fw-sm-bold); cursor: pointer; font-size: var(--fs-sm); }
   .quick button:active { background: var(--accent); border-color: var(--accent); }
@@ -1559,6 +1601,10 @@
     line-height: var(--lh-snug); white-space: nowrap; cursor: pointer; }
   .msg .m-act:hover { background: color-mix(in srgb, var(--f) 12%, transparent); }
   .msg .m-act:focus-visible { outline: 2px solid var(--f); outline-offset: 3px; }
+  /* With an action, text and icon centre on the 44px pill rather than
+     sitting at the top of a box the pill has made taller. */
+  .msg:has(> .m-act) { align-items: center; }
+  .msg:has(> .m-act) .m-ic { margin-top: 0; }
   .msg--quiet:not(:empty) { margin: var(--sp-3xs) 0 var(--sp-xs); }
   .msg--boxed:not(:empty) { background: var(--b); border: 1px solid var(--o);
     border-radius: var(--r-md); padding: var(--sp-md) var(--sp-lg); margin-bottom: var(--sp-lg); }
@@ -2436,7 +2482,8 @@
   /* Pop: floating panels use --pop; content cards use --pop-sm.
      Ordinary controls and nested rows keep an outline, not another depth layer. */
   html[data-depth="pop"] .modal,
-  html[data-depth="pop"] .cal-pop {
+  html[data-depth="pop"] .cal-pop,
+  html[data-depth="pop"] .log-pop {
     border: 2px solid var(--ink); box-shadow: var(--pop) var(--pop) 0 var(--pop-ink);
   }
   /* Level 1 is a full-screen page with no border, so pop has nothing to thicken
@@ -2447,6 +2494,7 @@
   html[data-depth="pop"] .mbtn,
   html[data-depth="pop"] .quick button,
   html[data-depth="pop"] .stepper .step,
+  html[data-depth="pop"] .log-edit,
   html[data-depth="pop"] .dp-trigger,
   html[data-depth="pop"] input,
   html[data-depth="pop"] textarea {
@@ -2843,6 +2891,9 @@
   .activity-day-detail { margin: var(--sp-lg) 0 var(--sp-4xl); }
   .activity-day-detail strong { display: block; font-size: var(--fs-sm); font-weight: var(--fw-sm-bold); }
   .activity-day-detail p { margin: var(--sp-2xs) 0 0; font-size: var(--fs-xs); color: var(--muted); }
+.activity-day-challenges { list-style: none; margin: var(--sp-xs) 0 0; padding: 0; font-size: var(--fs-xs); }
+.activity-day-challenges li { display: flex; justify-content: space-between; gap: var(--sp-lg); padding: var(--sp-2xs) 0; }
+.activity-day-challenges li span:last-child { flex: none; font-weight: var(--fw-sm-bold); font-variant-numeric: tabular-nums; }
   .activity-disclosure { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-md);
     width: 100%; min-height: 44px; padding: var(--sp-sm) 0; border: 0; background: none;
     color: var(--text); font: inherit; font-size: var(--fs-sm); font-weight: var(--fw-sm-bold);
@@ -3543,6 +3594,11 @@
       <div class="activity-day-detail" aria-live="polite">
         <strong x-text="$store.s.activity.selectedTitle"></strong>
         <p x-text="$store.s.activity.selectedText"></p>
+        <ul class="activity-day-challenges" x-show="$store.s.activity.selectedChallenges.length">
+          <template x-for="c in $store.s.activity.selectedChallenges" :key="c.cid">
+            <li><span x-text="c.name"></span><span x-text="c.minutes"></span></li>
+          </template>
+        </ul>
         <p x-show="$store.s.activity.selectedPending">Saved on this device, waiting to sync.</p>
       </div>
       <div class="activity-goal-row">
@@ -3634,7 +3690,36 @@
     <div class="modal add-modal" role="dialog" aria-modal="true" aria-labelledby="addModalTitle">
       <button class="modal-x" id="addClose" aria-label="Close"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
       <div class="modal-title" id="addModalTitle">Add minutes</div>
-      <div class="modal-msg" id="addModalSub"></div>
+      <div class="field log-pick" x-show="!$store.s.logTargets.many">
+        <label id="logOneLabel">Challenge</label>
+        <div class="log-one" id="addModalSub" x-text="$store.s.logTargets.name"></div>
+      </div>
+      <div class="field log-pick" id="logPick" x-show="$store.s.logTargets.many">
+        <label id="logTargetsLabel"><span x-text="$store.s.logTargets.title"></span><span class="log-count" x-text="$store.s.logTargets.count ? ' · ' + $store.s.logTargets.count : ''"></span></label>
+        <div class="log-line" id="logLine">
+          <button type="button" class="log-edit" id="logEdit" aria-controls="logPop" :aria-expanded="$store.s.logTargets.open ? 'true' : 'false'"
+                  :aria-label="$store.s.logTargets.open ? 'Close challenge list' : 'Choose challenges'" @click="$store.s.act.toggleLogPop()">
+            <svg class="ic" aria-hidden="true" x-show="!$store.s.logTargets.open"><use href="#i-pencil"/></svg>
+            <svg class="ic" aria-hidden="true" x-show="$store.s.logTargets.open"><use href="#i-x"/></svg>
+          </button>
+          <div class="pe-chips log-targets" id="logTargets" role="group" aria-labelledby="logTargetsLabel">
+            <template x-for="t in $store.s.logTargets.chips" :key="t.cid">
+              <button type="button" class="pe-chip" :class="{ on: t.on, current: t.current }" :aria-pressed="t.on ? 'true' : 'false'"
+                      :disabled="t.off" :aria-disabled="t.current ? 'true' : null" :aria-describedby="t.off ? 'logBlockNote' : null"
+                      @click="$store.s.act.toggleLogTarget(t.cid)" x-text="t.label"></button>
+            </template>
+          </div>
+          <div class="log-pop" id="logPop" role="group" aria-label="Challenges in the add sheet" :class="{ show: $store.s.logTargets.open }">
+            <template x-for="r in $store.s.logTargets.rows" :key="r.cid">
+              <button type="button" class="log-opt" :class="{ current: r.current }" :aria-pressed="r.pinned ? 'true' : 'false'"
+                      :aria-disabled="r.current ? 'true' : null" @click="$store.s.act.toggleLogPin(r.cid)">
+                <span class="log-opt-text"><span class="log-opt-name" x-text="r.label"></span><span class="log-opt-sub" x-show="r.current || r.brief" x-text="r.current ? 'This challenge' : r.brief"></span></span>
+                <span class="log-tick" aria-hidden="true"><svg class="ic"><use href="#i-ok"/></svg></span>
+              </button>
+            </template>
+          </div>
+        </div>
+      </div>
       <div class="row">
         <div class="field">
           <label id="dateLabel">Date</label>
@@ -3700,7 +3785,7 @@
         </div>
         <input type="text" id="note" :placeholder="$store.s.tagChips.placeholder" maxlength="32" autocomplete="off" />
       </div>
-      <div class="msg msg--boxed" id="logBlockNote" aria-live="polite"></div>
+      <div class="log-notes" id="logBlockNote" aria-live="polite" x-effect="$store.s.logTargets.noteKey; $store.s.act.updateLogGate()"></div>
       <button class="btn" id="addBtn">Add entry</button>
     </div>
   </div>
@@ -3954,7 +4039,7 @@
   var ACTIVECID_KEY = "minutes_active_cid";
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
-  var VERSION = "17.4";
+  var VERSION = "17.5";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -4339,12 +4424,16 @@
         if (date > now || entry.mins <= 0) return;
         var value = days[entry.date];
         if (!value) {
-          value = days[entry.date] = { minutes: 0, pending: false, entries: 0 };
+          value = days[entry.date] = { minutes: 0, pending: false, entries: 0, challenges: Object.create(null) };
           var week = key(monday(date));
           weeks[week] = (weeks[week] || 0) + 1;
           if (entry.date < earliest) earliest = entry.date;
         }
         value.minutes += entry.mins; value.entries++; value.pending = value.pending || !!entry._pending;
+        // Copies logged to several challenges are separate entries; the day keeps
+        // each challenge's own minutes so the calendar never adds them together.
+        var cid = entry.cid || "";
+        value.challenges[cid] = (value.challenges[cid] || 0) + entry.mins;
       });
       var start = monday(now), currentWeek = key(start), goal = goalAt(history, currentWeek);
       var activeDays = weeks[currentWeek] || 0, weekly = 0;
@@ -4360,7 +4449,7 @@
           outsideMonth: dateKey.slice(0, 7) !== month,
           today: date === now, future: date > now, active: !!value,
           minutes: value ? value.minutes : 0, pending: !!(value && value.pending),
-          entries: value ? value.entries : 0
+          entries: value ? value.entries : 0, challenges: value ? Object.keys(value.challenges).length : 0
         };
       }
       var weekDays = [], calendar = [];
@@ -4422,6 +4511,8 @@
   state.calRev = 0;           // date picker calView/selectedISO live outside the store
   state.tagRev = 0;           // tag inputs are DOM fields; this ticks their chip views
   state.editTagRev = 0;
+  state.logTargetRev = 0;      // add-sheet challenge picker lives outside the store
+  state.logPickOpen = false;   // add-sheet pencil list
   state.manageCid = null;
   state.discoverMore = false;
   state.discoverLoading = false;
@@ -5356,6 +5447,10 @@
           .catch(function (e) { console.error(e); done(); paint(cur); showToast("Couldn't update round", "danger"); });
       }, 260);
     },
+    toggleLogTarget: function (cid) { toggleLogTarget(cid); },
+    toggleLogPin: function (cid) { toggleLogPin(cid); },
+    toggleLogPop: function () { toggleLogPop(); },
+      updateLogGate: function () { updateLogGate(); },
     pickTag: function (tag) {
       var input = document.getElementById("note"); if (!input) return;
       input.value = (input.value.trim().toLowerCase() === tag.toLowerCase()) ? "" : tag;
@@ -9019,6 +9114,7 @@
   // Clearing is setMsg(el, ""), which empties the node so the :empty rules
   // collapse it completely: no box, no border, no margin.
   var MSG_ICON = { info: "i-info", success: "i-ok", warn: "i-warn", danger: "i-alert" };
+  // Several messages in one box, each line with its own optional action.
   function setMsg(el, text, tone, action) {
     if (typeof el === "string") el = document.getElementById(el);
     if (!el) return;
@@ -9039,6 +9135,7 @@
       b.type = "button";
       b.className = "m-act";
       b.textContent = action.label;
+      if (action.aria) b.setAttribute("aria-label", action.aria);
       b.onclick = action.fn;
       el.appendChild(b);
     }
@@ -9415,7 +9512,7 @@
     var t = document.getElementById("dpTrigger");
     if (t) t.setAttribute("aria-expanded", on ? "true" : "false");
   }
-  function openCal() { renderCal(); document.getElementById("calPop").classList.add("show"); setCalExpanded(true); }
+  function openCal() { closeLogPop(); renderCal(); document.getElementById("calPop").classList.add("show"); setCalExpanded(true); }
   function closeCal() { document.getElementById("calPop").classList.remove("show"); setCalExpanded(false); }
   document.getElementById("dpTrigger").onclick = function (e) {
     e.stopPropagation();
@@ -9467,6 +9564,134 @@
     return todayStr();
   }
 
+  // ---- Log to several challenges ----
+  // The sheet opens over one challenge, which is always written to and shown
+  // first. Two layers sit on top: the pencil list pins other approved challenges
+  // as chips, and tapping a chip turns it on for this entry. Each challenge that
+  // is on gets its own separate entry. Both sets are remembered on this device,
+  // with the challenge on screen included so it shows up from the others too.
+  var LOG_TARGETS_KEY = "minutes-log-targets";
+  var LOG_PINS_KEY = "minutes-log-pins";
+  var logPicked = {}, logPinned = {};
+  function rememberedCids(key) {
+    try {
+      var saved = JSON.parse(localStorage.getItem(key) || "[]");
+      return Array.isArray(saved) ? saved.filter(function (cid) { return typeof cid === "string"; }) : [];
+    } catch (e) { return []; }
+  }
+  function rememberCids(key, set) {
+    var cids = Object.keys(set).filter(function (cid) { return set[cid] && cid !== activeCid(); });
+    try { localStorage.setItem(key, JSON.stringify([activeCid()].concat(cids))); } catch (e) {}
+  }
+  function rememberLogTargets() { rememberCids(LOG_TARGETS_KEY, logPicked); }
+  function logChallenges() {
+    var current = activeCid();
+    return [current].concat(Object.keys(membersByCid).filter(function (cid) {
+      return cid !== current && !!challMeta[cid] && myStatus(cid) === "approved";
+    }).sort(function (a, b) { return challName(a).localeCompare(challName(b)); }));
+  }
+  // The same conditions the entry rules enforce: an explicit round you are in,
+  // open for logging, inside the current/previous-month window. null means the
+  // challenge's rounds are still loading.
+  function canLogTo(cid, date) {
+    if (date < iso(logWindowStart()) || date > todayStr()) return false;
+    if (Store && Store.roundsReady && !Store.roundsReady(cid)) return null;
+    var key = date.slice(0, 7), round = (roundsByCid[cid] || {})[key];
+    if (!round || !round.participants) return false;
+    var me = String(state.me).toLowerCase();
+    if (!round.participants.some(function (name) { return String(name).toLowerCase() === me; })) return false;
+    var flags = roundFlagsFromData(round);
+    return flags.logOpen !== null ? flags.logOpen : !isFutureMonthKey(key);
+  }
+  // Why canLogTo said no, worded like updateLogGate() words it for the open
+  // challenge, so each line says what to do next. A month without a round is
+  // the same as one not joined yet: joining starts it. Dates outside the
+  // logging window already block the whole sheet, so they need no line.
+  function logBlockInfo(cid, date) {
+    if (date < iso(logWindowStart()) || date > todayStr()) return null;
+    var key = date.slice(0, 7), round = (roundsByCid[cid] || {})[key], flags = roundFlagsFromData(round);
+    var month = new Date(+key.slice(0, 4), (+key.slice(5, 7)) - 1, 1).toLocaleString(undefined, { month: "long" });
+    var me = String(state.me).toLowerCase();
+    var joined = !!(round && round.participants) && round.participants.some(function (who) { return String(who).toLowerCase() === me; });
+    if (!joined && flags.joinOpen !== false) return { brief: "You haven't joined " + month + "'s round.", text: "You haven't joined " + month + "'s round yet.", key: key, month: month, join: true };
+    if (!joined) return { brief: "You're not in " + month + "'s round.", text: "You're not in " + month + "'s round. Ask whoever runs it to add you." };
+    if (flags.logOpen === false) return { brief: month + "'s round is locked.", text: month + "'s round is locked, so logging is closed." };
+    return { brief: month + "'s round hasn't opened yet.", text: month + "'s round hasn't opened for logging yet." };
+  }
+  // One line per pinned extra challenge that can't take the date, shown with
+  // the open challenge's own message so every reason sits in one place.
+  function logTargetNotes(date) {
+    return logChallenges().slice(1).filter(function (cid) { return logPinned[cid] && canLogTo(cid, date) === false; })
+      .map(function (cid) {
+        var info = logBlockInfo(cid, date), name = challName(cid);
+        if (!info) return null;
+        return { text: name + ": " + info.text, action: info.join ? { label: "Join " + info.month,
+          aria: "Join " + name + "'s " + info.month + " round", fn: function () { joinLogTarget(cid, info.key); } } : null };
+      }).filter(Boolean);
+  }
+  function joinLogTarget(cid, key) {
+    var round = (roundsByCid[cid] || {})[key], list = (round && round.participants) || [];
+    var me = String(state.me).toLowerCase();
+    if (list.some(function (who) { return String(who).toLowerCase() === me; })) return;
+    if (roundFlagsFromData(round).joinOpen === false) { showToast("Joining is closed for this round.", "warn"); return; }
+    commitChallenge(key, list.concat([state.me]), cid);
+    state.logTargetRev++;
+  }
+  // The same rules updateLogGate() uses for the open challenge.
+  function currentLogBlocked(date) {
+    var mk = date.slice(0, 7);
+    return date < iso(logWindowStart()) || !isParticipant(state.me, mk) || roundLocked(mk);
+  }
+  function pickedLogTargets(date) {
+    return logChallenges().slice(1).filter(function (cid) { return logPinned[cid] && logPicked[cid] && canLogTo(cid, date) !== false; });
+  }
+  function toggleLogTarget(cid) {
+    if (cid === activeCid()) return;
+    logPicked[cid] = !logPicked[cid];
+    if (logPicked[cid] && Store && Store.watchLogTargets) Store.watchLogTargets([cid]);
+    state.logTargetRev++;
+  }
+  // Pinning adds the chip already turned on, since that is why it was pinned.
+  function toggleLogPin(cid) {
+    if (cid === activeCid()) return;
+    logPinned[cid] = logPicked[cid] = !logPinned[cid];
+    if (logPinned[cid] && Store && Store.watchLogTargets) Store.watchLogTargets([cid]);
+    rememberCids(LOG_PINS_KEY, logPinned);
+    state.logTargetRev++;
+  }
+  function toggleLogPop() { if (!state.logPickOpen) closeCal(); state.logPickOpen = !state.logPickOpen; }
+  function closeLogPop() { state.logPickOpen = false; }
+  document.addEventListener("click", function (e) {
+    var line = document.getElementById("logLine");
+    if (state.logPickOpen && line && !line.contains(e.target)) closeLogPop();
+  });
+  view("logTargets", function () {
+    this.rev; this.calRev; this.logTargetRev; this.activeCid; this.me;
+    var dateInput = document.getElementById("date");
+    var date = (dateInput && dateInput.value) || todayStr();
+    var list = logChallenges();
+    var blocked = currentLogBlocked(date);
+    var rows = list.map(function (cid, index) {
+      var current = index === 0, open = current ? !blocked : canLogTo(cid, date) !== false;
+      var info = current || open ? null : logBlockInfo(cid, date);
+      return { cid: cid, label: challName(cid), current: current, off: !open, pinned: current || !!logPinned[cid],
+        on: open && (current || !!logPicked[cid]), brief: info ? info.brief : "" };
+    });
+    var chips = rows.filter(function (row) { return row.pinned; });
+    var selected = chips.filter(function (row) { return row.on; }).length;
+    return {
+      many: list.length > 1,
+      name: challName(activeCid()),
+      open: !!this.logPickOpen,
+      title: chips.length > 1 ? "Challenges" : "Challenge",
+      count: chips.length > 1 && selected ? selected + " selected" : "",
+      chips: chips,
+      rows: rows,
+      notes: logTargetNotes(date),
+      noteKey: logTargetNotes(date).map(function (note) { return note.text; }).join("|")
+    };
+  });
+
   function openAddModal() {
     setDate(addModalDefaultDate());
     document.getElementById("mins").value = "";
@@ -9476,12 +9701,16 @@
     renderTagChips();
     setMsg("minsErr", "");
     updateLogGate();
-    var sub = document.getElementById("addModalSub");
-    if (sub) sub.textContent = challName(activeCid());
+    logPicked = {}; logPinned = {};
+    rememberedCids(LOG_TARGETS_KEY).forEach(function (cid) { logPicked[cid] = true; });
+    rememberedCids(LOG_PINS_KEY).forEach(function (cid) { logPinned[cid] = true; });
+    state.logPickOpen = false;
+    state.logTargetRev++;
+    if (Store && Store.watchLogTargets) Store.watchLogTargets(Object.keys(logPinned));
     document.getElementById("calPop").classList.remove("show");
     document.getElementById("addModal").classList.add("show");
   }
-  function hideAdd() { document.getElementById("addModal").classList.remove("show"); }
+  function hideAdd() { closeLogPop(); document.getElementById("addModal").classList.remove("show"); }
   document.getElementById("fabAdd").onclick = openAddModal;
   (function () {
     var sb = document.getElementById("sheetBody"); if (!sb) return;
@@ -9511,55 +9740,83 @@
     }
     if (!requireEntryWrite()) return;
 
-    // fold into the same day's entry only when the tag matches; different tags stay
-    // separate so per-tag breakdowns can be built later
-    var existing = null;
-    for (var i = 0; i < state.entries.length; i++) {
-      var e = state.entries[i];
-      if (e.who === state.me && e.date === date && sameTag(e.note, tag)) { existing = e; break; }
-    }
-    var undoFn, writePromise, savedId, entryCid = activeCid();
-    if (existing) {
-      var id = existing.id, prevMins = existing.mins;
-      savedId = id;
-      var newMins = existing.mins + mins;
-      writePromise = Store.updateEntry(id, { mins: newMins });
-      undoFn = function () { Store.updateEntry(id, { mins: prevMins }, entryCid).catch(warnSaveFail); };
-    } else {
+    // Each picked challenge gets its own entry. Within a challenge, fold into the
+    // same day's entry only when the tag matches; different tags stay separate so
+    // per-tag breakdowns can be built later.
+    function writeTo(entryCid) {
+      var current = entryCid === activeCid(), pool = current ? state.entries : entriesAll;
+      var existing = null;
+      for (var i = 0; i < pool.length; i++) {
+        var e = pool[i];
+        if ((current || cidOf(e) === entryCid) && e.who === state.me && e.date === date && sameTag(e.note, tag)) { existing = e; break; }
+      }
+      if (existing) {
+        var id = existing.id, prevMins = existing.mins;
+        return { id: id, cid: entryCid, promise: Store.updateEntry(id, { mins: existing.mins + mins }, entryCid),
+          undo: function () { return Store.updateEntry(id, { mins: prevMins }, entryCid); } };
+      }
       var newId = uid();
-      savedId = newId;
-      writePromise = Store.addEntry({ id: newId, who: state.me, date: date, mins: mins, note: tag });
-      undoFn = function () { Store.deleteEntry(newId, entryCid).catch(warnSaveFail); };
+      return { id: newId, cid: entryCid, promise: Store.addEntry({ id: newId, cid: entryCid, who: state.me, date: date, mins: mins, note: tag }),
+        undo: function () { return Store.deleteEntry(newId, entryCid); } };
     }
-
-    // The sheet shows one round at a time, so if the entry lands in a different
-    // round than the one on screen, follow it there. Otherwise the save is confirmed
-    // and nothing visibly changes.
-    var landedKey = date.slice(0, 7);
-    if (landedKey !== monthKeyOf(state.viewMonth)) { state.viewMonth = keyToDate(landedKey); }
-    renderAll();
-
+    // Picked challenges whose rounds are still loading get a short wait so the
+    // copy is checked against the same rules the server will apply.
+    var picked = pickedLogTargets(date);
+    var waiting = picked.filter(function (cid) { return canLogTo(cid, date) === null; });
     var addBtn = document.getElementById("addBtn");
-    var minsInput = document.getElementById("mins");
-    var noteInput = document.getElementById("note");
-    addBtn.disabled = true; addBtn.textContent = "Saving…";
+    if (waiting.length && Store && Store.whenRoundsSettled) {
+      addBtn.disabled = true; addBtn.textContent = "Saving…";
+      Store.whenRoundsSettled(waiting, 4000).then(save);
+    } else save();
+    function save() {
+      var targets = picked.filter(function (cid) { return !!canLogTo(cid, date); });
+      var skipped = picked.filter(function (cid) { return targets.indexOf(cid) < 0; });
+      var writes = [activeCid()].concat(targets).map(writeTo);
+      var savedId = writes[0].id;
+      rememberLogTargets();
 
-    writePromise.then(function () {
-      // confirm only after the write actually succeeds. The modal closes on success
-      // rather than flashing a confirmation inside a sheet that is about to go away;
-      // the pill carries the confirmation and the undo, the row carries the where.
-      minsInput.value = ""; noteInput.value = "";
-      addBtn.disabled = false; addBtn.textContent = "Add entry";
-      hideAdd();
-      // Offline the save is real but local, and this pill is the thing the user is
-      // actually looking at in that moment, so it carries the caveat rather than
-      // relying on them noticing the banner behind the modal that just closed.
-      announceSaved("Added " + mins + " min · " + (offlineNow() ? "syncs when you're back" : niceDate(date)), undoFn, savedId);
-    }).catch(function (err) {
-      console.error("Save failed:", err);
-      addBtn.disabled = false; addBtn.textContent = "Add entry";
-      showToast("Couldn't save. Check your connection and try again.", "danger");
-    });
+      // The sheet shows one round at a time, so if the entry lands in a different
+      // round than the one on screen, follow it there. Otherwise the save is confirmed
+      // and nothing visibly changes.
+      var landedKey = date.slice(0, 7);
+      if (landedKey !== monthKeyOf(state.viewMonth)) { state.viewMonth = keyToDate(landedKey); }
+      renderAll();
+
+      var minsInput = document.getElementById("mins");
+      var noteInput = document.getElementById("note");
+      addBtn.disabled = true; addBtn.textContent = "Saving…";
+
+      Promise.all(writes.map(function (write) {
+        return write.promise.then(function () { return true; }, function (err) { console.error("Save failed:", err); return false; });
+      })).then(function (saved) {
+        var done = writes.filter(function (write, index) { return saved[index]; });
+        if (!saved[0]) {
+          // The challenge on screen is the one the user is logging into; without it
+          // the copies alone would be a surprise, so they are taken back.
+          done.forEach(function (write) { write.undo().catch(warnSaveFail); });
+          addBtn.disabled = false; addBtn.textContent = "Add entry";
+          showToast("Couldn't save. Check your connection and try again.", "danger");
+          return;
+        }
+        // confirm only after the write actually succeeds. The modal closes on success
+        // rather than flashing a confirmation inside a sheet that is about to go away;
+        // the pill carries the confirmation and the undo, the row carries the where.
+        minsInput.value = ""; noteInput.value = "";
+        addBtn.disabled = false; addBtn.textContent = "Add entry";
+        hideAdd();
+        var undoFn = function () { done.forEach(function (write) { write.undo().catch(warnSaveFail); }); };
+        // Offline the save is real but local, and this pill is the thing the user is
+        // actually looking at in that moment, so it carries the caveat rather than
+        // relying on them noticing the banner behind the modal that just closed.
+        announceSaved("Added " + mins + " min" + (done.length > 1 ? " to " + done.length + " challenges" : "") + " · " +
+          (offlineNow() ? "syncs when you're back" : niceDate(date)), undoFn, savedId);
+        var missed = writes.filter(function (write, index) { return !saved[index]; })
+          .map(function (write) { return write.cid; }).concat(skipped);
+        if (missed.length) {
+          showToast("Couldn't also save to " + missed.map(challName).join(", ") + ".", "warn");
+        }
+      });
+    }
   };
 
   // #seg range buttons and #rosterEditTab are bound in the markup.
@@ -9601,9 +9858,11 @@
   }
 
   // ---- Challenge rounds (per month, per active challenge) ----
-  function commitChallenge(key, newList) {
+  // cid defaults to the open challenge; the add sheet passes another one when
+  // the user joins a round for a pinned extra challenge.
+  function commitChallenge(key, newList, cid) {
     if (!requireConnection()) return;
-    var cid = activeCid();
+    cid = cid || activeCid();
     if (!roundsByCid[cid]) roundsByCid[cid] = {};
     var rounds = roundsByCid[cid];
     var prev = rounds.hasOwnProperty(key) ? rounds[key] : null;
@@ -9702,13 +9961,24 @@
       }
     }
     else if (roundLocked(mk)) msg = mName + "'s round is locked, so logging is closed.";
+    // Pinned extra challenges that can't take this date get a box each, named
+    // first and with their own Join where possible. The open challenge's box
+    // is named only when it isn't the only one.
+    var extra = logTargetNotes(dateVal), notes = extra;
     if (msg) {
-      setMsg(note, msg, "warn", action);
-      btn.disabled = true;
-    } else {
-      setMsg(note, "");
-      if (btn.textContent !== "Saving…") btn.disabled = false;
+      var name = challName(activeCid());
+      if (extra.length && action) action.aria = "Join " + name + "'s " + mName + " round";
+      notes = [{ text: extra.length ? name + ": " + msg : msg, action: action }].concat(extra);
     }
+    note.textContent = "";
+    notes.forEach(function (n) {
+      var box = document.createElement("div");
+      box.className = "msg msg--boxed";
+      note.appendChild(box);
+      setMsg(box, n.text, "warn", n.action);
+    });
+    if (msg) btn.disabled = true;
+    else if (btn.textContent !== "Saving…") btn.disabled = false;
   }
 
   function toggleAdmin(name) {
@@ -9863,7 +10133,7 @@
     var profile = null, membershipReady = false, catalogReady = false, pageCursor = null;
     var catalogIds = {}, pendingPages = false, generation = 0, adminRoster = null, adminPending = {};
     var notifyQueued = false, renderTimer = null, scopeTimer = null;
-    var cardObserver = null, cardIds = new WeakMap(), visibleCards = {}, metadataKeys = {}, historyStarted = false;
+    var cardObserver = null, cardIds = new WeakMap(), visibleCards = {}, metadataKeys = {}, historyStarted = false, logTargetCids = {};
     state.discoverMore = false;
     state.discoverLoading = false;
     state.discoverError = "";
@@ -9983,7 +10253,7 @@
       clearTimeout(renderTimer); renderTimer = null;
       clearTimeout(scopeTimer); scopeTimer = null;
       if (cardObserver) cardObserver.disconnect();
-      cardIds = new WeakMap(); visibleCards = {}; metadataKeys = {}; historyStarted = false;
+      cardIds = new WeakMap(); visibleCards = {}; metadataKeys = {}; historyStarted = false; logTargetCids = {};
       Object.keys(listeners).forEach(stop);
       buckets = {}; own = {}; profiles = {}; denied = {}; profile = null;
       catalogIds = {}; pageCursor = null; adminRoster = null; adminPending = {};
@@ -10172,6 +10442,9 @@
         var summary = !!visibleCards[cid] || detail;
         if (summary) {
           desired["members:" + cid] = true; subscribeMembers(cid);
+          desired["rounds:" + cid] = true; subscribeRounds(cid);
+        }
+        if (logTargetCids[cid] && !summary && own[cid] && own[cid].status === "approved") {
           desired["rounds:" + cid] = true; subscribeRounds(cid);
         }
         if (own[cid] && own[cid].status === "approved") {
@@ -10440,6 +10713,28 @@
         var entry = findEntry(id, cid);
         if (!entry) return failure("The entry is not loaded. Reopen its round before deleting.");
         return settle(fb.deleteDoc(reference("challenges", entry.cid, "entries", id)));
+      },
+      // The add sheet can copy an entry into the user's other challenges, so it
+      // needs their round records even when no home card is on screen. Only the
+      // picked challenges are watched; a user can belong to dozens.
+      watchLogTargets: function (cids) {
+        var added = false;
+        (cids || []).forEach(function (cid) { if (!logTargetCids[cid]) { logTargetCids[cid] = added = true; } });
+        if (added) syncScopes();
+      },
+      roundsReady: function (cid) { return !denied[cid] && ready("rounds:" + cid); },
+      whenRoundsSettled: function (cids, ms) {
+        function settled(cid) {
+          var listener = listeners["rounds:" + cid];
+          return !!denied[cid] || !own[cid] || (!!listener && (listener.ready || listener.failed));
+        }
+        return new Promise(function (resolve) {
+          var deadline = Date.now() + ms;
+          (function check() {
+            if (cids.every(settled) || Date.now() >= deadline) resolve();
+            else setTimeout(check, 100);
+          })();
+        });
       },
       putEntry: function (entry) {
         var blocked = guardWrite(); if (blocked) return blocked;
@@ -11557,6 +11852,7 @@
       ["confirmModal", "show", hideConfirm],
       ["activityGoalOptions", "show", closeActivityGoalMenu],
       ["activityModal", "show", hideActivity],
+      ["logPop", "show", closeLogPop],
       ["calPop", "show", closeCal],
       ["challModal", "show", hideChallModal],
       // calPop lives INSIDE addModal, so it has to peel first -- same reason it
@@ -11637,6 +11933,7 @@
       ["confirmModal", hideConfirm],
       ["activityGoalOptions", closeActivityGoalMenu],
       ["activityModal", hideActivity],
+      ["logPop", closeLogPop],
       ["calPop", closeCal],
       ["challModal", hideChallModal],
       ["addModal", hideAdd],
@@ -11787,7 +12084,8 @@
   }
   function activityDayLabel(cell) {
     var detail = cell.future ? "future date" : !state.activityLoaded ? "activity not loaded" :
-      cell.active ? cell.minutes + " minutes logged" + (cell.pending ? ", waiting to sync" : "") : "no minutes logged";
+      cell.active ? (cell.challenges > 1 ? "logged in " + cell.challenges + " challenges" : cell.minutes + " minutes logged") +
+        (cell.pending ? ", waiting to sync" : "") : "no minutes logged";
     return activityDateLabel(cell.date) + ", " + detail + (cell.today ? ", today" : "");
   }
   view("activity", function () {
@@ -11796,6 +12094,7 @@
     this.connectionOffline; this.connectionSettled;
     var result = activitySnapshot(), known = state.activityLoaded;
     var selected = result.days[state.activitySelected];
+    var selectedChallenges = selected ? Object.keys(selected.challenges) : [];
     var note = bannerOffline() ? (known ? "Saved history may be incomplete until connected." : "Connect to load your activity history.") :
       state.activityLoadError ? (known ? "Activity couldn't be refreshed. Showing saved entries; reload to try again." : "Activity couldn't be loaded. Reload to try again.") :
       !known ? "Loading your activity history..." : "";
@@ -11829,8 +12128,12 @@
       weekdays: result.weekDays.map(function (cell) { return activityDateLabel(cell.date, { weekday: "short" }); }),
       prevOff: state.activityMonth <= result.earliestMonth, nextOff: state.activityMonth >= state.activityDay.slice(0, 7),
       selectedTitle: activityDateLabel(state.activitySelected, { weekday: "long", day: "numeric", month: "long" }),
-      selectedText: !known ? "Activity history isn't available yet." : selected ?
-        selected.minutes + " minutes logged across " + selected.entries + " entr" + (selected.entries === 1 ? "y" : "ies") + "." : "No minutes logged.",
+      selectedText: !known ? "Activity history isn't available yet." : !selected ? "No minutes logged." :
+        selectedChallenges.length > 1 ? "Logged in " + selectedChallenges.length + " challenges." :
+        selected.minutes + " minutes logged across " + selected.entries + " entr" + (selected.entries === 1 ? "y" : "ies") + ".",
+      selectedChallenges: known && selectedChallenges.length > 1 ? selectedChallenges.map(function (cid) {
+        return { cid: cid, name: (challMeta[cid] && challMeta[cid].name) || "Another challenge", minutes: selected.challenges[cid] + " min" };
+      }).sort(function (a, b) { return a.name.localeCompare(b.name); }) : [],
       selectedPending: !!(selected && selected.pending)
     };
   });

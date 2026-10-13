@@ -5,7 +5,7 @@
    - Query-string requests (the pull-to-refresh version poll): network only.
    - Other same-origin static assets (icons, manifest, svg): cache-first.
    - Cross-origin (Firebase, gstatic, reCAPTCHA): passthrough, never cached. */
-var CACHE = "minutes-v58";  // Bump whenever the cached shell or assets change.
+var CACHE = "minutes-v59";  // Bump whenever the cached shell or assets change.
 var CORE = [
   "./",
   "./index.html",
@@ -26,14 +26,27 @@ var CORE = [
   "./fonts/inter-latin.woff2",
   "./fonts/inter-latin-ext.woff2"
 ];
+// Without these the offline shell cannot start. If any of them fails, install
+// fails, so the previous worker and its complete cache stay in charge.
+var REQUIRED = ["./", "./index.html", "./fonts/inter-latin.woff2", "./fonts/inter-latin-ext.woff2"];
+
+// Only complete same-origin responses are worth keeping; an error page or a
+// redirect stored here would be served back as if it were the app.
+function cacheable(res) { return !!res && res.ok && res.type === "basic"; }
+
+self.addEventListener("message", function (event) {
+  if (event.data && event.data.type === "SKIP_WAITING") self.skipWaiting();
+});
 
 self.addEventListener("install", function (e) {
   self.skipWaiting();
   e.waitUntil(
     caches.open(CACHE).then(function (c) {
-      return Promise.all(CORE.map(function (u) {
-        return c.add(u).catch(function () {});
-      }));
+      return c.addAll(REQUIRED).then(function () {
+        return Promise.all(CORE.filter(function (u) { return REQUIRED.indexOf(u) === -1; }).map(function (u) {
+          return c.add(u).catch(function () {});
+        }));
+      });
     })
   );
 });
@@ -75,6 +88,11 @@ self.addEventListener("fetch", function (e) {
     // network-first so version bumps are picked up; cache fallback when offline
     e.respondWith(
       fetch(req).then(function (res) {
+        if (!cacheable(res)) {
+          // A 404/5xx from the host must not replace the working offline copy;
+          // prefer that copy when there is one.
+          return caches.match(req).then(function (m) { return m || res; });
+        }
         var copy = res.clone();
         // Cache under the url that was actually requested. v2 hardcoded
         // "./index.html" here, so a second page opened alongside the shell
@@ -93,10 +111,6 @@ self.addEventListener("fetch", function (e) {
             return new Response(pageName + " unavailable offline. Reconnect and reload this page.", {
               status: 503, headers: { "Content-Type": "text/plain; charset=utf-8" }
             });
-
-            self.addEventListener("message", function (event) {
-              if (event.data && event.data.type === "SKIP_WAITING") self.skipWaiting();
-            });
           }
           return caches.match("./index.html");
         });
@@ -109,6 +123,7 @@ self.addEventListener("fetch", function (e) {
   e.respondWith(
     caches.match(req).then(function (m) {
       return m || fetch(req).then(function (res) {
+        if (!cacheable(res)) return res;
         var copy = res.clone();
         caches.open(CACHE).then(function (c) { c.put(req, copy); });
         return res;

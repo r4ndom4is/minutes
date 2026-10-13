@@ -689,7 +689,7 @@
   #ptr.ready .ptr-spinner { transform: scale(1.15); border-color: var(--accent); border-top-color: var(--accent); }
   #ptr.spin .ptr-spinner { animation: ptrspin .7s linear infinite; }
   @keyframes ptrspin { to { transform: rotate(360deg); } }
-  /* ---- Login and name approval ---- */
+  /* ---- Login and name setup ---- */
   [x-cloak] { display: none !important; }
   #login { min-height: 100dvh; display: flex; flex-direction: column; background: var(--bg); color: var(--text); }
   html #login { box-shadow: none; }
@@ -794,9 +794,8 @@
   .onb-account { margin: 0 0 var(--sp-5xl); color: var(--muted); font-size: var(--fs-xs);
     line-height: var(--lh-relaxed); overflow-wrap: anywhere; }
   .onb-account span { display: block; }
-  .login-card p.onb-help, .login-card p.cw-sub { font-size: var(--fs-sm); line-height: var(--lh-relaxed);
+  .login-card p.onb-help { font-size: var(--fs-sm); line-height: var(--lh-relaxed);
     margin: var(--sp-lg) 0 var(--sp-5xl); max-width: none; overflow-wrap: anywhere; }
-  .login-card p.cw-sub { color: var(--text); }
   .login-card.onb .claim .field { margin-bottom: 0; }
   #login input { width: 100%; min-width: 0; min-height: 48px; margin: 0; padding: var(--sp-lg) var(--sp-xl);
     border: 1px solid var(--field-edge); border-radius: var(--r-md); background: var(--card); color: var(--text);
@@ -805,7 +804,7 @@
   #login input:focus { border-color: var(--accent); }
   html[data-depth="pop"] #login input { border-width: 2px; border-color: var(--text); box-shadow: none; }
   #login .onb-card .field + .msg { min-height: 0; }
-  #login input:focus-visible, #login button:focus-visible, #login summary:focus-visible, #login a:focus-visible {
+  #login input:focus-visible, #login button:focus-visible, #login a:focus-visible {
     outline: 2px solid var(--accent); outline-offset: 3px; }
 
   .onb-steps { display: flex; gap: var(--sp-sm); list-style: none; padding: 0; margin: var(--sp-5xl) 0 var(--sp-sm); }
@@ -813,7 +812,7 @@
   .onb-step i { display: block; height: 3px; border-radius: var(--r-pill); background: var(--border-2); margin-bottom: var(--sp-sm); }
   .onb-step span { display: block; font-size: var(--fs-3xs); line-height: var(--lh-normal); overflow-wrap: anywhere; }
   .onb-step.done, .onb-step.now { color: var(--text); }
-  .onb-step.done i, .onb-step.now i, .onb-steps.all-done .onb-step i { background: var(--text); }
+  .onb-step.done i, .onb-step.now i { background: var(--text); }
   .onb-step.now span { font-weight: var(--fw-bold); }
   .onb-alt { display: none; width: 100%; margin: var(--sp-lg) 0 0; padding: var(--sp-lg); border: 0;
     min-height: 44px; border-radius: var(--r-pill); background: none; color: var(--text);
@@ -821,33 +820,11 @@
     text-decoration: underline; text-underline-offset: 3px; cursor: pointer; font-family: inherit; }
   .login-card.onb .onb-alt { display: block; }
   .onb-alt:hover:not(:disabled) { background: var(--card-2); }
-  .login-card.landing .onb-alt { display: none; }
-
-  .cw-game { margin-top: var(--sp-4xl); }
-  .cw-game summary { min-height: 44px; padding: var(--sp-lg) var(--sp-2xl); border-radius: var(--r-pill);
-    font-size: var(--fs-xs); font-weight: var(--fw-sm-bold); line-height: var(--lh-loose); cursor: pointer; background: var(--card-2); }
-  .cw-stage { position: relative; border-radius: var(--r-xl); overflow: hidden; margin-top: var(--sp-lg); background: var(--card-2); }
-  .cw-stage canvas { display: block; width: 100%; height: 132px; touch-action: manipulation; }
-  .cw-stage canvas:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
-  .cw-overlay { position: absolute; inset: 0; display: flex; flex-direction: column;
-    width: 100%; padding: var(--sp-lg); border: none; color: var(--text); align-items: center; justify-content: center;
-    gap: var(--sp-xs); cursor: pointer; background: var(--card-2); text-align: center; }
-  #login .cw-overlay:focus-visible { outline-offset: -3px; }
-  .cw-overlay strong { font-size: var(--fs-xs); font-weight: var(--fw-bold); }
-  .cw-overlay span { font-size: var(--fs-2xs); line-height: var(--lh-relaxed); }
-  .cw-foot { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-sm); margin-top: var(--sp-sm); font-size: var(--fs-3xs); }
-  .cw-foot b { font-variant-numeric: tabular-nums; }
-  .cw-done { display: none; align-items: center; gap: var(--sp-lg); padding: var(--sp-lg) 0; }
-  .cw-tick { width: 44px; height: 44px; flex: 0 0 auto; border-radius: var(--r-pill); background: var(--s-bg);
-    color: var(--s-fg); display: flex; align-items: center; justify-content: center; animation: cwPop .32s cubic-bezier(.16,1,.3,1) both; }
-  .cw-tick svg { width: 22px; height: 22px; }
-  .cw-done b { font-size: var(--fs-lg); overflow-wrap: anywhere; min-width: 0; }
-  @keyframes cwPop { from { transform: scale(.3); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
   #loginBrand { color: var(--accent); }
   #loginBrand .h2-column { transform-box: fill-box; transform-origin: center bottom; }
   @media (prefers-reduced-motion: reduce) {
-    .onb-in, .cw-tick, .login-spin { animation: none; }
+    .onb-in, .login-spin { animation: none; }
     #loginBrand .h2-column { transform: none !important; }
   }
   /* ---- App ---- */
@@ -1048,9 +1025,6 @@
 .log-tick .ic { width: 13px; height: 13px; }
 .log-opt[aria-pressed="true"] .log-tick { background: var(--accent); border-color: var(--accent); color: var(--on-accent, #fff); }
 .log-opt.current .log-tick { background: var(--border-2); border-color: var(--border-2); color: var(--muted); }
-  .pe-add { display: flex; gap: var(--sp-sm); margin-top: var(--sp-sm); }
-  .pe-add input { flex: 1; min-width: 0; }
-  .pe-add button { flex: 0 0 auto; padding: 0 var(--sp-3xl); border-radius: var(--r-pill); border: 1px solid var(--border-2); background: var(--card-2); color: var(--text); font-weight: var(--fw-bold); font-size: var(--fs-sm); cursor: pointer; }
 
 
   /* Personal stats block */
@@ -1822,7 +1796,7 @@
   html[data-focus-input="pointer"] :is(#layerBase .activity-overview, .modal-overlay .modal-x):focus-visible { outline: none; }
   .modal :is(input, .dp-trigger) { min-height: 48px; }
   .modal :is(.btn, .quick button) { border-radius: var(--r-pill); }
-  .modal :is(.btn, .pe-add button) { min-height: 48px; }
+  .modal .btn { min-height: 48px; }
   .modal :is(.pe-chip, .mg-btn, .ar-btn, .quick button) { min-height: 44px; }
   .modal .stepper { align-items: center; }
   .modal .stepper .step { flex-basis: 44px; width: 44px; height: 44px; }
@@ -2120,17 +2094,6 @@
   .approve-row .ar-deny { background: var(--card-2); color: var(--text); border: 1px solid var(--border-2); }
   .approve-group { font-size: var(--fs-2xs); font-weight: var(--fw-bold); color: var(--muted); text-transform: uppercase; letter-spacing: var(--ls-caps); padding: var(--sp-lg) 0 var(--sp-2xs); }
   .approve-group:first-child { padding-top: var(--sp-3xs); }
-  /* Name-claim rows reuse .approve-row, but the email is the whole basis for the
-     decision, so the handle and address stack instead of sitting on one line. */
-  .approve-row .ar-who { flex: 1; min-width: 0; }
-  .approve-row .ar-who .ar-name { flex: none; }
-  .approve-row .ar-sub { font-size: var(--fs-3xs); color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  /* Marks a claim for a name that is not on the roster, i.e. a genuine stranger
-     rather than a member asking for their own name back. */
-  .approve-row .ar-tag { margin-left: var(--sp-xs); padding: var(--sp-hair) var(--sp-xs); border-radius: 999px;
-    font-size: var(--fs-4xs); font-weight: var(--fw-bold); letter-spacing: var(--ls-wide); text-transform: uppercase;
-    color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent);
-    vertical-align: middle; }
 
   /* One neutral account reminder in both layers; linking never blocks logging. */
   .nudge { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-lg) var(--sp-2xl); margin: 0;
@@ -2685,13 +2648,12 @@
   #backofficeView :is(button, input):focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
   #backofficeView .bo-chall { padding: var(--sp-lg) 0; margin: 0; border: none; border-radius: 0; background: none; box-shadow: none; }
   #backofficeView .bo-chall + .bo-chall { border-top: 1px solid var(--border); }
-  #backofficeView :is(.bo-chall-name, .bo-chall-owners, .ar-name, .ar-sub, .mname) {
+  #backofficeView :is(.bo-chall-name, .bo-chall-owners, .ar-name, .mname) {
     min-width: 0; overflow: visible; white-space: normal; overflow-wrap: anywhere;
   }
   #backofficeView .bo-chall-name { font-weight: var(--fw-sm-bold); }
   #backofficeView .approve-group { font-size: var(--fs-sm); font-weight: var(--fw-sm-bold);
     letter-spacing: normal; text-transform: none; padding: var(--sp-sm) 0; }
-  #backofficeView .ar-sub { font-size: var(--fs-xs); }
   .bo-approval-actions { display: flex; flex: 0 0 auto; gap: var(--sp-sm); }
   #backofficeView :is(.ar-btn, .roletoggle) { min-height: 44px; border-radius: var(--r-pill);
     font-size: var(--fs-xs); font-weight: var(--fw-sm-bold); letter-spacing: normal; text-transform: capitalize; }
@@ -2699,8 +2661,8 @@
   #backofficeView .ar-approve:hover, #backofficeView .btn:not(.ghost):hover { background: var(--accent-hover); }
   #backofficeView :is(.ar-approve, .btn:not(.ghost)):active { background: var(--accent-pressed); }
   #backofficeView .roletoggle.on { background: var(--accent-soft); color: var(--accent); }
-  #backofficeView .member { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto 44px; gap: var(--sp-sm); }
-  #backofficeView :is(.cr-edit, .icon-del) { width: 44px; min-width: 44px; height: 44px; border-radius: var(--r-pill); }
+  #backofficeView .member { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; gap: var(--sp-sm); }
+  #backofficeView .cr-edit { width: 44px; min-width: 44px; height: 44px; border-radius: var(--r-pill); }
   #backofficeView :is(.bo-close, .cr-edit):hover { background: var(--border-2); }
   #backofficeView .btn { min-height: 48px; border-radius: var(--r-pill); }
   #boCreateChall { display: flex; align-items: center; justify-content: center; gap: var(--sp-sm); margin-top: var(--sp-2xl); }
@@ -2717,7 +2679,7 @@
     #backofficeView .bo-approval-actions { grid-column: 2; }
   }
   @media (max-width: 380px) {
-    #backofficeView .member { grid-template-columns: 26px minmax(0, 1fr) 44px; }
+    #backofficeView .member { grid-template-columns: 26px minmax(0, 1fr); }
     #backofficeView .member .mname { grid-column: 2 / -1; }
     #backofficeView .member .roletoggle { grid-column: 2; justify-self: start; }
   }
@@ -2975,9 +2937,9 @@
       <div class="msg msg--quiet" id="authErr" aria-live="polite"></div>
 
       <!-- Handle claim. Only reached when the signed-in account has no profile.
-           New names continue immediately; reserved names ask an admin to connect
-           this Google account. The roster is deliberately NOT listed here, because
-           that would show every member's name to anyone who signs in. -->
+           New names continue immediately; reserved or taken names are refused
+           inline. The roster is deliberately NOT listed here, because that would
+           show every member's name to anyone who signs in. -->
       <div class="claim onb-card onb-in" id="claimBox" style="display:none">
         <h2 class="onb-title" id="claimHeading" tabindex="-1"><label id="claimQ" for="claimNewName">What should we call you?</label></h2>
         <div class="onb-account" aria-live="polite">
@@ -2990,47 +2952,16 @@
         <div class="msg msg--quiet" id="claimErr" aria-live="polite"></div>
         <p class="onb-help" id="onbHelp">New names can continue right away. Challenge owners still approve challenge membership.</p>
         <button class="btn" id="claimBtn" disabled>Continue</button>
-        <ol class="onb-steps" aria-label="Name approval progress">
+        <ol class="onb-steps" aria-label="Setup progress">
           <li class="onb-step done"><i aria-hidden="true"></i><span>Signed in</span></li>
           <li class="onb-step now" aria-current="step"><i aria-hidden="true"></i><span>Your name</span></li>
-          <li class="onb-step"><i aria-hidden="true"></i><span id="onbStepClaim3">Ready</span></li>
+          <li class="onb-step"><i aria-hidden="true"></i><span>Ready</span></li>
         </ol>
       </div>
 
-      <div class="claim-pending onb-card" id="claimPending" style="display:none">
-        <div role="status" aria-live="polite" aria-atomic="true">
-          <h2 class="onb-title" id="cwTitle" tabindex="-1">Waiting for approval</h2>
-          <p class="cw-sub" id="cwSub"></p>
-        </div>
-        <div class="onb-account" id="pendingMail"></div>
-        <div class="cw-done" id="cwDone">
-          <span class="cw-tick" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4 10-10"/></svg></span>
-          <b id="cwDoneTx">Welcome</b>
-        </div>
-        <ol class="onb-steps" id="onbStepsPend" aria-label="Name approval progress">
-          <li class="onb-step done"><i aria-hidden="true"></i><span>Signed in</span></li>
-          <li class="onb-step done"><i aria-hidden="true"></i><span>Your name</span></li>
-          <li class="onb-step now" aria-current="step"><i aria-hidden="true"></i><span id="onbStep3">Approval</span></li>
-        </ol>
-        <details class="cw-game" id="cwGame">
-          <summary>Play while you wait</summary>
-          <div class="cw-stage" id="cwStage">
-            <canvas id="cwCanvas" tabindex="0" aria-label="Waiting game. Press Space or Up arrow to jump over the tally bars."></canvas>
-            <button type="button" class="cw-overlay" id="cwOverlay">
-              <strong id="cwOverlayTitle">A little time to spare?</strong>
-              <span id="cwOverlayHint">Tap to play, then tap or press space to jump</span>
-            </button>
-          </div>
-          <div class="cw-foot" id="cwFoot">
-            <span>Minutes survived: <b id="cwScore">0</b></span>
-            <span>Best: <b id="cwBest">0</b></span>
-          </div>
-        </details>
-      </div>
-
-      <!-- Shared by the name card and the waiting room. Onboarding mode hides the
-           OAuth button, so without this someone who queued on the wrong Google
-           account would have no way out of the flow at all. -->
+      <!-- Shown with the name card. Onboarding mode hides the OAuth button, so
+           without this someone signed in with the wrong Google account would have
+           no way out of the flow at all. -->
       <button type="button" class="onb-alt" id="onbSwitch">Not you? Use a different account</button>
 
       <!-- Signed in with Google and a name already bound, but the app session
@@ -3838,25 +3769,6 @@
           </template>
         </div></div>
       </div>
-      <div class="sect" id="claimApprovalsCard" x-show="$store.s.claimApprovals.total">
-        <h2 class="slabel" x-text="$store.s.claimApprovals.title">Name claims</h2>
-        <div class="card"><div id="claimApprovalList">
-          <template x-for="r in $store.s.claimApprovals.rows" :key="r.handle">
-            <div class="approve-row">
-              <span class="dot" :style="'background:' + r.color" x-text="r.initial"></span>
-              <div class="ar-who">
-                <div class="ar-name"><span x-text="r.name"></span><span class="ar-tag" x-show="r.isNew">new</span></div>
-                <div class="ar-sub" x-text="r.email"></div>
-              </div>
-              <div class="bo-approval-actions">
-                <button class="ar-btn ar-approve" @click="$store.s.act.approveClaim($event, r.handle)">Approve</button>
-                <button class="ar-btn ar-deny" @click="$store.s.act.rejectClaim($event, r.handle)">Reject</button>
-              </div>
-            </div>
-          </template>
-        </div></div>
-        <p class="claim-note">Approving binds that Google account to the name permanently. Only approve an address you recognise.</p>
-      </div>
       <div class="sect">
         <h2 class="slabel">Challenges</h2>
         <div class="card"><div id="boChallList">
@@ -3879,22 +3791,10 @@
               <span class="dot sm" :style="'background:' + m.color" x-text="m.initial"></span>
               <span class="mname" x-text="m.name"></span>
               <button class="roletoggle" :class="{ on: m.admin }" :aria-label="'Admin access for ' + m.name" :aria-pressed="m.admin" title="Toggle admin" @click="$store.s.act.toggleMemberAdmin(m.name)" x-text="m.role"></button>
-              <button class="del icon-del" :aria-label="'Remove ' + m.name" :title="'Remove ' + m.name" @click="$store.s.act.removeMember(m.name)"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg></button>
             </div>
           </template>
         </div></div>
         <div class="msg msg--quiet" id="boUserErr" aria-live="polite"></div>
-      </div>
-      <div class="sect">
-        <h2 class="slabel">Add user</h2>
-        <div class="card">
-        <div class="field">
-          <label for="newMember">Name (this is their username &amp; key)</label>
-          <input type="text" id="newMember" placeholder="e.g. Morgan" autocomplete="off" autocapitalize="words" />
-        </div>
-        <div class="msg msg--quiet" id="memberErr" aria-live="polite"></div>
-        <button class="btn" id="addMemberBtn">Add user</button>
-        </div>
       </div>
     </div>
   </div>
@@ -3947,27 +3847,13 @@
 
             <div class="mg-section-h" id="peInTitle" x-text="'In ' + $store.s.participantEditor.monthName"></div>
             <div id="participantEdit">
-              <template x-if="!$store.s.participantEditor.current.length"><div class="blank blank--sm">No one yet. Add people below.</div></template>
+              <template x-if="!$store.s.participantEditor.current.length"><div class="blank blank--sm">No one has joined yet.</div></template>
               <template x-for="p in $store.s.participantEditor.current" :key="p.name">
                 <div class="pe-row">
                   <span class="dot sm" :style="'background:' + p.color" x-text="p.initial"></span>
                   <span class="nm" x-text="p.name"></span><button class="rm icon-del" :aria-label="'Remove ' + p.name" :title="'Remove ' + p.name" @click="$store.s.act.removeParticipant(p.name)"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg></button>
                 </div>
               </template>
-
-              <div class="mg-section-h">Add existing members</div>
-              <template x-if="!$store.s.participantEditor.others.length"><div class="blank blank--sm">Everyone is already in.</div></template>
-              <template x-if="$store.s.participantEditor.others.length">
-                <div class="pe-chips">
-                  <template x-for="m in $store.s.participantEditor.others" :key="m">
-                    <button type="button" class="pe-chip" @click="$store.s.act.addExistingParticipant(m)" x-text="'+ ' + m"></button>
-                  </template>
-                </div>
-              </template>
-
-              <div class="mg-section-h" id="peNewNameLabel">Add someone new</div>
-              <div class="pe-add"><input type="text" id="peNewName" aria-labelledby="peNewNameLabel" placeholder="New name" autocomplete="off" autocapitalize="words" @keydown.enter="$store.s.act.addNewParticipant()" /><button type="button" id="peNewBtn" @click="$store.s.act.addNewParticipant()">Add</button></div>
-              <div class="msg msg--quiet" id="peErr" aria-live="polite"></div>
             </div>
           </div>
         </template>
@@ -4039,7 +3925,7 @@
   var ACTIVECID_KEY = "minutes_active_cid";
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
-  var VERSION = "17.6";
+  var VERSION = "17.7";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -5191,8 +5077,6 @@
     this.rev; this.viewMonth; this.me; this.activeCid;
     var key = monthKeyOf(state.viewMonth);
     var current = participantsFor(state.viewMonth);
-    var roster = members();
-    var lowers = current.map(function (c) { return c.toLowerCase(); });
     var monthName = state.viewMonth.toLocaleString(undefined, { month: "long", year: "numeric" });
     var jOpen = roundJoinOpen(key), lOpen = roundLogOpen(key);
     var isFutureRound = state.viewMonth.getTime() > firstOfMonth(new Date()).getTime();
@@ -5212,8 +5096,7 @@
         guard("join", jOpen, "New member joining", isPastRound ? "Closed" : "", isPastRound ? ICON_LOCK_CLOSED : "", isPastRound),
         guard("log", lOpen, "Logging minutes", isFutureRound ? opensLbl : "", isFutureRound ? ICON_CLOCK : "", isFutureRound)
       ],
-      current: current.map(function (name) { return { name: name, initial: name.charAt(0).toUpperCase(), color: colorFor(name) }; }),
-      others: roster.filter(function (m) { return lowers.indexOf(m.toLowerCase()) < 0; })
+      current: current.map(function (name) { return { name: name, initial: name.charAt(0).toUpperCase(), color: colorFor(name) }; })
     };
   });
 
@@ -5281,23 +5164,6 @@
   });
 
   function approveRowModel(h) { return { name: h, initial: h.charAt(0).toUpperCase(), color: colorFor(h) }; }
-
-  // Name-claim review queue. The rows come from the Claims module, whose listener
-  // doubles as the admin capability check: a non-admin gets an empty list because
-  // the rules refuse the subscription, so this section never renders for them.
-  view("claimApprovals", function () {
-    this.rev; this.me; this.claimRev;
-    var C = window.__CLAIMS;
-    var rows = (C && C.pending) ? C.pending() : [];
-    return {
-      total: rows.length,
-      title: "Name claims \u00B7 " + rows.length,
-      rows: rows.map(function (r) {
-        return { handle: r.handle, name: r.name, email: r.email, isNew: r.isNew,
-          initial: String(r.name || "?").charAt(0).toUpperCase(), color: colorFor(r.name) };
-      })
-    };
-  });
 
   view("boChallenges", function () {
     this.rev; this.me;
@@ -5398,17 +5264,9 @@
     join: function (cid) { requestJoinChallenge(cid); },
     manage: function (cid) { openManageChallenge(cid); },
     newChallenge: function () { openChallModal("create"); },
-    addExistingParticipant: function (name) {
-      var key = monthKeyOf(state.viewMonth);
-      addParticipant(key, participantsFor(state.viewMonth), name);
-    },
     removeParticipant: function (name) {
       var key = monthKeyOf(state.viewMonth);
       removeParticipant(key, participantsFor(state.viewMonth), name);
-    },
-    addNewParticipant: function () {
-      var key = monthKeyOf(state.viewMonth);
-      addNewParticipant(key, participantsFor(state.viewMonth));
     },
     setRoundGuard: function (ev, kind, want) {
       var key = monthKeyOf(state.viewMonth);
@@ -5442,7 +5300,7 @@
       setTimeout(function () {
         Store.saveRound(activeCid(), key, roundSavePayload(kind === "join"
           ? { joinOpen: want, logOpen: raw.logOpen }
-          : { joinOpen: raw.joinOpen, logOpen: want }, parts))
+          : { joinOpen: raw.joinOpen, logOpen: want }, parts), roundSavePayload(raw, parts))
           .then(function () { done(); showToast("Round updated", "success"); })
           .catch(function (e) { console.error(e); done(); paint(cur); showToast("Couldn't update round", "danger"); });
       }, 260);
@@ -5480,47 +5338,7 @@
         .then(function () { showToast(h + " denied", "info"); })
         .catch(function (e) { console.error(e); Array.prototype.forEach.call(bs, function (b) { b.disabled = false; }); showToast("Couldn't deny", "danger"); });
     },
-    // ---- name claims ----
-    approveClaim: function (ev, handle) {
-      if (!requireConnection()) return;
-      var row = ev && ev.currentTarget && ev.currentTarget.parentNode;
-      var bs = row ? row.querySelectorAll("button") : [];
-      Array.prototype.forEach.call(bs, function (b) { b.disabled = true; });
-      window.__CLAIMS.approve(handle)
-        .then(function () { showToast(handle + " approved", "success"); })
-        .catch(function (e) { console.error(e); Array.prototype.forEach.call(bs, function (b) { b.disabled = false; }); showToast("Couldn't approve", "danger"); });
-    },
-    // Rejecting leaves the requester back on the waiting screen with nothing, so
-    // it asks first.
-    rejectClaim: function (ev, handle) {
-      if (!requireConnection()) return;
-      showConfirm({ title: "Reject this claim?", msg: "They can ask again. Nothing else changes.", ok: "Reject" }, function () {
-        window.__CLAIMS.reject(handle)
-          .then(function () { showToast("Claim rejected", "info"); })
-          .catch(function (e) { console.error(e); showToast("Couldn't reject", "danger"); });
-      });
-    },
     toggleMemberAdmin: function (name) { toggleAdmin(name); },
-    removeMember: function (name) {
-      if (isAdmin(name) && admins().length <= 1) {
-        setMsg("boUserErr", "Can't remove the last admin. Make someone else an admin first."); return;
-      }
-      showConfirm({ title: "Remove " + name + "?", msg: "Their logged entries stay, but they can no longer sign in.", ok: "Remove" }, function () {
-        var idx = members().indexOf(name);
-        var wasAdmin = isAdmin(name);
-        commitRoster(function () {
-          cache.members = members().filter(function (n) { return n !== name; });
-          if (wasAdmin) cache.admins = admins().filter(function (n) { return n.toLowerCase() !== name.toLowerCase(); });
-        }, name + " removed", function () {
-          commitRoster(function () {
-            var l = members();
-            if (l.indexOf(name) < 0) l.splice(Math.min(idx < 0 ? l.length : idx, l.length), 0, name);
-            cache.members = l;
-            if (wasAdmin) { var a = admins(); if (a.map(function (n) { return n.toLowerCase(); }).indexOf(name.toLowerCase()) < 0) a.push(name); cache.admins = a; }
-          }, null, null);
-        });
-      });
-    },
     setOwnerRole: function (cid, h, makeOwner) { setOwnerRole(cid, h, makeOwner); },
     removeChallengeMember: function (cid, h) { removeFromChallenge(cid, h); },
     openManageRename: function () { var cid = state.manageCid || manageCid; closeManageModal(); openChallModal("edit", cid); },
@@ -5797,7 +5615,6 @@
     ]
   }
 };
-  var WAIT_GAME_GEOMETRY = {"front":{"x":31.345794392523356,"y":31.345794392523356,"width":44.41121495327103,"height":44.41121495327103,"radius":11.102803738317757,"outline":3.3644859813084107},"hands":{"pivot":{"x":53.551401869158866,"y":56.30489719626167},"minute":{"x":63.08978947904995,"y":50.79790654205606},"hour":{"x":46.50286647498247,"y":51.36945957992141},"stroke":4.317757009345795}};
   var LoginWelcome = (function () {
     var login = document.getElementById("login");
     var card = login.querySelector(".login-card");
@@ -5855,20 +5672,18 @@
       if (!signin || document.hidden) stop();
       else if (!played) play();
 
-      var pending = document.getElementById("claimPending").style.display === "block";
       var claiming = document.getElementById("claimBox").style.display === "block";
       var offline = navigator.onLine === false;
       var authReady = !!(window.__AUTH && window.__AUTH.ready);
       var expectsData = expectsDataConnection();
-      var recovery = !state.signedIn && !card.classList.contains("landing");
+      var recovery = !state.signedIn;
       var error = document.getElementById("loginErr").textContent ||
         document.getElementById("authErr").textContent;
       if (!expectsData && authReady) loginConnecting = false;
       var text = "";
       if (recovery && !error && (offline || (expectsData && bannerOffline()))) {
         var reason = offline ? "You're offline. " : "Not connected. ";
-        text = reason + (pending ? "Your request is still waiting. Reconnect for approval updates."
-          : claiming ? "Your name draft is kept here. Reconnect before continuing."
+        text = reason + (claiming ? "Your name draft is kept here. Reconnect before continuing."
           : "Reconnect to continue.");
       }
       if (network.textContent !== text) setMsg(network, text, "warn");
@@ -6220,234 +6035,21 @@
     // event alone for the initial paint.
     if (window.__AUTH && window.__AUTH.user) render(window.__AUTH.user);
   })();
-
-  // --- Waiting-room mini game --------------------------------------------------
-  // Shown while a claim sits with an admin. An original endless runner, deliberately
-  // tiny: the player is a Minutes clock card hopping over tally bars, and the score is
-  // counted in "minutes survived" so the joke lands with the rest of the app.
-  // It only animates while the pending panel is on screen.
-  var WaitGame = (function () {
-    var cv = document.getElementById("cwCanvas");
-    var overlay = document.getElementById("cwOverlay");
-    var oTitle = document.getElementById("cwOverlayTitle");
-    var oHint = document.getElementById("cwOverlayHint");
-    var scoreEl = document.getElementById("cwScore");
-    var bestEl = document.getElementById("cwBest");
-    var gameEl = document.getElementById("cwGame");
-    if (!cv || !overlay) return { mount: function () {}, stop: function () {} };
-
-    var BEST_KEY = "minutes_wait_best";
-    var ctx = cv.getContext("2d");
-    var raf = null, live = false, playing = false, dead = false;
-    var W = 0, H = 0, ground = 0;
-    var py, vy, dist, spd, bars, last, best = 0;
-    var col = {};
-
-    try { best = parseInt(localStorage.getItem(BEST_KEY), 10) || 0; } catch (e) {}
-
-    function readColors() {
-      var s = getComputedStyle(cv);
-      col.line = s.getPropertyValue("--muted").trim();
-      col.muted = s.getPropertyValue("--text").trim();
-      col.player = s.getPropertyValue("--brand-front").trim();
-      col.surface = s.getPropertyValue("--card-2").trim();
-    }
-
-    function size() {
-      var dpr = Math.min(window.devicePixelRatio || 1, 2);
-      var w = cv.clientWidth || 300;
-      var h = cv.clientHeight || 132;
-      W = w; H = h;
-      cv.width = Math.round(w * dpr);
-      cv.height = Math.round(h * dpr);
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ground = H - 26;
-    }
-
-    function reset() {
-      py = 0; vy = 0; dist = 0; spd = 150; bars = []; dead = false;
-      spawn(W + 40);
-    }
-
-    function spawn(x) {
-      // Keep gaps comfortably clearable at the current speed.
-      var gap = 150 + Math.random() * 130 + spd * 0.25;
-      bars.push({ x: x, h: 12 + Math.random() * 16, w: 5 + Math.random() * 4 });
-      if (bars.length < 4) spawn(x + gap);
-    }
-
-    function jump() {
-      if (!live) return;
-      if (dead || !playing) {
-        if (dead) reset();
-        playing = true;
-        hideOverlay();
-        last = 0;
-        raf = requestAnimationFrame(frame);
-        return;
-      }
-      if (py <= 0.5) vy = 300;
-    }
-
-    function hideOverlay() { overlay.style.display = "none"; }
-    function showOverlay(t, h) {
-      oTitle.textContent = t; oHint.textContent = h;
-      overlay.style.display = "flex";
-    }
-
-    function step(dt) {
-      if (!playing || dead) return;
-      dist += spd * dt;
-      spd = 150 + Math.min(dist / 24, 160);
-
-      vy -= 900 * dt;
-      py += vy * dt;
-      if (py < 0) { py = 0; vy = 0; }
-
-      var i, b, hit = false;
-      for (i = bars.length - 1; i >= 0; i--) {
-        b = bars[i];
-        b.x -= spd * dt;
-        // Player box is 18 wide at x=26; forgiving by a couple of px on each side.
-        if (b.x < 26 + 16 && b.x + b.w > 26 + 2 && py < b.h - 2) hit = true;
-        if (b.x + b.w < -20) bars.splice(i, 1);
-      }
-      if (!bars.length || bars[bars.length - 1].x < W - 150) {
-        spawn(W + 20 + Math.random() * 80);
-      }
-      if (hit) {
-        dead = true; playing = false;
-        var mins = Math.floor(dist / 40);
-        if (mins > best) {
-          best = mins;
-          try { localStorage.setItem(BEST_KEY, String(best)); } catch (e) {}
-        }
-        showOverlay("Caught by a tally bar", "Tap to try again");
-      }
-    }
-
-    function draw() {
-      ctx.clearRect(0, 0, W, H);
-
-      ctx.strokeStyle = col.line;
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(0, ground + 0.5);
-      ctx.lineTo(W, ground + 0.5);
-      ctx.stroke();
-
-      ctx.fillStyle = col.muted;
-      for (var i = 0; i < bars.length; i++) {
-        var b = bars[i];
-        ctx.fillRect(b.x, ground - b.h, b.w, b.h);
-      }
-
-      var x = 26, y = ground - 18 - py;
-      var card = WAIT_GAME_GEOMETRY.front, hands = WAIT_GAME_GEOMETRY.hands;
-      // Just the front clock card, fitted to the unchanged 18px player box.
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.scale(18 / card.width, 18 / card.height);
-      ctx.translate(-card.x, -card.y);
-      ctx.fillStyle = col.player;
-      roundRect(card.x, card.y, card.width, card.height, card.radius);
-      ctx.fill();
-      ctx.strokeStyle = col.surface;
-      ctx.lineWidth = hands.stroke;
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-      ctx.beginPath();
-      ctx.moveTo(hands.minute.x, hands.minute.y);
-      ctx.lineTo(hands.pivot.x, hands.pivot.y);
-      ctx.lineTo(hands.hour.x, hands.hour.y);
-      ctx.stroke();
-      ctx.restore();
-
-      scoreEl.textContent = String(Math.floor(dist / 40));
-      bestEl.textContent = String(best);
-    }
-
-    function roundRect(x, y, w, h, r) {
-      ctx.beginPath();
-      ctx.moveTo(x + r, y);
-      ctx.arcTo(x + w, y, x + w, y + h, r);
-      ctx.arcTo(x + w, y + h, x, y + h, r);
-      ctx.arcTo(x, y + h, x, y, r);
-      ctx.arcTo(x, y, x + w, y, r);
-      ctx.closePath();
-    }
-
-    function frame(t) {
-      raf = null;
-      if (!live) return;
-      var dt = last ? Math.min((t - last) / 1000, 0.05) : 0;
-      last = t;
-      step(dt);
-      draw();
-      if (playing && !dead) raf = requestAnimationFrame(frame);
-    }
-
-    function onKey(e) {
-      if (!live) return;
-      if (e.key === " " || e.code === "Space" || e.key === "ArrowUp") {
-        e.preventDefault();
-        jump();
-      }
-    }
-
-    cv.addEventListener("pointerdown", function (e) {
-      e.preventDefault(); cv.focus({ preventScroll: true }); jump();
-    });
-    overlay.addEventListener("click", function () { cv.focus({ preventScroll: true }); jump(); });
-    cv.addEventListener("keydown", onKey);
-    window.addEventListener("resize", function () { if (live) { size(); draw(); } });
-    if (gameEl) gameEl.addEventListener("toggle", function () {
-      var pending = document.getElementById("claimPending");
-      if (gameEl.open && !gameEl.hidden && pending.style.display === "block") WaitGame.mount();
-      else WaitGame.stop();
-    });
-    document.addEventListener("visibilitychange", function () {
-      // Don't run the loop in a hidden tab, and don't let dt spike on return.
-      if (document.visibilityState === "visible" && live && playing && !raf) {
-        last = 0; raf = requestAnimationFrame(frame);
-      } else if (document.visibilityState !== "visible" && raf) {
-        cancelAnimationFrame(raf); raf = null;
-      }
-    });
-
-    return {
-      mount: function () {
-        if (live) return;
-        live = true;
-        readColors();
-        size();
-        reset();
-        playing = false;
-        showOverlay("A little time to spare?", "Tap to play, then tap or press space to jump");
-        bestEl.textContent = String(best);
-        last = 0;
-        draw();
-      },
-      stop: function () {
-        live = false; playing = false;
-        if (raf) { cancelAnimationFrame(raf); raf = null; }
-      }
-    };
-  })();
   // Binds a Google uid to an app handle:
   //   1. an existing seeded handle with this verified email -> instant claim
-  //   2. an existing reserved handle -> claimRequests doc for admin approval
-  //   3. a new unreserved handle -> atomic self-registration
+  //   2. a new unreserved handle -> atomic self-registration
+  // Reserved handles are refused like taken ones; an admin binds them by hand.
   //
   // Firestore always uses the challenge-scoped data model (profiles/{uid}); the
   // in-memory demo path below stands in for it on the dev server.
   var Claims = (function () {
-    var REQ_KEY = "minutes_claim_req";   // handle this device last asked for
+    // Older versions kept a pending name request here and showed a waiting
+    // screen; that flow is gone, so a stuck device just gets the name card.
+    try { localStorage.removeItem("minutes_claim_req"); } catch (e) {}
     var box     = document.getElementById("claimBox");
     var btn     = document.getElementById("claimBtn");
     var qEl     = document.getElementById("claimQ");
     var noteEl  = document.getElementById("onbHelp");
-    var pendEl  = document.getElementById("claimPending");
     var resEl   = document.getElementById("claimResume");
     var resBtn  = document.getElementById("resumeBtn");
     var resName = document.getElementById("resumeName");
@@ -6455,35 +6057,29 @@
     var cardEl  = document.querySelector(".login-card");
     var introduction = document.getElementById("loginSub").textContent;
     var onbMail = document.getElementById("onbMail");
-    var pendingMail = document.getElementById("pendingMail");
     var switchEl = document.getElementById("onbSwitch");
-    var gameEl = document.getElementById("cwGame");
     if (!box || !btn || !newEl) return { render: function () {} };
 
+    var TAKEN = "That name is taken. Pick another.";
     var idents = {};        // lower(handle) -> { handle, uid, ts, via }
     var identsLoaded = false;
-    var reqs = {};          // lower(handle) -> { handle, uid, email, ts }  (admins only)
-    var reqsLive = false;   // true once the admin-only listener has actually attached
     var busy = false;
-    var requestChecking = false, requestPending = false;
-    var reservationChecks = {}, reservationKnown = {};
+    var reservationKnown = {};
     var autoLoggedIn = false;
     var subscribed = false;
-    var reqSubscribed = false;
     var sweptUid = null;    // uid the silent email match has already been run for
     var sweeping = false;
     var lastUid = null;
     var prefilled = false;
-    var scopedUid = null, scopedProfile = null, identityStop = null, requestsStop = null;
+    var scopedUid = null, scopedProfile = null, identityStop = null;
 
     function scoped() { return !!window.__FB; }
     function guardClaimWrite() { return requireAppWrite ? requireAppWrite() : null; }
     function resetScopedWatch() {
       if (identityStop) identityStop();
-      if (requestsStop) requestsStop();
-      identityStop = null; requestsStop = null; scopedProfile = null; scopedUid = null;
-      subscribed = false; reqSubscribed = false; reqsLive = false;
-      idents = {}; reqs = {}; identsLoaded = false; autoLoggedIn = false;
+      identityStop = null; scopedProfile = null; scopedUid = null;
+      subscribed = false;
+      idents = {}; identsLoaded = false; autoLoggedIn = false;
     }
     function saveIdentity(fb, handle, data) {
       var blocked = guardClaimWrite(); if (blocked) return blocked;
@@ -6492,7 +6088,6 @@
       batch.set(fb.doc(fb.db, "profiles", data.uid), {
         uid: data.uid, handle: data.handle, displayName: data.handle, role: "member", ts: data.ts
       });
-      if (data.via === "admin") batch.delete(fb.doc(fb.db, "handleReservations", handle));
       return batch.commit();
     }
 
@@ -6515,35 +6110,23 @@
     // the actual email comparison the rules perform.
     var demo = {
       idents: {},
-      reqs: {},
       // Synthetic fixtures only; never put a member's real address in the app.
       seeds: { adminowner: "adminowner@example.test", user: "*", owner: "*" },
       selfRegs: {}
     };
 
-    // DEMO-only rehearsal switches, for walking the flow by hand on the dev server:
-    //   ?onboard        arrive as a stranger: no seeds, so the next Google sign-in
-    //                   cannot be matched by email and gets the full name flow
-    //   ?onboard=admin  arrive as an admin with somebody waiting in the queue
-    // Without these the wildcard seeds above silently bind you to a handle and the
-    // onboarding is unreachable locally. Keyed off IS_DEMO (hostname), not
-    // usingDemo(), because __FB is set by a module script that may not have run yet.
-    var onboardArg = location.search.match(/[?&]onboard(?:=([^&]*))?/);
-    if (onboardArg && IS_DEMO) {
-      if ((onboardArg[1] || "") === "admin") {
-        demo.seeds = { adminowner: "*" };     // any account you sign in with
-        demo.reqs["newmember"] = {
-          handle: "NewMember", uid: "demo-newmember-uid",
-          email: "newmember@example.test", ts: Date.now()
-        };
-      } else {
-        demo.seeds = {};
-      }
+    // DEMO-only rehearsal switch, for walking the flow by hand on the dev server:
+    // ?onboard arrives as a stranger with no seeds, so the next Google sign-in
+    // cannot be matched by email and gets the name card. Without it the wildcard
+    // seeds above silently bind you to a handle and the onboarding is unreachable
+    // locally. Keyed off IS_DEMO (hostname), not usingDemo(), because __FB is set
+    // by a module script that may not have run yet.
+    if (/[?&]onboard(?:[=&]|$)/.test(location.search) && IS_DEMO) {
+      demo.seeds = {};
       try { localStorage.removeItem(SESSION_KEY); } catch (e) {}
-      try { localStorage.removeItem("minutes_claim_req"); } catch (e) {}
     }
 
-    // Mirrors the auto-claim condition in firestore.phase3.rules: the handle must
+    // Mirrors the auto-claim condition in emulator/firestore.scoped.rules: the handle must
     // be seeded, the address must match exactly, and the address must be verified.
     function demoSeedMatches(handle, u) {
       var want = demo.seeds[low(handle)];
@@ -6601,59 +6184,15 @@
       idents = demo.idents; identsLoaded = true; emit(); render();
     }
 
-    // claimRequests can only be listed by an admin, so attaching this listener IS
-    // the capability check. A non-admin's subscription is rejected by the rules and
-    // the approvals section simply never appears for them - no separate role lookup,
-    // and no chance of the UI and the rules disagreeing.
-    function watchRequests() {
-      if (scoped() && (!scopedProfile || scopedProfile.role !== "admin")) {
-        if (requestsStop) requestsStop();
-        requestsStop = null; reqSubscribed = false; reqsLive = false; reqs = {};
-        return;
-      }
-      if (reqSubscribed) return;
-      if (usingDemo()) { reqSubscribed = true; reqs = demo.reqs; reqsLive = true; emit(); return; }
-      if (!me() || !window.__FB) return;   // the rules need a token before this can succeed
-      reqSubscribed = true;
-      var fb = window.__FB;
-      try {
-        requestsStop = fb.onSnapshot(fb.collection(fb.db, "claimRequests"), function (snap) {
-          var next = {};
-          snap.forEach(function (d) { next[d.id] = d.data() || {}; });
-          reqs = next;
-          reqsLive = true;
-          emit();
-        }, function () {
-          // Expected for everyone who is not an admin. Not an error worth logging.
-          reqs = {};
-          reqsLive = false;
-          emit();
-        });
-      } catch (e) { reqsLive = false; }
-    }
-
-    // Rows for the backoffice review queue, oldest request first.
-    function pendingList() {
-      if (!reqsLive) return [];
-      var known = {};
-      members().forEach(function (n) { known[low(n)] = true; });
-      return Object.keys(reqs).map(function (k) {
-        var r = reqs[k] || {};
-        return { handle: k, name: r.handle || k, email: r.email || "", uid: r.uid || "",
-                 ts: r.ts || 0, isNew: !known[k] };
-      }).sort(function (a, b) { return (a.ts || 0) - (b.ts || 0); });
-    }
-
     // Validates a proposed name. Mirrors the roster editor's rule so the two ways a
-    // name can enter the system agree. An UNCLAIMED roster name is allowed through
-    // on purpose: that is exactly how a member whose address was never seeded asks
-    // for their own name back. It still goes to an admin, who sees the address.
+    // name can enter the system agree. Reserved names pass here and are refused
+    // after the reservation lookup on submit.
     function checkNewName(name) {
       if (!name) return "Enter a name.";
       if (!/^[A-Za-z][A-Za-z0-9 _-]{0,23}$/.test(name)) {
         return "Use letters/numbers, 1-24 chars, starting with a letter.";
       }
-      if (idents[low(name)]) return "That name is already taken.";
+      if (idents[low(name)]) return TAKEN;
       return "";
     }
 
@@ -6673,17 +6212,6 @@
       var first = (raw.split(/[\s.]+/)[0] || "").replace(/[^A-Za-z0-9_-]/g, "").slice(0, 24);
       if (!first || !/^[A-Za-z]/.test(first)) return "";
       return first.charAt(0).toUpperCase() + first.slice(1);
-    }
-
-    // A newcomer is not in meta/roster, so binding the identity alone would approve
-    // someone who then appears nowhere: the leaderboard, participants and challenge
-    // membership all read the roster. Added first so that by the time the identity
-    // lands on their device and logs them in, the roster already knows them.
-    function addToRoster(name) {
-      if (!name) return Promise.resolve();
-      if (members().some(function (n) { return low(n) === low(name); })) return Promise.resolve();
-      cache.members = members().concat([name]);
-      return Store.saveRoster();
     }
 
     // Takes the user tryClaim already validated rather than re-reading me(). The
@@ -6748,31 +6276,6 @@
       return step();
     }
 
-    function fileRequest(handle) {
-      var blocked = guardClaimWrite(); if (blocked) return blocked;
-      var u = me();
-      if (!u) return Promise.reject({ code: "signed-out" });
-      var payload = { handle: handle, uid: u.uid, email: u.email || "", ts: Date.now() };
-      if (usingDemo()) {
-        return new Promise(function (res) {
-          setTimeout(function () { demo.reqs[low(handle)] = payload; res(); }, 200);
-        });
-      }
-      var fb = window.__FB;
-      return fb.setDoc(fb.doc(fb.db, "claimRequests", low(handle)), payload);
-    }
-
-    // Reads back only the request this device filed. A non-admin cannot list the
-    // collection (the rules forbid it), but may read their own doc by id.
-    function readRequest(handle) {
-      if (usingDemo()) return Promise.resolve(demo.reqs[low(handle)] || null);
-      var fb = window.__FB;
-      if (!fb.getDoc) return Promise.reject(new Error("Claim request reads are unavailable"));
-      return fb.getDoc(fb.doc(fb.db, "claimRequests", low(handle))).then(function (s) {
-        return s.exists() ? s.data() : null;
-      });
-    }
-
     // ---- ui -----------------------------------------------------------------
 
     // Onboarding mode swaps the login card over to the "finish setting up" screen.
@@ -6785,16 +6288,12 @@
 
     function hideAll() {
       box.style.display = "none";
-      pendEl.style.display = "none";
       if (resEl) resEl.style.display = "none";
       onbMode(false);
-      if (cardEl) cardEl.classList.remove("landing");
-      if (gameEl) gameEl.open = false;
       var sub = document.getElementById("loginSub");
       // The pitch, not an instruction. Someone arriving here has not been told
       // what Minutes is, and "sign in to open your tracker" does not tell them.
       if (sub) sub.textContent = introduction;
-      WaitGame.stop();
       if (!me()) paintHero();
     }
 
@@ -6803,100 +6302,15 @@
     function showResume(handle) {
       if (!resEl) return;
       box.style.display = "none";
-      pendEl.style.display = "none";
       onbMode(false);
-      WaitGame.stop();
       if (resName) resName.textContent = handle;
       var sub = document.getElementById("loginSub");
       if (sub) sub.textContent = "Welcome back";
       resEl.style.display = "block";
     }
 
-    function showPending(handle) {
-      var entering = pendEl.style.display !== "block";
-      box.style.display = "none";
-      pendEl.style.display = "block";
-      onbMode(true);
-      var sub = document.getElementById("loginSub");
-      if (sub) sub.textContent = "Almost there";
-      var cw = document.getElementById("cwSub");
-      if (cw) {
-        cw.textContent = "Your request for \u201C" + handle + "\u201D is sent. " +
-          "Once your name is approved, you can choose a challenge to join.";
-      }
-      // Undo a previous approval landing, in case this device queues a second
-      // name in the same page load after switching Google accounts.
-      var st = document.getElementById("cwStage");
-      var dn = document.getElementById("cwDone");
-      var ft = document.getElementById("cwFoot");
-      var strip = document.getElementById("onbStepsPend");
-      var s3 = document.getElementById("onbStep3");
-      var title = document.getElementById("cwTitle");
-      if (st) st.style.display = "";
-      if (ft) ft.style.display = "";
-      if (dn) dn.style.display = "none";
-      if (strip) strip.classList.remove("all-done");
-      if (s3) s3.textContent = "Approval";
-      if (s3) s3.parentElement.setAttribute("aria-current", "step");
-      if (title) title.textContent = "Waiting for approval";
-      if (cardEl) cardEl.classList.remove("landing");
-      if (gameEl) gameEl.hidden = false;
-      paintHero();
-      if (entering && title) title.focus({ preventScroll: true });
-      if (gameEl && gameEl.open) WaitGame.mount();
-      LoginWelcome.sync();
-    }
-
-    // The approval landing. The strip promised three beats and the third one used
-    // to be destroyed mid-animation, so the payoff of the whole flow was a screen
-    // that silently became a different screen. This lands the beat, then leaves.
-    var landing = false;
-    var landTimer = null;
-    function cancelLanding() {
-      if (landTimer) { clearTimeout(landTimer); landTimer = null; }
-      landing = false;
-    }
-    function approveMoment(handle) {
-      if (landing) return;
-      landing = true;
-      WaitGame.stop();
-      if (gameEl) { gameEl.open = false; gameEl.hidden = true; }
-      var st = document.getElementById("cwStage");
-      var dn = document.getElementById("cwDone");
-      var ft = document.getElementById("cwFoot");
-      var tx = document.getElementById("cwDoneTx");
-      var strip = document.getElementById("onbStepsPend");
-      var s3 = document.getElementById("onbStep3");
-      var sub = document.getElementById("loginSub");
-      var title = document.getElementById("cwTitle");
-      var cw = document.getElementById("cwSub");
-      if (st) st.style.display = "none";
-      if (ft) ft.style.display = "none";
-      if (dn) dn.style.display = "flex";
-      if (tx) tx.textContent = "Welcome, " + handle;
-      if (strip) strip.classList.add("all-done");
-      if (s3) { s3.textContent = "Approved"; s3.parentElement.removeAttribute("aria-current"); }
-      if (sub) sub.textContent = "All done";
-      if (title) title.textContent = "Name approved";
-      if (cw) cw.textContent = "Next up: your challenges.";
-      if (cardEl) cardEl.classList.add("landing");
-      if (title) title.focus({ preventScroll: true });
-      LoginWelcome.sync();
-      // Signing out mid-hold must not drag them into the app afterwards, so the
-      // timer is cancellable and re-checks that the account is still there.
-      landTimer = setTimeout(function () {
-        landTimer = null;
-        landing = false;
-        if (!me()) { hideAll(); return; }
-        hideAll();
-        doLogin(handle);
-      }, 1500);
-    }
-
     function showClaim() {
       var entering = box.style.display !== "block";
-      pendEl.style.display = "none";
-      WaitGame.stop();
       if (resEl) resEl.style.display = "none";
       onbMode(true);
       var sub = document.getElementById("loginSub");
@@ -6913,7 +6327,6 @@
       var u = me();
       var account = u ? (u.email ? "Signed in as " + u.email : "Signed in with your Google account") : "";
       if (onbMail) onbMail.textContent = account;
-      if (pendingMail) pendingMail.textContent = account;
     }
 
     function isReservedName(handle) {
@@ -6921,38 +6334,14 @@
       return !!h && (!!reservationKnown[h] || members().some(function (name) { return low(name) === h; }));
     }
 
-    function refreshReservation(handle) {
-      var h = low(handle);
-      if (!h || reservationChecks[h] || reservationKnown.hasOwnProperty(h)) return;
-      if (usingDemo()) { reservationKnown[h] = isReservedName(handle); return; }
-      var fb = window.__FB;
-      if (!fb || !fb.getDoc) return;
-      reservationChecks[h] = true;
-      fb.getDoc(fb.doc(fb.db, "handleReservations", h)).then(function (snapshot) {
-        reservationKnown[h] = snapshot.exists();
-      }, function () {
-        reservationKnown[h] = false;
-      }).finally(function () {
-        delete reservationChecks[h];
-        if (low(newEl.value) === h) { paintChips(); emit(); }
-      });
-    }
-
     function paintChips() {
       if (!prefilled) { prefilled = true; newEl.value = suggestedName(); }
-      refreshReservation(newEl.value);
-      var reserved = isReservedName(newEl.value);
       qEl.textContent = "What should we call you?";
       if (noteEl) {
         noteEl.style.display = "";
-        noteEl.textContent = reserved
-          ? "That name is already reserved. Request approval to connect it to this Google account."
-          : "New names can continue right away. Challenge owners still approve challenge membership.";
+        noteEl.textContent = "New names can continue right away. Challenge owners still approve challenge membership.";
       }
-      var step = document.getElementById("onbStepClaim3");
-      if (step) step.textContent = reserved ? "Approval" : "Ready";
-      btn.textContent = busy ? (reserved ? "Sending\u2026" : "Continuing\u2026")
-        : (reserved ? "Request approval" : "Continue");
+      btn.textContent = busy ? "Continuing\u2026" : "Continue";
       btn.disabled = busy || !newEl.value.trim() || offlineNow();
       btn.setAttribute("aria-busy", String(busy));
       paintHero();
@@ -6967,34 +6356,6 @@
         reservationKnown[low(handle)] = snapshot.exists();
         return snapshot.exists();
       }, function () { return false; });
-    }
-
-    function requestApproval(handle) {
-      return fileRequest(handle).then(function () {
-        try { localStorage.setItem(REQ_KEY, low(handle)); } catch (x) {}
-        emit();
-        showPending(handle);
-      });
-    }
-
-    function checkRequest(handle) {
-      var h = low(handle), u = me();
-      if (!h || !u || requestChecking) return;
-      requestChecking = true;
-      readRequest(h).then(function (request) {
-        requestChecking = false;
-        if (request && request.uid === u.uid) {
-          showPending(request.handle || handle);
-        } else {
-          try { localStorage.removeItem(REQ_KEY); } catch (e) {}
-          render();
-        }
-        emit();
-      }, function () {
-        requestChecking = false;
-        showPending(handle);
-        emit();
-      });
     }
 
     function selfRegister(handle) {
@@ -7029,7 +6390,6 @@
         autoLoggedIn = false; prefilled = false; newEl.value = "";
         newEl.removeAttribute("aria-invalid");
         setMsg("claimErr", "");
-        cancelLanding();
         hideAll(); emit(); return;
       }
       // A different account is a different person, so nothing typed for the previous
@@ -7039,34 +6399,23 @@
         prefilled = false;
         newEl.value = "";
         setMsg("claimErr", "");
-        requestPending = false;
       }
 
       watch();
-      watchRequests();
 
-      // The approval landing owns the card until its hold finishes. Without this
-      // the very snapshot that triggered it would re-enter below, find
-      // autoLoggedIn already latched and no app session yet, and paint the resume
-      // button straight over the tick.
-      if (landing) { emit(); return; }
-
-      if (busy || requestChecking) { hideAll(); return; }
+      if (busy) { hideAll(); return; }
 
       // Already bound: skip the whole prompt and sign the user straight in.
       var mine = myHandle();
       if (mine) {
         if (scoped() && Store.modelVersion === 2 && !Store.loginReady()) {
-          if (pendEl.style.display !== "block") hideAll();
+          hideAll();
           return;
         }
         if (state.signedIn) { hideAll(); return; }
         // The latch stops a deliberate log out from being undone instantly.
         if (!autoLoggedIn) {
           autoLoggedIn = true;
-          // Arriving here straight off the waiting room means an admin just
-          // approved them while they watched. Land the third beat first.
-          if (pendEl.style.display === "block") { approveMoment(mine); return; }
           hideAll();
           doLogin(mine);
           return;
@@ -7080,14 +6429,6 @@
 
       if (!identsLoaded || !rosterLoaded) { hideAll(); return; }
 
-      // A request filed from this device is still outstanding.
-      var asked = null;
-      try { asked = localStorage.getItem(REQ_KEY); } catch (e) {}
-      if (asked) {
-        checkRequest(asked);
-        return;
-      }
-
       // Nobody has been identified from their email yet on this account. Try that
       // silently before asking for anything; the card stays hidden meanwhile so a
       // seeded member never sees it at all. Re-render either way: on a hit the
@@ -7098,16 +6439,13 @@
         return;
       }
 
-      pendEl.style.display = "none";
       showClaim();
     }
 
     btn.onclick = function () {
       if (busy) return;
       if (offlineNow()) {
-        setMsg("claimErr", isReservedName(newEl.value)
-          ? "Reconnect before requesting approval. Your name draft is kept here."
-          : "Reconnect before continuing. Your name draft is kept here.", "warn");
+        setMsg("claimErr", "Reconnect before continuing. Your name draft is kept here.", "warn");
         return;
       }
       var handle = newEl.value.trim();
@@ -7124,9 +6462,8 @@
       paintChips();
 
       // Still goes through tryClaim first. The silent match has already run, so this
-      // will normally be denied and fall through to a request, but keeping one path
-      // means a name that does turn out to be seeded resolves instantly instead of
-      // pointlessly waiting for an admin.
+      // will normally be denied and fall through to self-registration, but keeping
+      // one path means a name that does turn out to be seeded resolves instantly.
       tryClaim(handle).then(function () {
         busy = false;
         // The listener will repaint and auto-login; in demo there is no listener.
@@ -7136,15 +6473,16 @@
         if (!state.signedIn) doLogin(handle);
       }).catch(function (e) {
         // Denied means "no seed, or the seed is a different address" - which is the
-        // normal case for anyone whose email the admin didn't have. Fall back to a
-        // request rather than presenting it as an error.
+        // normal case for anyone whose email the admin didn't have. Reserved names
+        // are refused like taken ones; anything else self-registers.
         var code = (e && e.code) || "";
         if (code === "signed-out") { busy = false; emit(); return; }
         if (code === "permission-denied" || code === "PERMISSION_DENIED") {
           readReservation(handle).then(function (reserved) {
-            return reserved ? requestApproval(handle) : selfRegister(handle).catch(function (selfError) {
+            if (reserved) throw { code: "reserved" };
+            return selfRegister(handle).catch(function (selfError) {
               var selfCode = (selfError && selfError.code) || "";
-              if (selfCode === "permission-denied" || selfCode === "PERMISSION_DENIED") return requestApproval(handle);
+              if (selfCode === "permission-denied" || selfCode === "PERMISSION_DENIED") throw { code: "reserved" };
               throw selfError;
             });
           }).then(function () {
@@ -7156,21 +6494,25 @@
           }).catch(function (e2) {
             busy = false;
             if (((e2 && e2.code) || "") === "signed-out") { emit(); return; }
+            // A listener may have re-rendered while busy and hidden the card.
+            render();
             var c2 = (e2 && e2.code) || "";
             if (c2 === "already-registered") setMsg("claimErr", "This Google account already has a Minutes name.");
-            else if (c2 === "already-exists") setMsg("claimErr", "That name is already taken.");
-            else if (c2 === "unverified-email") setMsg("claimErr", "Verify your Google email before continuing.");
+            else if (c2 === "reserved" || c2 === "already-exists") {
+              setMsg("claimErr", TAKEN);
+              newEl.setAttribute("aria-invalid", "true");
+              newEl.focus();
+            } else if (c2 === "unverified-email") setMsg("claimErr", "Verify your Google email before continuing.");
             else {
               console.error("name setup failed:", e2);
               setMsg("claimErr", "Couldn't finish name setup. Please try again.");
             }
-            paintChips();
           });
         } else {
           busy = false;
+          render();
           console.error("claim failed:", e);
           setMsg("claimErr", "Couldn't claim that name. Please try again.");
-          paintChips();
         }
       });
     };
@@ -7206,7 +6548,6 @@
 
     window.addEventListener("minutes-auth", function () {
       if (scoped() && (!me() || me().uid !== scopedUid)) resetScopedWatch();
-      if (!me()) { requestPending = false; }
       render(); emit();
     });
     window.addEventListener("minutes-scoped-ready", function () { render(); });
@@ -7220,67 +6561,6 @@
 
     return {
       render: render,
-      // Rows for the backoffice review queue. Empty for anyone the rules will not
-      // let list claimRequests, which is what keeps the section admin-only.
-      pending: pendingList,
-      list: function () {
-        if (usingDemo()) return Promise.resolve(demo.reqs);
-        var fb = window.__FB;
-        return new Promise(function (res, rej) {
-          var un = fb.onSnapshot(fb.collection(fb.db, "claimRequests"), function (snap) {
-            var out = {};
-            snap.forEach(function (d) { out[d.id] = d.data(); });
-            try { un(); } catch (e) {}
-            res(out);
-          }, rej);
-        });
-      },
-      approve: function (handle, uid) {
-        var blocked = guardClaimWrite(); if (blocked) return blocked;
-        var h = low(handle);
-        if (usingDemo()) {
-          return new Promise(function (res, rej) {
-            setTimeout(function () {
-              var r = demo.reqs[h];
-              if (!r && !uid) { rej(new Error("No request for " + handle)); return; }
-              var display = (r && r.handle) || handle;
-              addToRoster(display);
-              demo.idents[h] = {
-                handle: display,
-                uid: uid || r.uid, ts: Date.now(), via: "admin"
-              };
-              delete demo.reqs[h];
-              emit();
-              render();
-              res();
-            }, 200);
-          });
-        }
-        var fb = window.__FB;
-        return fb.getDoc(fb.doc(fb.db, "claimRequests", h)).then(function (s) {
-          if (!s.exists() && !uid) throw new Error("No request for " + handle);
-          var r = s.exists() ? s.data() : null;
-          var display = (r && r.handle) || handle;
-          var who = uid || r.uid;
-          // Accounts are profile-owned and do not need meta/roster for personal access.
-          return saveIdentity(fb, h, {
-            handle: display, uid: who, ts: Date.now(), via: "admin"
-          });
-        }).then(function () {
-          return fb.deleteDoc(fb.doc(fb.db, "claimRequests", h));
-        });
-      },
-      reject: function (handle) {
-        var blocked = guardClaimWrite(); if (blocked) return blocked;
-        if (usingDemo()) {
-          delete demo.reqs[low(handle)];
-          emit();
-          render();
-          return Promise.resolve();
-        }
-        var fb = window.__FB;
-        return fb.deleteDoc(fb.doc(fb.db, "claimRequests", low(handle)));
-      },
       // DEMO-only. Stands in for writing claimSeeds/{handle} = { email } in the
       // console, so the seeded auto-claim path is testable on the dev server.
       // Pass no email to use the signed-in address.
@@ -7290,27 +6570,24 @@
         var addr = email || (u && u.email);
         if (!addr) return Promise.reject(new Error("Sign in first, or pass an email"));
         demo.seeds[low(handle)] = addr;
-        delete demo.reqs[low(handle)];   // a seeded handle no longer needs approval
         emit();
         render();
         return Promise.resolve(low(handle) + " -> " + addr);
       },
-      // DEMO-only. Clears claims, requests and any extra seeds for a fresh run.
+      // DEMO-only. Clears claims and any extra seeds for a fresh run.
       demoReset: function () {
         if (!usingDemo()) return Promise.reject(new Error("demoReset is dev-server only"));
         // Clear in place. watch() aliases `idents` to demo.idents once, so
         // reassigning here would leave the module reading a detached object.
         for (var a in demo.idents) delete demo.idents[a];
-        for (var b in demo.reqs) delete demo.reqs[b];
         demo.seeds = { user: "*", owner: "*" };
         for (var c in demo.selfRegs) delete demo.selfRegs[c];
-        try { localStorage.removeItem(REQ_KEY); } catch (e) {}
         emit();
         render();
         return Promise.resolve("demo claim state cleared");
       },
       demoState: function () {
-        return { seeds: demo.seeds, idents: demo.idents, reqs: demo.reqs };
+        return { seeds: demo.seeds, idents: demo.idents };
       }
     };
   })();
@@ -8075,11 +7352,20 @@
     save.disabled = true;
     if (challMode === "edit" && challEditCid) {
       var cid = challEditCid;
+      var before = challMeta[cid] ? { name: challMeta[cid].name, color: challMeta[cid].color } : null;
       if (challMeta[cid]) { challMeta[cid].name = name; challMeta[cid].color = color; persistChallCache(); }
       renderChallenges(); renderChallChip();
       Store.renameChallenge(cid, { name: name, color: color }).then(function () {
         hideChallModal(); showToast("Challenge updated", "success");
-      }).catch(function (e2) { console.error("renameChallenge failed:", e2); save.disabled = false; setMsg(err, "Couldn't save. Try again."); });
+      }).catch(function (e2) {
+        console.error("renameChallenge failed:", e2); save.disabled = false; setMsg(err, "Couldn't save. Try again.");
+        // Undo the optimistic edit unless a newer value has arrived meanwhile.
+        var meta = challMeta[cid];
+        if (before && meta && meta.name === name && meta.color === color) {
+          meta.name = before.name; meta.color = before.color; persistChallCache();
+          renderChallenges(); renderChallChip();
+        }
+      });
     } else {
       var ncid = genCid(name);
       var prevActive = activeCid();
@@ -8119,9 +7405,13 @@
     var isFuture = monthDate.getTime() > firstOfMonth(new Date()).getTime();
     var mKey = monthKeyOf(monthDate), t = todayStr();
 
-    var monthTotal = 0, todayTotal = 0, bestDay = 0;
+    var monthTotal = 0, todayTotal = 0, bestDay = 0, byDay = {};
     myEntries().forEach(function (e) {
-      if (e.date.indexOf(mKey) === 0) { monthTotal += e.mins; if (e.mins > bestDay) bestDay = e.mins; }
+      if (e.date.indexOf(mKey) === 0) {
+        monthTotal += e.mins;
+        byDay[e.date] = (byDay[e.date] || 0) + e.mins;
+        if (byDay[e.date] > bestDay) bestDay = byDay[e.date];
+      }
       if (e.date === t) todayTotal += e.mins;
     });
 
@@ -9413,10 +8703,10 @@
 
     var writePromise, undoFn;
     if (target) {
-      var tId = target.id, tPrev = target.mins;
-      writePromise = Store.updateEntry(tId, { mins: tPrev + newMins }).then(function () { return Store.deleteEntry(id); });
+      var tId = target.id;
+      writePromise = Store.incrementEntry(tId, newMins).then(function () { return Store.deleteEntry(id); });
       undoFn = function () {
-        Store.updateEntry(tId, { mins: tPrev }, ent.cid).catch(warnSaveFail);
+        Store.incrementEntry(tId, -newMins, ent.cid).catch(warnSaveFail);
         Store.putEntry({ id: id, uid: ent.uid, who: ent.who, date: ent.date, mins: prevMins, note: prevNote, cid: ent.cid }).catch(warnSaveFail);
       };
     } else {
@@ -9712,9 +9002,9 @@
         if ((current || cidOf(e) === entryCid) && e.who === state.me && e.date === date && sameTag(e.note, tag)) { existing = e; break; }
       }
       if (existing) {
-        var id = existing.id, prevMins = existing.mins;
-        return { id: id, cid: entryCid, promise: Store.updateEntry(id, { mins: existing.mins + mins }, entryCid),
-          undo: function () { return Store.updateEntry(id, { mins: prevMins }, entryCid); } };
+        var id = existing.id;
+        return { id: id, cid: entryCid, promise: Store.incrementEntry(id, mins, entryCid),
+          undo: function () { return Store.incrementEntry(id, -mins, entryCid); } };
       }
       var newId = uid();
       return { id: newId, cid: entryCid, promise: Store.addEntry({ id: newId, cid: entryCid, who: state.me, date: date, mins: mins, note: tag }),
@@ -9828,36 +9118,20 @@
     var rounds = roundsByCid[cid];
     var prev = rounds.hasOwnProperty(key) ? rounds[key] : null;
     var f = roundFlagsFromData(prev);
+    var base = roundSavePayload(f, prev && prev.participants ? prev.participants.slice() : []);
     rounds[key] = roundSavePayload(f, newList.slice());
     renderAll();
-    return Store.saveRound(cid, key, roundSavePayload(f, newList)).catch(function (err) {
+    return Store.saveRound(cid, key, roundSavePayload(f, newList), base).catch(function (err) {
       console.error("Round save failed:", err);
       if (prev === null) delete rounds[key]; else rounds[key] = prev;
       renderAll();
       showToast("Couldn't save. Check your connection and try again.", "danger");
     });
   }
-  function addParticipant(key, current, name) {
-    if (current.some(function (p) { return p.toLowerCase() === name.toLowerCase(); })) return;
-    commitChallenge(key, current.concat([name]));
-  }
+  // People join a round themselves. Managers can only take someone out: adding
+  // by name predates challenge-scoped accounts and could not save.
   function removeParticipant(key, current, name) {
     commitChallenge(key, current.filter(function (p) { return p.toLowerCase() !== name.toLowerCase(); }));
-  }
-  function addNewParticipant(key, current) {
-    var input = document.getElementById("peNewName");
-    var err = document.getElementById("peErr");
-    var name = input.value.trim();
-    setMsg(err, "");
-    if (!name) { setMsg(err, "Enter a name."); return; }
-    if (!/^[A-Za-z][A-Za-z0-9 _-]{0,23}$/.test(name)) { setMsg(err, "Use letters/numbers, 1-24 chars, starting with a letter."); return; }
-    if (current.some(function (p) { return p.toLowerCase() === name.toLowerCase(); })) { setMsg(err, "Already a participant."); return; }
-    if (!requireConnection()) return;
-    if (!members().some(function (m) { return m.toLowerCase() === name.toLowerCase(); })) {
-      cache.members = members().concat([name]);
-      Store.saveRoster().catch(warnSaveFail);
-    }
-    commitChallenge(key, current.concat([name]));
   }
 
   function renderParticipantEditor() { bump(); }
@@ -9974,13 +9248,8 @@
 
   // Live pending-request count badge on the header account button — shown to anyone who
   // can approve (challenge owners + global admins); scoped to their approvable challenges.
-  // Name claims ride the same badge: they land in the same backoffice the badge points at.
-  function claimPendingCount() {
-    var C = window.__CLAIMS;
-    return (C && C.pending) ? C.pending().length : 0;
-  }
   function updateAdminBadge() {
-    var n = pendingCount() + claimPendingCount();
+    var n = pendingCount();
     var b = document.getElementById("pendingBadge");
     if (!b) return;
     if (n > 0) { b.textContent = n > 9 ? "9+" : String(n); b.hidden = false; }
@@ -10068,24 +9337,37 @@
   document.getElementById("boCreateChall").onclick = function () { openChallModal("create"); };
   document.getElementById("manageX").onclick = closeManageModal;
   document.getElementById("manageModal").onclick = function (e) { if (e.target === this) closeManageModal(); };
-
-  document.getElementById("addMemberBtn").onclick = function () {
-    var input = document.getElementById("newMember");
-    var err = document.getElementById("memberErr");
-    var name = input.value.trim();
-    setMsg(err, "");
-    if (!name) { setMsg(err, "Enter a name."); return; }
-    if (!/^[A-Za-z][A-Za-z0-9 _-]{0,23}$/.test(name)) { setMsg(err, "Use letters/numbers, 1-24 chars, starting with a letter."); return; }
-    if (members().some(function (n) { return n.toLowerCase() === name.toLowerCase(); })) {
-      setMsg(err, "That name already exists."); return;
-    }
-    input.value = "";
-    commitRoster(function () { cache.members = members().concat([name]); }, name + " added", null);
-  };
-  document.getElementById("newMember").addEventListener("keydown", function (e) {
-    if (e.key === "Enter") document.getElementById("addMemberBtn").click();
-  });
   // Challenge-scoped Firestore store: profiles/{uid}, challenges/{cid}/members/{uid}, rounds and entries.
+
+  // A round write carries the whole list, but the caller only meant one change:
+  // join, leave, remove someone, or flip a flag. Apply just the difference
+  // between `base` (what the caller saw) and `next` to the server's current
+  // round, so a concurrent change by someone else is not overwritten.
+  // `ids` are the account ids for next.participants, in the same order.
+  function mergeRoundChange(server, base, next, ids) {
+    var names = {};
+    ids.forEach(function (id, index) { names[id] = next.participants[index]; });
+    if (!server || !base) return Object.assign({}, next, { participants: ids, names: names });
+    function low(handle) { return String(handle).toLowerCase(); }
+    var before = base.participants.map(low), after = next.participants.map(low);
+    var serverNames = server.names || {};
+    var participants = (server.participants || []).filter(function (id) {
+      var handle = low(serverNames[id]);
+      return before.indexOf(handle) < 0 || after.indexOf(handle) >= 0;
+    });
+    ids.forEach(function (id, index) {
+      if (before.indexOf(low(next.participants[index])) < 0 && participants.indexOf(id) < 0) participants.push(id);
+    });
+    var out = Object.assign({}, server, { participants: participants, names: {} });
+    participants.forEach(function (id) {
+      out.names[id] = Object.prototype.hasOwnProperty.call(serverNames, id) ? serverNames[id] : names[id];
+    });
+    ["joinOpen", "logOpen", "locked"].forEach(function (flag) {
+      if (next[flag] === base[flag]) return;
+      if (flag in next) out[flag] = next[flag]; else delete out[flag];
+    });
+    return out;
+  }
   function createScopedStore(fb, settle) {
     var PAGE_SIZE = 24;
     var METADATA_BATCH_SIZE = 10;
@@ -10669,6 +9951,14 @@
         if (!entry) return failure("The entry is not loaded. Reopen its round before editing.");
         return settle(fb.updateDoc(reference("challenges", entry.cid, "entries", id), fields));
       },
+      // Adding minutes to an existing entry is a server-side increment, so two
+      // devices logging to the same day and tag cannot overwrite each other.
+      incrementEntry: function (id, delta, cid) {
+        var blocked = guardWrite(); if (blocked) return blocked;
+        var entry = findEntry(id, cid);
+        if (!entry) return failure("The entry is not loaded. Reopen its round before editing.");
+        return settle(fb.updateDoc(reference("challenges", entry.cid, "entries", id), { mins: fb.increment(delta) }));
+      },
       deleteEntry: function (id, cid) {
         var blocked = guardWrite(); if (blocked) return blocked;
         var entry = findEntry(id, cid);
@@ -10710,18 +10000,19 @@
       },
       setMember: changeMember,
       removeMember: function (cid, handle) { return changeMember(cid, handle, null); },
-      saveRound: function (cid, key, data) {
+      saveRound: function (cid, key, data, base) {
         var blocked = guardWrite(); if (blocked) return blocked;
         return Promise.all(data.participants.map(function (handle) { return uidFor(handle, cid); })).then(function (ids) {
-          var names = {};
-          ids.forEach(function (id, index) { names[id] = data.participants[index]; });
-          var payload = Object.assign({}, data, { participants: ids, names: names });
-          var batch = fb.writeBatch(fb.db);
-          batch.set(reference("challenges", cid, "rounds", key), payload);
-          if (ids.length && challMeta[cid] && key < challMeta[cid].firstMonth) {
-            batch.update(reference("challenges", cid), { firstMonth: key });
-          }
-          return batch.commit();
+          var ref = reference("challenges", cid, "rounds", key);
+          return fb.runTransaction(fb.db, function (transaction) {
+            return transaction.get(ref).then(function (snapshot) {
+              var payload = mergeRoundChange(snapshot.exists() ? snapshot.data() : null, base, data, ids);
+              transaction.set(ref, payload);
+              if (payload.participants.length && challMeta[cid] && key < challMeta[cid].firstMonth) {
+                transaction.update(reference("challenges", cid), { firstMonth: key });
+              }
+            });
+          });
         });
       },
       createChallenge: function (cid, name, color) {
@@ -10867,6 +10158,7 @@
     recordAppVersion: function () { return Promise.resolve(); },
     addEntry: notConnected,
     updateEntry: notConnected,
+    incrementEntry: notConnected,
     deleteEntry: notConnected,
     putEntry: notConnected,
     saveRoster: notConnected,
@@ -11019,6 +10311,12 @@
         refreshEntries();
         return Promise.resolve();
       },
+      incrementEntry: function (id, delta) {
+        var blocked = guardWrite(); if (blocked) return blocked;
+        var en = findEntry(id); if (en) { en.mins += delta; if (offlineNow()) en._pending = true; }
+        refreshEntries();
+        return Promise.resolve();
+      },
       deleteEntry: function (id) {
         var blocked = guardWrite(); if (blocked) return blocked;
         entriesAll = entriesAll.filter(function (e) { return e.id !== id; });
@@ -11101,7 +10399,6 @@
     if (state.me) renderChart();
     if (palReady) applyPalette(currentPalette(), false);
   }
-  function toggleMenu() { /* the gear menu is gone; settings live on the You tab */ }
   // ---- Appearance: current choices and retained legacy preferences ----
   // Retired experiment controls must not erase saved styling on open challenges.
   var LAYOUT_KEY = "minutes-layout", DEPTH_KEY = "minutes-depth";
@@ -12063,7 +11360,7 @@ ${r?'Expression: "'+r+`"
   import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
            enableNetwork, disableNetwork,
            collection, collectionGroup, onSnapshot, setDoc, updateDoc, deleteDoc, doc, getDoc, getDocs,
-           query, where, orderBy, documentId, startAfter, limit, writeBatch, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+           query, where, orderBy, documentId, startAfter, limit, writeBatch, runTransaction, increment } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -12184,7 +11481,7 @@ ${r?'Expression: "'+r+`"
     }
     window.__FB = { db, durable, collection, onSnapshot, setDoc, updateDoc, deleteDoc, doc, getDoc,
                     enableNetwork, disableNetwork, collectionGroup, query, where, orderBy, documentId,
-                    startAfter, limit, getDocs, writeBatch, runTransaction, serverTimestamp, modelVersion: 2 };
+                    startAfter, limit, getDocs, writeBatch, runTransaction, increment, serverTimestamp, modelVersion: 2 };
   } catch (e) {
     console.error("Firebase init failed - falling back to local storage:", e);
   }

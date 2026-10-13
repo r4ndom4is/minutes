@@ -4039,7 +4039,7 @@
   var ACTIVECID_KEY = "minutes_active_cid";
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
-  var VERSION = "17.5";
+  var VERSION = "17.6";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -5539,7 +5539,7 @@
   function expectsDataConnection() {
     var config = window.__FB || window.__MINUTES_EMULATOR;
     // Scoped private listeners start after authentication, not on the sign-in screen.
-    return !config || config.modelVersion !== 2 || !!(window.__AUTH && window.__AUTH.user);
+    return !config || !!(window.__AUTH && window.__AUTH.user);
   }
   function requireConnection() {
     if (appWritesBlocked && appWritesBlocked()) {
@@ -6439,8 +6439,8 @@
   //   2. an existing reserved handle -> claimRequests doc for admin approval
   //   3. a new unreserved handle -> atomic self-registration
   //
-  // Model 2 is the production path on this branch; legacy model-1 compatibility
-  // remains only for unreleased local comparisons.
+  // Firestore always uses the challenge-scoped data model (profiles/{uid}); the
+  // in-memory demo path below stands in for it on the dev server.
   var Claims = (function () {
     var REQ_KEY = "minutes_claim_req";   // handle this device last asked for
     var box     = document.getElementById("claimBox");
@@ -6467,7 +6467,6 @@
     var busy = false;
     var requestChecking = false, requestPending = false;
     var reservationChecks = {}, reservationKnown = {};
-    var identsFailed = false;
     var autoLoggedIn = false;
     var subscribed = false;
     var reqSubscribed = false;
@@ -6477,7 +6476,7 @@
     var prefilled = false;
     var scopedUid = null, scopedProfile = null, identityStop = null, requestsStop = null;
 
-    function scoped() { return window.__FB && window.__FB.modelVersion === 2; }
+    function scoped() { return !!window.__FB; }
     function guardClaimWrite() { return requireAppWrite ? requireAppWrite() : null; }
     function resetScopedWatch() {
       if (identityStop) identityStop();
@@ -6488,7 +6487,6 @@
     }
     function saveIdentity(fb, handle, data) {
       var blocked = guardClaimWrite(); if (blocked) return blocked;
-      if (!scoped()) return fb.setDoc(fb.doc(fb.db, "identities", handle), data);
       var batch = fb.writeBatch(fb.db);
       batch.set(fb.doc(fb.db, "identities", handle), data);
       batch.set(fb.doc(fb.db, "profiles", data.uid), {
@@ -6600,40 +6598,7 @@
       }
       if (subscribed) return;
       subscribed = true;
-      if (usingDemo()) { idents = demo.idents; identsLoaded = true; emit(); render(); return; }
-      var fb = window.__FB;
-      try {
-        if (identityStop) identityStop();
-        identityStop = fb.onSnapshot(fb.collection(fb.db, "identities"), { includeMetadataChanges: true }, function (snap) {
-          var next = {};
-          snap.forEach(function (d) {
-            // A claim appears locally before rules accept it. Do not sign in on
-            // that optimistic write; listen for its server acknowledgement.
-            if (d.metadata.hasPendingWrites) {
-              if (idents[d.id]) next[d.id] = idents[d.id];
-              return;
-            }
-            var v = d.data() || {};
-            next[d.id] = { handle: v.handle || d.id, uid: v.uid || "", ts: v.ts || 0, via: v.via || "" };
-          });
-          idents = next;
-          identsLoaded = identsLoaded || !snap.metadata.fromCache || Object.keys(next).length > 0;
-          identsFailed = false;
-          emit();
-          render();
-        }, function (e) {
-          console.warn("identities listener:", e);
-          identsLoaded = true;
-          identsFailed = true;
-          emit();
-          render();
-        });
-      } catch (e) {
-        console.warn("identities subscribe failed:", e);
-        identsLoaded = true;
-        identsFailed = true;
-        emit();
-      }
+      idents = demo.idents; identsLoaded = true; emit(); render();
     }
 
     // claimRequests can only be listed by an admin, so attaching this listener IS
@@ -7297,13 +7262,9 @@
           var r = s.exists() ? s.data() : null;
           var display = (r && r.handle) || handle;
           var who = uid || r.uid;
-          // The legacy roster still needs the name before the identity lands.
-          // Scoped/model-2 accounts are profile-owned and do not need meta/roster
-          // for personal access.
-          return (scoped() ? Promise.resolve() : addToRoster(display)).then(function () {
-            return saveIdentity(fb, h, {
-              handle: display, uid: who, ts: Date.now(), via: "admin"
-            });
+          // Accounts are profile-owned and do not need meta/roster for personal access.
+          return saveIdentity(fb, h, {
+            handle: display, uid: who, ts: Date.now(), via: "admin"
           });
         }).then(function () {
           return fb.deleteDoc(fb.doc(fb.db, "claimRequests", h));
@@ -10124,7 +10085,7 @@
   document.getElementById("newMember").addEventListener("keydown", function (e) {
     if (e.key === "Enter") document.getElementById("addMemberBtn").click();
   });
-  // Model 2 is opt-in until existing identities and history have been migrated.
+  // Challenge-scoped Firestore store: profiles/{uid}, challenges/{cid}/members/{uid}, rounds and entries.
   function createScopedStore(fb, settle) {
     var PAGE_SIZE = 24;
     var METADATA_BATCH_SIZE = 10;
@@ -10849,393 +10810,73 @@
     };
     return api;
   }
-  // ---- Data store: Firestore only ----
+  // ---- Data store: Firestore (challenge-scoped) ----
   var entriesAll = [];        // every entry across all challenges, each carrying its cid
-  var Store = (function () {
-    var fb = null;
-    var cidSubbed = {};        // cid -> true (avoid duplicate subcollection listeners)
-    var failedListeners = {};
-    var uidAliases = null, uidDirectoryError = "";
+  // ---- Write acknowledgement ------------------------------------------------
+  // Firestore resolves a write promise only when the SERVER acknowledges it, so
+  // while offline that promise never settles at all. The local cache has already
+  // accepted the write, and the snapshot listener has already painted it, by the
+  // time setDoc returns - so the UI has to confirm on THAT. Waiting for a round
+  // trip that may not happen for hours is not a confirmation, it is a hang, and
+  // it is what would have left the button stuck on "Saving…" forever.
+  //
+  // Online we still wait briefly for the real ack, so a genuine refusal (rules,
+  // App Check) surfaces as a failed save exactly as it did before.
+  var LOCAL_ACK_MS = 1500;
+  function track(p) {
+    pendingOps++; renderSync();
+    var done = function () { pendingOps--; renderSync(); };
+    return p.then(function (v) { done(); return v; },
+                  function (e) { done(); throw e; });
+  }
+  function settle(p, value) {
+    var tracked = track(p);
+    var confirmed = false;
+    // A queued write that comes back rejected will never land. If we already told
+    // the user it was saved, the retraction has to come from here. Registered
+    // before the race below, so when a rejection beats the confirmation this is
+    // still quiet and the caller's own catch reports it instead.
+    tracked.catch(function (e) {
+      console.error("Write rejected:", e);
+      if (confirmed) showToast("A change couldn't be saved to the server.", "danger");
+    });
+    if (offlineNow()) { confirmed = true; return Promise.resolve(value); }
+    return new Promise(function (resolve, reject) {
+      var settled = false;
+      tracked.then(function () { if (!settled) { settled = true; resolve(value); } },
+                   function (e) { if (!settled) { settled = true; reject(e); } });
+      setTimeout(function () {
+        if (settled) return;
+        settled = true; confirmed = true;
+        resolve(value);
+      }, LOCAL_ACK_MS);
+    });
+  }
 
-    function participantUid(handle) {
-      return uidAliases && Object.prototype.hasOwnProperty.call(uidAliases, handle) ? uidAliases[handle] : "";
-    }
-    function participantUids(handles) {
-      if (!uidAliases || !handles.every(function (handle) { return !!participantUid(handle); })) return null;
-      return Object.fromEntries(handles.map(function (handle) { return [handle, participantUid(handle)]; }));
-    }
-    function memberPayload(cid, handle, data) {
-      var result = Object.assign({}, data), id = participantUid(handle);
-      if (id) { result.uid = id; result.cid = cid; }
-      return result;
-    }
-    function legacyEntryPayload(obj) {
-      var result = { who: obj.who, date: obj.date, mins: obj.mins, note: obj.note || "", cid: obj.cid || activeCid() };
-      var id = participantUid(obj.who);
-      if (id) {
-        if (obj.uid && obj.uid !== id) throw new Error("This entry's account reference needs administrator review.");
-        result.uid = id;
-      }
-      return result;
-    }
-
-    function listen(key, ref, options, next, failed) {
-      var unsubscribe = null, generation = 0;
-      function attach() {
-        if (unsubscribe) unsubscribe();
-        delete failedListeners[key];
-        var current = ++generation;
-        unsubscribe = fb.onSnapshot(ref, options, function (snap) {
-          if (current === generation) next(snap);
-        }, function (error) {
-          if (current !== generation) return;
-          failedListeners[key] = attach;
-          failed(error);
-        });
-      }
-      attach();
-    }
-    function retryFailedListeners() {
-      Object.keys(failedListeners).forEach(function (key) {
-        if (/^(members|rounds):/.test(key) && !challMeta[key.split(":")[1]]) {
-          delete failedListeners[key];
-          return;
-        }
-        failedListeners[key]();
-      });
-    }
-
-    function isMonthId(id) { return /^\d{4}-\d{2}$/.test(id); }
-    function challengesTabActive() { var el = document.getElementById("tab-challenges"); return el && el.classList.contains("active"); }
-    function adminTabActive() { return !!document.getElementById("backofficeView") && document.getElementById("backofficeView").classList.contains("show"); }
-    function guardWrite() { return requireAppWrite ? requireAppWrite() : null; }
-    function appVersionKey(handle) { return "minutes_app_version_v1_" + String(handle || "").trim().toLowerCase(); }
-    function rememberAppVersion(handle) {
-      try {
-        localStorage.setItem(appVersionKey(handle), JSON.stringify({ version: VERSION, day: todayStr() }));
-      } catch (e) {}
-    }
-    function recentlyRecorded(handle) {
-      try {
-        var saved = JSON.parse(localStorage.getItem(appVersionKey(handle)) || "null");
-        return saved && saved.version === VERSION && saved.day === todayStr();
-      } catch (e) { return false; }
-    }
-    function recordAppVersion(handle) {
-      var blocked = guardWrite();
-      if (blocked) return blocked;
-      if (!fb || !handle || recentlyRecorded(handle)) return Promise.resolve();
-      if (!fb.setDoc || !fb.serverTimestamp) return Promise.resolve();
-      // Members cannot read appVersions (admin-only), so write blindly at most once a day.
-      var ref = fb.doc(fb.db, "appVersions", String(handle).toLowerCase());
-      return fb.setDoc(ref, { version: VERSION, ts: fb.serverTimestamp() })
-        .then(function () { rememberAppVersion(handle); });
-    }
-
-    // ---- Write acknowledgement ------------------------------------------------
-    // Firestore resolves a write promise only when the SERVER acknowledges it, so
-    // while offline that promise never settles at all. The local cache has already
-    // accepted the write, and the snapshot listener has already painted it, by the
-    // time setDoc returns - so the UI has to confirm on THAT. Waiting for a round
-    // trip that may not happen for hours is not a confirmation, it is a hang, and
-    // it is what would have left the button stuck on "Saving…" forever.
-    //
-    // Online we still wait briefly for the real ack, so a genuine refusal (rules,
-    // App Check) surfaces as a failed save exactly as it did before.
-    var LOCAL_ACK_MS = 1500;
-    function track(p) {
-      pendingOps++; renderSync();
-      var done = function () { pendingOps--; renderSync(); };
-      return p.then(function (v) { done(); return v; },
-                    function (e) { done(); throw e; });
-    }
-    function settle(p, value) {
-      var tracked = track(p);
-      var confirmed = false;
-      // A queued write that comes back rejected will never land. If we already told
-      // the user it was saved, the retraction has to come from here. Registered
-      // before the race below, so when a rejection beats the confirmation this is
-      // still quiet and the caller's own catch reports it instead.
-      tracked.catch(function (e) {
-        console.error("Write rejected:", e);
-        if (confirmed) showToast("A change couldn't be saved to the server.", "danger");
-      });
-      if (offlineNow()) { confirmed = true; return Promise.resolve(value); }
-      return new Promise(function (resolve, reject) {
-        var settled = false;
-        tracked.then(function () { if (!settled) { settled = true; resolve(value); } },
-                     function (e) { if (!settled) { settled = true; reject(e); } });
-        setTimeout(function () {
-          if (settled) return;
-          settled = true; confirmed = true;
-          resolve(value);
-        }, LOCAL_ACK_MS);
-      });
-    }
-
-    function applyActiveEntries() {
-      var cid = activeCid();
-      state.entries = entriesAll.filter(function (e) { return (e.cid || "") === cid; });
-      renderAll();
-    }
-    function emitRoster(m, a) {
-      if (m && m.length) cache.members = m;
-      if (a && a.length) cache.admins = a;
-      rosterLoaded = true;
-      persistRosterCache();
-      try { window.dispatchEvent(new Event("minutes-roster")); } catch (e) {}
-      try { sessionStorage.removeItem("minutes_reconnect"); } catch (e) {}
-      setLoginConnecting(false);
-      renderAll();
-      if (adminTabActive()) renderBackoffice();
-      if (state.me) { refreshAdminAccess(); }
-      else {
-        // roster is now authoritative - resume a saved session that the default list couldn't match yet
-        var saved = localStorage.getItem(SESSION_KEY);
-        if (saved && resolveName(saved)) doLogin(resolveName(saved));
-      }
-    }
-
-    // Live-subscribe a challenge's members + rounds subcollections (few challenges in v1).
-    function subscribeCid(cid) {
-      if (cidSubbed[cid]) return;
-      cidSubbed[cid] = true;
-      listen("members:" + cid, fb.collection(fb.db, "challenges", cid, "members"), { includeMetadataChanges: true }, function (snap) {
-        var m = {};
-        snap.forEach(function (d) { var v = d.data() || {}; m[d.id] = {
-          handle: v.handle || d.id, uid: v.uid || participantUid(v.handle || d.id),
-          role: v.role || "member", status: v.status || "approved", ts: v.ts || 0
-        }; });
-        // Same guard as the challenges listener: an empty roster from cache is "not loaded",
-        // not "everyone left". Accepting it would drop the user's own membership and flip
-        // their role and admin badge for as long as the connection was down.
-        if (!snap.size && snap.metadata.fromCache) return;
-        membersByCid[cid] = m;
-        hubDataArrived("members:" + cid);
-        onCidData();
-      }, function (err) {
-        console.error("members listener (" + cid + "):", err);
-        if (challMeta[cid]) hubDataFailed("members:" + cid);
-      });
-      listen("rounds:" + cid, fb.collection(fb.db, "challenges", cid, "rounds"), { includeMetadataChanges: true }, function (snap) {
-        var r = {};
-        snap.forEach(function (d) { var v = d.data() || {}; r[d.id] = roundSavePayload(roundFlagsFromData(v), v.participants || []); });
-        if (!snap.size && snap.metadata.fromCache) return;
-        roundsByCid[cid] = r;
-        hubDataArrived("rounds:" + cid);
-        onCidData();
-      }, function (err) {
-        console.error("rounds listener (" + cid + "):", err);
-        if (challMeta[cid]) hubDataFailed("rounds:" + cid);
-      });
-    }
-    function onCidData() {
-      renderAll();
-      renderChallChip();
-      if (challengesTabActive()) renderChallenges();
-      if (adminTabActive()) renderBackoffice();
-      if (manageCid && document.getElementById("manageModal").classList.contains("show")) renderManage(manageCid);
-      updateAdminBadge();
-    }
-
-    function fbStart() {
-      listen("uid-directory", fb.doc(fb.db, "meta", "uidDirectory"), { includeMetadataChanges: true }, function (snapshot) {
-        if (!snapshot.exists() && snapshot.metadata.fromCache) return;
-        if (!snapshot.exists()) { uidAliases = null; uidDirectoryError = ""; return; }
-        var data = snapshot.data(), aliases = data.aliases;
-        var valid = data.schemaVersion === 1 && aliases && typeof aliases === "object" && !Array.isArray(aliases) &&
-          Object.keys(data).every(function (key) { return key === "schemaVersion" || key === "aliases"; }) &&
-          Object.keys(aliases).every(function (handle) {
-            return /^[A-Za-z][A-Za-z0-9 _-]{0,23}$/.test(handle) && typeof aliases[handle] === "string" &&
-              aliases[handle].length > 0 && aliases[handle].length <= 128 && aliases[handle].indexOf("/") === -1;
-          }) && new Set(Object.values(aliases)).size === Object.keys(aliases).length;
-        if (!valid) {
-          uidDirectoryError = "The participant UID directory is invalid.";
-          console.error(uidDirectoryError);
-          showToast("Account references need administrator review. Your current session is unchanged.", "danger");
-          return;
-        }
-        uidAliases = Object.assign(Object.create(null), aliases);
-        uidDirectoryError = "";
-        entriesAll.forEach(function (entry) { if (!entry.uid) entry.uid = participantUid(entry.who); });
-      }, function (error) {
-        uidDirectoryError = "The participant UID directory could not be refreshed.";
-        console.error(uidDirectoryError, error);
-      });
-      // includeMetadataChanges: without it the listener does not re-fire when a
-      // queued write is finally acknowledged, so the per-row "waiting to sync"
-      // markers would never clear.
-      listen("entries", fb.collection(fb.db, "entries"), { includeMetadataChanges: true }, function (snap) {
-        if (!snap.metadata.fromCache) { netReady = true; entriesNetReady = true; setOffline(false); }
-        var arr = [], pend = 0;
-        snap.forEach(function (d) {
-          var v = d.data();
-          // hasPendingWrites is Firestore's own answer to "is this row still only on
-          // this device", and unlike a counter of our own it survives a reload with
-          // the queue it describes.
-          var waiting = !!d.metadata.hasPendingWrites;
-          if (waiting) pend++;
-          arr.push({ id: d.id, uid: v.uid || participantUid(v.who), who: v.who, date: v.date, mins: v.mins, note: v.note || "", cid: v.cid || "", _hadCid: v.cid != null, _pending: waiting });
-        });
-        cachePending = pend;
-        state.activityLoaded = ActivityModel.snapshotReady(state.activityLoaded, snap.metadata.fromCache, arr.length);
-        state.activityFromCache = !!snap.metadata.fromCache;
-        state.activityLoadError = false;
-        hubDataArrived("entries");
-        // No "ignore an empty cache result" guard here, unlike the challenges, members and
-        // rounds listeners below. Entries are the one collection a user can legitimately
-        // empty while offline (delete your last entry), and that has to show at once.
-        // Those other collections are all connection-gated, so an offline empty is always
-        // a cold cache and never a real deletion.
-        entriesAll = arr;
-        renderSync();
-        applyActiveEntries();
-      }, function (err) {
-        console.error("entries listener:", err);
-        state.activityLoadError = true;
-        hubDataFailed("entries");
-      });
-
-      var rosterRef = fb.doc(fb.db, "meta", "roster");
-      listen("roster", rosterRef, { includeMetadataChanges: true }, function (d) {
-        if (!d.metadata.fromCache) { netReady = true; setOffline(false); }
-        if (d.exists()) {
-          var v = d.data();
-          emitRoster(v.members || DEFAULT_MEMBERS.slice(), v.admins || DEFAULT_ADMINS.slice());
-        }
-      }, function (err) { console.error("roster listener:", err); });
-
-      // Top-level "challenges" holds challenge metadata docs (id="founding", …).
-      // Any stray legacy "YYYY-MM" month docs are ignored (pre-migration data, no longer used).
-      listen("challenges", fb.collection(fb.db, "challenges"), { includeMetadataChanges: true }, function (snap) {
-        var meta = {};
-        snap.forEach(function (d) {
-          if (isMonthId(d.id)) return;
-          var v = d.data() || {};
-          meta[d.id] = { name: v.name || "", color: v.color || "", owner: v.owner || "", createdTs: v.createdTs || 0 };
-        });
-        // An empty result served from cache means the cache has nothing to say yet, not
-        // that every challenge was deleted. Trusting it is what renamed the header to the
-        // raw cid ("founding") mid-session whenever the connection dropped. A server
-        // confirmed empty result is a real deletion, so that one is still allowed through.
-        if (!Object.keys(meta).length && snap.metadata.fromCache) return;
-        challMeta = meta;
-        hubCatalogReady = true;
-        hubDataArrived("challenges");
-        Object.keys(hubErrors).forEach(function (key) {
-          if (/^(members|rounds):/.test(key) && !challMeta[key.split(":")[1]]) hubDataArrived(key);
-        });
-        persistChallCache();
-        Object.keys(challMeta).forEach(subscribeCid);
-        renderAll();
-        renderChallChip();
-        if (challengesTabActive()) renderChallenges();
-        updateAdminBadge();
-      }, function (err) {
-        console.error("challenges listener:", err);
-        hubDataFailed("challenges");
-      });
-    }
-
-    return {
-      init: function (f) {
-        fb = f;
-        if (f.modelVersion === 2) Store = createScopedStore(f, settle);
-      },
-      start: function () {
-        if (!fb) return;
-        fbStart();
-        // Resumed sessions log in before Firebase loads; record the version once it is available.
-        if (state.signedIn && state.me) recordAppVersion(state.me).catch(function (error) {
-          console.warn("App version could not be recorded:", error);
-        });
-      },
-      retryFailed: retryFailedListeners,
-      // Whether this device can hold writes offline (persistent IndexedDB cache).
-      // False on a storage-blocked browser, where offline writes must stay refused.
-      durable: function () { return !!(fb && fb.durable); },
-      diagnostics: function () {
-        return { modelVersion: 1, uidPreparation: {
-          prepared: !!uidAliases, error: uidDirectoryError, mappedParticipants: uidAliases ? Object.keys(uidAliases).length : 0
-        } };
-      },
-      addEntry: function (obj) {
-        var blocked = guardWrite(); if (blocked) return blocked;
-        var id = obj.id || uid();
-        return Promise.resolve().then(function () {
-          return settle(fb.setDoc(fb.doc(fb.db, "entries", id), legacyEntryPayload(obj)), id);
-        });
-      },
-      updateEntry: function (id, fields) {
-        var blocked = guardWrite(); if (blocked) return blocked;
-        return settle(fb.updateDoc(fb.doc(fb.db, "entries", id), fields));
-      },
-      deleteEntry: function (id) {
-        var blocked = guardWrite(); if (blocked) return blocked;
-        return settle(fb.deleteDoc(fb.doc(fb.db, "entries", id)));
-      },
-      putEntry: function (obj) {
-        var blocked = guardWrite(); if (blocked) return blocked;
-        return Promise.resolve().then(function () {
-          return settle(fb.setDoc(fb.doc(fb.db, "entries", obj.id), legacyEntryPayload(obj)));
-        });
-      },
-      saveRoster: function () {
-        var blocked = guardWrite(); if (blocked) return blocked;
-        var data = { members: cache.members, admins: cache.admins };
-        var memberIds = participantUids(cache.members), adminIds = participantUids(cache.admins);
-        if (memberIds) data.memberUids = memberIds;
-        if (adminIds) data.adminUids = adminIds;
-        return fb.setDoc(fb.doc(fb.db, "meta", "roster"), data);
-      },
-      // Round metadata (joining/logging guards + participants) for the active challenge.
-      saveRound: function (cid, key, data) {
-        var blocked = guardWrite(); if (blocked) return blocked;
-        var f = roundFlagsFromData(data);
-        var payload = roundSavePayload(f, data.participants || []), ids = participantUids(payload.participants);
-        if (ids) payload.participantUids = ids;
-        return fb.setDoc(fb.doc(fb.db, "challenges", cid, "rounds", key), payload);
-      },
-      // Membership writes (approval flow).
-      requestJoin: function (cid) {
-        var blocked = guardWrite(); if (blocked) return blocked;
-        return fb.setDoc(fb.doc(fb.db, "challenges", cid, "members", state.me),
-          memberPayload(cid, state.me, { handle: state.me, role: "member", status: "pending", ts: Date.now() }));
-      },
-      setMember: function (cid, handle, data) {
-        var blocked = guardWrite(); if (blocked) return blocked;
-        return fb.setDoc(fb.doc(fb.db, "challenges", cid, "members", handle), memberPayload(cid, handle, data));
-      },
-      removeMember: function (cid, handle) {
-        var blocked = guardWrite(); if (blocked) return blocked;
-        return fb.deleteDoc(fb.doc(fb.db, "challenges", cid, "members", handle));
-      },
-      // Create a new challenge; creator becomes owner + approved.
-      createChallenge: function (cid, name, color) {
-        var blocked = guardWrite(); if (blocked) return blocked;
-        var owner = state.me, data = {
-          name: name, color: color || "", owner: state.me,
-          type: "monthly", visibility: "public", createdTs: Date.now()
-        };
-        var ownerId = participantUid(owner);
-        if (ownerId) data.ownerUid = ownerId;
-        return fb.setDoc(fb.doc(fb.db, "challenges", cid), data).then(function () {
-          return fb.setDoc(fb.doc(fb.db, "challenges", cid, "members", owner),
-            memberPayload(cid, owner, { handle: owner, role: "owner", status: "approved", ts: 0 }));
-        });
-      },
-      // Rename / recolour an existing challenge.
-      renameChallenge: function (cid, data) {
-        var blocked = guardWrite(); if (blocked) return blocked;
-        var patch = {};
-        if (data.name != null) patch.name = data.name;
-        if (data.color != null) patch.color = data.color;
-        return fb.updateDoc(fb.doc(fb.db, "challenges", cid), patch);
-      },
-      recordAppVersion: recordAppVersion
-    };
-  })();
-  // ---- Demo Store (localhost only) ------------------------------------------
+  // Until the Firebase module arrives, Store is a quiet placeholder. init() swaps in the
+  // challenge-scoped store (scoped-store.js); the demo replaces it with DemoStore.
+  function notConnected() {
+    var blocked = requireAppWrite ? requireAppWrite() : null;
+    return blocked || Promise.reject(new Error("Minutes is still connecting. Try again in a moment."));
+  }
+  var Store = {
+    init: function (f) { Store = createScopedStore(f, settle); },
+    start: function () {},
+    retryFailed: function () {},
+    durable: function () { return false; },
+    recordAppVersion: function () { return Promise.resolve(); },
+    addEntry: notConnected,
+    updateEntry: notConnected,
+    deleteEntry: notConnected,
+    putEntry: notConnected,
+    saveRoster: notConnected,
+    saveRound: notConnected,
+    requestJoin: notConnected,
+    setMember: notConnected,
+    removeMember: notConnected,
+    createChallenge: notConnected,
+    renameChallenge: notConnected
+  };  // ---- Demo Store (localhost only) ------------------------------------------
   // Self-contained in-memory backend, used ONLY when served from localhost, so the
   // app can be run and clicked through with no Firebase / App Check. Seeds role-named
   // demo users (User / Admin / Owner / AdminOwner + a Pending request) and a month of
@@ -12337,7 +11978,7 @@
       settled: function () { return netSettled; }
     };
     window.__minutesBackend = function () {
-      return Store.diagnostics ? Store.diagnostics() : { modelVersion: 1 };
+      return Store.diagnostics ? Store.diagnostics() : null;
     };
     // Third bridge, same reason. The pull-to-refresh script called activeScroller()
     // and sheetOpen() directly, which are private to this IIFE, so every touch in
@@ -12370,15 +12011,15 @@
     // Seed the in-memory roster from the last-known cache so a returning user's saved
     // session (and typed name) resolve immediately - even if the live snapshot is slow or
     // the realtime socket came back stale after suspend. The server snapshot refreshes this.
-    if (!window.__FB || window.__FB.modelVersion !== 2) hydrateRosterCache();
+    if (!window.__FB) hydrateRosterCache();
     // Same for challenge names/colours, so the header reads correctly from the first frame
     // instead of briefly (or, while offline, indefinitely) showing the raw cid. The repaint
     // matters: Alpine has already painted by now, and with no connection there is no
     // snapshot coming to trigger a second one, so without this the cache would be loaded
     // and still not shown.
-    if ((!window.__FB || window.__FB.modelVersion !== 2) && hydrateChallCache()) renderChallChip();
+    if (!window.__FB && hydrateChallCache()) renderChallChip();
     var saved = localStorage.getItem(SESSION_KEY);
-    if ((!window.__FB || window.__FB.modelVersion !== 2) && saved && resolveName(saved)) doLogin(resolveName(saved));
+    if (!window.__FB && saved && resolveName(saved)) doLogin(resolveName(saved));
     // Release the boot gate now that visibility is decided (restored -> app, else login).
     document.documentElement.classList.remove("has-session");
     LoginWelcome.start();

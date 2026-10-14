@@ -3922,9 +3922,8 @@
   });
   var SESSION_KEY = "minutes_session_v3";
   var ACTIVECID_KEY = "minutes_active_cid";
-  var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
-  var VERSION = "17.9";
+  var VERSION = "18.0";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -5450,24 +5449,7 @@
     return false;
   }
 
-  // Legacy roster cache: older versions persisted the name directory here. It is no
-  // longer written, but a copy left behind still lets a returning user resume a saved
-  // session instantly - before, or without, a live Firestore snapshot.
-  function hydrateRosterCache() {
-    if (IS_DEMO) return false;
-    try {
-      var rc = JSON.parse(localStorage.getItem(ROSTER_CACHE_KEY) || "null");
-      if (rc && rc.members && rc.members.length) {
-        cache.members = rc.members;
-        if (rc.admins && rc.admins.length) cache.admins = rc.admins;
-        rosterLoaded = true; // names resolve now; netReady still gates saves until the server answers
-        return true;
-      }
-    } catch (e) {}
-    return false;
-  }
-
-  // Challenge metadata cache: same reasoning as the roster cache above.
+  // Challenge metadata cache.
   // A challenge's name and colour are pure display data that only Firestore holds, so with
   // no snapshot the header falls back to the raw cid and the user sees "founding" instead
   // of their challenge name. Persisting the last-known meta keeps the app reading correctly
@@ -11307,11 +11289,13 @@
       menu.scrollTop = option.offsetTop + option.offsetHeight - menu.clientHeight;
     }
   }
+  var activityGoalOpenScroll = 0;
   function openActivityGoalMenu(goal) {
     document.getElementById("activityGoalOptions").style.visibility = "hidden";
     state.activityGoalActive = goal || activitySnapshot().goal;
     state.activityGoalMenuOpen = true;
     document.getElementById("activityGoal").focus({ preventScroll: true });
+    activityGoalOpenScroll = document.getElementById("activityModal").scrollTop;
     Alpine.nextTick(function () {
       if (!state.activityGoalMenuOpen) return;
       var menu = document.getElementById("activityGoalOptions");
@@ -11364,7 +11348,11 @@
   document.addEventListener("pointerdown", function (event) {
     if (state.activityGoalMenuOpen && !document.getElementById("activityGoalPicker").contains(event.target)) closeActivityGoalMenu(false);
   });
-  document.getElementById("activityModal").addEventListener("scroll", function () { closeActivityGoalMenu(false); });
+  // Scroll events are delivered a frame late: one from an earlier focus move can
+  // land after a key has opened the menu. Only real movement since opening closes it.
+  document.getElementById("activityModal").addEventListener("scroll", function () {
+    if (this.scrollTop !== activityGoalOpenScroll) closeActivityGoalMenu(false);
+  });
   window.addEventListener("resize", function () { closeActivityGoalMenu(); });
   document.getElementById("activityModal").addEventListener("click", function (event) {
     if (event.target === this) hideActivity();
@@ -11452,12 +11440,11 @@
         setLoginConnecting(true, "Connecting to the server…");
       }
     }, 6000);
-    // Seed the in-memory roster from the last-known cache so a returning user's saved
-    // session (and typed name) resolve immediately - even if the live snapshot is slow or
-    // the realtime socket came back stale after suspend. The server snapshot refreshes this.
-    if (!window.__FB) hydrateRosterCache();
-    // Same for challenge names/colours, so the header reads correctly from the first frame
-    // instead of briefly (or, while offline, indefinitely) showing the raw cid. The repaint
+    // Older versions persisted a name directory here; nothing reads it any more.
+    try { localStorage.removeItem("minutes_roster_v1"); } catch (e) {}
+    // Challenge names/colours come from the last-known cache, so the header reads
+    // correctly from the first frame instead of briefly (or, while offline,
+    // indefinitely) showing the raw cid. The repaint
     // matters: Alpine has already painted by now, and with no connection there is no
     // snapshot coming to trigger a second one, so without this the cache would be loaded
     // and still not shown.

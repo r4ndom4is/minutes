@@ -3271,9 +3271,9 @@
         <div class="chart-caption" id="chartCaption" hidden><span>Cumulative minutes</span><span></span></div>
         <div class="chart-wrap" id="chart"></div>
         <div class="chart-legend" id="legend">
-          <template x-for="l in $store.s.legend" :key="l.name">
+          <template x-for="l in $store.s.legend" :key="l.uid">
             <button type="button" class="leg-item" :class="{ off: l.off, me: l.me }"
-                    :aria-pressed="!l.off" @click="$store.s.act.toggleLegend(l.name)">
+                    :aria-pressed="!l.off" @click="$store.s.act.toggleLegend(l.uid)">
               <span class="leg-swatch" :style="'background:' + l.color"></span><span x-text="l.name"></span>
             </button>
           </template>
@@ -3306,10 +3306,10 @@
             <template x-if="$store.s.board.empty">
               <div class="blank" x-html="$store.s.board.empty"></div>
             </template>
-            <template x-for="p in $store.s.board.rows" :key="p.name">
+            <template x-for="p in $store.s.board.rows" :key="p.uid">
               <div class="lb-person" :class="{ me: p.me, open: p.open }">
                 <button type="button" class="lb-head" :disabled="!p.hasDetail"
-                        @click="p.hasDetail && $store.s.act.togglePerson(p.name)">
+                        @click="p.hasDetail && $store.s.act.togglePerson(p.uid)">
                   <span class="lb-left">
                     <span class="lb-name"><span class="lb-rank" x-text="p.rank"></span><span x-text="p.name"></span></span>
                     <span class="cat-track cat-line"><span class="cat-fill" :style="'width:' + p.pct + ';background:' + p.color"></span></span>
@@ -3755,13 +3755,13 @@
           <template x-for="g in $store.s.approvals.groups" :key="g.cid">
             <div>
               <div class="approve-group" x-text="g.title"></div>
-              <template x-for="r in g.rows" :key="r.name">
+              <template x-for="r in g.rows" :key="r.uid">
                 <div class="approve-row">
                   <span class="dot" :style="'background:' + r.color" x-text="r.initial"></span>
                   <span class="ar-name" x-text="r.name"></span>
                   <div class="bo-approval-actions">
-                    <button class="ar-btn ar-approve" @click="$store.s.act.approveRequest($event, g.cid, r.name)">Approve</button>
-                    <button class="ar-btn ar-deny" @click="$store.s.act.denyRequest($event, g.cid, r.name)">Deny</button>
+                    <button class="ar-btn ar-approve" @click="$store.s.act.approveRequest($event, g.cid, r.uid)">Approve</button>
+                    <button class="ar-btn ar-deny" @click="$store.s.act.denyRequest($event, g.cid, r.uid)">Deny</button>
                   </div>
                 </div>
               </template>
@@ -3848,10 +3848,10 @@
             <div class="mg-section-h" id="peInTitle" x-text="'In ' + $store.s.participantEditor.monthName"></div>
             <div id="participantEdit">
               <template x-if="!$store.s.participantEditor.current.length"><div class="blank blank--sm">No one has joined yet.</div></template>
-              <template x-for="p in $store.s.participantEditor.current" :key="p.name">
+              <template x-for="p in $store.s.participantEditor.current" :key="p.uid">
                 <div class="pe-row">
                   <span class="dot sm" :style="'background:' + p.color" x-text="p.initial"></span>
-                  <span class="nm" x-text="p.name"></span><button class="rm icon-del" :aria-label="'Remove ' + p.name" :title="'Remove ' + p.name" @click="$store.s.act.removeParticipant(p.name)"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg></button>
+                  <span class="nm" x-text="p.name"></span><button class="rm icon-del" :aria-label="'Remove ' + p.name" :title="'Remove ' + p.name" @click="$store.s.act.removeParticipant(p.uid)"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg></button>
                 </div>
               </template>
             </div>
@@ -3864,24 +3864,24 @@
           <div>
             <div class="mg-section-h" x-text="$store.s.manage.pendingTitle"></div>
             <template x-if="$store.s.manage.noPending"><div class="blank blank--sm">None right now.</div></template>
-            <template x-for="r in $store.s.manage.pending" :key="r.name">
+            <template x-for="r in $store.s.manage.pending" :key="r.uid">
               <div class="approve-row">
                 <span class="dot" :style="'background:' + r.color" x-text="r.initial"></span>
                 <span class="ar-name" x-text="r.name"></span>
-                <button class="ar-btn ar-approve" @click="$store.s.act.approveRequest($event, $store.s.manage.cid, r.name)">Approve</button>
-                <button class="ar-btn ar-deny" @click="$store.s.act.denyRequest($event, $store.s.manage.cid, r.name)">Deny</button>
+                <button class="ar-btn ar-approve" @click="$store.s.act.approveRequest($event, $store.s.manage.cid, r.uid)">Approve</button>
+                <button class="ar-btn ar-deny" @click="$store.s.act.denyRequest($event, $store.s.manage.cid, r.uid)">Deny</button>
               </div>
             </template>
 
             <div class="mg-section-h" x-text="$store.s.manage.membersTitle"></div>
             <template x-if="$store.s.manage.noMembers"><div class="blank blank--sm">No members yet.</div></template>
-            <template x-for="m in $store.s.manage.members" :key="m.name">
+            <template x-for="m in $store.s.manage.members" :key="m.uid">
               <div class="mg-row">
                 <span class="dot" :style="'background:' + m.color" x-text="m.initial"></span>
                 <span class="mg-name" x-text="m.name"></span>
                 <span class="mg-owner-pill" x-show="m.ownerPill">Owner</span>
-                <button class="mg-btn" :class="{ on: m.owner }" x-show="m.admin" @click="$store.s.act.setOwnerRole($store.s.manage.cid, m.name, !m.owner)" x-text="m.toggleText"></button>
-                <button class="mg-del icon-del" :aria-label="'Remove ' + m.name + ' from challenge'" :title="'Remove ' + m.name + ' from challenge'" x-show="m.showDel" @click="$store.s.act.removeChallengeMember($store.s.manage.cid, m.name)"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg></button>
+                <button class="mg-btn" :class="{ on: m.owner }" x-show="m.admin" @click="$store.s.act.setOwnerRole($store.s.manage.cid, m.uid, !m.owner)" x-text="m.toggleText"></button>
+                <button class="mg-del icon-del" :aria-label="'Remove ' + m.name + ' from challenge'" :title="'Remove ' + m.name + ' from challenge'" x-show="m.showDel" @click="$store.s.act.removeChallengeMember($store.s.manage.cid, m.uid)"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg></button>
               </div>
             </template>
           </div>
@@ -3925,7 +3925,7 @@
   var ACTIVECID_KEY = "minutes_active_cid";
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
-  var VERSION = "17.7";
+  var VERSION = "17.8";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -3933,7 +3933,7 @@
   var IS_DEMO = (location.hostname === "localhost" || location.hostname === "127.0.0.1") &&
     !window.__MINUTES_EMULATOR;
 
-  // ---- Multi-challenge model (handle-keyed; a name IS the identity) ----
+  // ---- Multi-challenge model (uid-keyed; a handle is only a display label) ----
   // A "challenge" is a durable, renamable unit (stable cid). Members join with admin
   // approval. Each challenge has monthly "rounds" derived from entry dates; round
   // metadata (lock, participants) lives in a subcollection. Entries carry a `cid`.
@@ -3941,10 +3941,13 @@
   var FOUNDING_NAME = "The Original Six";
 
   // In-memory cache - the UI's source of truth; kept in sync by Store (Firestore).
+  // cache.members/admins are the account directory (display handles); everything
+  // challenge-scoped below is keyed by account uid.
   var cache = { members: DEFAULT_MEMBERS.slice(), admins: DEFAULT_ADMINS.slice() };
-  var challMeta = {};       // cid -> { name, color, owner, createdTs }
-  var membersByCid = {};    // cid -> { handle: { handle, role, status, ts } }
-  var roundsByCid = {};     // cid -> { "YYYY-MM": { locked, participants:[handle] } }
+  var challMeta = {};       // cid -> { name, color, owner (uid), createdTs }
+  var membersByCid = {};    // cid -> { uid: { uid, handle, role, status, ts } }
+  var roundsByCid = {};     // cid -> { "YYYY-MM": { locked, participants:[uid], names:{uid: handle} } }
+  var nameBook = {};        // uid -> handle, learned from members, rounds and entries
 
   function members() { return cache.members.slice(); }
   function admins() { return cache.admins.slice(); }
@@ -3954,17 +3957,61 @@
   function meIsAdmin() { return !!state.me && isAdmin(state.me); }
   function colorFor(name) { var idx = cache.members.indexOf(name); if (idx < 0) idx = 0; return PALETTE[idx % PALETTE.length]; }
 
+  // ---- Identity ----
+  // state.uid is the signed-in account; state.me is only its display handle.
+  function meUid() { return state.uid || null; }
+  function isMe(id) { return !!state.uid && id === state.uid; }
+  function entryUid(e) { return (e && e.uid) || ""; }
+  function isMine(e) { return !!state.uid && entryUid(e) === state.uid; }
+  function learnName(id, handle) { if (id && handle) nameBook[id] = handle; }
+  // Display handle for an account uid. Rounds, member docs and entries all carry
+  // the handle beside the uid, so a uid only falls through when nothing loaded
+  // names it.
+  function nameOf(id) {
+    if (!id) return "";
+    if (isMe(id) && state.me) return state.me;
+    if (Object.prototype.hasOwnProperty.call(nameBook, id)) return nameBook[id];
+    var found = "";
+    Object.keys(membersByCid).some(function (cid) {
+      var m = (membersByCid[cid] || {})[id];
+      if (m && m.handle) found = m.handle;
+      return !!found;
+    });
+    if (!found) Object.keys(roundsByCid).some(function (cid) {
+      var rounds = roundsByCid[cid] || {};
+      return Object.keys(rounds).some(function (k) {
+        var names = rounds[k] && rounds[k].names;
+        if (names && names[id]) found = names[id];
+        return !!found;
+      });
+    });
+    if (!found) (typeof entriesAll !== "undefined" ? entriesAll : []).some(function (e) {
+      if (e.uid === id && e.who) found = e.who;
+      return !!found;
+    });
+    if (found) { nameBook[id] = found; return found; }
+    return id;
+  }
+  function byName(a, b) { var x = nameOf(a), y = nameOf(b); return x < y ? -1 : x > y ? 1 : 0; }
+  // The uid -> handle map a round carries beside its participant uids.
+  function roundNamesFor(ids, prev) {
+    var known = (prev && prev.names) || {}, out = {};
+    ids.forEach(function (id) { out[id] = Object.prototype.hasOwnProperty.call(known, id) ? known[id] : nameOf(id); });
+    return out;
+  }
+
   // ---- Challenge accessors ----
   function activeCid() { return state.activeCid || FOUNDING_CID; }
   function cidOf(e) { return e.cid || ""; }
   function challName(cid) { var m = challMeta[cid]; return (m && m.name) ? m.name : cid; }
   function activeRounds() { return roundsByCid[activeCid()] || {}; }
-  function approvedHandles(cid) {
+  function approvedMembers(cid) {
     var mm = membersByCid[cid] || {};
-    return Object.keys(mm).filter(function (h) { return mm[h].status === "approved"; });
+    return Object.keys(mm).filter(function (id) { return mm[id].status === "approved"; });
   }
-  function myStatus(cid) { var e = (membersByCid[cid] || {})[state.me]; return e ? e.status : null; }
-  function myRole(cid) { var e = (membersByCid[cid] || {})[state.me]; return e ? e.role : null; }
+  function myMember(cid) { return state.uid ? (membersByCid[cid] || {})[state.uid] : null; }
+  function myStatus(cid) { var e = myMember(cid); return e ? e.status : null; }
+  function myRole(cid) { var e = myMember(cid); return e ? e.role : null; }
   // Current round number for a specific challenge, derived from its earliest entry month.
   function challRoundNumber(cid) {
     if (challMeta[cid] && challMeta[cid].schemaVersion === 2) {
@@ -4001,13 +4048,13 @@
   // The signed-in user's standing in a challenge this (current) round.
   function challStanding(cid) {
     var mk = monthKeyOf(new Date());
-    var members = approvedHandles(cid);
+    var members = approvedMembers(cid);
     var totals = {};
-    members.forEach(function (h) { totals[h] = 0; });
+    members.forEach(function (id) { totals[id] = 0; });
     entriesAll.forEach(function (e) {
-      if (cidOf(e) === cid && e.date.indexOf(mk) === 0 && totals.hasOwnProperty(e.who)) totals[e.who] += e.mins;
+      if (cidOf(e) === cid && e.date.indexOf(mk) === 0 && totals.hasOwnProperty(entryUid(e))) totals[entryUid(e)] += e.mins;
     });
-    var mine = totals[state.me] || 0;
+    var mine = (state.uid && totals[state.uid]) || 0;
     // Competition ranking, not index order: members level on minutes must be given
     // the same position, and in a tie for first BOTH are leading.
     var rank = members.filter(function (h) { return totals[h] > mine; }).length + 1;
@@ -4017,27 +4064,27 @@
   // ---- Approval scope: an owner manages their own challenge(s); a global admin manages all. ----
   function iOwn(cid) {
     var m = challMeta[cid];
-    if (m && m.owner && state.me && String(m.owner).toLowerCase() === String(state.me).toLowerCase()) return true;
+    if (m && m.owner && isMe(m.owner)) return true;
     return myRole(cid) === "owner";
   }
   function canApprove(cid) { return !!state.me && (meIsAdmin() || iOwn(cid)); }
   // True when the signed-in user owns the active challenge (per-challenge owner, not global admin).
   function meOwnsActive() { return !!state.me && iOwn(activeCid()); }
+  // Both lists are uids, ordered by display handle as they always were.
   function ownersOf(cid) {
     var mm = membersByCid[cid] || {};
-    return Object.keys(mm).filter(function (h) { return mm[h].role === "owner" && mm[h].status === "approved"; }).sort();
+    return Object.keys(mm).filter(function (id) { return mm[id].role === "owner" && mm[id].status === "approved"; }).sort(byName);
   }
   function approvableCids() { return Object.keys(challMeta).filter(canApprove); }
   function pendingFor(cid) {
     var mm = membersByCid[cid] || {};
-    return Object.keys(mm).filter(function (h) { return mm[h].status === "pending"; }).sort();
+    return Object.keys(mm).filter(function (id) { return mm[id].status === "pending"; }).sort(byName);
   }
   function pendingCount() {
     return approvableCids().reduce(function (n, c) { return n + pendingFor(c).length; }, 0);
   }
-  // The competing pool for the active challenge: approved members, or the roster as a
-  // pre-migration fallback (founding has no member docs until migration runs).
-  function challengeMembers() { var a = approvedHandles(activeCid()); return a.length ? a : members(); }
+  // The competing pool for the active challenge: its approved members' uids.
+  function challengeMembers() { return approvedMembers(activeCid()); }
   // Per-round guards: legacy rounds only had `locked` (which closed both joining and logging).
   // We now split that into independent joinOpen/logOpen flags; a legacy round with no explicit
   // flags maps to joinOpen = logOpen = !locked, so old data keeps working unchanged.
@@ -4099,9 +4146,18 @@
   function entryAuthorsForMonth(key) {
     var seen = {}, order = [];
     state.entries.forEach(function (e) {
-      if (e.date.indexOf(key) === 0 && !seen[e.who]) { seen[e.who] = 1; order.push(e.who); }
+      var id = entryUid(e);
+      if (id && e.date.indexOf(key) === 0 && !seen[id]) { seen[id] = 1; order.push(id); }
     });
     return order;
+  }
+  // A round participant's label as that round recorded it, like the handle the
+  // round listed before rounds were keyed by uid.
+  function participantName(id, dateOrKey) {
+    if (isMe(id) && state.me) return state.me;
+    var key = typeof dateOrKey === "string" ? dateOrKey : monthKeyOf(dateOrKey || state.viewMonth);
+    var round = activeRounds()[key], names = round && round.names;
+    return names && Object.prototype.hasOwnProperty.call(names, id) && names[id] ? names[id] : nameOf(id);
   }
   function participantsFor(dateOrKey) {
     var key = typeof dateOrKey === "string" ? dateOrKey : monthKeyOf(dateOrKey);
@@ -4125,12 +4181,12 @@
     var ranBefore = Object.keys(rounds).some(function (k) { return k < key; }) ||
       state.entries.some(function (e) { return e.date.slice(0, 7) < key; });
     if (ranBefore) return [];
-    // First-ever round of this challenge: seed from the approved members (also the
-    // pre-migration fallback, since `founding` has no member docs until migration runs).
+    // First-ever round of this challenge: seed from the approved members.
     return challengeMembers();
   }
-  function isParticipant(name, dateOrKey) {
-    return participantsFor(dateOrKey).some(function (p) { return p.toLowerCase() === String(name).toLowerCase(); });
+  function isParticipant(id, dateOrKey) {
+    if (!id) return false;
+    return participantsFor(dateOrKey).indexOf(id) >= 0;
   }
   // Admins may edit the previous, current, and next month's roster.
   function monthEditable(dateObj) {
@@ -4230,7 +4286,7 @@
     if (!state.me) return false;
     if (mKey >= monthKeyOf(new Date())) return false;            // round still open
     if (roundNumberOf(keyToDate(mKey)) < 1) return false;        // never actually ran
-    if (!(isParticipant(state.me, mKey) || meIsAdmin() || meOwnsActive())) return false;
+    if (!(isParticipant(state.uid, mKey) || meIsAdmin() || meOwnsActive())) return false;
     return state.entries.some(function (e) { return e.date.indexOf(mKey) === 0 && e.mins > 0; });
   }
 
@@ -4264,7 +4320,7 @@
     if (viewableMonthKeys().indexOf(monthKeyOf(state.viewMonth)) < 0) state.viewMonth = keyToDate(defaultViewKey());
   }
 
-  var state = { me: null, entries: [], lbRange: "today", hidden: {}, viewMonth: firstOfMonth(new Date()), entriesGroup: "date", openCats: {}, updateBlocked: false, updateMinVersion: "", activeCid: (function () { try { return localStorage.getItem(ACTIVECID_KEY) || FOUNDING_CID; } catch (e) { return FOUNDING_CID; } })() };
+  var state = { me: null, uid: null, entries: [], lbRange: "today", hidden: {}, viewMonth: firstOfMonth(new Date()), entriesGroup: "date", openCats: {}, updateBlocked: false, updateMinVersion: "", activeCid: (function () { try { return localStorage.getItem(ACTIVECID_KEY) || FOUNDING_CID; } catch (e) { return FOUNDING_CID; } })() };
   var ActivityModel = (function () {
     var DAY = 86400000;
     function day(value) {
@@ -4296,7 +4352,8 @@
       var week = key(monday(day(today)));
       return history.filter(function (change) { return change.week < week; }).concat([{ week: week, goal: goal }]);
     }
-    function summarize(entries, who, today, history, month) {
+    // ccount is the signed-in uid; ownership never depends on the display name.
+    function summarize(entries, account, today, history, month) {
       var now = day(today);
       if (now === null || !validHistory(history)) throw new Error("Invalid activity calendar input.");
       month = month || today.slice(0, 7);
@@ -4304,7 +4361,7 @@
       if (monthStart === null || month > today.slice(0, 7)) throw new Error("Invalid activity month.");
       var days = Object.create(null), weeks = Object.create(null), invalid = 0, earliest = today;
       entries.forEach(function (entry) {
-        if (entry.who !== who) return;
+        if (!account || entry.uid !== account) return;
         var date = day(entry.date);
         if (date === null || typeof entry.mins !== "number" || !Number.isFinite(entry.mins)) { invalid++; return; }
         if (date > now || entry.mins <= 0) return;
@@ -4479,7 +4536,8 @@
   });
 
   // A saved hub is presentation only. It never populates membership, roles or entries.
-  var HUB_CACHE_KEY = "minutes-hub-v1:";
+  // It is stored per account uid; older handle-keyed (v1) copies are ignored.
+  var HUB_CACHE_KEY = "minutes-hub-v2:";
   var hubCatalogReady = false, hubErrors = {};
   var hubOwner = null, hubSaved = null, hubStored = "", hubComputed = null;
   state.hubLoadSlow = false;
@@ -4498,7 +4556,7 @@
   function validHubSnapshot(value) {
     function text(v) { return typeof v === "string"; }
     function flag(v) { return typeof v === "boolean"; }
-    return value && value.version === 1 && value.name === state.me &&
+    return value && value.version === 2 && !!state.uid && value.uid === state.uid && value.name === state.me &&
       value.month === monthKeyOf(new Date()) &&
       value.hello && text(value.hello.sub) &&
       Array.isArray(value.sections) && value.sections.length === 2 &&
@@ -4528,12 +4586,13 @@
   }
 
   function readHubSnapshot() {
-    if (hubOwner === state.me) return;
-    hubOwner = state.me;
+    var owner = state.me && state.uid ? state.uid + "|" + state.me : null;
+    if (hubOwner === owner) return;
+    hubOwner = owner;
     hubSaved = null; hubStored = ""; hubComputed = null;
-    if (!state.me) return;
+    if (!owner) return;
     try {
-      var raw = localStorage.getItem(HUB_CACHE_KEY + encodeURIComponent(state.me));
+      var raw = localStorage.getItem(HUB_CACHE_KEY + encodeURIComponent(state.uid));
       if (!raw) return;
       var value = JSON.parse(raw);
       if (!validHubSnapshot(value)) throw new Error("Invalid or outdated challenge preview.");
@@ -4545,19 +4604,19 @@
   }
 
   function hubDisplay() {
-    state.rev; state.me; state.signedIn; state.activeCid; state.welcomed; state.hourRev;
+    state.rev; state.me; state.uid; state.signedIn; state.activeCid; state.welcomed; state.hourRev;
     state.activityDay; state.activityGoalRev; state.activityLoaded; state.activityLoadError; state.activityFromCache;
     state.connectionOffline; state.connectionSettled;
     readHubSnapshot();
     if (!state.signedIn) return null;
     if (!hubDataReady()) return hubSaved;
-    var signature = [state.rev, state.me, state.activeCid, state.welcomed, state.hourRev,
+    var signature = [state.rev, state.uid, state.me, state.activeCid, state.welcomed, state.hourRev,
       state.activityDay, state.activityGoalRev, state.activityFromCache, state.activityLoadError,
       offlineNow(), netSettled, cachePending].join("|");
     if (hubComputed && hubComputed.signature === signature) return hubComputed.value;
     var activity = state.activity;
     var value = {
-      version: 1, name: state.me, month: monthKeyOf(new Date()),
+      version: 2, uid: state.uid, name: state.me, month: monthKeyOf(new Date()),
       hello: buildHello(), sections: buildChallengeSections(),
       activity: {
         show: activity.show, progress: activity.progress, weekly: activity.weekly, weeklyLabel: activity.weeklyLabel,
@@ -4569,9 +4628,9 @@
     if (Store.hubComplete && !Store.hubComplete()) return value;
     hubSaved = value;
     var raw = JSON.stringify(value);
-    if (raw !== hubStored) {
+    if (raw !== hubStored && state.uid) {
       hubStored = raw;
-      try { localStorage.setItem(HUB_CACHE_KEY + encodeURIComponent(state.me), raw); }
+      try { localStorage.setItem(HUB_CACHE_KEY + encodeURIComponent(state.uid), raw); }
       catch (error) { console.warn("Challenge preview could not be saved:", error); }
     }
     return value;
@@ -4724,7 +4783,7 @@
     });    var act = activeCid(), admin = meIsAdmin();
     function row(cid) {
       var status = myStatus(cid), approved = status === "approved";
-      var n = approvedHandles(cid).length;
+      var n = approvedMembers(cid).length;
       if (challMeta[cid].schemaVersion === 2) n = challMeta[cid].memberCount;
       var loading = approved && !!Store.standingReady && !Store.standingReady(cid);
       var failed = approved && !!Store.challengeFailed && Store.challengeFailed(cid);
@@ -4915,7 +4974,7 @@
     };
     if (rn < 1) { out.mode = "prestart"; out.lock.show = false;
                   out.empty = "Before the challenge started. No standings yet."; return out; }
-    if (!(isParticipant(state.me, mk) || admin || meOwnsActive())) {
+    if (!(isParticipant(state.uid, mk) || admin || meOwnsActive())) {
       out.mode = "noboard";
       out.empty = past ? ("You didn\u2019t take part in " + escapeHtml(monthName) + ".")
         : ((canSelfToggle && roundJoinOpen(mk))
@@ -4936,7 +4995,7 @@
     var tKey = todayStr(), byPerson = {};
     state.entries.forEach(function (e) {
       var inRange = range === "today" ? e.date === tKey : e.date.indexOf(mk) === 0;
-      if (inRange) (byPerson[e.who] = byPerson[e.who] || []).push(e);
+      if (inRange) (byPerson[entryUid(e)] = byPerson[entryUid(e)] || []).push(e);
     });
     // Competition ranking: arr is sorted desc, so a total's rank is the position
     // of its FIRST occurrence. Numbering by index would show two people level on
@@ -4944,12 +5003,12 @@
     var rankOfMins = {};
     arr.forEach(function (r, i) { if (!rankOfMins.hasOwnProperty(r.mins)) rankOfMins[r.mins] = i + 1; });
     out.rows = arr.map(function (r) {
-      var pe = byPerson[r.name] || [], ptot = r.mins || 1;
+      var pe = byPerson[r.uid] || [], ptot = r.mins || 1;
       return {
-        name: r.name, rank: rankOfMins[r.mins], mins: r.mins + " min",
-        me: r.name === state.me, pct: Math.round((r.mins / max) * 100) + "%",
+        uid: r.uid, name: r.name, rank: rankOfMins[r.mins], mins: r.mins + " min",
+        me: isMe(r.uid), pct: Math.round((r.mins / max) * 100) + "%",
         color: colorFor(r.name), hasDetail: pe.length > 0,
-        open: !!lbOpen[r.name] && pe.length > 0,
+        open: !!lbOpen[r.uid] && pe.length > 0,
         tags: catGroups(pe).map(function (g) {
           var gp = Math.round(g.mins / ptot * 100);
           return { tag: g.tag, name: capTag(g.tag), untagged: g.tag === CAT_UNTAG,
@@ -4974,9 +5033,9 @@
     this.rev; this.entries; this.viewMonth; this.me; this.hidden; this.hiddenRev;
     var mp = monthKeyOf(state.viewMonth);
     var roster = participantsFor(state.viewMonth), totals = {};
-    roster.forEach(function (n) { totals[n] = 0; });
+    roster.forEach(function (id) { totals[id] = 0; });
     state.entries.forEach(function (e) {
-      if (e.date.indexOf(mp) === 0 && totals.hasOwnProperty(e.who)) totals[e.who] += e.mins;
+      if (e.date.indexOf(mp) === 0 && totals.hasOwnProperty(entryUid(e))) totals[entryUid(e)] += e.mins;
     });
     // No minutes anywhere in this month means renderChart() draws the sleepy empty
     // state instead of a chart, and a legend of clickable swatches under it would
@@ -4986,8 +5045,9 @@
     var anyData = roster.some(function (n) { return totals[n] > 0; });
     if (!anyData) return [];
     return roster.slice().sort(function (a, b) { return totals[b] - totals[a]; })
-      .map(function (n) {
-        return { name: n, color: colorFor(n), off: !!state.hidden[n], me: n === state.me };
+      .map(function (id) {
+        var n = participantName(id, mp);
+        return { uid: id, name: n, color: colorFor(n), off: !!state.hidden[id], me: isMe(id) };
       });
   });
 
@@ -5096,7 +5156,7 @@
         guard("join", jOpen, "New member joining", isPastRound ? "Closed" : "", isPastRound ? ICON_LOCK_CLOSED : "", isPastRound),
         guard("log", lOpen, "Logging minutes", isFutureRound ? opensLbl : "", isFutureRound ? ICON_CLOCK : "", isFutureRound)
       ],
-      current: current.map(function (name) { return { name: name, initial: name.charAt(0).toUpperCase(), color: colorFor(name) }; })
+      current: current.map(function (id) { var name = participantName(id, key); return { uid: id, name: name, initial: name.charAt(0).toUpperCase(), color: colorFor(name) }; })
     };
   });
 
@@ -5163,16 +5223,16 @@
       groups: groups.map(function (g) { return { cid: g.cid, title: challName(g.cid), pastel: challPastel(g.cid), rows: g.pending.map(approveRowModel) }; }) };
   });
 
-  function approveRowModel(h) { return { name: h, initial: h.charAt(0).toUpperCase(), color: colorFor(h) }; }
+  function approveRowModel(id) { var h = nameOf(id); return { uid: id, name: h, initial: h.charAt(0).toUpperCase(), color: colorFor(h) }; }
 
   view("boChallenges", function () {
     this.rev; this.me;
     var cids = Object.keys(challMeta).sort(function (a, b) { return challName(a).localeCompare(challName(b)); });
     return { empty: !cids.length, rows: cids.map(function (cid) {
-      var owners = ownersOf(cid), pc = pendingFor(cid).length, memberCount = approvedHandles(cid).length;
+      var owners = ownersOf(cid), pc = pendingFor(cid).length, memberCount = approvedMembers(cid).length;
       return {
         cid: cid, pastel: challPastel(cid), name: challName(cid),
-        owners: memberCount + " member" + (memberCount === 1 ? "" : "s") + " · " + (owners.length ? ("Owners: " + owners.join(", ")) : "No owners"),
+        owners: memberCount + " member" + (memberCount === 1 ? "" : "s") + " · " + (owners.length ? ("Owners: " + owners.map(nameOf).join(", ")) : "No owners"),
         pending: pc, pendingLabel: pc > 9 ? "9+" : String(pc),
         title: pc ? ("Manage · " + pc + " pending request" + (pc === 1 ? "" : "s")) : "Manage challenge"
       };
@@ -5187,7 +5247,7 @@
     var pend = pendingFor(cid);
     var mm = membersByCid[cid] || {};
     var ownerCount = ownersOf(cid).length;
-    var approved = Object.keys(mm).filter(function (h) { return mm[h].status === "approved"; }).sort();
+    var approved = Object.keys(mm).filter(function (id) { return mm[id].status === "approved"; }).sort(byName);
     return {
       cid: cid, pastel: challPastel(cid), color: challColor(cid), title: challName(cid), canRename: isAdm || iOwn(cid),
       // Everything that administers OTHER people is one flag. A member can open
@@ -5201,24 +5261,24 @@
       isActive: cid === activeCid(),
       canEditRound: (isAdm || iOwn(cid)) && monthEditable(state.viewMonth),
       canLeave: !isAdm && !iOwn(cid) && roundJoinOpen(monthKeyOf(state.viewMonth))
-                && isParticipant(state.me, monthKeyOf(state.viewMonth)),
+                && isParticipant(state.uid, monthKeyOf(state.viewMonth)),
       // A member's whole menu is Leave. When that is unavailable the modal would
       // be blank, so say why instead: the two reasons are that the round is
       // locked, or that they are not in this round to begin with.
       nothingToDo: !(isAdm || iOwn(cid)) && !(cid === activeCid()
                    && roundJoinOpen(monthKeyOf(state.viewMonth))
-                   && isParticipant(state.me, monthKeyOf(state.viewMonth))),
-      nothingNote: !isParticipant(state.me, monthKeyOf(state.viewMonth))
+                   && isParticipant(state.uid, monthKeyOf(state.viewMonth))),
+      nothingNote: !isParticipant(state.uid, monthKeyOf(state.viewMonth))
                    ? "You're not in this round, so there's nothing to change here."
                    : "This round is locked, so you can't leave it now.",
       roundName: state.viewMonth.toLocaleString(undefined, { month: "long" }),
       pendingTitle: "Pending requests" + (pend.length ? " · " + pend.length : ""), noPending: !pend.length,
       pending: pend.map(approveRowModel),
       membersTitle: "Members" + (approved.length ? " · " + approved.length : ""), noMembers: !approved.length,
-      members: approved.map(function (h) {
-        var isOwner = mm[h].role === "owner";
+      members: approved.map(function (id) {
+        var isOwner = mm[id].role === "owner", h = nameOf(id);
         return {
-          name: h, initial: h.charAt(0).toUpperCase(), color: colorFor(h), owner: isOwner,
+          uid: id, name: h, initial: h.charAt(0).toUpperCase(), color: colorFor(h), owner: isOwner,
           ownerPill: isOwner && !isAdm, admin: isAdm,
           toggleText: isOwner ? "Owner" : "Make owner", showDel: isAdm && !(isOwner && ownerCount <= 1)
         };
@@ -5246,8 +5306,8 @@
     joinTile: function () { toggleSelfParticipation(); },
     leaveRound: function () { toggleSelfParticipation(); },
     setRange: function (r) { state.lbTouched = true; state.lbRange = r; },
-    togglePerson: function (name) { lbOpen[name] = !lbOpen[name]; state.lbOpenRev++; },
-    toggleLegend: function (name) { state.hidden[name] = !state.hidden[name]; state.hiddenRev++; renderChart(); },
+    togglePerson: function (id) { lbOpen[id] = !lbOpen[id]; state.lbOpenRev++; },
+    toggleLegend: function (id) { state.hidden[id] = !state.hidden[id]; state.hiddenRev++; renderChart(); },
     monthPrev: function () { changeMonth(-1); },
     monthNext: function () { changeMonth(1); },
     monthGoto: function (key) { wheelGlideToKey(key); setViewMonthKey(key); },
@@ -5264,9 +5324,9 @@
     join: function (cid) { requestJoinChallenge(cid); },
     manage: function (cid) { openManageChallenge(cid); },
     newChallenge: function () { openChallModal("create"); },
-    removeParticipant: function (name) {
+    removeParticipant: function (id) {
       var key = monthKeyOf(state.viewMonth);
-      removeParticipant(key, participantsFor(state.viewMonth), name);
+      removeParticipant(key, participantsFor(state.viewMonth), id);
     },
     setRoundGuard: function (ev, kind, want) {
       var key = monthKeyOf(state.viewMonth);
@@ -5319,28 +5379,29 @@
       input.value = (input.value.trim().toLowerCase() === tag.toLowerCase()) ? "" : tag;
       state.editTagRev++;
     },
-    approveRequest: function (ev, cid, h) {
+    approveRequest: function (ev, cid, id) {
       if (!requireConnection()) return;
       var row = ev && ev.currentTarget && ev.currentTarget.parentNode;
       var bs = row ? row.querySelectorAll("button") : [];
       Array.prototype.forEach.call(bs, function (b) { b.disabled = true; });
-      var mm = membersByCid[cid] || {}, cur = mm[h] || {};
-      Store.setMember(cid, h, { handle: h, role: cur.role || "member", status: "approved", ts: cur.ts || Date.now() })
+      var mm = membersByCid[cid] || {}, cur = mm[id] || {}, h = cur.handle || nameOf(id);
+      Store.setMember(cid, id, { handle: h, role: cur.role || "member", status: "approved", ts: cur.ts || Date.now() })
         .then(function () { showToast(h + " approved", "success"); })
         .catch(function (e) { console.error(e); Array.prototype.forEach.call(bs, function (b) { b.disabled = false; }); showToast("Couldn't approve", "danger"); });
     },
-    denyRequest: function (ev, cid, h) {
+    denyRequest: function (ev, cid, id) {
       if (!requireConnection()) return;
       var row = ev && ev.currentTarget && ev.currentTarget.parentNode;
       var bs = row ? row.querySelectorAll("button") : [];
       Array.prototype.forEach.call(bs, function (b) { b.disabled = true; });
-      Store.removeMember(cid, h)
+      var h = ((membersByCid[cid] || {})[id] || {}).handle || nameOf(id);
+      Store.removeMember(cid, id)
         .then(function () { showToast(h + " denied", "info"); })
         .catch(function (e) { console.error(e); Array.prototype.forEach.call(bs, function (b) { b.disabled = false; }); showToast("Couldn't deny", "danger"); });
     },
     toggleMemberAdmin: function (name) { toggleAdmin(name); },
-    setOwnerRole: function (cid, h, makeOwner) { setOwnerRole(cid, h, makeOwner); },
-    removeChallengeMember: function (cid, h) { removeFromChallenge(cid, h); },
+    setOwnerRole: function (cid, id, makeOwner) { setOwnerRole(cid, id, makeOwner); },
+    removeChallengeMember: function (cid, id) { removeFromChallenge(cid, id); },
     openManageRename: function () { var cid = state.manageCid || manageCid; closeManageModal(); openChallModal("edit", cid); },
     calPrev: function () { calView.setMonth(calView.getMonth() - 1); state.calRev++; },
     calNext: function () { calView.setMonth(calView.getMonth() + 1); state.calRev++; },
@@ -5844,8 +5905,11 @@
     bump();
   });
 
-  function doLogin(name) {
+  // `name` is the display handle; the account uid comes from the store, which
+  // knows who is actually signed in.
+  function doLogin(name, id) {
     state.me = name;
+    state.uid = id || (Store.uidForLogin ? Store.uidForLogin(name) : null) || null;
     hideActivity();
     refreshActivityDay();
     loadActivityGoal();
@@ -5902,6 +5966,7 @@
     state.activityGoalRev++;
     state.activityGoalNotice = "";
     state.me = null;
+    state.uid = null;
     localStorage.removeItem(SESSION_KEY);
     clearRoute();                       // and does not inherit this one's challenge in the URL
     closeBackoffice();
@@ -7212,11 +7277,12 @@
   function renderChallenges() { bump(); }
 
   function requestJoinChallenge(cid) {
-    if (!state.me) return;
+    if (!state.me || !state.uid) return;
     if (!requireConnection()) return;
     // Optimistic: show Requested immediately.
     if (!membersByCid[cid]) membersByCid[cid] = {};
-    membersByCid[cid][state.me] = { handle: state.me, role: "member", status: "pending", ts: Date.now() };
+    var mine = state.uid;
+    membersByCid[cid][mine] = { uid: mine, cid: cid, handle: state.me, role: "member", status: "pending", ts: Date.now() };
     renderChallenges();
     Store.requestJoin(cid).then(function () {
       // Not "admins". canApprove(cid) is `meIsAdmin() || iOwn(cid)`, so the person
@@ -7227,7 +7293,7 @@
       showToast("Request sent. Whoever runs it will let you in.", "success");
     }).catch(function (err) {
       console.error("requestJoin failed:", err);
-      if (membersByCid[cid]) delete membersByCid[cid][state.me];
+      if (membersByCid[cid]) delete membersByCid[cid][mine];
       renderChallenges();
       showToast("Couldn't send request. Try again.", "danger");
     });
@@ -7369,9 +7435,10 @@
     } else {
       var ncid = genCid(name);
       var prevActive = activeCid();
-      challMeta[ncid] = { name: name, color: color, owner: state.me, createdTs: Date.now() };
+      var owner = state.uid;
+      challMeta[ncid] = { name: name, color: color, owner: owner, createdTs: Date.now() };
       if (!membersByCid[ncid]) membersByCid[ncid] = {};
-      membersByCid[ncid][state.me] = { handle: state.me, role: "owner", status: "approved", ts: 0 };
+      membersByCid[ncid][owner] = { uid: owner, cid: ncid, handle: state.me, role: "owner", status: "approved", ts: 0 };
       // The list sorts by createdTs ASCENDING, so a brand new challenge would
       // otherwise appear at the very bottom, furthest from the "+" that was just
       // tapped. Making it ACTIVE puts it on top for free: .chall-row.active-cid
@@ -7384,7 +7451,7 @@
       }).catch(function (e2) {
         console.error("createChallenge failed:", e2);
         save.disabled = false; setMsg(err, "Couldn't create. Try again.");
-        delete challMeta[ncid]; if (membersByCid[ncid]) delete membersByCid[ncid][state.me];
+        delete challMeta[ncid]; if (membersByCid[ncid]) delete membersByCid[ncid][owner];
         // Hand the active card back, or the failed creation leaves the hub
         // pointing at a challenge that no longer exists.
         setActiveChallenge(prevActive);
@@ -7395,7 +7462,7 @@
   document.getElementById("challNameInput").addEventListener("keydown", function (e) { if (e.key === "Enter") submitChallModal(); });
 
   // ---- Data helpers ----
-  function myEntries() { return state.entries.filter(function (e) { return e.who === state.me; }); }
+  function myEntries() { return state.entries.filter(isMine); }
 
   // Tiles / join tile as DATA. Same three-way rule as before: when you are not in
   // an eligible round the two "You" tiles would read 0 min (or strand minutes you
@@ -7416,7 +7483,7 @@
     });
 
     var eligibleMonth = isCur || mKey === nextMonthKey();
-    var notInRound = allowJoinTile && !!state.me && !isParticipant(state.me, mKey) &&
+    var notInRound = allowJoinTile && !!state.me && !isParticipant(state.uid, mKey) &&
                      roundNumberOf(monthDate) >= 1 && eligibleMonth;
     if (notInRound) {
       var monthNm = monthDate.toLocaleString(undefined, { month: "long" });
@@ -7493,20 +7560,21 @@
     var mKey = monthKeyOf(monthDate);
     // Same visibility rule as the board: never surface other people's standings
     // to someone who is not allowed to see the leaderboard for this round.
-    if (!(isParticipant(state.me, mKey) || meIsAdmin() || meOwnsActive())) return null;
+    if (!(isParticipant(state.uid, mKey) || meIsAdmin() || meOwnsActive())) return null;
 
     var arr = rangeArr("month");
     if (!arr.length || !arr[0].mins) return null;   // nobody logged, so there is no result
 
     var topMins = arr[0].mins;
     var winners = arr.filter(function (r) { return r.mins === topMins; });
-    var iAmIn = arr.some(function (r) { return r.name === state.me; });
-    var iWon = winners.some(function (r) { return r.name === state.me; });
+    function mine(r) { return !!state.uid && r.uid === state.uid; }
+    var iAmIn = arr.some(mine);
+    var iWon = winners.some(mine);
     // Rank by competition ranking, not array index: two people on the same total
     // must be told the same position. Index order would have given the Owner "2nd"
     // and the Admin "3rd" off identical minutes.
     var myRank = 0, myMins = 0;
-    arr.forEach(function (r) { if (r.name === state.me) myMins = r.mins; });
+    arr.forEach(function (r) { if (mine(r)) myMins = r.mins; });
     if (iAmIn) {
       myRank = arr.filter(function (r) { return r.mins > myMins; }).length + 1;
     }
@@ -7522,7 +7590,7 @@
     // The margin retains escaped names and inline emphasis on the winning total.
     var champ;
     if (iWon && winners.length > 1) {
-      champ = "Level with " + joinNames(winners.filter(function (r) { return r.name !== state.me; }));
+      champ = "Level with " + joinNames(winners.filter(function (r) { return !mine(r); }));
     } else if (iWon) {
       champ = arr.length > 1
         ? "+" + (topMins - arr[1].mins) + " clear of " + escapeHtml(arr[1].name)
@@ -7964,22 +8032,22 @@
 
     // build cumulative series per participant
     var roster = participantsFor(vm);
-    var series = {}; // name -> array of {day,val}
+    var series = {}; // uid -> array of {day,val}
     var globalMax = 10;
     var anyData = false;
-    roster.forEach(function (name) {
+    roster.forEach(function (id) {
       var perDay = {};
       state.entries.forEach(function (e) {
-        if (e.who === name && e.date.indexOf(mp) === 0) {
+        if (entryUid(e) === id && e.date.indexOf(mp) === 0) {
           var day = parseInt(e.date.slice(8, 10), 10);
           perDay[day] = (perDay[day] || 0) + e.mins;
         }
       });
       var pts = [], cum = 0;
       for (var d = 1; d <= lastDay; d++) { cum += (perDay[d] || 0); pts.push({ day: d, val: cum }); }
-      series[name] = pts;
+      series[id] = pts;
       if (cum > 0) anyData = true;
-      if (!state.hidden[name] && cum > globalMax) globalMax = cum;
+      if (!state.hidden[id] && cum > globalMax) globalMax = cum;
     });
 
     var caption = document.getElementById("chartCaption");
@@ -8028,12 +8096,12 @@
 
     var lines = "";
     // draw others first, me last (on top)
-    var order = roster.filter(function (n) { return n !== state.me; }).concat(state.me ? [state.me] : []);
-    order.forEach(function (name) {
-      if (state.hidden[name]) return;
-      var pts = series[name]; if (!pts || !pts.length) return;
+    var order = roster.filter(function (id) { return id !== state.uid; }).concat(state.uid ? [state.uid] : []);
+    order.forEach(function (id) {
+      if (state.hidden[id]) return;
+      var pts = series[id]; if (!pts || !pts.length) return;
       if (pts[pts.length - 1].val === 0) return; // skip flat zero lines (no data for this member)
-      var isMe = name === state.me;
+      var isMe = id === state.uid, name = participantName(id, mp);
       var path = splinePath(pts.map(function (p) { return { x: x(p.day), y: y(p.val) }; }));
       lines += '<path d="' + path + '" fill="none" stroke="' + colorFor(name) + '" stroke-width="' + (isMe ? 2.75 : 1.8) +
                '" stroke-linejoin="round" stroke-linecap="round" opacity="' + (isMe ? 1 : 0.85) + '"/>';
@@ -8133,12 +8201,13 @@
     var t = todayStr(), mp = monthKeyOf(state.viewMonth);
     var roster = participantsFor(state.viewMonth);
     var totals = {};
-    roster.forEach(function (n) { totals[n] = 0; });
+    roster.forEach(function (id) { totals[id] = 0; });
     state.entries.forEach(function (e) {
       var inRange = range === "today" ? e.date === t : e.date.indexOf(mp) === 0;
-      if (inRange && totals.hasOwnProperty(e.who)) totals[e.who] += e.mins;
+      if (inRange && totals.hasOwnProperty(entryUid(e))) totals[entryUid(e)] += e.mins;
     });
-    return roster.map(function (n) { return { name: n, mins: totals[n] }; })
+    // Rows are keyed by uid; `name` is only the label the lines print.
+    return roster.map(function (id) { return { uid: id, name: participantName(id, mp), mins: totals[id] }; })
                  .sort(function (a, b) { return b.mins - a.mins; });
   }
 
@@ -8207,10 +8276,10 @@
   function pickDaily(list) { return list[Math.floor(Date.now() / 86400000) % list.length]; }
 
   function motivationFor(arr, isCur) {
-    var me = state.me;
-    if (!me || !arr.length) return null;
+    var me = state.uid;
+    if (!state.me || !me || !arr.length) return null;
     var myIdx = -1;
-    for (var i = 0; i < arr.length; i++) { if (arr[i].name === me) { myIdx = i; break; } }
+    for (var i = 0; i < arr.length; i++) { if (arr[i].uid === me) { myIdx = i; break; } }
     if (myIdx < 0) return null;
     var my = arr[myIdx], leader = arr[0], n = arr.length, CLOSE = 30;
     var monthName = state.viewMonth.toLocaleString(undefined, { month: "long" });
@@ -8695,7 +8764,7 @@
     var target = null;
     for (var j = 0; j < state.entries.length; j++) {
       var o = state.entries[j];
-      if (o.id !== id && o.who === ent.who && o.date === ent.date && sameTag(o.note, newTag)) { target = o; break; }
+      if (o.id !== id && entryUid(o) === entryUid(ent) && o.date === ent.date && sameTag(o.note, newTag)) { target = o; break; }
     }
 
     var saveBtn = document.getElementById("editSave");
@@ -8849,8 +8918,7 @@
     if (Store && Store.roundsReady && !Store.roundsReady(cid)) return null;
     var key = date.slice(0, 7), round = (roundsByCid[cid] || {})[key];
     if (!round || !round.participants) return false;
-    var me = String(state.me).toLowerCase();
-    if (!round.participants.some(function (name) { return String(name).toLowerCase() === me; })) return false;
+    if (!state.uid || round.participants.indexOf(state.uid) < 0) return false;
     var flags = roundFlagsFromData(round);
     return flags.logOpen !== null ? flags.logOpen : !isFutureMonthKey(key);
   }
@@ -8862,8 +8930,7 @@
     if (date < iso(logWindowStart()) || date > todayStr()) return null;
     var key = date.slice(0, 7), round = (roundsByCid[cid] || {})[key], flags = roundFlagsFromData(round);
     var month = new Date(+key.slice(0, 4), (+key.slice(5, 7)) - 1, 1).toLocaleString(undefined, { month: "long" });
-    var me = String(state.me).toLowerCase();
-    var joined = !!(round && round.participants) && round.participants.some(function (who) { return String(who).toLowerCase() === me; });
+    var joined = !!(round && round.participants) && !!state.uid && round.participants.indexOf(state.uid) >= 0;
     if (!joined && flags.joinOpen !== false) return { brief: "You haven't joined " + month + "'s round.", text: "You haven't joined " + month + "'s round yet.", key: key, month: month, join: true };
     if (!joined) return { brief: "You're not in " + month + "'s round.", text: "You're not in " + month + "'s round. Ask whoever runs it to add you." };
     if (flags.logOpen === false) return { brief: month + "'s round is locked.", text: month + "'s round is locked, so logging is closed." };
@@ -8882,16 +8949,15 @@
   }
   function joinLogTarget(cid, key) {
     var round = (roundsByCid[cid] || {})[key], list = (round && round.participants) || [];
-    var me = String(state.me).toLowerCase();
-    if (list.some(function (who) { return String(who).toLowerCase() === me; })) return;
+    if (!state.uid || list.indexOf(state.uid) >= 0) return;
     if (roundFlagsFromData(round).joinOpen === false) { showToast("Joining is closed for this round.", "warn"); return; }
-    commitChallenge(key, list.concat([state.me]), cid);
+    commitChallenge(key, list.concat([state.uid]), cid);
     state.logTargetRev++;
   }
   // The same rules updateLogGate() uses for the open challenge.
   function currentLogBlocked(date) {
     var mk = date.slice(0, 7);
-    return date < iso(logWindowStart()) || !isParticipant(state.me, mk) || roundLocked(mk);
+    return date < iso(logWindowStart()) || !isParticipant(state.uid, mk) || roundLocked(mk);
   }
   function pickedLogTargets(date) {
     return logChallenges().slice(1).filter(function (cid) { return logPinned[cid] && logPicked[cid] && canLogTo(cid, date) !== false; });
@@ -8985,7 +9051,7 @@
     // in #logBlockNote while it disables this button, so reaching them means the
     // gate is stale. Re-running it puts the reason in its one home instead of
     // keeping a second copy of the wording here.
-    if (date < iso(logWindowStart()) || !isParticipant(state.me, date.slice(0, 7)) || roundLocked(date.slice(0, 7))) {
+    if (date < iso(logWindowStart()) || !isParticipant(state.uid, date.slice(0, 7)) || roundLocked(date.slice(0, 7))) {
       updateLogGate();
       return;
     }
@@ -8999,7 +9065,7 @@
       var existing = null;
       for (var i = 0; i < pool.length; i++) {
         var e = pool[i];
-        if ((current || cidOf(e) === entryCid) && e.who === state.me && e.date === date && sameTag(e.note, tag)) { existing = e; break; }
+        if ((current || cidOf(e) === entryCid) && isMine(e) && e.date === date && sameTag(e.note, tag)) { existing = e; break; }
       }
       if (existing) {
         var id = existing.id;
@@ -9007,7 +9073,7 @@
           undo: function () { return Store.incrementEntry(id, -mins, entryCid); } };
       }
       var newId = uid();
-      return { id: newId, cid: entryCid, promise: Store.addEntry({ id: newId, cid: entryCid, who: state.me, date: date, mins: mins, note: tag }),
+      return { id: newId, cid: entryCid, promise: Store.addEntry({ id: newId, cid: entryCid, uid: state.uid, who: state.me, date: date, mins: mins, note: tag }),
         undo: function () { return Store.deleteEntry(newId, entryCid); } };
     }
     // Picked challenges whose rounds are still loading get a short wait so the
@@ -9119,7 +9185,7 @@
     var prev = rounds.hasOwnProperty(key) ? rounds[key] : null;
     var f = roundFlagsFromData(prev);
     var base = roundSavePayload(f, prev && prev.participants ? prev.participants.slice() : []);
-    rounds[key] = roundSavePayload(f, newList.slice());
+    rounds[key] = Object.assign(roundSavePayload(f, newList.slice()), { names: roundNamesFor(newList, prev) });
     renderAll();
     return Store.saveRound(cid, key, roundSavePayload(f, newList), base).catch(function (err) {
       console.error("Round save failed:", err);
@@ -9130,8 +9196,8 @@
   }
   // People join a round themselves. Managers can only take someone out: adding
   // by name predates challenge-scoped accounts and could not save.
-  function removeParticipant(key, current, name) {
-    commitChallenge(key, current.filter(function (p) { return p.toLowerCase() !== name.toLowerCase(); }));
+  function removeParticipant(key, current, id) {
+    commitChallenge(key, current.filter(function (p) { return p !== id; }));
   }
 
   function renderParticipantEditor() { bump(); }
@@ -9141,7 +9207,7 @@
     if (!roundJoinOpen(key)) { showToast("Joining is closed for this round.", "warn"); return; }
     var current = participantsFor(state.viewMonth);
     var monthName = state.viewMonth.toLocaleString(undefined, { month: "long" });
-    if (isParticipant(state.me, key)) {
+    if (isParticipant(state.uid, key)) {
       var isNext = key === nextMonthKey();
       showConfirm({
         title: "Leave " + monthName + "'s challenge?",
@@ -9151,10 +9217,10 @@
         ok: "Leave",
         danger: true
       }, function () {
-        commitChallenge(key, current.filter(function (p) { return p.toLowerCase() !== state.me.toLowerCase(); }));
+        commitChallenge(key, current.filter(function (p) { return p !== state.uid; }));
       });
-    } else {
-      commitChallenge(key, current.concat([state.me]));
+    } else if (state.uid) {
+      commitChallenge(key, current.concat([state.uid]));
     }
   }
 
@@ -9166,9 +9232,9 @@
   // to be viewing. The add-entry modal can hold a date in a different month from
   // state.viewMonth, so toggleSelfParticipation() is the wrong tool there.
   function joinRoundKey(key) {
-    if (isParticipant(state.me, key)) return;
+    if (!state.uid || isParticipant(state.uid, key)) return;
     if (!roundJoinOpen(key)) { showToast("Joining is closed for this round.", "warn"); return; }
-    commitChallenge(key, participantsFor(keyToDate(key)).concat([state.me]));
+    commitChallenge(key, participantsFor(keyToDate(key)).concat([state.uid]));
     // commitChallenge -> renderAll -> updateLogGate, so the note and the Save
     // button both settle on their own. Nothing here has to close the modal.
   }
@@ -9183,7 +9249,7 @@
     var mName = new Date(+mk.slice(0, 4), (+mk.slice(5, 7)) - 1, 1).toLocaleString(undefined, { month: "long" });
     var msg = null, action = null;
     if (dateVal < iso(logWindowStart())) msg = mName + " is closed for logging. You can only log the current and previous month.";
-    else if (!isParticipant(state.me, mk)) {
+    else if (!isParticipant(state.uid, mk)) {
       // Being outside the round is the one blocked state the user can clear
       // themselves, so it gets a button instead of an instruction. It used to
       // read "Tap Join on the Challenges tab", which meant closing the modal,
@@ -9307,28 +9373,29 @@
     state.manageCid = null;
   }
   function renderManage(cid) { if (cid) { manageCid = cid; state.manageCid = cid; } bump(); }
-  function setOwnerRole(cid, h, makeOwner) {
+  // `id` is the member's account uid; the handle is only for the messages.
+  function setOwnerRole(cid, id, makeOwner) {
     if (!meIsAdmin()) return;
     if (!requireConnection()) return;
     setMsg("manageErr", "");
-    var cur = (membersByCid[cid] || {})[h] || {};
+    var cur = (membersByCid[cid] || {})[id] || {}, h = cur.handle || nameOf(id);
     if (!makeOwner && cur.role === "owner" && ownersOf(cid).length <= 1) {
       setMsg("manageErr", "Can't remove the last owner. Make someone else an owner first."); return;
     }
-    Store.setMember(cid, h, { handle: h, role: makeOwner ? "owner" : "member", status: "approved", ts: cur.ts || Date.now() })
+    Store.setMember(cid, id, { handle: h, role: makeOwner ? "owner" : "member", status: "approved", ts: cur.ts || Date.now() })
       .then(function () { showToast(makeOwner ? (h + " is now an owner") : (h + " is no longer an owner"), makeOwner ? "success" : "info"); })
       .catch(function (e) { console.error(e); showToast("Couldn't update role", "danger"); });
   }
-  function removeFromChallenge(cid, h) {
+  function removeFromChallenge(cid, id) {
     if (!meIsAdmin()) return;
     setMsg("manageErr", "");
-    var cur = (membersByCid[cid] || {})[h] || {};
+    var cur = (membersByCid[cid] || {})[id] || {}, h = cur.handle || nameOf(id);
     if (cur.role === "owner" && ownersOf(cid).length <= 1) {
       setMsg("manageErr", "Can't remove the last owner. Make someone else an owner first."); return;
     }
     showConfirm({ title: "Remove " + h + "?", msg: "They'll be removed from " + challName(cid) + ". Their logged entries stay.", ok: "Remove" }, function () {
       if (!requireConnection()) return;
-      Store.removeMember(cid, h)
+      Store.removeMember(cid, id)
         .then(function () { showToast(h + " removed", "info"); })
         .catch(function (e) { console.error(e); showToast("Couldn't remove", "danger"); });
     });
@@ -9343,24 +9410,27 @@
   // join, leave, remove someone, or flip a flag. Apply just the difference
   // between `base` (what the caller saw) and `next` to the server's current
   // round, so a concurrent change by someone else is not overwritten.
-  // `ids` are the account ids for next.participants, in the same order.
-  function mergeRoundChange(server, base, next, ids) {
-    var names = {};
-    ids.forEach(function (id, index) { names[id] = next.participants[index]; });
-    if (!server || !base) return Object.assign({}, next, { participants: ids, names: names });
-    function low(handle) { return String(handle).toLowerCase(); }
-    var before = base.participants.map(low), after = next.participants.map(low);
+  // Participants are account uids; `names` maps each uid in next.participants
+  // to its display handle, for the round's required `names` map.
+  function mergeRoundChange(server, base, next, names) {
+    names = names || {};
+    var has = Object.prototype.hasOwnProperty;
+    if (!server || !base) {
+      var fresh = Object.assign({}, next, { participants: next.participants.slice(), names: {} });
+      fresh.participants.forEach(function (id) { fresh.names[id] = names[id]; });
+      return fresh;
+    }
+    var before = base.participants, after = next.participants;
     var serverNames = server.names || {};
     var participants = (server.participants || []).filter(function (id) {
-      var handle = low(serverNames[id]);
-      return before.indexOf(handle) < 0 || after.indexOf(handle) >= 0;
+      return before.indexOf(id) < 0 || after.indexOf(id) >= 0;
     });
-    ids.forEach(function (id, index) {
-      if (before.indexOf(low(next.participants[index])) < 0 && participants.indexOf(id) < 0) participants.push(id);
+    after.forEach(function (id) {
+      if (before.indexOf(id) < 0 && participants.indexOf(id) < 0) participants.push(id);
     });
     var out = Object.assign({}, server, { participants: participants, names: {} });
     participants.forEach(function (id) {
-      out.names[id] = Object.prototype.hasOwnProperty.call(serverNames, id) ? serverNames[id] : names[id];
+      out.names[id] = has.call(serverNames, id) ? serverNames[id] : names[id];
     });
     ["joinOpen", "logOpen", "locked"].forEach(function (flag) {
       if (next[flag] === base[flag]) return;
@@ -9508,7 +9578,7 @@
       hubOwner = null; hubSaved = null; hubStored = ""; hubComputed = null;
       state.activityLoaded = false; state.activityFromCache = true; state.activityLoadError = false;
       state.landingResolved = false; cachePending = 0;
-      state.me = null; state.signedIn = false;
+      state.me = null; state.uid = null; state.signedIn = false; nameBook = {};
       closeBackoffice();
       hideActivity();
       LoginWelcome.sync();
@@ -9518,8 +9588,9 @@
       profiles[data.uid] = data;
       var names = Object.keys(profiles).map(function (id) { return profiles[id].handle; });
       Object.keys(membersByCid).forEach(function (cid) {
-        Object.keys(membersByCid[cid]).forEach(function (handle) {
-          if (names.indexOf(handle) === -1) names.push(handle);
+        Object.keys(membersByCid[cid]).forEach(function (id) {
+          var handle = membersByCid[cid][id].handle;
+          if (handle && names.indexOf(handle) === -1) names.push(handle);
         });
       });
       cache.members = names;
@@ -9573,7 +9644,7 @@
             key === "mine:" + cid || key.indexOf("entries:" + cid + ":") === 0) stop(key);
       });
       membersByCid[cid] = administrator() && adminPending[cid] ? Object.assign({}, adminPending[cid]) : {};
-      if (own[cid] && !denied[cid]) membersByCid[cid][own[cid].handle] = own[cid];
+      if (own[cid] && !denied[cid]) membersByCid[cid][own[cid].uid] = own[cid];
       roundsByCid[cid] = {};
     }
     function page() {
@@ -9634,6 +9705,7 @@
       var rows = [];
       snapshot.forEach(function (document) {
         var data = document.data();
+        learnName(data.uid, data.who);
         rows.push({
           id: document.id, uid: data.uid, who: data.who, cid: cid, date: data.date,
           mins: data.mins, note: data.note, _hadCid: true, _pending: document.metadata.hasPendingWrites
@@ -9650,7 +9722,8 @@
         snapshot.forEach(function (document) {
           var data = modelMember(document);
           if (!data) return;
-          members[data.handle] = data;
+          members[data.uid] = data;
+          learnName(data.uid, data.handle);
         });
         membersByCid[cid] = members;
         if (profile) mergeProfile(profile);
@@ -9661,9 +9734,10 @@
         if (!snapshot.size && snapshot.metadata.fromCache) return;
         var rounds = {};
         snapshot.forEach(function (document) {
-          var data = document.data();
-          rounds[document.id] = roundSavePayload(roundFlagsFromData(data),
-            data.participants.map(function (id) { return data.names[id]; }));
+          var data = document.data(), names = {};
+          data.participants.forEach(function (id) { names[id] = data.names[id]; learnName(id, data.names[id]); });
+          rounds[document.id] = roundSavePayload(roundFlagsFromData(data), data.participants.slice());
+          rounds[document.id].names = names;
         });
         roundsByCid[cid] = rounds;
       });
@@ -9729,7 +9803,7 @@
           stop(key);
           if (key.indexOf("members:") === 0) {
             membersByCid[cid] = {};
-            if (own[cid]) membersByCid[cid][own[cid].handle] = own[cid];
+            if (own[cid]) membersByCid[cid][own[cid].uid] = own[cid];
           }
           if (key.indexOf("rounds:") === 0) roundsByCid[cid] = {};
         }
@@ -9753,7 +9827,7 @@
             own = {}; buckets = {}; membersByCid = {}; roundsByCid = {};
             cache = { members: [], admins: [] };
             membershipReady = false; catalogReady = false; hubCatalogReady = false;
-            state.me = null; state.signedIn = false;
+            state.me = null; state.uid = null; state.signedIn = false;
             publishEntries();
           }
           profile = null; setLoginConnecting(false);
@@ -9781,7 +9855,8 @@
               var member = modelMember(document);
               if (!member) return;
               if (!adminPending[member.cid]) adminPending[member.cid] = {};
-              adminPending[member.cid][member.handle] = member;
+              adminPending[member.cid][member.uid] = member;
+              learnName(member.uid, member.handle);
             });
             syncMetadata();
             syncScopes();
@@ -9813,7 +9888,7 @@
           });
           Object.keys(own).forEach(function (cid) {
             if (!membersByCid[cid]) membersByCid[cid] = {};
-            membersByCid[cid][own[cid].handle] = own[cid];
+            membersByCid[cid][own[cid].uid] = own[cid];
           });
           membershipReady = !snap.metadata.fromCache || snap.size > 0;
           syncMetadata();
@@ -9829,18 +9904,22 @@
       var id = entry.uid || signedUid();
       return { uid: id, who: entry.who, date: entry.date, mins: entry.mins, note: entry.note || "" };
     }
+    // Handle -> uid for the back-office account directory, which is still keyed
+    // by handle (meta/roster). Challenge actions already carry uids.
     function uidFor(handle, cid) {
-      var known = (membersByCid[cid] || {})[handle];
-      if (known) return Promise.resolve(known.uid);
+      var mm = membersByCid[cid] || {};
+      var known = Object.keys(mm).filter(function (id) { return mm[id].handle === handle; })[0];
+      if (known) return Promise.resolve(known);
       if (profile && profile.handle === handle) return Promise.resolve(profile.uid);
       return fb.getDoc(reference("identities", handle.toLowerCase())).then(function (snap) {
         if (!snap.exists()) throw new Error("That person needs an approved account first.");
         return snap.data().uid;
       });
     }
-    function changeMember(cid, handle, data) {
+    function changeMember(cid, memberUid, data) {
       var blocked = guardWrite(); if (blocked) return blocked;
-      return uidFor(handle, cid).then(function (memberUid) {
+      if (!memberUid) return failure("That person needs an approved account first.");
+      return Promise.resolve().then(function () {
         var memberRef = reference("challenges", cid, "members", memberUid);
         var challengeRef = reference("challenges", cid);
         return fb.runTransaction(fb.db, function (transaction) {
@@ -9999,14 +10078,18 @@
         });
       },
       setMember: changeMember,
-      removeMember: function (cid, handle) { return changeMember(cid, handle, null); },
+      removeMember: function (cid, memberUid) { return changeMember(cid, memberUid, null); },
       saveRound: function (cid, key, data, base) {
         var blocked = guardWrite(); if (blocked) return blocked;
-        return Promise.all(data.participants.map(function (handle) { return uidFor(handle, cid); })).then(function (ids) {
+        var names = {};
+        data.participants.forEach(function (id) {
+          names[id] = profile && id === profile.uid ? profile.handle : nameOf(id);
+        });
+        return Promise.resolve().then(function () {
           var ref = reference("challenges", cid, "rounds", key);
           return fb.runTransaction(fb.db, function (transaction) {
             return transaction.get(ref).then(function (snapshot) {
-              var payload = mergeRoundChange(snapshot.exists() ? snapshot.data() : null, base, data, ids);
+              var payload = mergeRoundChange(snapshot.exists() ? snapshot.data() : null, base, data, names);
               transaction.set(ref, payload);
               if (payload.participants.length && challMeta[cid] && key < challMeta[cid].firstMonth) {
                 transaction.update(reference("challenges", cid), { firstMonth: key });
@@ -10086,6 +10169,8 @@
         });
       },
       recordAppVersion: recordAppVersion,
+      // Profiles are keyed by the auth uid, so the signed-in account is the identity.
+      uidForLogin: function () { return profile ? profile.uid : signedUid() || null; },
       diagnostics: function () {
         return {
           modelVersion: 2, uid: signedUid(), subscriptions: Object.keys(listeners), catalogCount: Object.keys(catalogIds).length,
@@ -10195,7 +10280,48 @@
       if (manageCid && document.getElementById("manageModal").classList.contains("show")) renderManage(manageCid);
       updateAdminBadge();
     }
-    function mk(handle, role, status, ts) { return { handle: handle, role: role, status: status, ts: ts }; }
+    // Like Firestore, the demo keys everything by an account uid and keeps the
+    // handle only as a label. Each synthetic account has a stable uid derived from
+    // its handle, so a demo onboarding of a new name gets its own account.
+    function demoUid(handle) { return "demo-uid-" + String(handle || "").trim().toLowerCase(); }
+    // Stand-in for profiles/{uid}.handle.
+    function demoHandleOf(id) {
+      if (id && id === state.uid && state.me) return state.me;
+      var list = members();
+      for (var i = 0; i < list.length; i++) { if (demoUid(list[i]) === id) return list[i]; }
+      return null;
+    }
+    function mk(handle, role, status, ts) { return { uid: demoUid(handle), handle: handle, role: role, status: status, ts: ts }; }
+    function memberMap(cid, rows) {
+      var out = {};
+      rows.forEach(function (m) { m.cid = cid; out[m.uid] = m; });
+      return out;
+    }
+    function round(fields, handles) {
+      var out = Object.assign({ participants: [], names: {} }, fields);
+      handles.forEach(function (h) { out.participants.push(demoUid(h)); out.names[demoUid(h)] = h; });
+      return out;
+    }
+    function reject(message) { return Promise.reject(new Error(message)); }
+    // The cheap halves of the scoped rules, so the demo cannot quietly accept a
+    // write that Firestore would refuse.
+    function entryProblem(obj, existing) {
+      if (!obj.uid || typeof obj.uid !== "string") return "An entry needs its account uid.";
+      if (obj.who !== demoHandleOf(obj.uid)) return "An entry's name must match its account.";
+      if (existing && (existing.uid !== obj.uid || existing.date !== obj.date)) return "An entry's account and day cannot change.";
+      if (obj.uid !== state.uid && !meIsAdmin()) return "Only an admin can log minutes for someone else.";
+      return "";
+    }
+    function roundProblem(data) {
+      var ids = data.participants || [], names = data.names || {};
+      if (new Set(ids).size !== ids.length) return "A round lists someone twice.";
+      var keys = Object.keys(names);
+      if (keys.length !== ids.length || ids.some(function (id) { return typeof names[id] !== "string"; })) {
+        return "A round's names must match its participants.";
+      }
+      if (state.uid && ids.indexOf(state.uid) >= 0 && names[state.uid] !== state.me) return "A round must carry your current name.";
+      return "";
+    }
 
     function seed() {
       // Role-named logins so you can sign in as each access level to test the UI.
@@ -10203,35 +10329,35 @@
       cache.admins = ["AdminOwner", "Admin"]; // global admins (Backoffice access)
 
       challMeta = {};
-      challMeta[FOUNDING_CID] = { name: FOUNDING_NAME, color: "lime", owner: "AdminOwner", createdTs: 1 };
-      challMeta["sidequest"] = { name: "Step Sprint", color: "coral", owner: "Owner", createdTs: 2 };
-      challMeta["readathon"] = { name: "Read-a-thon", color: "mint", owner: "Rookie", createdTs: 3 };
+      challMeta[FOUNDING_CID] = { name: FOUNDING_NAME, color: "lime", owner: demoUid("AdminOwner"), createdTs: 1 };
+      challMeta["sidequest"] = { name: "Step Sprint", color: "coral", owner: demoUid("Owner"), createdTs: 2 };
+      challMeta["readathon"] = { name: "Read-a-thon", color: "mint", owner: demoUid("Rookie"), createdTs: 3 };
 
       membersByCid = {};
-      membersByCid[FOUNDING_CID] = {
-        AdminOwner: mk("AdminOwner", "owner", "approved", 0),
-        Owner: mk("Owner", "owner", "approved", 1),      // 2 owners -> last-owner guard not tripped
-        Admin: mk("Admin", "member", "approved", 2),
-        User: mk("User", "member", "approved", 3),
-        Rookie: mk("Rookie", "member", "approved", 4),
-        Pending: mk("Pending", "member", "pending", 5)   // shows approval flow + cog/tab badge
-      };
-      membersByCid["sidequest"] = {
-        Owner: mk("Owner", "owner", "approved", 0),
-        User: mk("User", "member", "approved", 1),
-        AdminOwner: mk("AdminOwner", "member", "approved", 2)
-      };
-      membersByCid["readathon"] = {                       // most logins aren't in this -> Discover / Request to join
-        Rookie: mk("Rookie", "owner", "approved", 0),
-        Pending: mk("Pending", "member", "approved", 1)
-      };
+      membersByCid[FOUNDING_CID] = memberMap(FOUNDING_CID, [
+        mk("AdminOwner", "owner", "approved", 0),
+        mk("Owner", "owner", "approved", 1),      // 2 owners -> last-owner guard not tripped
+        mk("Admin", "member", "approved", 2),
+        mk("User", "member", "approved", 3),
+        mk("Rookie", "member", "approved", 4),
+        mk("Pending", "member", "pending", 5)     // shows approval flow + cog/tab badge
+      ]);
+      membersByCid["sidequest"] = memberMap("sidequest", [
+        mk("Owner", "owner", "approved", 0),
+        mk("User", "member", "approved", 1),
+        mk("AdminOwner", "member", "approved", 2)
+      ]);
+      membersByCid["readathon"] = memberMap("readathon", [  // most logins aren't in this -> Discover / Request to join
+        mk("Rookie", "owner", "approved", 0),
+        mk("Pending", "member", "approved", 1)
+      ]);
 
       roundsByCid = {};
       roundsByCid[FOUNDING_CID] = {
-        "2026-07": { joinOpen: false, logOpen: false, locked: true, participants: ["AdminOwner", "Owner", "Admin", "User", "Rookie"] },
-        "2026-08": { locked: false, participants: ["AdminOwner", "Owner", "Admin", "User", "Rookie"] }
+        "2026-07": round({ joinOpen: false, logOpen: false, locked: true }, ["AdminOwner", "Owner", "Admin", "User", "Rookie"]),
+        "2026-08": round({ locked: false }, ["AdminOwner", "Owner", "Admin", "User", "Rookie"])
       };
-      roundsByCid["sidequest"] = { "2026-08": { locked: false, participants: ["Owner", "User", "AdminOwner"] } };
+      roundsByCid["sidequest"] = { "2026-08": round({ locked: false }, ["Owner", "User", "AdminOwner"]) };
       roundsByCid["readathon"] = {};
 
       var e = [];
@@ -10242,7 +10368,7 @@
       // untagged so the "No category" group stays represented.
       function add(who, cid, ym, mins, tags) {
         mins.forEach(function (m, i) {
-          if (m > 0) e.push({ id: uid(), who: who, date: ym + "-" + pad(i + 1), mins: m,
+          if (m > 0) e.push({ id: uid(), uid: demoUid(who), who: who, date: ym + "-" + pad(i + 1), mins: m,
                               note: (tags && tags[i]) || "", cid: cid, _hadCid: true });
         });
       }
@@ -10300,25 +10426,36 @@
       },
       addEntry: function (obj) {
         var blocked = guardWrite(); if (blocked) return blocked;
+        var problem = entryProblem(obj, null); if (problem) return reject(problem);
         var id = obj.id || uid();
-        entriesAll.push({ id: id, who: obj.who, date: obj.date, mins: obj.mins, note: obj.note || "", cid: obj.cid || activeCid(), _hadCid: true, _pending: offlineNow() });
+        entriesAll.push({ id: id, uid: obj.uid, who: obj.who, date: obj.date, mins: obj.mins, note: obj.note || "", cid: obj.cid || activeCid(), _hadCid: true, _pending: offlineNow() });
         refreshEntries();
         return Promise.resolve(id);
       },
       updateEntry: function (id, fields) {
         var blocked = guardWrite(); if (blocked) return blocked;
-        var en = findEntry(id); if (en) { Object.keys(fields).forEach(function (k) { en[k] = fields[k]; }); if (offlineNow()) en._pending = true; }
+        var en = findEntry(id);
+        if (en) {
+          var problem = entryProblem(Object.assign({}, en, fields), en); if (problem) return reject(problem);
+          Object.keys(fields).forEach(function (k) { en[k] = fields[k]; }); if (offlineNow()) en._pending = true;
+        }
         refreshEntries();
         return Promise.resolve();
       },
       incrementEntry: function (id, delta) {
         var blocked = guardWrite(); if (blocked) return blocked;
-        var en = findEntry(id); if (en) { en.mins += delta; if (offlineNow()) en._pending = true; }
+        var en = findEntry(id);
+        if (en) {
+          var problem = entryProblem(en, en); if (problem) return reject(problem);
+          en.mins += delta; if (offlineNow()) en._pending = true;
+        }
         refreshEntries();
         return Promise.resolve();
       },
       deleteEntry: function (id) {
         var blocked = guardWrite(); if (blocked) return blocked;
+        var en = findEntry(id);
+        if (en && en.uid !== state.uid && !meIsAdmin()) return reject("Only an admin can delete someone else's minutes.");
         entriesAll = entriesAll.filter(function (e) { return e.id !== id; });
         refreshEntries();
         return Promise.resolve();
@@ -10326,8 +10463,9 @@
       putEntry: function (obj) {
         var blocked = guardWrite(); if (blocked) return blocked;
         var en = findEntry(obj.id);
+        var problem = entryProblem(obj, en); if (problem) return reject(problem);
         if (en) { en.who = obj.who; en.date = obj.date; en.mins = obj.mins; en.note = obj.note || ""; en.cid = obj.cid || activeCid(); if (offlineNow()) en._pending = true; }
-        else { entriesAll.push({ id: obj.id, who: obj.who, date: obj.date, mins: obj.mins, note: obj.note || "", cid: obj.cid || activeCid(), _hadCid: true, _pending: offlineNow() }); }
+        else { entriesAll.push({ id: obj.id, uid: obj.uid, who: obj.who, date: obj.date, mins: obj.mins, note: obj.note || "", cid: obj.cid || activeCid(), _hadCid: true, _pending: offlineNow() }); }
         refreshEntries();
         return Promise.resolve();
       },
@@ -10335,42 +10473,56 @@
         var blocked = guardWrite(); if (blocked) return blocked;
         rosterLoaded = true; renderAll(); if (boActive()) renderBackoffice(); return Promise.resolve();
       },
-      saveRound: function (cid, key, data) {
+      // Same merge as Firestore: only the caller's change is applied to the
+      // stored round, which then carries the uid -> handle names map.
+      saveRound: function (cid, key, data, base) {
         var blocked = guardWrite(); if (blocked) return blocked;
+        var names = {};
+        (data.participants || []).forEach(function (id) { names[id] = demoHandleOf(id) || nameOf(id); });
+        var current = (roundsByCid[cid] || {})[key] || null;
+        var next = roundSavePayload(roundFlagsFromData(data), (data.participants || []).slice());
+        var payload = mergeRoundChange(current, current && base, next, names);
+        var problem = roundProblem(payload); if (problem) return reject(problem);
         roundsByCid[cid] = roundsByCid[cid] || {};
-        roundsByCid[cid][key] = roundSavePayload(roundFlagsFromData(data), data.participants || []);
+        roundsByCid[cid][key] = payload;
         refreshCid();
         return Promise.resolve();
       },
       requestJoin: function (cid) {
         var blocked = guardWrite(); if (blocked) return blocked;
+        if (!state.uid) return reject("Sign in before requesting membership.");
         membersByCid[cid] = membersByCid[cid] || {};
-        membersByCid[cid][state.me] = mk(state.me, "member", "pending", Date.now());
+        membersByCid[cid][state.uid] = { uid: state.uid, cid: cid, handle: state.me, role: "member", status: "pending", ts: Date.now() };
         refreshCid();
         return Promise.resolve();
       },
-      setMember: function (cid, handle, data) {
+      setMember: function (cid, memberUid, data) {
         var blocked = guardWrite(); if (blocked) return blocked;
         var v = data || {};
+        var handle = v.handle || demoHandleOf(memberUid);
+        if (!memberUid || handle !== demoHandleOf(memberUid)) return reject("A member's name must match their account.");
         membersByCid[cid] = membersByCid[cid] || {};
-        membersByCid[cid][handle] = mk(v.handle || handle, v.role || "member", v.status || "approved", v.ts || 0);
+        membersByCid[cid][memberUid] = { uid: memberUid, cid: cid, handle: handle, role: v.role || "member", status: v.status || "approved", ts: v.ts || 0 };
         refreshCid();
         return Promise.resolve();
       },
-      removeMember: function (cid, handle) {
+      removeMember: function (cid, memberUid) {
         var blocked = guardWrite(); if (blocked) return blocked;
-        if (membersByCid[cid]) delete membersByCid[cid][handle];
+        if (membersByCid[cid]) delete membersByCid[cid][memberUid];
         refreshCid();
         return Promise.resolve();
       },
       createChallenge: function (cid, name, color) {
         var blocked = guardWrite(); if (blocked) return blocked;
-        challMeta[cid] = { name: name, color: color || "", owner: state.me, createdTs: Date.now() };
+        if (!state.uid) return reject("Sign in before creating a challenge.");
+        challMeta[cid] = { name: name, color: color || "", owner: state.uid, createdTs: Date.now() };
         roundsByCid[cid] = {};
-        membersByCid[cid] = {}; membersByCid[cid][state.me] = mk(state.me, "owner", "approved", 0);
+        membersByCid[cid] = {};
+        membersByCid[cid][state.uid] = { uid: state.uid, cid: cid, handle: state.me, role: "owner", status: "approved", ts: 0 };
         refreshCid();
         return Promise.resolve();
       },
+      uidForLogin: demoUid,
       renameChallenge: function (cid, data) {
         var blocked = guardWrite(); if (blocked) return blocked;
         if (challMeta[cid]) { if (data.name != null) challMeta[cid].name = data.name; if (data.color != null) challMeta[cid].color = data.color; }
@@ -10987,7 +11139,11 @@
   var activityGoals = [], activityCache = null;
   var ACTIVITY_GOAL_KEY = "minutes-activity-goals-v1:";
 
-  function activityGoalKey() { return ACTIVITY_GOAL_KEY + encodeURIComponent(state.me || ""); }
+  var ACTIVITY_GOAL_UID_KEY = "minutes-activity-goals-v2:";
+  // Goals are a saved preference, not a cache: they are stored per account uid,
+  // and a goal saved under the older handle key is still read until replaced.
+  function legacyActivityGoalKey() { return ACTIVITY_GOAL_KEY + encodeURIComponent(state.me || ""); }
+  function activityGoalKey() { return state.uid ? ACTIVITY_GOAL_UID_KEY + encodeURIComponent(state.uid) : legacyActivityGoalKey(); }
   function loadActivityGoal() {
     closeActivityGoalMenu(false);
     state.activityGoalSaved = false;
@@ -10995,6 +11151,7 @@
     state.activityGoalNotice = "";
     try {
       var saved = localStorage.getItem(activityGoalKey());
+      if (saved === null && state.uid) saved = localStorage.getItem(legacyActivityGoalKey());
       if (saved) {
         var value = JSON.parse(saved);
         if (!value || value.version !== 1 || !ActivityModel.validHistory(value.history)) throw new Error("Invalid saved weekly goal.");
@@ -11007,9 +11164,9 @@
     state.activityGoalRev++;
   }
   function activitySnapshot() {
-    var signature = [state.rev, state.me, state.activityDay, state.activityMonth, state.activityGoalRev].join("|");
+    var signature = [state.rev, state.uid, state.activityDay, state.activityMonth, state.activityGoalRev].join("|");
     if (!activityCache || activityCache.signature !== signature) {
-      activityCache = { signature: signature, value: ActivityModel.summarize(entriesAll, state.me, state.activityDay, activityGoals, state.activityMonth) };
+      activityCache = { signature: signature, value: ActivityModel.summarize(entriesAll, state.uid, state.activityDay, activityGoals, state.activityMonth) };
     }
     return activityCache.value;
   }
@@ -11027,7 +11184,7 @@
     return activityDateLabel(cell.date) + ", " + detail + (cell.today ? ", today" : "");
   }
   view("activity", function () {
-    this.rev; this.me; this.signedIn; this.activityDay; this.activityMonth; this.activitySelected;
+    this.rev; this.me; this.uid; this.signedIn; this.activityDay; this.activityMonth; this.activitySelected;
     this.activityGoalRev; this.activityLoaded; this.activityFromCache; this.activityLoadError;
     this.connectionOffline; this.connectionSettled;
     var result = activitySnapshot(), known = state.activityLoaded;
@@ -11232,7 +11389,7 @@
     if (!document.hidden) refreshActivityDay();
   });
   window.addEventListener("storage", function (event) {
-    if (state.me && event.key === activityGoalKey()) loadActivityGoal();
+    if (state.me && (event.key === activityGoalKey() || event.key === legacyActivityGoalKey())) loadActivityGoal();
   });
   // ---- Boot ----
   var began = false, storeStarted = false;

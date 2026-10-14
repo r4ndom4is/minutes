@@ -3786,11 +3786,11 @@
       <div class="sect">
         <h2 class="slabel">Users</h2>
         <div class="card"><div id="memberList">
-          <template x-for="m in $store.s.membersList" :key="m.name">
+          <template x-for="m in $store.s.membersList" :key="m.uid">
             <div class="member">
               <span class="dot sm" :style="'background:' + m.color" x-text="m.initial"></span>
               <span class="mname" x-text="m.name"></span>
-              <button class="roletoggle" :class="{ on: m.admin }" :aria-label="'Admin access for ' + m.name" :aria-pressed="m.admin" title="Toggle admin" @click="$store.s.act.toggleMemberAdmin(m.name)" x-text="m.role"></button>
+              <button class="roletoggle" :class="{ on: m.admin }" :aria-label="'Admin access for ' + m.name" :aria-pressed="m.admin" title="Toggle admin" @click="$store.s.act.toggleMemberAdmin(m.uid)" x-text="m.role"></button>
             </div>
           </template>
         </div></div>
@@ -3911,10 +3911,9 @@
     (location.hostname === "localhost" || location.hostname === "127.0.0.1")
     ? window.sessionStorage : window.localStorage;
 
-  // Real names live ONLY in Firestore (meta/roster) - never baked into the deployed
-  // HTML. Since a typed name IS the login credential, hardcoding the roster here would
-  // let anyone who views source sign in as any friend. Prod loads the roster from the
-  // server; the localhost demo seeds its own throwaway names (see DemoStore).
+  // Real names live ONLY in Firestore (profiles) - never baked into the deployed
+  // HTML. Prod loads accounts from the server; the localhost demo seeds its own
+  // throwaway names (see DemoStore).
   var DEFAULT_MEMBERS = [];
   var DEFAULT_ADMINS = [];
   var PALETTE = ["#7c5cff", "#34d399", "#ffb454", "#ff5c7c", "#38bdf8", "#f472d0",
@@ -3925,7 +3924,7 @@
   var ACTIVECID_KEY = "minutes_active_cid";
   var ROSTER_CACHE_KEY = "minutes_roster_v1";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
-  var VERSION = "17.8";
+  var VERSION = "17.9";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -3950,7 +3949,6 @@
   var nameBook = {};        // uid -> handle, learned from members, rounds and entries
 
   function members() { return cache.members.slice(); }
-  function admins() { return cache.admins.slice(); }
   function isAdmin(name) { return cache.admins.some(function (a) { return a.toLowerCase() === String(name).toLowerCase(); }); }
   // Current user wields admin powers only if they signed in with the admin gesture AND are still an admin.
   // Global admin = the logged-in name is in the admins list (no login gesture needed).
@@ -4085,9 +4083,8 @@
   }
   // The competing pool for the active challenge: its approved members' uids.
   function challengeMembers() { return approvedMembers(activeCid()); }
-  // Per-round guards: legacy rounds only had `locked` (which closed both joining and logging).
-  // We now split that into independent joinOpen/logOpen flags; a legacy round with no explicit
-  // flags maps to joinOpen = logOpen = !locked, so old data keeps working unchanged.
+  // Per-round guards: independent joinOpen/logOpen flags. (The retired `locked` flag is
+  // neither read nor written; every stored round carries explicit flags instead.)
   //
   // These are TRI-STATE: true, false, or null for "nobody has decided". The null matters,
   // because logging derives its default from the calendar (a future round is closed until
@@ -4097,18 +4094,20 @@
   // becoming current, so the round stayed locked and read as finished forever.
   function roundFlagsFromData(d) {
     d = d || {};
-    function tri(v, legacy) {
-      if (typeof v === "boolean") return v;
-      if (typeof legacy === "boolean") return !legacy;
-      return null;   // undecided, so the reader derives it
-    }
-    return { joinOpen: tri(d.joinOpen, d.locked), logOpen: tri(d.logOpen, d.locked) };
+    function tri(v) { return typeof v === "boolean" ? v : null; }   // null: undecided, the reader derives it
+    return { joinOpen: tri(d.joinOpen), logOpen: tri(d.logOpen) };
   }
   // Only ever write what was actually decided; an undecided flag stays absent.
+  // A decided logOpen with an undecided joinOpen used to also write locked = !logOpen,
+  // and an absent joinOpen then read back as !locked. Writing joinOpen = logOpen
+  // keeps exactly that outcome without the retired flag.
   function roundSavePayload(f, participants) {
     var out = { participants: participants };
     if (f.joinOpen !== null) out.joinOpen = f.joinOpen;
-    if (f.logOpen !== null) { out.logOpen = f.logOpen; out.locked = !f.logOpen; }
+    if (f.logOpen !== null) {
+      out.logOpen = f.logOpen;
+      if (f.joinOpen === null) out.joinOpen = f.logOpen;
+    }
     return out;
   }
   function roundJoinOpen(key) {
@@ -4116,7 +4115,7 @@
     return f.joinOpen === null ? true : f.joinOpen;
   }
   // Logging defaults to open, EXCEPT for an upcoming (future) round which stays closed until the
-  // month is live or the owner explicitly opens it. Explicit/legacy saved flags always win.
+  // month is live or the owner explicitly opens it. Explicit saved flags always win.
   function isFutureMonthKey(key) { return keyToDate(key).getTime() > firstOfMonth(new Date()).getTime(); }
   function roundLogOpen(key)  {
     var f = roundFlagsFromData(activeRounds()[key]);
@@ -4543,7 +4542,7 @@
   state.hubLoadSlow = false;
 
   function hubDataReady() {
-    if (Store && Store.modelVersion === 2) return Store.hubReady();
+    if (Store && Store.firestoreBacked === true) return Store.hubReady();
     return hubCatalogReady && !Object.keys(hubErrors).length && state.activityLoaded &&
       Object.keys(challMeta).every(function (cid) {
         return Object.prototype.hasOwnProperty.call(membersByCid, cid) &&
@@ -4644,7 +4643,7 @@
     if (!hubDataReady() && bannerOffline()) return saved
       ? "Showing your saved view. Updates will appear when connected."
       : "Connect to load your challenges.";
-    if (Store && Store.modelVersion === 2 && hubDataReady()) {
+    if (Store && Store.firestoreBacked === true && hubDataReady()) {
       return Object.keys(hubErrors).some(function (key) { return key !== "discovery" && !/^(members|rounds|entries|mine):/.test(key); })
         ? "Some challenge details couldn't be loaded. Reload to try again." : "";
     }
@@ -5206,9 +5205,9 @@
 
   view("membersList", function () {
     this.rev; this.me;
-    return members().map(function (name) {
-      var admin = isAdmin(name);
-      return { name: name, initial: name.charAt(0).toUpperCase(), color: colorFor(name), admin: admin, role: admin ? "Admin" : "Member" };
+    return (Store.accounts ? Store.accounts() : []).map(function (account) {
+      var name = account.handle, admin = account.role === "admin";
+      return { uid: account.uid, name: name, initial: name.charAt(0).toUpperCase(), color: colorFor(name), admin: admin, role: admin ? "Admin" : "Member" };
     });
   });
 
@@ -5399,7 +5398,7 @@
         .then(function () { showToast(h + " denied", "info"); })
         .catch(function (e) { console.error(e); Array.prototype.forEach.call(bs, function (b) { b.disabled = false; }); showToast("Couldn't deny", "danger"); });
     },
-    toggleMemberAdmin: function (name) { toggleAdmin(name); },
+    toggleMemberAdmin: function (uid) { toggleAdmin(uid); },
     setOwnerRole: function (cid, id, makeOwner) { setOwnerRole(cid, id, makeOwner); },
     removeChallengeMember: function (cid, id) { removeFromChallenge(cid, id); },
     openManageRename: function () { var cid = state.manageCid || manageCid; closeManageModal(); openChallModal("edit", cid); },
@@ -5426,8 +5425,8 @@
       return false;
     }
     if (!offlineNow()) return true;
-    // Admin actions are deliberately NOT queued. Approving a request, editing the
-    // roster or renaming a challenge offline is a decision taken against data that
+    // Admin actions are deliberately NOT queued. Approving a request, changing an
+    // account role or renaming a challenge offline is a decision taken against data that
     // may already have moved on, and Firestore's last-write-wins would happily
     // replay it over the newer state. So this is refused rather than deferred.
     // No button: reconnecting is automatic now (see scheduleRetry).
@@ -5451,14 +5450,9 @@
     return false;
   }
 
-  // Roster cache: a name IS the login identity, and the roster lives only in Firestore.
-  // Persist the last-known roster so a returning user can resolve their name (and resume a
-  // saved session) instantly - even before, or without, a live Firestore snapshot. This is
-  // what stops the login screen wedging on "Still connecting…" when the realtime listener
-  // is slow, or the socket came back stale after the app was suspended/expired.
-  function persistRosterCache() {
-    try { localStorage.setItem(ROSTER_CACHE_KEY, JSON.stringify({ members: cache.members, admins: cache.admins })); } catch (e) {}
-  }
+  // Legacy roster cache: older versions persisted the name directory here. It is no
+  // longer written, but a copy left behind still lets a returning user resume a saved
+  // session instantly - before, or without, a live Firestore snapshot.
   function hydrateRosterCache() {
     if (IS_DEMO) return false;
     try {
@@ -5473,7 +5467,7 @@
     return false;
   }
 
-  // Challenge metadata cache: same reasoning as the roster above, for the same reason.
+  // Challenge metadata cache: same reasoning as the roster cache above.
   // A challenge's name and colour are pure display data that only Firestore holds, so with
   // no snapshot the header falls back to the raw cid and the user sees "founding" instead
   // of their challenge name. Persisting the last-known meta keeps the app reading correctly
@@ -6473,7 +6467,7 @@
       // Already bound: skip the whole prompt and sign the user straight in.
       var mine = myHandle();
       if (mine) {
-        if (scoped() && Store.modelVersion === 2 && !Store.loginReady()) {
+        if (scoped() && Store.firestoreBacked === true && !Store.loginReady()) {
           hideAll();
           return;
         }
@@ -9156,19 +9150,17 @@
     updateAdminBadge();
   }
 
-  // Optimistically apply a roster change, persist to Firestore, and confirm only on
-  // real success - reverting the change and warning if the write fails.
-  function commitRoster(mutate, okMsg, undoFn) {
+  // The store applies an account's role optimistically and reverts it if the
+  // write fails; confirm only on real success.
+  function commitRole(uid, role, okMsg, undoFn) {
     if (!requireConnection()) return;
-    var prevM = cache.members.slice(), prevA = cache.admins.slice();
     setMsg("boUserErr", "");
-    mutate();
+    var saving = Store.setAccountRole(uid, role);
     renderMembers(); renderAll(); if (state.me) refreshAdminAccess();
-    return Store.saveRoster().then(function () {
+    return saving.then(function () {
       if (okMsg) showToast(okMsg, "success", undoFn || null);
     }).catch(function (err) {
-      console.error("Roster save failed:", err);
-      cache.members = prevM; cache.admins = prevA;
+      console.error("Account role save failed:", err);
       renderMembers(); renderAll(); if (state.me) refreshAdminAccess();
       showToast("Couldn't save. Check your connection and try again.", "danger");
     });
@@ -9282,9 +9274,12 @@
     else if (btn.textContent !== "Saving…") btn.disabled = false;
   }
 
-  function toggleAdmin(name) {
-    var currentlyAdmin = isAdmin(name);
-    if (currentlyAdmin && admins().length <= 1) {
+  function toggleAdmin(uid) {
+    var accounts = Store.accounts ? Store.accounts() : [];
+    var account = accounts.filter(function (row) { return row.uid === uid; })[0];
+    if (!account) return;
+    var name = account.handle, currentlyAdmin = account.role === "admin";
+    if (currentlyAdmin && accounts.filter(function (row) { return row.role === "admin"; }).length <= 1) {
       setMsg("boUserErr", "At least one admin is required."); return;
     }
     var becomingAdmin = !currentlyAdmin;
@@ -9294,14 +9289,8 @@
       ok: becomingAdmin ? "Make admin" : "Remove admin",
       danger: !becomingAdmin
     }, function () {
-      commitRoster(function () {
-        if (becomingAdmin) cache.admins = admins().concat([name]);
-        else cache.admins = admins().filter(function (n) { return n.toLowerCase() !== name.toLowerCase(); });
-      }, name + (becomingAdmin ? " is now an admin" : " is now a member"), function () {
-        commitRoster(function () {
-          if (becomingAdmin) cache.admins = admins().filter(function (n) { return n.toLowerCase() !== name.toLowerCase(); });
-          else cache.admins = admins().concat([name]);
-        }, null, null);
+      commitRole(uid, becomingAdmin ? "admin" : "member", name + (becomingAdmin ? " is now an admin" : " is now a member"), function () {
+        commitRole(uid, becomingAdmin ? "member" : "admin", null, null);
       });
     });
   }
@@ -9418,6 +9407,7 @@
     if (!server || !base) {
       var fresh = Object.assign({}, next, { participants: next.participants.slice(), names: {} });
       fresh.participants.forEach(function (id) { fresh.names[id] = names[id]; });
+      delete fresh.locked;
       return fresh;
     }
     var before = base.participants, after = next.participants;
@@ -9432,10 +9422,13 @@
     participants.forEach(function (id) {
       out.names[id] = has.call(serverNames, id) ? serverNames[id] : names[id];
     });
-    ["joinOpen", "logOpen", "locked"].forEach(function (flag) {
+    ["joinOpen", "logOpen"].forEach(function (flag) {
       if (next[flag] === base[flag]) return;
       if (flag in next) out[flag] = next[flag]; else delete out[flag];
     });
+    // The retired `locked` flag is refused by the rules; drop any copy left on
+    // the server document so an old round heals on its next write.
+    delete out.locked;
     return out;
   }
   function createScopedStore(fb, settle) {
@@ -9444,7 +9437,7 @@
     var HISTORY_CONCURRENCY = 12;
     var listeners = {}, buckets = {}, own = {}, profiles = {}, denied = {}, currentUser = null;
     var profile = null, membershipReady = false, catalogReady = false, pageCursor = null;
-    var catalogIds = {}, pendingPages = false, generation = 0, adminRoster = null, adminPending = {};
+    var catalogIds = {}, pendingPages = false, generation = 0, accountDirectory = null, adminPending = {};
     var notifyQueued = false, renderTimer = null, scopeTimer = null;
     var cardObserver = null, cardIds = new WeakMap(), visibleCards = {}, metadataKeys = {}, historyStarted = false, logTargetCids = {};
     state.discoverMore = false;
@@ -9457,9 +9450,13 @@
     function administrator() { return !!profile && profile.role === "admin"; }
     function failure(message) { return Promise.reject(new Error(message)); }
     function guardWrite() { return requireAppWrite ? requireAppWrite() : null; }
-    function appVersionKey(handle) { return "minutes_app_version_v1_" + String(handle || "").trim().toLowerCase(); }
+    function appVersionKey(handle) { return "minutes_app_version_" + String(handle || "").trim().toLowerCase(); }
     function rememberAppVersion(handle) {
-      try { localStorage.setItem(appVersionKey(handle), JSON.stringify({ version: VERSION, day: todayStr() })); } catch (e) {}
+      try {
+        localStorage.setItem(appVersionKey(handle), JSON.stringify({ version: VERSION, day: todayStr() }));
+        // Earlier builds kept this under a _v1_ key; drop it so it is not left behind.
+        localStorage.removeItem("minutes_app_version_v1_" + String(handle || "").trim().toLowerCase());
+      } catch (e) {}
     }
     function recentlyRecorded(handle) {
       try {
@@ -9569,7 +9566,7 @@
       cardIds = new WeakMap(); visibleCards = {}; metadataKeys = {}; historyStarted = false; logTargetCids = {};
       Object.keys(listeners).forEach(stop);
       buckets = {}; own = {}; profiles = {}; denied = {}; profile = null;
-      catalogIds = {}; pageCursor = null; adminRoster = null; adminPending = {};
+      catalogIds = {}; pageCursor = null; accountDirectory = null; adminPending = {};
       membershipReady = false; catalogReady = false; pendingPages = false;
       state.discoverMore = false; state.discoverLoading = false; state.discoverError = "";
       entriesAll = []; state.entries = []; challMeta = {}; membersByCid = {}; roundsByCid = {};
@@ -9596,12 +9593,24 @@
       cache.members = names;
       cache.admins = Object.keys(profiles).filter(function (id) { return profiles[id].role === "admin"; })
         .map(function (id) { return profiles[id].handle; });
-      if (administrator() && adminRoster) {
-        cache.members = adminRoster.members.slice();
-        cache.admins = adminRoster.admins.slice();
+      if (administrator() && accountDirectory) {
+        var accounts = directoryRows();
+        cache.members = accounts.map(function (row) { return row.handle; })
+          .concat(names.filter(function (handle) {
+            return !accounts.some(function (row) { return row.handle === handle; });
+          }));
+        cache.admins = accounts.filter(function (row) { return row.role === "admin"; })
+          .map(function (row) { return row.handle; });
       }
       rosterLoaded = true;
       setLoginConnecting(false);
+    }
+    // The back-office account directory: every live profile, keyed by uid, in
+    // the order the accounts were created. Archived historical identities are
+    // records, not people who can sign in, so they are left out.
+    function directoryRows() {
+      return Object.keys(accountDirectory || {}).map(function (id) { return accountDirectory[id]; })
+        .sort(function (a, b) { return (a.ts - b.ts) || a.handle.localeCompare(b.handle); });
     }
     function metadata(cid, data) {
       if (data.schemaVersion !== 2) throw new Error("Challenge " + cid + " has not been migrated to model 2.");
@@ -9824,7 +9833,7 @@
           if (!archived && snapshot.metadata.fromCache && profile) return;
           if (profile) {
             Object.keys(listeners).forEach(function (key) { if (key !== "profile") stop(key); });
-            own = {}; buckets = {}; membersByCid = {}; roundsByCid = {};
+            own = {}; buckets = {}; membersByCid = {}; roundsByCid = {}; accountDirectory = null; adminPending = {};
             cache = { members: [], admins: [] };
             membershipReady = false; catalogReady = false; hubCatalogReady = false;
             state.me = null; state.uid = null; state.signedIn = false;
@@ -9842,9 +9851,15 @@
           console.warn("App version could not be recorded:", error);
         });
         if (administrator()) {
-          watch("admin-roster", reference("meta", "roster"), function (snap) {
-            if (!snap.exists()) return;
-            adminRoster = snap.data();
+          watch("admin-profiles", collection("profiles"), function (snap) {
+            var next = {};
+            snap.forEach(function (document) {
+              var data = document.data();
+              if (data.archived === true || !data.handle) return;
+              next[document.id] = { uid: document.id, handle: data.handle, role: data.role, ts: Number(data.ts) || 0 };
+              learnName(document.id, data.handle);
+            });
+            accountDirectory = next;
             mergeProfile(profile);
             refreshAdminAccess(); bump();
           });
@@ -9862,7 +9877,7 @@
             syncScopes();
           });
         } else {
-          stop("admin-roster"); stop("admin-pending"); adminPending = {}; adminRoster = null;
+          stop("admin-profiles"); stop("admin-pending"); adminPending = {}; accountDirectory = null;
         }
         watch("memberships", fb.query(fb.collectionGroup(fb.db, "members"), fb.where("uid", "==", signedUid())), function (snap) {
           if (!snap.size && snap.metadata.fromCache && membershipReady) return;
@@ -9904,18 +9919,6 @@
       var id = entry.uid || signedUid();
       return { uid: id, who: entry.who, date: entry.date, mins: entry.mins, note: entry.note || "" };
     }
-    // Handle -> uid for the back-office account directory, which is still keyed
-    // by handle (meta/roster). Challenge actions already carry uids.
-    function uidFor(handle, cid) {
-      var mm = membersByCid[cid] || {};
-      var known = Object.keys(mm).filter(function (id) { return mm[id].handle === handle; })[0];
-      if (known) return Promise.resolve(known);
-      if (profile && profile.handle === handle) return Promise.resolve(profile.uid);
-      return fb.getDoc(reference("identities", handle.toLowerCase())).then(function (snap) {
-        if (!snap.exists()) throw new Error("That person needs an approved account first.");
-        return snap.data().uid;
-      });
-    }
     function changeMember(cid, memberUid, data) {
       var blocked = guardWrite(); if (blocked) return blocked;
       if (!memberUid) return failure("That person needs an approved account first.");
@@ -9937,7 +9940,8 @@
       });
     }
     var api = {
-      modelVersion: 2,
+      // Distinguishes this Firestore-backed store from the in-memory DemoStore.
+      firestoreBacked: true,
       start: function () {
         window.addEventListener("minutes-auth", authChanged);
         document.addEventListener("alpine:init", function () {
@@ -10111,7 +10115,7 @@
           uid: profile.uid, cid: cid, handle: profile.handle, role: "owner", status: "approved", ts: Date.now()
         });
         batch.set(reference("challenges", cid, "rounds", month), {
-          participants: [profile.uid], names: names, joinOpen: true, logOpen: true, locked: false
+          participants: [profile.uid], names: names, joinOpen: true, logOpen: true
         });
         return batch.commit();
       },
@@ -10119,53 +10123,24 @@
         var blocked = guardWrite(); if (blocked) return blocked;
         return fb.updateDoc(reference("challenges", cid), data);
       },
-      saveRoster: function () {
+      accounts: function () {
+        return directoryRows().map(function (row) { return { uid: row.uid, handle: row.handle, role: row.role }; });
+      },
+      // Admin access lives on the account's profile; nothing else changes.
+      setAccountRole: function (id, role) {
         var blocked = guardWrite(); if (blocked) return blocked;
         if (!administrator()) return failure("Only an administrator can change accounts.");
-        var wantedMembers = cache.members.slice(), wantedAdmins = cache.admins.slice();
-        return fb.getDoc(reference("meta", "roster")).then(function (snap) {
-          if (!snap.exists()) throw new Error("The account directory is unavailable.");
-          var before = snap.data();
-          var added = wantedMembers.filter(function (name) { return before.members.indexOf(name) < 0; });
-          var removed = before.members.filter(function (name) { return wantedMembers.indexOf(name) < 0; });
-          var changes = before.admins.concat(wantedAdmins).filter(function (name, index, names) {
-            return names.indexOf(name) === index && (before.admins.indexOf(name) >= 0) !== (wantedAdmins.indexOf(name) >= 0);
-          });
-          var addedLooks = added.map(function (name) {
-            var lower = name.toLowerCase();
-            return Promise.all([
-              fb.getDoc(reference("identities", lower)),
-              fb.getDoc(reference("handleReservations", lower))
-            ]).then(function (snaps) { return { name: name, identity: snaps[0], reservation: snaps[1] }; });
-          });
-          var removedLooks = removed.map(function (name) {
-            return fb.getDoc(reference("handleReservations", name.toLowerCase()))
-              .then(function (snap) { return { name: name, reservation: snap }; });
-          });
-          return Promise.all(changes.map(function (name) { return uidFor(name, ""); })).then(function (ids) {
-            return Promise.all([Promise.all(addedLooks), Promise.all(removedLooks)]).then(function (looks) {
-              var batch = fb.writeBatch(fb.db);
-              batch.set(reference("meta", "roster"), { members: wantedMembers, admins: wantedAdmins });
-              looks[0].forEach(function (record) {
-                if (!record.identity.exists() && !record.reservation.exists()) {
-                  batch.set(reference("handleReservations", record.name.toLowerCase()), {
-                    handle: record.name, ts: Date.now(), reason: "preadded"
-                  });
-                }
-              });
-              looks[1].forEach(function (record) {
-                if (record.reservation.exists() && record.reservation.data().reason === "preadded") {
-                  batch.delete(reference("handleReservations", record.name.toLowerCase()));
-                }
-              });
-              ids.forEach(function (id, index) {
-                batch.update(reference("profiles", id), {
-                  role: wantedAdmins.indexOf(changes[index]) >= 0 ? "admin" : "member"
-                });
-              });
-              return batch.commit();
-            });
-          });
+        var row = accountDirectory && accountDirectory[id];
+        if (!row) return failure("That account is no longer available.");
+        if (role !== "admin" && role !== "member") return failure("Unknown account role.");
+        if (role === "member" && row.role === "admin" && directoryRows().filter(function (other) {
+          return other.role === "admin";
+        }).length <= 1) return failure("At least one admin is required.");
+        var before = row.role;
+        row.role = role; mergeProfile(profile);
+        return fb.updateDoc(reference("profiles", id), { role: role }).catch(function (error) {
+          if (accountDirectory && accountDirectory[id] === row) { row.role = before; mergeProfile(profile); }
+          throw error;
         });
       },
       recordAppVersion: recordAppVersion,
@@ -10173,7 +10148,7 @@
       uidForLogin: function () { return profile ? profile.uid : signedUid() || null; },
       diagnostics: function () {
         return {
-          modelVersion: 2, uid: signedUid(), subscriptions: Object.keys(listeners), catalogCount: Object.keys(catalogIds).length,
+          firestoreBacked: true, uid: signedUid(), subscriptions: Object.keys(listeners), catalogCount: Object.keys(catalogIds).length,
           entryChallenges: Array.from(new Set(entriesAll.map(function (entry) { return entry.cid; }))),
           membershipReady: membershipReady, catalogReady: catalogReady, profileLoaded: !!profile,
           waiting: Object.keys(listeners).filter(function (key) { return !listeners[key].ready; }),
@@ -10246,7 +10221,8 @@
     incrementEntry: notConnected,
     deleteEntry: notConnected,
     putEntry: notConnected,
-    saveRoster: notConnected,
+    accounts: function () { return []; },
+    setAccountRole: notConnected,
     saveRound: notConnected,
     requestJoin: notConnected,
     setMember: notConnected,
@@ -10354,10 +10330,10 @@
 
       roundsByCid = {};
       roundsByCid[FOUNDING_CID] = {
-        "2026-07": round({ joinOpen: false, logOpen: false, locked: true }, ["AdminOwner", "Owner", "Admin", "User", "Rookie"]),
-        "2026-08": round({ locked: false }, ["AdminOwner", "Owner", "Admin", "User", "Rookie"])
+        "2026-07": round({ joinOpen: false, logOpen: false }, ["AdminOwner", "Owner", "Admin", "User", "Rookie"]),
+        "2026-08": round({ joinOpen: true, logOpen: true }, ["AdminOwner", "Owner", "Admin", "User", "Rookie"])
       };
-      roundsByCid["sidequest"] = { "2026-08": round({ locked: false }, ["Owner", "User", "AdminOwner"]) };
+      roundsByCid["sidequest"] = { "2026-08": round({ joinOpen: true, logOpen: true }, ["Owner", "User", "AdminOwner"]) };
       roundsByCid["readathon"] = {};
 
       var e = [];
@@ -10469,9 +10445,23 @@
         refreshEntries();
         return Promise.resolve();
       },
-      saveRoster: function () {
+      // Stand-in for the profiles collection: one uid-keyed account per seeded handle.
+      accounts: function () {
+        return members().map(function (handle) {
+          return { uid: demoUid(handle), handle: handle, role: isAdmin(handle) ? "admin" : "member" };
+        });
+      },
+      setAccountRole: function (id, role) {
         var blocked = guardWrite(); if (blocked) return blocked;
-        rosterLoaded = true; renderAll(); if (boActive()) renderBackoffice(); return Promise.resolve();
+        if (!meIsAdmin()) return reject("Only an administrator can change accounts.");
+        var handle = demoHandleOf(id);
+        if (!handle) return reject("That account is no longer available.");
+        if (role !== "admin" && role !== "member") return reject("Unknown account role.");
+        var others = cache.admins.filter(function (name) { return demoUid(name) !== id; });
+        if (role === "member" && !others.length) return reject("At least one admin is required.");
+        cache.admins = role === "admin" ? others.concat([handle]) : others;
+        renderAll(); if (boActive()) renderBackoffice();
+        return Promise.resolve();
       },
       // Same merge as Firestore: only the caller's change is applied to the
       // stored round, which then carries the uid -> handle names map.
@@ -11638,7 +11628,7 @@ ${r?'Expression: "'+r+`"
     }
     window.__FB = { db, durable, collection, onSnapshot, setDoc, updateDoc, deleteDoc, doc, getDoc,
                     enableNetwork, disableNetwork, collectionGroup, query, where, orderBy, documentId,
-                    startAfter, limit, getDocs, writeBatch, runTransaction, increment, serverTimestamp, modelVersion: 2 };
+                    startAfter, limit, getDocs, writeBatch, runTransaction, increment, serverTimestamp };
   } catch (e) {
     console.error("Firebase init failed - falling back to local storage:", e);
   }

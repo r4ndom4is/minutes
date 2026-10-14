@@ -3923,7 +3923,7 @@
   var SESSION_KEY = "minutes_session_v3";
   var ACTIVECID_KEY = "minutes_active_cid";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
-  var VERSION = "18.0";
+  var VERSION = "18.1";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -3941,7 +3941,7 @@
   // In-memory cache - the UI's source of truth; kept in sync by Store (Firestore).
   // cache.members/admins are the account directory (display handles); everything
   // challenge-scoped below is keyed by account uid.
-  var cache = { members: DEFAULT_MEMBERS.slice(), admins: DEFAULT_ADMINS.slice() };
+  var cache = { members: DEFAULT_MEMBERS.slice(), admins: DEFAULT_ADMINS.slice(), adminUids: [] };
   var challMeta = {};       // cid -> { name, color, owner (uid), createdTs }
   var membersByCid = {};    // cid -> { uid: { uid, handle, role, status, ts } }
   var roundsByCid = {};     // cid -> { "YYYY-MM": { locked, participants:[uid], names:{uid: handle} } }
@@ -3949,9 +3949,9 @@
 
   function members() { return cache.members.slice(); }
   function isAdmin(name) { return cache.admins.some(function (a) { return a.toLowerCase() === String(name).toLowerCase(); }); }
-  // Current user wields admin powers only if they signed in with the admin gesture AND are still an admin.
-  // Global admin = the logged-in name is in the admins list (no login gesture needed).
-  function meIsAdmin() { return !!state.me && isAdmin(state.me); }
+  // Admin power follows the signed-in account, never its display handle: two
+  // accounts may share a name.
+  function meIsAdmin() { return !!state.uid && cache.adminUids.indexOf(state.uid) >= 0; }
   function colorFor(name) { var idx = cache.members.indexOf(name); if (idx < 0) idx = 0; return PALETTE[idx % PALETTE.length]; }
 
   // ---- Identity ----
@@ -6078,8 +6078,8 @@
   })();
   // Binds a Google uid to an app handle:
   //   1. an existing seeded handle with this verified email -> instant claim
-  //   2. a new unreserved handle -> atomic self-registration
-  // Reserved handles are refused like taken ones; an admin binds them by hand.
+  //   2. any other valid handle -> self-registration of profiles/{uid}
+  // Handles are display names, not keys, so two accounts may share one.
   //
   // Firestore always uses the challenge-scoped data model (profiles/{uid}); the
   // in-memory demo path below stands in for it on the dev server.
@@ -6101,11 +6101,9 @@
     var switchEl = document.getElementById("onbSwitch");
     if (!box || !btn || !newEl) return { render: function () {} };
 
-    var TAKEN = "That name is taken. Pick another.";
-    var idents = {};        // lower(handle) -> { handle, uid, ts, via }
+    var idents = {};        // account uid -> { handle, uid, ts, via }
     var identsLoaded = false;
     var busy = false;
-    var reservationKnown = {};
     var autoLoggedIn = false;
     var subscribed = false;
     var sweptUid = null;    // uid the silent email match has already been run for
@@ -6180,15 +6178,30 @@
     function usingDemo() { return !window.__FB; }
 
     function myHandle() {
-      var u = me();
-      if (!u) return null;
-      for (var k in idents) if (idents[k].uid === u.uid) return idents[k].handle;
+      var u = me(), row = u && idents[u.uid];
+      return row ? row.handle : null;
+    }
+
+    // Demo fixtures are keyed by a uid derived from their handle, so a seeded
+    // claim logs in as that fixture account. A self-registered demo account
+    // keeps its own auth uid, which is what lets it share a fixture's name.
+    // Firestore always resolves the uid from the signed-in profile.
+    function loginUid() {
+      if (!usingDemo()) return undefined;
+      var u = me(), row = u && idents[u.uid];
+      return row && row.via === "self" ? u.uid : undefined;
+    }
+
+    // A seeded handle binds one account; self-registered look-alikes do not count.
+    function seededHolder(handle) {
+      for (var k in demo.idents) {
+        if (demo.idents[k].via !== "self" && low(demo.idents[k].handle) === low(handle)) return k;
+      }
       return null;
     }
 
     function unclaimed() {
-      var taken = idents;
-      return members().filter(function (h) { return !taken[low(h)]; });
+      return members().filter(function (h) { return !seededHolder(h); });
     }
 
     // ---- backend ------------------------------------------------------------
@@ -6211,7 +6224,7 @@
               scopedProfile = null;
               setMsg("authErr", "This historical identity cannot sign in. Use your own account.");
             }
-            if (scopedProfile) idents[low(scopedProfile.handle)] = scopedProfile;
+            if (scopedProfile) idents[scopedProfile.uid] = scopedProfile;
             identsLoaded = !snapshot.metadata.fromCache || snapshot.exists();
             emit(); render();
           }, function (error) {
@@ -6225,15 +6238,12 @@
       idents = demo.idents; identsLoaded = true; emit(); render();
     }
 
-    // Validates a proposed name. Mirrors the roster editor's rule so the two ways a
-    // name can enter the system agree. Reserved names pass here and are refused
-    // after the reservation lookup on submit.
+    // Validates a proposed name's shape only. Names need not be unique.
     function checkNewName(name) {
       if (!name) return "Enter a name.";
       if (!/^[A-Za-z][A-Za-z0-9 _-]{0,23}$/.test(name)) {
         return "Use letters/numbers, 1-24 chars, starting with a letter.";
       }
-      if (idents[low(name)]) return TAKEN;
       return "";
     }
 
@@ -6275,8 +6285,10 @@
       if (usingDemo()) {
         return new Promise(function (res, rej) {
           setTimeout(function () {
-            if (demoSeedMatches(handle, u)) { demo.idents[low(handle)] = claimDoc(handle, u); res(); }
-            else rej({ code: "permission-denied" });
+            var holder = seededHolder(handle);
+            if (demoSeedMatches(handle, u) && (!holder || holder === u.uid)) {
+              demo.idents[u.uid] = claimDoc(handle, u); res();
+            } else rej({ code: "permission-denied" });
           }, 250);
         });
       }
@@ -6370,11 +6382,6 @@
       if (onbMail) onbMail.textContent = account;
     }
 
-    function isReservedName(handle) {
-      var h = low(handle);
-      return !!h && (!!reservationKnown[h] || members().some(function (name) { return low(name) === h; }));
-    }
-
     function paintChips() {
       if (!prefilled) { prefilled = true; newEl.value = suggestedName(); }
       qEl.textContent = "What should we call you?";
@@ -6388,40 +6395,26 @@
       paintHero();
     }
 
-    function readReservation(handle) {
-      if (isReservedName(handle)) return Promise.resolve(true);
-      if (usingDemo()) return Promise.resolve(false);
-      var fb = window.__FB;
-      if (!fb || !fb.getDoc) return Promise.resolve(false);
-      return fb.getDoc(fb.doc(fb.db, "handleReservations", low(handle))).then(function (snapshot) {
-        reservationKnown[low(handle)] = snapshot.exists();
-        return snapshot.exists();
-      }, function () { return false; });
-    }
-
     function selfRegister(handle) {
-      var u = me(), ts = Date.now(), h = low(handle);
+      var u = me(), ts = Date.now();
       if (!u) return Promise.reject({ code: "signed-out" });
       if (u.emailVerified === false) return Promise.reject({ code: "unverified-email" });
       if (usingDemo()) {
         return new Promise(function (res, rej) {
           setTimeout(function () {
-            if (demo.selfRegs[u.uid]) { rej({ code: "already-registered" }); return; }
-            if (demo.idents[h] || isReservedName(handle)) { rej({ code: "permission-denied" }); return; }
+            if (demo.selfRegs[u.uid] || demo.idents[u.uid]) { rej({ code: "already-registered" }); return; }
             demo.selfRegs[u.uid] = { handle: handle, ts: ts };
-            demo.idents[h] = { handle: handle, uid: u.uid, ts: ts, via: "self" };
+            demo.idents[u.uid] = { handle: handle, uid: u.uid, ts: ts, via: "self" };
             res();
           }, 200);
         });
       }
       var fb = window.__FB;
-      if (!fb || !fb.writeBatch) return Promise.reject(new Error("Account registration is unavailable"));
-      var batch = fb.writeBatch(fb.db);
-      batch.set(fb.doc(fb.db, "identities", h), { handle: handle, uid: u.uid, ts: ts, via: "self" });
-      batch.set(fb.doc(fb.db, "profiles", u.uid), {
+      if (!fb || !fb.setDoc) return Promise.reject(new Error("Account registration is unavailable"));
+      var blocked = guardClaimWrite(); if (blocked) return blocked;
+      return fb.setDoc(fb.doc(fb.db, "profiles", u.uid), {
         uid: u.uid, handle: handle, displayName: handle, role: "member", ts: ts
       });
-      return batch.commit();
     }
 
     function render() {
@@ -6458,7 +6451,7 @@
         if (!autoLoggedIn) {
           autoLoggedIn = true;
           hideAll();
-          doLogin(mine);
+          doLogin(mine, loginUid());
           return;
         }
         // Logged out of the app but still signed in to Google. hideAll() here
@@ -6511,27 +6504,19 @@
         if (usingDemo()) { idents = demo.idents; }
         emit();
         render();
-        if (!state.signedIn) doLogin(handle);
+        if (!state.signedIn) doLogin(handle, loginUid());
       }).catch(function (e) {
         // Denied means "no seed, or the seed is a different address" - which is the
-        // normal case for anyone whose email the admin didn't have. Reserved names
-        // are refused like taken ones; anything else self-registers.
+        // normal case for anyone whose email the admin didn't have. Self-register.
         var code = (e && e.code) || "";
         if (code === "signed-out") { busy = false; emit(); return; }
         if (code === "permission-denied" || code === "PERMISSION_DENIED") {
-          readReservation(handle).then(function (reserved) {
-            if (reserved) throw { code: "reserved" };
-            return selfRegister(handle).catch(function (selfError) {
-              var selfCode = (selfError && selfError.code) || "";
-              if (selfCode === "permission-denied" || selfCode === "PERMISSION_DENIED") throw { code: "reserved" };
-              throw selfError;
-            });
-          }).then(function () {
+          selfRegister(handle).then(function () {
             busy = false;
             if (usingDemo()) idents = demo.idents;
             emit();
             render();
-            if (!state.signedIn && myHandle()) doLogin(handle);
+            if (!state.signedIn && myHandle()) doLogin(handle, loginUid());
           }).catch(function (e2) {
             busy = false;
             if (((e2 && e2.code) || "") === "signed-out") { emit(); return; }
@@ -6539,11 +6524,7 @@
             render();
             var c2 = (e2 && e2.code) || "";
             if (c2 === "already-registered") setMsg("claimErr", "This Google account already has a Minutes name.");
-            else if (c2 === "reserved" || c2 === "already-exists") {
-              setMsg("claimErr", TAKEN);
-              newEl.setAttribute("aria-invalid", "true");
-              newEl.focus();
-            } else if (c2 === "unverified-email") setMsg("claimErr", "Verify your Google email before continuing.");
+            else if (c2 === "unverified-email") setMsg("claimErr", "Verify your Google email before continuing.");
             else {
               console.error("name setup failed:", e2);
               setMsg("claimErr", "Couldn't finish name setup. Please try again.");
@@ -6568,7 +6549,7 @@
     if (resBtn) {
       resBtn.onclick = function () {
         var mine = myHandle();
-        if (mine) { hideAll(); doLogin(mine); }
+        if (mine) { hideAll(); doLogin(mine, loginUid()); }
       };
     }
 
@@ -9432,29 +9413,33 @@
     function administrator() { return !!profile && profile.role === "admin"; }
     function failure(message) { return Promise.reject(new Error(message)); }
     function guardWrite() { return requireAppWrite ? requireAppWrite() : null; }
-    function appVersionKey(handle) { return "minutes_app_version_" + String(handle || "").trim().toLowerCase(); }
-    function rememberAppVersion(handle) {
+    // Keyed by account uid: two accounts may share a handle.
+    function appVersionKey(id) { return "minutes_app_version_uid_" + id; }
+    function rememberAppVersion(id, handle) {
       try {
-        localStorage.setItem(appVersionKey(handle), JSON.stringify({ version: VERSION, day: todayStr() }));
-        // Earlier builds kept this under a _v1_ key; drop it so it is not left behind.
-        localStorage.removeItem("minutes_app_version_v1_" + String(handle || "").trim().toLowerCase());
+        localStorage.setItem(appVersionKey(id), JSON.stringify({ version: VERSION, day: todayStr() }));
+        // Earlier builds kept this under handle keys; drop them so they are not left behind.
+        var h = String(handle || "").trim().toLowerCase();
+        localStorage.removeItem("minutes_app_version_" + h);
+        localStorage.removeItem("minutes_app_version_v1_" + h);
       } catch (e) {}
     }
-    function recentlyRecorded(handle) {
+    function recentlyRecorded(id) {
       try {
-        var saved = JSON.parse(localStorage.getItem(appVersionKey(handle)) || "null");
+        var saved = JSON.parse(localStorage.getItem(appVersionKey(id)) || "null");
         return saved && saved.version === VERSION && saved.day === todayStr();
       } catch (e) { return false; }
     }
     function recordAppVersion(handle) {
       var blocked = guardWrite();
       if (blocked) return blocked;
-      if (!handle || recentlyRecorded(handle)) return Promise.resolve();
+      var id = signedUid();
+      if (!id || !handle || recentlyRecorded(id)) return Promise.resolve();
       if (!fb.setDoc || !fb.serverTimestamp) return Promise.resolve();
       // Members cannot read appVersions (admin-only), so write blindly at most once a day.
-      var ref = reference("appVersions", String(handle).toLowerCase());
-      return fb.setDoc(ref, { version: VERSION, ts: fb.serverTimestamp() })
-        .then(function () { rememberAppVersion(handle); });
+      // The handle rides along only so the console stays readable.
+      return fb.setDoc(reference("appVersions", id), { version: VERSION, ts: fb.serverTimestamp(), handle: handle })
+        .then(function () { rememberAppVersion(id, handle); });
     }
     function modelMember(document) {
       var data = document.data();
@@ -9573,16 +9558,17 @@
         });
       });
       cache.members = names;
-      cache.admins = Object.keys(profiles).filter(function (id) { return profiles[id].role === "admin"; })
-        .map(function (id) { return profiles[id].handle; });
+      cache.adminUids = Object.keys(profiles).filter(function (id) { return profiles[id].role === "admin"; });
+      cache.admins = cache.adminUids.map(function (id) { return profiles[id].handle; });
       if (administrator() && accountDirectory) {
         var accounts = directoryRows();
         cache.members = accounts.map(function (row) { return row.handle; })
           .concat(names.filter(function (handle) {
             return !accounts.some(function (row) { return row.handle === handle; });
           }));
-        cache.admins = accounts.filter(function (row) { return row.role === "admin"; })
-          .map(function (row) { return row.handle; });
+        var adminRows = accounts.filter(function (row) { return row.role === "admin"; });
+        cache.admins = adminRows.map(function (row) { return row.handle; });
+        cache.adminUids = adminRows.map(function (row) { return row.uid; });
       }
       rosterLoaded = true;
       setLoginConnecting(false);
@@ -10285,6 +10271,7 @@
       // Role-named logins so you can sign in as each access level to test the UI.
       cache.members = ["AdminOwner", "Owner", "Admin", "User", "Pending", "Rookie"];
       cache.admins = ["AdminOwner", "Admin"]; // global admins (Backoffice access)
+      cache.adminUids = cache.admins.map(demoUid);
 
       challMeta = {};
       challMeta[FOUNDING_CID] = { name: FOUNDING_NAME, color: "lime", owner: demoUid("AdminOwner"), createdTs: 1 };
@@ -10442,6 +10429,7 @@
         var others = cache.admins.filter(function (name) { return demoUid(name) !== id; });
         if (role === "member" && !others.length) return reject("At least one admin is required.");
         cache.admins = role === "admin" ? others.concat([handle]) : others;
+        cache.adminUids = cache.admins.map(demoUid);
         renderAll(); if (boActive()) renderBackoffice();
         return Promise.resolve();
       },

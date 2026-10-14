@@ -604,7 +604,7 @@
   /* Shared app surfaces use the approved palette without rewriting saved preferences. */
   :root { --welcome-bg: #161615; --welcome-accent: #dfb4cf; --welcome-on-accent: #321c2c; }
   html[data-theme="light"] { --welcome-bg: #f5f4f0; --welcome-accent: #81506e; --welcome-on-accent: #ffffff; }
-  #login, #layerBase, #backofficeView, .policy-page,
+  #login, #layerBase, #backofficeView, .policy-page, #nameModal,
   html:has(#backofficeView.show) :is(.modal-overlay, #popDock, #ptr),
   html.hub-active :is(#challModal, #activityModal, #popDock, #ptr),
   html.settings-active :is(#sheet, #popDock, #ptr),
@@ -643,7 +643,7 @@
     --brand-rear: var(--accent-pressed); --brand-middle: var(--accent); --brand-front: var(--accent-hover);
     --logo-surface: var(--bg);
   }
-  html[data-theme="light"] :is(#login, #layerBase, #backofficeView, .policy-page),
+  html[data-theme="light"] :is(#login, #layerBase, #backofficeView, .policy-page, #nameModal),
   html[data-theme="light"]:has(#backofficeView.show) :is(.modal-overlay, #popDock, #ptr),
   html[data-theme="light"].hub-active :is(#challModal, #activityModal, #popDock, #ptr),
   html[data-theme="light"].settings-active :is(#sheet, #popDock, #ptr),
@@ -2745,6 +2745,16 @@
     border: 1px solid var(--border-2); border-radius: var(--r-pill); background: transparent;
     color: var(--text); font-family: inherit; font-size: var(--fs-md); font-weight: var(--fw-bold); cursor: pointer; }
   .settings-logout:hover { background: var(--card-2); }
+  .settings-change { min-height: 44px; padding: var(--sp-sm) var(--sp-2xl);
+    border: 1px solid var(--border-2); border-radius: var(--r-pill); background: transparent;
+    color: var(--text); font-family: inherit; font-size: var(--fs-sm); font-weight: var(--fw-bold); cursor: pointer; }
+  .settings-change:hover { background: var(--card-2); }
+  #nameModal { color: var(--text); }
+  #nameModal input { min-height: 48px; border-color: var(--field-edge); caret-color: var(--accent); }
+  #nameModal .mbtn.primary { color: var(--on-accent); }
+  #nameModal .mbtn.primary:hover:not(:disabled) { background: var(--accent-hover); }
+  #nameModal .mbtn.primary:active:not(:disabled) { background: var(--accent-pressed); }
+  #nameModal :is(button, input):focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
   #youBack:focus-visible, #tab-you :is(button, a):focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
   /* Current-flow challenge: the same cards and scroller, in the approved palette. */
   html.challenge-active, html.challenge-active body { background: var(--welcome-bg); }
@@ -3422,6 +3432,13 @@
             <span class="prof-sub" id="youSub" x-text="$store.s.you.sub">Your account</span>
           </span>
         </div>
+        <div class="settings-row" id="nameRow">
+          <span class="settings-copy">
+            <span class="settings-label" id="nameLabel">Name</span>
+            <span class="settings-hint" id="nameHint">Shown to everyone in your challenges</span>
+          </span>
+          <button type="button" class="settings-change" id="nameChange" aria-describedby="nameHint">Change</button>
+        </div>
         <div class="settings-row" id="avatarRow" x-show="$store.s.you.hasPhoto">
           <span class="settings-copy">
             <span class="settings-label" id="avatarLabel">Your picture</span>
@@ -3742,6 +3759,20 @@
       </div>
     </div>
   </div>
+  <div class="modal-overlay" id="nameModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="nameModalTitle">
+      <button class="modal-x" id="nameClose" aria-label="Close"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
+      <div class="modal-title" id="nameModalTitle">Change name</div>
+      <div class="field">
+        <label for="nameInput">Name</label>
+        <input type="text" id="nameInput" maxlength="24" autocomplete="off" autocapitalize="words" spellcheck="false" aria-describedby="nameErr" />
+      </div>
+      <div class="msg msg--quiet" id="nameErr" aria-live="polite"></div>
+      <div class="modal-actions">
+        <button class="mbtn primary" id="nameSave">Save</button>
+      </div>
+    </div>
+  </div>
   <!-- BACKOFFICE (global admins) -->
   <div class="backoffice" id="backofficeView">
     <div class="bo-topbar">
@@ -3923,7 +3954,7 @@
   var SESSION_KEY = "minutes_session_v3";
   var ACTIVECID_KEY = "minutes_active_cid";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
-  var VERSION = "18.1";
+  var VERSION = "18.2";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -3945,7 +3976,8 @@
   var challMeta = {};       // cid -> { name, color, owner (uid), createdTs }
   var membersByCid = {};    // cid -> { uid: { uid, handle, role, status, ts } }
   var roundsByCid = {};     // cid -> { "YYYY-MM": { locked, participants:[uid], names:{uid: handle} } }
-  var nameBook = {};        // uid -> handle, learned from members, rounds and entries
+  var nameBook = {};        // uid -> current handle, from member docs and the account directory
+  var nameHints = {};       // uid -> handle as a round or entry recorded it; may predate a rename
 
   function members() { return cache.members.slice(); }
   function isAdmin(name) { return cache.admins.some(function (a) { return a.toLowerCase() === String(name).toLowerCase(); }); }
@@ -3961,10 +3993,10 @@
   function entryUid(e) { return (e && e.uid) || ""; }
   function isMine(e) { return !!state.uid && entryUid(e) === state.uid; }
   function learnName(id, handle) { if (id && handle) nameBook[id] = handle; }
-  // Display handle for an account uid. Rounds, member docs and entries all carry
-  // the handle beside the uid, so a uid only falls through when nothing loaded
-  // names it.
-  function nameOf(id) {
+  function learnHint(id, handle) { if (id && handle) nameHints[id] = handle; }
+  // An account's name as it is now. Member docs follow a rename; round and
+  // entry copies are snapshots, so they never count as current.
+  function currentName(id) {
     if (!id) return "";
     if (isMe(id) && state.me) return state.me;
     if (Object.prototype.hasOwnProperty.call(nameBook, id)) return nameBook[id];
@@ -3974,6 +4006,16 @@
       if (m && m.handle) found = m.handle;
       return !!found;
     });
+    if (found) nameBook[id] = found;
+    return found;
+  }
+  // Display handle for an account uid: the current name when anything loaded
+  // knows it, else the newest snapshot a round or entry carried.
+  function nameOf(id) {
+    if (!id) return "";
+    var found = currentName(id);
+    if (found) return found;
+    if (Object.prototype.hasOwnProperty.call(nameHints, id)) return nameHints[id];
     if (!found) Object.keys(roundsByCid).some(function (cid) {
       var rounds = roundsByCid[cid] || {};
       return Object.keys(rounds).some(function (k) {
@@ -3986,7 +4028,7 @@
       if (e.uid === id && e.who) found = e.who;
       return !!found;
     });
-    if (found) { nameBook[id] = found; return found; }
+    if (found) { nameHints[id] = found; return found; }
     return id;
   }
   function byName(a, b) { var x = nameOf(a), y = nameOf(b); return x < y ? -1 : x > y ? 1 : 0; }
@@ -4149,10 +4191,11 @@
     });
     return order;
   }
-  // A round participant's label as that round recorded it, like the handle the
-  // round listed before rounds were keyed by uid.
+  // A round participant's label: their current name, so a rename reaches past
+  // rounds too. Someone who has since left keeps the label the round recorded.
   function participantName(id, dateOrKey) {
-    if (isMe(id) && state.me) return state.me;
+    var current = currentName(id);
+    if (current) return current;
     var key = typeof dateOrKey === "string" ? dateOrKey : monthKeyOf(dateOrKey || state.viewMonth);
     var round = activeRounds()[key], names = round && round.names;
     return names && Object.prototype.hasOwnProperty.call(names, id) && names[id] ? names[id] : nameOf(id);
@@ -5864,6 +5907,59 @@
     paintAvatar(document.getElementById("headAvatar"), n);
     paintAvatar(document.getElementById("youAvatar"), n);
   }
+  // A rename keeps the uid, so only the label and the per-name device flags move.
+  // The demo derives its uid from the saved session name, so it keeps the old one.
+  function adoptName(name) {
+    if (!name || name === state.me) return;
+    state.me = name;
+    if (state.welcomed) { try { localStorage.setItem(WELCOME_KEY, String(name).toLowerCase()); } catch (e) {} }
+    if (window.__FB) { try { localStorage.setItem(SESSION_KEY, name); } catch (e) {} }
+    paintAvatars();
+    if (typeof renderAll === "function") renderAll();
+    if (typeof renderChallChip === "function") renderChallChip();
+    bump();
+  }
+
+  function openNameModal() {
+    if (!state.signedIn) return;
+    var input = document.getElementById("nameInput");
+    input.value = state.me || "";
+    setMsg("nameErr", "");
+    document.getElementById("nameSave").disabled = false;
+    document.getElementById("nameModal").classList.add("show");
+    if (!(window.matchMedia && window.matchMedia("(pointer: coarse)").matches)) {
+      setTimeout(function () { input.focus(); input.select(); }, 30);
+    }
+  }
+  function hideNameModal() { document.getElementById("nameModal").classList.remove("show"); }
+  function submitNameModal() {
+    var input = document.getElementById("nameInput");
+    var save = document.getElementById("nameSave");
+    if (save.disabled) return;
+    var name = input.value.trim();
+    var bad = Claims.checkName(name);
+    setMsg("nameErr", bad);
+    if (bad) return;
+    if (name === state.me) { hideNameModal(); return; }
+    if (!Store.renameMe) { setMsg("nameErr", "Couldn't save. Try again."); return; }
+    if (!requireConnection()) return;
+    save.disabled = true;
+    Store.renameMe(name).then(function () {
+      hideNameModal(); showToast("Name updated", "success");
+    }).catch(function (e) {
+      console.error("renameMe failed:", e);
+      save.disabled = false; setMsg("nameErr", "Couldn't save. Try again.");
+    });
+  }
+  document.getElementById("nameChange").addEventListener("click", openNameModal);
+  document.getElementById("nameClose").onclick = hideNameModal;
+  document.getElementById("nameModal").onclick = function (e) { if (e.target === this) hideNameModal(); };
+  document.getElementById("nameSave").onclick = submitNameModal;
+  // Closing returns focus to Change; without preventDefault the same Enter
+  // would then activate that button and reopen the dialog.
+  document.getElementById("nameInput").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") { e.preventDefault(); submitNameModal(); }
+  });
   // Auth resolves asynchronously, so at sign-in time there is usually no photo
   // yet. Without this the avatar would stay an initial for the whole session
   // and only show a face after some unrelated re-render. bump() re-runs the
@@ -6583,6 +6679,7 @@
 
     return {
       render: render,
+      checkName: checkNewName,
       // DEMO-only. Stands in for writing claimSeeds/{handle} = { email } in the
       // console, so the seeded auto-claim path is testable on the dev server.
       // Pass no email to use the signed-in address.
@@ -9542,7 +9639,7 @@
       hubOwner = null; hubSaved = null; hubStored = ""; hubComputed = null;
       state.activityLoaded = false; state.activityFromCache = true; state.activityLoadError = false;
       state.landingResolved = false; cachePending = 0;
-      state.me = null; state.uid = null; state.signedIn = false; nameBook = {};
+      state.me = null; state.uid = null; state.signedIn = false; nameBook = {}; nameHints = {};
       closeBackoffice();
       hideActivity();
       LoginWelcome.sync();
@@ -9682,7 +9779,7 @@
       var rows = [];
       snapshot.forEach(function (document) {
         var data = document.data();
-        learnName(data.uid, data.who);
+        learnHint(data.uid, data.who);
         rows.push({
           id: document.id, uid: data.uid, who: data.who, cid: cid, date: data.date,
           mins: data.mins, note: data.note, _hadCid: true, _pending: document.metadata.hasPendingWrites
@@ -9712,7 +9809,7 @@
         var rounds = {};
         snapshot.forEach(function (document) {
           var data = document.data(), names = {};
-          data.participants.forEach(function (id) { names[id] = data.names[id]; learnName(id, data.names[id]); });
+          data.participants.forEach(function (id) { names[id] = data.names[id]; learnHint(id, data.names[id]); });
           rounds[document.id] = roundSavePayload(roundFlagsFromData(data), data.participants.slice());
           rounds[document.id].names = names;
         });
@@ -9814,6 +9911,10 @@
         }
         if (snapshot.metadata.hasPendingWrites) return;
         profile = snapshot.data();
+        learnName(profile.uid, profile.handle);
+        // A rename from another device arrives here.
+        if (state.signedIn && state.uid === profile.uid && state.me !== profile.handle &&
+          typeof adoptName === "function") adoptName(profile.handle);
         mergeProfile(profile);
         recordAppVersion(profile.handle).catch(function (error) {
           console.warn("App version could not be recorded:", error);
@@ -9883,9 +9984,19 @@
     function findEntry(id, cid) {
       return entriesAll.find(function (entry) { return entry.id === id && entry.cid === (cid || activeCid()); });
     }
+    // Entries carry the author's name as it was when written; the rules require
+    // the current one, so every write refreshes it.
+    function whoFor(id, fallback) {
+      if (profile && id === profile.uid) return profile.handle;
+      return currentName(id) || fallback;
+    }
     function entryPayload(entry) {
       var id = entry.uid || signedUid();
-      return { uid: id, who: entry.who, date: entry.date, mins: entry.mins, note: entry.note || "" };
+      return { uid: id, who: whoFor(id, entry.who), date: entry.date, mins: entry.mins, note: entry.note || "" };
+    }
+    function withCurrentWho(entry, fields) {
+      var who = whoFor(entry.uid, entry.who);
+      return who && who !== entry.who ? Object.assign({}, fields, { who: who }) : fields;
     }
     function changeMember(cid, memberUid, data) {
       var blocked = guardWrite(); if (blocked) return blocked;
@@ -10000,7 +10111,7 @@
         var blocked = guardWrite(); if (blocked) return blocked;
         var entry = findEntry(id, cid);
         if (!entry) return failure("The entry is not loaded. Reopen its round before editing.");
-        return settle(fb.updateDoc(reference("challenges", entry.cid, "entries", id), fields));
+        return settle(fb.updateDoc(reference("challenges", entry.cid, "entries", id), withCurrentWho(entry, fields)));
       },
       // Adding minutes to an existing entry is a server-side increment, so two
       // devices logging to the same day and tag cannot overwrite each other.
@@ -10008,7 +10119,8 @@
         var blocked = guardWrite(); if (blocked) return blocked;
         var entry = findEntry(id, cid);
         if (!entry) return failure("The entry is not loaded. Reopen its round before editing.");
-        return settle(fb.updateDoc(reference("challenges", entry.cid, "entries", id), { mins: fb.increment(delta) }));
+        return settle(fb.updateDoc(reference("challenges", entry.cid, "entries", id),
+          withCurrentWho(entry, { mins: fb.increment(delta) })));
       },
       deleteEntry: function (id, cid) {
         var blocked = guardWrite(); if (blocked) return blocked;
@@ -10062,6 +10174,10 @@
           return fb.runTransaction(fb.db, function (transaction) {
             return transaction.get(ref).then(function (snapshot) {
               var payload = mergeRoundChange(snapshot.exists() ? snapshot.data() : null, base, data, names);
+              // The rules check my own label against my current name.
+              if (profile && Object.prototype.hasOwnProperty.call(payload.names || {}, profile.uid)) {
+                payload.names[profile.uid] = profile.handle;
+              }
               transaction.set(ref, payload);
               if (payload.participants.length && challMeta[cid] && key < challMeta[cid].firstMonth) {
                 transaction.update(reference("challenges", cid), { firstMonth: key });
@@ -10090,6 +10206,28 @@
       renameChallenge: function (cid, data) {
         var blocked = guardWrite(); if (blocked) return blocked;
         return fb.updateDoc(reference("challenges", cid), data);
+      },
+      // The name is copied into each membership; one batch moves them together
+      // and resolves only once the server has accepted it.
+      renameMe: function (handle) {
+        var blocked = guardWrite(); if (blocked) return blocked;
+        if (!profile || !personalReady()) return failure("Your account is still loading. Try again in a moment.");
+        var me = profile.uid, cids = Object.keys(own), batch = fb.writeBatch(fb.db);
+        batch.update(reference("profiles", me), { handle: handle, displayName: handle });
+        cids.forEach(function (cid) { batch.update(reference("challenges", cid, "members", me), { handle: handle }); });
+        return batch.commit().then(function () {
+          if (!profile || profile.uid !== me) return;
+          profile = Object.assign({}, profile, { handle: handle, displayName: handle });
+          cids.forEach(function (cid) {
+            if (own[cid]) own[cid] = Object.assign({}, own[cid], { handle: handle });
+            if (membersByCid[cid] && membersByCid[cid][me]) {
+              membersByCid[cid][me] = Object.assign({}, membersByCid[cid][me], { handle: handle });
+            }
+          });
+          learnName(me, handle);
+          mergeProfile(profile);
+          if (typeof adoptName === "function") adoptName(handle);
+        });
       },
       accounts: function () {
         return directoryRows().map(function (row) { return { uid: row.uid, handle: row.handle, role: row.role }; });
@@ -10228,12 +10366,22 @@
     // handle only as a label. Each synthetic account has a stable uid derived from
     // its handle, so a demo onboarding of a new name gets its own account.
     function demoUid(handle) { return "demo-uid-" + String(handle || "").trim().toLowerCase(); }
-    // Stand-in for profiles/{uid}.handle.
-    function demoHandleOf(id) {
-      if (id && id === state.uid && state.me) return state.me;
+    // A rename keeps the account's uid, so the seed name stays the key here.
+    var renamed = {};
+    function seedHandleOf(id) {
       var list = members();
       for (var i = 0; i < list.length; i++) { if (demoUid(list[i]) === id) return list[i]; }
       return null;
+    }
+    // Stand-in for profiles/{uid}.handle.
+    function demoHandleOf(id) {
+      if (id && id === state.uid && state.me) return state.me;
+      if (id && Object.prototype.hasOwnProperty.call(renamed, id)) return renamed[id];
+      return seedHandleOf(id);
+    }
+    function withCurrentWho(obj) {
+      var who = demoHandleOf(obj.uid);
+      return who && who !== obj.who ? Object.assign({}, obj, { who: who }) : obj;
     }
     function mk(handle, role, status, ts) { return { uid: demoUid(handle), handle: handle, role: role, status: status, ts: ts }; }
     function memberMap(cid, rows) {
@@ -10381,8 +10529,10 @@
         var blocked = guardWrite(); if (blocked) return blocked;
         var en = findEntry(id);
         if (en) {
-          var problem = entryProblem(Object.assign({}, en, fields), en); if (problem) return reject(problem);
-          Object.keys(fields).forEach(function (k) { en[k] = fields[k]; }); if (offlineNow()) en._pending = true;
+          var next = withCurrentWho(Object.assign({}, en, fields));
+          var problem = entryProblem(next, en); if (problem) return reject(problem);
+          Object.keys(fields).forEach(function (k) { en[k] = fields[k]; }); en.who = next.who;
+          if (offlineNow()) en._pending = true;
         }
         refreshEntries();
         return Promise.resolve();
@@ -10391,8 +10541,9 @@
         var blocked = guardWrite(); if (blocked) return blocked;
         var en = findEntry(id);
         if (en) {
-          var problem = entryProblem(en, en); if (problem) return reject(problem);
-          en.mins += delta; if (offlineNow()) en._pending = true;
+          var next = withCurrentWho(en);
+          var problem = entryProblem(next, en); if (problem) return reject(problem);
+          en.who = next.who; en.mins += delta; if (offlineNow()) en._pending = true;
         }
         refreshEntries();
         return Promise.resolve();
@@ -10408,6 +10559,7 @@
       putEntry: function (obj) {
         var blocked = guardWrite(); if (blocked) return blocked;
         var en = findEntry(obj.id);
+        if (obj.uid) obj = withCurrentWho(obj);
         var problem = entryProblem(obj, en); if (problem) return reject(problem);
         if (en) { en.who = obj.who; en.date = obj.date; en.mins = obj.mins; en.note = obj.note || ""; en.cid = obj.cid || activeCid(); if (offlineNow()) en._pending = true; }
         else { entriesAll.push({ id: obj.id, uid: obj.uid, who: obj.who, date: obj.date, mins: obj.mins, note: obj.note || "", cid: obj.cid || activeCid(), _hadCid: true, _pending: offlineNow() }); }
@@ -10417,13 +10569,14 @@
       // Stand-in for the profiles collection: one uid-keyed account per seeded handle.
       accounts: function () {
         return members().map(function (handle) {
-          return { uid: demoUid(handle), handle: handle, role: isAdmin(handle) ? "admin" : "member" };
+          var id = demoUid(handle);
+          return { uid: id, handle: demoHandleOf(id) || handle, role: isAdmin(handle) ? "admin" : "member" };
         });
       },
       setAccountRole: function (id, role) {
         var blocked = guardWrite(); if (blocked) return blocked;
         if (!meIsAdmin()) return reject("Only an administrator can change accounts.");
-        var handle = demoHandleOf(id);
+        var handle = seedHandleOf(id);
         if (!handle) return reject("That account is no longer available.");
         if (role !== "admin" && role !== "member") return reject("Unknown account role.");
         var others = cache.admins.filter(function (name) { return demoUid(name) !== id; });
@@ -10442,6 +10595,7 @@
         var current = (roundsByCid[cid] || {})[key] || null;
         var next = roundSavePayload(roundFlagsFromData(data), (data.participants || []).slice());
         var payload = mergeRoundChange(current, current && base, next, names);
+        if (state.uid && Object.prototype.hasOwnProperty.call(payload.names, state.uid)) payload.names[state.uid] = state.me;
         var problem = roundProblem(payload); if (problem) return reject(problem);
         roundsByCid[cid] = roundsByCid[cid] || {};
         roundsByCid[cid][key] = payload;
@@ -10483,6 +10637,20 @@
         return Promise.resolve();
       },
       uidForLogin: demoUid,
+      renameMe: function (handle) {
+        var blocked = guardWrite(); if (blocked) return blocked;
+        if (!state.uid) return reject("Sign in before changing your name.");
+        var me = state.uid;
+        renamed[me] = handle;
+        Object.keys(membersByCid).forEach(function (cid) {
+          var member = (membersByCid[cid] || {})[me];
+          if (member) membersByCid[cid][me] = Object.assign({}, member, { handle: handle });
+        });
+        learnName(me, handle);
+        if (typeof adoptName === "function") adoptName(handle); else state.me = handle;
+        refreshCid();
+        return Promise.resolve();
+      },
       renameChallenge: function (cid, data) {
         var blocked = guardWrite(); if (blocked) return blocked;
         if (challMeta[cid]) { if (data.name != null) challMeta[cid].name = data.name; if (data.color != null) challMeta[cid].color = data.color; }
@@ -10905,6 +11073,7 @@
       ["logPop", "show", closeLogPop],
       ["calPop", "show", closeCal],
       ["challModal", "show", hideChallModal],
+      ["nameModal", "show", hideNameModal],
       // calPop lives INSIDE addModal, so it has to peel first -- same reason it
       // is ordered ahead of addModal in initModalA11y. Keep these two lists in
       // the same order or Escape and Back would close different things.
@@ -10986,11 +11155,12 @@
       ["logPop", closeLogPop],
       ["calPop", closeCal],
       ["challModal", hideChallModal],
+      ["nameModal", hideNameModal],
       ["addModal", hideAdd],
       ["accountMenu", closeAccountMenu],
       ["backofficeView", closeBackoffice]
     ];
-    var dialogs = ["manageModal", "editModal", "confirmModal", "activityModal", "challModal", "addModal"];
+    var dialogs = ["manageModal", "editModal", "confirmModal", "activityModal", "challModal", "nameModal", "addModal"];
     var openers = {};
 
     // A pointer activation can inherit :focus-visible from the dialog's last keyboard opener.

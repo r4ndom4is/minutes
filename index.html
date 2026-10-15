@@ -3954,7 +3954,7 @@
   var SESSION_KEY = "minutes_session_v3";
   var ACTIVECID_KEY = "minutes_active_cid";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
-  var VERSION = "18.2";
+  var VERSION = "18.3";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -3975,7 +3975,7 @@
   var cache = { members: DEFAULT_MEMBERS.slice(), admins: DEFAULT_ADMINS.slice(), adminUids: [] };
   var challMeta = {};       // cid -> { name, color, owner (uid), createdTs }
   var membersByCid = {};    // cid -> { uid: { uid, handle, role, status, ts } }
-  var roundsByCid = {};     // cid -> { "YYYY-MM": { locked, participants:[uid], names:{uid: handle} } }
+  var roundsByCid = {};     // cid -> { "YYYY-MM": { participants:[uid], joinOpen, logOpen, names? } }; names only on rounds from 18.2 and older
   var nameBook = {};        // uid -> current handle, from member docs and the account directory
   var nameHints = {};       // uid -> handle as a round or entry recorded it; may predate a rename
 
@@ -3984,7 +3984,22 @@
   // Admin power follows the signed-in account, never its display handle: two
   // accounts may share a name.
   function meIsAdmin() { return !!state.uid && cache.adminUids.indexOf(state.uid) >= 0; }
-  function colorFor(name) { var idx = cache.members.indexOf(name); if (idx < 0) idx = 0; return PALETTE[idx % PALETTE.length]; }
+  // Colour follows the account, in the order people joined the challenge, so
+  // two people who share a name still get different colours. Accounts the
+  // challenge no longer lists fall back to a stable hash of their uid.
+  function colorFor(id, cid) {
+    id = String(id || "");
+    var mm = membersByCid[cid || activeCid()] || {};
+    var order = Object.keys(mm).sort(function (a, b) {
+      return ((mm[a].ts || 0) - (mm[b].ts || 0)) || (a < b ? -1 : a > b ? 1 : 0);
+    });
+    var idx = order.indexOf(id);
+    if (idx < 0) {
+      idx = 5381;
+      for (var i = 0; i < id.length; i++) idx = ((idx * 33) ^ id.charCodeAt(i)) >>> 0;
+    }
+    return PALETTE[idx % PALETTE.length];
+  }
 
   // ---- Identity ----
   // state.uid is the signed-in account; state.me is only its display handle.
@@ -4032,12 +4047,6 @@
     return id;
   }
   function byName(a, b) { var x = nameOf(a), y = nameOf(b); return x < y ? -1 : x > y ? 1 : 0; }
-  // The uid -> handle map a round carries beside its participant uids.
-  function roundNamesFor(ids, prev) {
-    var known = (prev && prev.names) || {}, out = {};
-    ids.forEach(function (id) { out[id] = Object.prototype.hasOwnProperty.call(known, id) ? known[id] : nameOf(id); });
-    return out;
-  }
 
   // ---- Challenge accessors ----
   function activeCid() { return state.activeCid || FOUNDING_CID; }
@@ -4310,12 +4319,20 @@
   function resultSeenMap() {
     try { return JSON.parse(localStorage.getItem(RESULT_SEEN_KEY) || "{}"); } catch (e) { return {}; }
   }
-  function resultSeenKey(cid, mKey, who) { return cid + "|" + mKey + "|" + String(who).toLowerCase(); }
-  function isResultSeen(cid, mKey, who) { return !!resultSeenMap()[resultSeenKey(cid, mKey, who)]; }
-  function markResultSeen(cid, mKey, who) {
+  // Keyed by account. Before 18.3 the key was the display name; a mark made
+  // then still counts.
+  function resultSeenKey(cid, mKey, id) { return cid + "|" + mKey + "|uid:" + id; }
+  function legacyResultSeenKey(cid, mKey) { return cid + "|" + mKey + "|" + String(state.me).toLowerCase(); }
+  function isResultSeen(cid, mKey) {
+    var m = resultSeenMap();
+    return !!(state.uid && m[resultSeenKey(cid, mKey, state.uid)]) ||
+      !!(state.me && m[legacyResultSeenKey(cid, mKey)]);
+  }
+  function markResultSeen(cid, mKey) {
+    if (!state.uid) return;
     try {
       var m = resultSeenMap();
-      m[resultSeenKey(cid, mKey, who)] = true;
+      m[resultSeenKey(cid, mKey, state.uid)] = true;
       localStorage.setItem(RESULT_SEEN_KEY, JSON.stringify(m));
     } catch (e) {}
   }
@@ -4340,7 +4357,7 @@
     // result has actually been seen once, or the grace window lapses.
     if (state.me && cands.length >= 2 && new Date().getDate() <= RESULT_GRACE_DAYS) {
       var finished = cands[cands.length - 2];
-      if (monthMayHaveResult(finished) && !isResultSeen(activeCid(), finished, state.me)) return finished;
+      if (monthMayHaveResult(finished) && !isResultSeen(activeCid(), finished)) return finished;
     }
     return current;
   }
@@ -5048,7 +5065,7 @@
       return {
         uid: r.uid, name: r.name, rank: rankOfMins[r.mins], mins: r.mins + " min",
         me: isMe(r.uid), pct: Math.round((r.mins / max) * 100) + "%",
-        color: colorFor(r.name), hasDetail: pe.length > 0,
+        color: colorFor(r.uid), hasDetail: pe.length > 0,
         open: !!lbOpen[r.uid] && pe.length > 0,
         tags: catGroups(pe).map(function (g) {
           var gp = Math.round(g.mins / ptot * 100);
@@ -5088,7 +5105,7 @@
     return roster.slice().sort(function (a, b) { return totals[b] - totals[a]; })
       .map(function (id) {
         var n = participantName(id, mp);
-        return { uid: id, name: n, color: colorFor(n), off: !!state.hidden[id], me: isMe(id) };
+        return { uid: id, name: n, color: colorFor(id), off: !!state.hidden[id], me: isMe(id) };
       });
   });
 
@@ -5165,7 +5182,7 @@
     return {
       name: name,
       initial: (state.me || "?").charAt(0).toUpperCase(),
-      color: colorFor(state.me || ""),
+      color: colorFor(state.uid),
       // Drives whether the Photo/Letter choice is offered at all.
       hasPhoto: hasAvatarPhoto(),
       photoFailed: currentAvatarStyle() === "photo" && avatarPhotoFailed(),
@@ -5197,7 +5214,7 @@
         guard("join", jOpen, "New member joining", isPastRound ? "Closed" : "", isPastRound ? ICON_LOCK_CLOSED : "", isPastRound),
         guard("log", lOpen, "Logging minutes", isFutureRound ? opensLbl : "", isFutureRound ? ICON_CLOCK : "", isFutureRound)
       ],
-      current: current.map(function (id) { var name = participantName(id, key); return { uid: id, name: name, initial: name.charAt(0).toUpperCase(), color: colorFor(name) }; })
+      current: current.map(function (id) { var name = participantName(id, key); return { uid: id, name: name, initial: name.charAt(0).toUpperCase(), color: colorFor(id) }; })
     };
   });
 
@@ -5249,7 +5266,7 @@
     this.rev; this.me;
     return (Store.accounts ? Store.accounts() : []).map(function (account) {
       var name = account.handle, admin = account.role === "admin";
-      return { uid: account.uid, name: name, initial: name.charAt(0).toUpperCase(), color: colorFor(name), admin: admin, role: admin ? "Admin" : "Member" };
+      return { uid: account.uid, name: name, initial: name.charAt(0).toUpperCase(), color: colorFor(account.uid), admin: admin, role: admin ? "Admin" : "Member" };
     });
   });
 
@@ -5261,10 +5278,10 @@
       .sort(function (a, b) { return challName(a.cid).localeCompare(challName(b.cid)); });
     var total = groups.reduce(function (n, g) { return n + g.pending.length; }, 0);
     return { total: total, title: "Pending requests · " + total,
-      groups: groups.map(function (g) { return { cid: g.cid, title: challName(g.cid), pastel: challPastel(g.cid), rows: g.pending.map(approveRowModel) }; }) };
+      groups: groups.map(function (g) { return { cid: g.cid, title: challName(g.cid), pastel: challPastel(g.cid), rows: g.pending.map(function (id) { return approveRowModel(id, g.cid); }) }; }) };
   });
 
-  function approveRowModel(id) { var h = nameOf(id); return { uid: id, name: h, initial: h.charAt(0).toUpperCase(), color: colorFor(h) }; }
+  function approveRowModel(id, cid) { var h = nameOf(id); return { uid: id, name: h, initial: h.charAt(0).toUpperCase(), color: colorFor(id, cid) }; }
 
   view("boChallenges", function () {
     this.rev; this.me;
@@ -5314,12 +5331,12 @@
                    : "This round is locked, so you can't leave it now.",
       roundName: state.viewMonth.toLocaleString(undefined, { month: "long" }),
       pendingTitle: "Pending requests" + (pend.length ? " · " + pend.length : ""), noPending: !pend.length,
-      pending: pend.map(approveRowModel),
+      pending: pend.map(function (id) { return approveRowModel(id, cid); }),
       membersTitle: "Members" + (approved.length ? " · " + approved.length : ""), noMembers: !approved.length,
       members: approved.map(function (id) {
         var isOwner = mm[id].role === "owner", h = nameOf(id);
         return {
-          uid: id, name: h, initial: h.charAt(0).toUpperCase(), color: colorFor(h), owner: isOwner,
+          uid: id, name: h, initial: h.charAt(0).toUpperCase(), color: colorFor(id, cid), owner: isOwner,
           ownerPill: isOwner && !isAdm, admin: isAdm,
           toggleText: isOwner ? "Owner" : "Make owner", showDel: isAdm && !(isOwner && ownerCount <= 1)
         };
@@ -5339,8 +5356,8 @@
     winnerCardMounted: function (el, win) {
       if (!state.me || el._rcSeen === win.mKey) return;
       el._rcSeen = win.mKey;
-      var before = isResultSeen(activeCid(), win.mKey, state.me);
-      markResultSeen(activeCid(), win.mKey, state.me);
+      var before = isResultSeen(activeCid(), win.mKey);
+      markResultSeen(activeCid(), win.mKey);
       if (!before) requestAnimationFrame(function () { launchConfetti(el, "min"); });
     },
     celebrate: function (el) { launchConfetti(el, "full"); },
@@ -5872,7 +5889,7 @@
       el.style.backgroundImage = "";
       el.style.color = "";
       if (el.textContent !== initial || el.childElementCount) el.textContent = initial;
-      el.style.backgroundColor = colorFor(name || "");
+      el.style.backgroundColor = colorFor(state.uid);
     }
     if (!url) { avatarLoads.delete(el); fallback(); return; }
     var previous = avatarLoads.get(el);
@@ -6172,13 +6189,12 @@
     // event alone for the initial paint.
     if (window.__AUTH && window.__AUTH.user) render(window.__AUTH.user);
   })();
-  // Binds a Google uid to an app handle:
-  //   1. an existing seeded handle with this verified email -> instant claim
-  //   2. any other valid handle -> self-registration of profiles/{uid}
+  // Binds a Google uid to an app handle by self-registering profiles/{uid}.
   // Handles are display names, not keys, so two accounts may share one.
   //
   // Firestore always uses the challenge-scoped data model (profiles/{uid}); the
-  // in-memory demo path below stands in for it on the dev server.
+  // in-memory demo path below stands in for it on the dev server, and also keeps
+  // a rehearsal of the retired seeded-email claim for its existing scenarios.
   var Claims = (function () {
     // Older versions kept a pending name request here and showed a waiting
     // screen; that flow is gone, so a stuck device just gets the name card.
@@ -6216,15 +6232,6 @@
       subscribed = false;
       idents = {}; identsLoaded = false; autoLoggedIn = false;
     }
-    function saveIdentity(fb, handle, data) {
-      var blocked = guardClaimWrite(); if (blocked) return blocked;
-      var batch = fb.writeBatch(fb.db);
-      batch.set(fb.doc(fb.db, "identities", handle), data);
-      batch.set(fb.doc(fb.db, "profiles", data.uid), {
-        uid: data.uid, handle: data.handle, displayName: data.handle, role: "member", ts: data.ts
-      });
-      return batch.commit();
-    }
 
     // Anything the app's Alpine store renders from this module has to announce
     // itself: the store cannot see module-local variables, so it ticks a revision
@@ -6238,7 +6245,9 @@
     // stand-in. It exists so the UI and both branches are exercisable on the dev
     // server; production always takes the real path below.
     //
-    // seeds mirrors claimSeeds/{handle} = { email }. "*" means "any signed-in
+    // seeds mirrors the retired claimSeeds/{handle} = { email }. Firestore no
+    // longer has seeded claims; this demo-only rehearsal is kept for its existing
+    // scenarios. "*" means "any signed-in
     // address", which is a local convenience so both branches stay clickable
     // without knowing which Google account you happen to be using. Bind a real
     // address with __CLAIMS.demoSeed("AdminOwner", "admin@example.test") to exercise
@@ -6388,18 +6397,15 @@
           }, 250);
         });
       }
-      var fb = window.__FB;
-      return saveIdentity(fb, low(handle), claimDoc(handle, u));
+      // Firestore has no seeded claims since 18.3: deny so the caller falls
+      // through to self-registration.
+      return Promise.reject({ code: "permission-denied" });
     }
 
-    // Silent email match. The rules compare our verified email against claimSeeds,
-    // but no client may read that collection, so the app cannot ask "which name is
-    // mine?" and has to find out by attempting the claim. Deliberately SEQUENTIAL
-    // with an early exit: firing these in parallel would bind every matching handle
-    // at once, and one person must end up with one name. Reasonable only because the
-    // roster is small and seeds exist purely for the migration: once everyone has
-    // claimed, delete claimSeeds and this goes with it. Failure is never fatal, it
-    // just means we fall through to asking for a name.
+    // Silent email match (demo rehearsal only; scoped mode returns at once).
+    // Deliberately SEQUENTIAL with an early exit: one person must end up with
+    // one name. Failure is never fatal, it just means we fall through to asking
+    // for a name.
     function sweep() {
       var u = me();
       if (!u || sweeping || sweptUid === u.uid) return Promise.resolve(false);
@@ -6672,16 +6678,16 @@
     window.addEventListener("minutes-roster", function () { if (me()) render(); else emit(); });
     window.addEventListener("minutes-fb-ready", function () { boot(); if (me()) render(); });
 
-    // In legacy mode identities are readable enough to subscribe early. In scoped
-    // mode watch() waits for the signed-in account and listens only to its profile.
+    // Scoped mode: watch() waits for the signed-in account and listens only to
+    // its profile.
     function boot() { watch(); }
     if (window.__FB) boot();
 
     return {
       render: render,
       checkName: checkNewName,
-      // DEMO-only. Stands in for writing claimSeeds/{handle} = { email } in the
-      // console, so the seeded auto-claim path is testable on the dev server.
+      // DEMO-only. Stands in for the retired claimSeeds/{handle} = { email }, so
+      // the seeded auto-claim rehearsal stays testable on the dev server.
       // Pass no email to use the signed-in address.
       demoSeed: function (handle, email) {
         if (!usingDemo()) return Promise.reject(new Error("demoSeed is dev-server only"));
@@ -8157,11 +8163,11 @@
       if (pts[pts.length - 1].val === 0) return; // skip flat zero lines (no data for this member)
       var isMe = id === state.uid, name = participantName(id, mp);
       var path = splinePath(pts.map(function (p) { return { x: x(p.day), y: y(p.val) }; }));
-      lines += '<path d="' + path + '" fill="none" stroke="' + colorFor(name) + '" stroke-width="' + (isMe ? 2.75 : 1.8) +
+      lines += '<path d="' + path + '" fill="none" stroke="' + colorFor(id) + '" stroke-width="' + (isMe ? 2.75 : 1.8) +
                '" stroke-linejoin="round" stroke-linecap="round" opacity="' + (isMe ? 1 : 0.85) + '"/>';
       var last = pts[pts.length - 1];
       lines += '<circle cx="' + x(last.day).toFixed(1) + '" cy="' + y(last.val).toFixed(1) + '" r="' + (isMe ? 4 : 3) +
-               '" fill="' + colorFor(name) + '" stroke="' + C.ring + '" stroke-width="1.5"/>';
+               '" fill="' + colorFor(id) + '" stroke="' + C.ring + '" stroke-width="1.5"/>';
     });
 
     var svg =
@@ -8830,7 +8836,7 @@
       writePromise = Store.incrementEntry(tId, newMins).then(function () { return Store.deleteEntry(id); });
       undoFn = function () {
         Store.incrementEntry(tId, -newMins, ent.cid).catch(warnSaveFail);
-        Store.putEntry({ id: id, uid: ent.uid, who: ent.who, date: ent.date, mins: prevMins, note: prevNote, cid: ent.cid }).catch(warnSaveFail);
+        Store.putEntry({ id: id, uid: ent.uid, date: ent.date, mins: prevMins, note: prevNote, cid: ent.cid }).catch(warnSaveFail);
       };
     } else {
       writePromise = Store.updateEntry(id, { mins: newMins, note: newTag });
@@ -8852,7 +8858,7 @@
     if (!editId) return;
     var ent = findEntry(editId);
     if (!ent) { hideEdit(); return; }
-    var removed = { id: ent.id, uid: ent.uid, who: ent.who, date: ent.date, mins: ent.mins, note: ent.note, cid: ent.cid };
+    var removed = { id: ent.id, uid: ent.uid, date: ent.date, mins: ent.mins, note: ent.note, cid: ent.cid };
     hideEdit();
     showConfirm({ title: "Delete entry?", msg: niceDate(removed.date) + " · " + removed.mins + " min" + (removed.note ? " · " + capTag(removed.note) : ""), ok: "Delete" }, function () {
       Store.deleteEntry(removed.id).then(function () {
@@ -9127,7 +9133,7 @@
           undo: function () { return Store.incrementEntry(id, -mins, entryCid); } };
       }
       var newId = uid();
-      return { id: newId, cid: entryCid, promise: Store.addEntry({ id: newId, cid: entryCid, uid: state.uid, who: state.me, date: date, mins: mins, note: tag }),
+      return { id: newId, cid: entryCid, promise: Store.addEntry({ id: newId, cid: entryCid, uid: state.uid, date: date, mins: mins, note: tag }),
         undo: function () { return Store.deleteEntry(newId, entryCid); } };
     }
     // Picked challenges whose rounds are still loading get a short wait so the
@@ -9237,7 +9243,8 @@
     var prev = rounds.hasOwnProperty(key) ? rounds[key] : null;
     var f = roundFlagsFromData(prev);
     var base = roundSavePayload(f, prev && prev.participants ? prev.participants.slice() : []);
-    rounds[key] = Object.assign(roundSavePayload(f, newList.slice()), { names: roundNamesFor(newList, prev) });
+    rounds[key] = roundSavePayload(f, newList.slice());
+    if (prev && prev.names) rounds[key].names = prev.names;
     renderAll();
     return Store.saveRound(cid, key, roundSavePayload(f, newList), base).catch(function (err) {
       console.error("Round save failed:", err);
@@ -9459,29 +9466,24 @@
   // join, leave, remove someone, or flip a flag. Apply just the difference
   // between `base` (what the caller saw) and `next` to the server's current
   // round, so a concurrent change by someone else is not overwritten.
-  // Participants are account uids; `names` maps each uid in next.participants
-  // to its display handle, for the round's required `names` map.
-  function mergeRoundChange(server, base, next, names) {
-    names = names || {};
-    var has = Object.prototype.hasOwnProperty;
+  // Participants are account uids. A round written by 18.2 or older also has a
+  // `names` copy; the rules keep it exactly as stored, so it passes through.
+  function mergeRoundChange(server, base, next) {
     if (!server || !base) {
-      var fresh = Object.assign({}, next, { participants: next.participants.slice(), names: {} });
-      fresh.participants.forEach(function (id) { fresh.names[id] = names[id]; });
+      var fresh = Object.assign({}, next, { participants: next.participants.slice() });
+      delete fresh.names;
       delete fresh.locked;
+      if (server && server.names) fresh.names = server.names;
       return fresh;
     }
     var before = base.participants, after = next.participants;
-    var serverNames = server.names || {};
     var participants = (server.participants || []).filter(function (id) {
       return before.indexOf(id) < 0 || after.indexOf(id) >= 0;
     });
     after.forEach(function (id) {
       if (before.indexOf(id) < 0 && participants.indexOf(id) < 0) participants.push(id);
     });
-    var out = Object.assign({}, server, { participants: participants, names: {} });
-    participants.forEach(function (id) {
-      out.names[id] = has.call(serverNames, id) ? serverNames[id] : names[id];
-    });
+    var out = Object.assign({}, server, { participants: participants });
     ["joinOpen", "logOpen"].forEach(function (flag) {
       if (next[flag] === base[flag]) return;
       if (flag in next) out[flag] = next[flag]; else delete out[flag];
@@ -9534,8 +9536,7 @@
       if (!id || !handle || recentlyRecorded(id)) return Promise.resolve();
       if (!fb.setDoc || !fb.serverTimestamp) return Promise.resolve();
       // Members cannot read appVersions (admin-only), so write blindly at most once a day.
-      // The handle rides along only so the console stays readable.
-      return fb.setDoc(reference("appVersions", id), { version: VERSION, ts: fb.serverTimestamp(), handle: handle })
+      return fb.setDoc(reference("appVersions", id), { version: VERSION, ts: fb.serverTimestamp() })
         .then(function () { rememberAppVersion(id, handle); });
     }
     function modelMember(document) {
@@ -9808,10 +9809,10 @@
         if (!snapshot.size && snapshot.metadata.fromCache) return;
         var rounds = {};
         snapshot.forEach(function (document) {
-          var data = document.data(), names = {};
-          data.participants.forEach(function (id) { names[id] = data.names[id]; learnHint(id, data.names[id]); });
+          var data = document.data(), names = data.names || {};
+          data.participants.forEach(function (id) { if (names[id]) learnHint(id, names[id]); });
           rounds[document.id] = roundSavePayload(roundFlagsFromData(data), data.participants.slice());
-          rounds[document.id].names = names;
+          if (data.names) rounds[document.id].names = data.names;
         });
         roundsByCid[cid] = rounds;
       });
@@ -9984,19 +9985,9 @@
     function findEntry(id, cid) {
       return entriesAll.find(function (entry) { return entry.id === id && entry.cid === (cid || activeCid()); });
     }
-    // Entries carry the author's name as it was when written; the rules require
-    // the current one, so every write refreshes it.
-    function whoFor(id, fallback) {
-      if (profile && id === profile.uid) return profile.handle;
-      return currentName(id) || fallback;
-    }
+    // Entries name their author by uid only; the name comes from the roster.
     function entryPayload(entry) {
-      var id = entry.uid || signedUid();
-      return { uid: id, who: whoFor(id, entry.who), date: entry.date, mins: entry.mins, note: entry.note || "" };
-    }
-    function withCurrentWho(entry, fields) {
-      var who = whoFor(entry.uid, entry.who);
-      return who && who !== entry.who ? Object.assign({}, fields, { who: who }) : fields;
+      return { uid: entry.uid || signedUid(), date: entry.date, mins: entry.mins, note: entry.note || "" };
     }
     function changeMember(cid, memberUid, data) {
       var blocked = guardWrite(); if (blocked) return blocked;
@@ -10007,10 +9998,14 @@
         return fb.runTransaction(fb.db, function (transaction) {
           return Promise.all([transaction.get(memberRef), transaction.get(challengeRef)]).then(function (snapshots) {
             if (!snapshots[1].exists()) throw new Error("The challenge no longer exists.");
-            var before = snapshots[0].exists() && snapshots[0].data().status === "approved" ? 1 : 0;
+            var current = snapshots[0].exists() ? snapshots[0].data() : null;
+            var before = current && current.status === "approved" ? 1 : 0;
+            // Removing a member keeps a no-access "left" record so history can
+            // still name them; a declined request leaves nothing behind.
+            if (!data && before) data = { handle: current.handle, role: "member", status: "left", ts: current.ts };
             var after = data && data.status === "approved" ? 1 : 0;
             if (data) transaction.set(memberRef, Object.assign({}, data, { uid: memberUid, cid: cid }));
-            else transaction.delete(memberRef);
+            else if (current) transaction.delete(memberRef);
             if (after !== before) transaction.update(challengeRef, {
               memberCount: snapshots[1].data().memberCount + after - before
             });
@@ -10111,7 +10106,7 @@
         var blocked = guardWrite(); if (blocked) return blocked;
         var entry = findEntry(id, cid);
         if (!entry) return failure("The entry is not loaded. Reopen its round before editing.");
-        return settle(fb.updateDoc(reference("challenges", entry.cid, "entries", id), withCurrentWho(entry, fields)));
+        return settle(fb.updateDoc(reference("challenges", entry.cid, "entries", id), fields));
       },
       // Adding minutes to an existing entry is a server-side increment, so two
       // devices logging to the same day and tag cannot overwrite each other.
@@ -10119,8 +10114,7 @@
         var blocked = guardWrite(); if (blocked) return blocked;
         var entry = findEntry(id, cid);
         if (!entry) return failure("The entry is not loaded. Reopen its round before editing.");
-        return settle(fb.updateDoc(reference("challenges", entry.cid, "entries", id),
-          withCurrentWho(entry, { mins: fb.increment(delta) })));
+        return settle(fb.updateDoc(reference("challenges", entry.cid, "entries", id), { mins: fb.increment(delta) }));
       },
       deleteEntry: function (id, cid) {
         var blocked = guardWrite(); if (blocked) return blocked;
@@ -10165,19 +10159,11 @@
       removeMember: function (cid, memberUid) { return changeMember(cid, memberUid, null); },
       saveRound: function (cid, key, data, base) {
         var blocked = guardWrite(); if (blocked) return blocked;
-        var names = {};
-        data.participants.forEach(function (id) {
-          names[id] = profile && id === profile.uid ? profile.handle : nameOf(id);
-        });
         return Promise.resolve().then(function () {
           var ref = reference("challenges", cid, "rounds", key);
           return fb.runTransaction(fb.db, function (transaction) {
             return transaction.get(ref).then(function (snapshot) {
-              var payload = mergeRoundChange(snapshot.exists() ? snapshot.data() : null, base, data, names);
-              // The rules check my own label against my current name.
-              if (profile && Object.prototype.hasOwnProperty.call(payload.names || {}, profile.uid)) {
-                payload.names[profile.uid] = profile.handle;
-              }
+              var payload = mergeRoundChange(snapshot.exists() ? snapshot.data() : null, base, data);
               transaction.set(ref, payload);
               if (payload.participants.length && challMeta[cid] && key < challMeta[cid].firstMonth) {
                 transaction.update(reference("challenges", cid), { firstMonth: key });
@@ -10189,8 +10175,7 @@
       createChallenge: function (cid, name, color) {
         var blocked = guardWrite(); if (blocked) return blocked;
         if (!profile) return failure("Sign in before creating a challenge.");
-        var batch = fb.writeBatch(fb.db), month = monthKeyOf(new Date()), names = {};
-        names[profile.uid] = profile.handle;
+        var batch = fb.writeBatch(fb.db), month = monthKeyOf(new Date());
         batch.set(reference("challenges", cid), {
           schemaVersion: 2, name: name, color: color, createdTs: Date.now(), firstMonth: month,
           memberCount: 1, type: "monthly", visibility: "public"
@@ -10199,7 +10184,7 @@
           uid: profile.uid, cid: cid, handle: profile.handle, role: "owner", status: "approved", ts: Date.now()
         });
         batch.set(reference("challenges", cid, "rounds", month), {
-          participants: [profile.uid], names: names, joinOpen: true, logOpen: true
+          participants: [profile.uid], joinOpen: true, logOpen: true
         });
         return batch.commit();
       },
@@ -10379,10 +10364,6 @@
       if (id && Object.prototype.hasOwnProperty.call(renamed, id)) return renamed[id];
       return seedHandleOf(id);
     }
-    function withCurrentWho(obj) {
-      var who = demoHandleOf(obj.uid);
-      return who && who !== obj.who ? Object.assign({}, obj, { who: who }) : obj;
-    }
     function mk(handle, role, status, ts) { return { uid: demoUid(handle), handle: handle, role: role, status: status, ts: ts }; }
     function memberMap(cid, rows) {
       var out = {};
@@ -10390,8 +10371,8 @@
       return out;
     }
     function round(fields, handles) {
-      var out = Object.assign({ participants: [], names: {} }, fields);
-      handles.forEach(function (h) { out.participants.push(demoUid(h)); out.names[demoUid(h)] = h; });
+      var out = Object.assign({ participants: [] }, fields);
+      handles.forEach(function (h) { out.participants.push(demoUid(h)); });
       return out;
     }
     function reject(message) { return Promise.reject(new Error(message)); }
@@ -10399,19 +10380,14 @@
     // write that Firestore would refuse.
     function entryProblem(obj, existing) {
       if (!obj.uid || typeof obj.uid !== "string") return "An entry needs its account uid.";
-      if (obj.who !== demoHandleOf(obj.uid)) return "An entry's name must match its account.";
       if (existing && (existing.uid !== obj.uid || existing.date !== obj.date)) return "An entry's account and day cannot change.";
       if (obj.uid !== state.uid && !meIsAdmin()) return "Only an admin can log minutes for someone else.";
       return "";
     }
-    function roundProblem(data) {
-      var ids = data.participants || [], names = data.names || {};
+    function roundProblem(data, before) {
+      var ids = data.participants || [];
       if (new Set(ids).size !== ids.length) return "A round lists someone twice.";
-      var keys = Object.keys(names);
-      if (keys.length !== ids.length || ids.some(function (id) { return typeof names[id] !== "string"; })) {
-        return "A round's names must match its participants.";
-      }
-      if (state.uid && ids.indexOf(state.uid) >= 0 && names[state.uid] !== state.me) return "A round must carry your current name.";
+      if (JSON.stringify(data.names || null) !== JSON.stringify((before && before.names) || null)) return "A round's recorded names cannot change.";
       return "";
     }
 
@@ -10461,7 +10437,7 @@
       // untagged so the "No category" group stays represented.
       function add(who, cid, ym, mins, tags) {
         mins.forEach(function (m, i) {
-          if (m > 0) e.push({ id: uid(), uid: demoUid(who), who: who, date: ym + "-" + pad(i + 1), mins: m,
+          if (m > 0) e.push({ id: uid(), uid: demoUid(who), date: ym + "-" + pad(i + 1), mins: m,
                               note: (tags && tags[i]) || "", cid: cid, _hadCid: true });
         });
       }
@@ -10521,7 +10497,7 @@
         var blocked = guardWrite(); if (blocked) return blocked;
         var problem = entryProblem(obj, null); if (problem) return reject(problem);
         var id = obj.id || uid();
-        entriesAll.push({ id: id, uid: obj.uid, who: obj.who, date: obj.date, mins: obj.mins, note: obj.note || "", cid: obj.cid || activeCid(), _hadCid: true, _pending: offlineNow() });
+        entriesAll.push({ id: id, uid: obj.uid, date: obj.date, mins: obj.mins, note: obj.note || "", cid: obj.cid || activeCid(), _hadCid: true, _pending: offlineNow() });
         refreshEntries();
         return Promise.resolve(id);
       },
@@ -10529,9 +10505,8 @@
         var blocked = guardWrite(); if (blocked) return blocked;
         var en = findEntry(id);
         if (en) {
-          var next = withCurrentWho(Object.assign({}, en, fields));
-          var problem = entryProblem(next, en); if (problem) return reject(problem);
-          Object.keys(fields).forEach(function (k) { en[k] = fields[k]; }); en.who = next.who;
+          var problem = entryProblem(Object.assign({}, en, fields), en); if (problem) return reject(problem);
+          Object.keys(fields).forEach(function (k) { en[k] = fields[k]; });
           if (offlineNow()) en._pending = true;
         }
         refreshEntries();
@@ -10541,9 +10516,8 @@
         var blocked = guardWrite(); if (blocked) return blocked;
         var en = findEntry(id);
         if (en) {
-          var next = withCurrentWho(en);
-          var problem = entryProblem(next, en); if (problem) return reject(problem);
-          en.who = next.who; en.mins += delta; if (offlineNow()) en._pending = true;
+          var problem = entryProblem(en, en); if (problem) return reject(problem);
+          en.mins += delta; if (offlineNow()) en._pending = true;
         }
         refreshEntries();
         return Promise.resolve();
@@ -10559,10 +10533,9 @@
       putEntry: function (obj) {
         var blocked = guardWrite(); if (blocked) return blocked;
         var en = findEntry(obj.id);
-        if (obj.uid) obj = withCurrentWho(obj);
         var problem = entryProblem(obj, en); if (problem) return reject(problem);
-        if (en) { en.who = obj.who; en.date = obj.date; en.mins = obj.mins; en.note = obj.note || ""; en.cid = obj.cid || activeCid(); if (offlineNow()) en._pending = true; }
-        else { entriesAll.push({ id: obj.id, uid: obj.uid, who: obj.who, date: obj.date, mins: obj.mins, note: obj.note || "", cid: obj.cid || activeCid(), _hadCid: true, _pending: offlineNow() }); }
+        if (en) { delete en.who; en.date = obj.date; en.mins = obj.mins; en.note = obj.note || ""; en.cid = obj.cid || activeCid(); if (offlineNow()) en._pending = true; }
+        else { entriesAll.push({ id: obj.id, uid: obj.uid, date: obj.date, mins: obj.mins, note: obj.note || "", cid: obj.cid || activeCid(), _hadCid: true, _pending: offlineNow() }); }
         refreshEntries();
         return Promise.resolve();
       },
@@ -10587,16 +10560,13 @@
         return Promise.resolve();
       },
       // Same merge as Firestore: only the caller's change is applied to the
-      // stored round, which then carries the uid -> handle names map.
+      // stored round; a legacy names copy passes through untouched.
       saveRound: function (cid, key, data, base) {
         var blocked = guardWrite(); if (blocked) return blocked;
-        var names = {};
-        (data.participants || []).forEach(function (id) { names[id] = demoHandleOf(id) || nameOf(id); });
         var current = (roundsByCid[cid] || {})[key] || null;
         var next = roundSavePayload(roundFlagsFromData(data), (data.participants || []).slice());
-        var payload = mergeRoundChange(current, current && base, next, names);
-        if (state.uid && Object.prototype.hasOwnProperty.call(payload.names, state.uid)) payload.names[state.uid] = state.me;
-        var problem = roundProblem(payload); if (problem) return reject(problem);
+        var payload = mergeRoundChange(current, current && base, next);
+        var problem = roundProblem(payload, current); if (problem) return reject(problem);
         roundsByCid[cid] = roundsByCid[cid] || {};
         roundsByCid[cid][key] = payload;
         refreshCid();
@@ -10622,7 +10592,11 @@
       },
       removeMember: function (cid, memberUid) {
         var blocked = guardWrite(); if (blocked) return blocked;
-        if (membersByCid[cid]) delete membersByCid[cid][memberUid];
+        var current = membersByCid[cid] && membersByCid[cid][memberUid];
+        // Same as Firestore: a removed member keeps a no-access "left" record.
+        if (current && current.status === "approved") {
+          membersByCid[cid][memberUid] = Object.assign({}, current, { role: "member", status: "left" });
+        } else if (current) delete membersByCid[cid][memberUid];
         refreshCid();
         return Promise.resolve();
       },
@@ -11712,9 +11686,8 @@ ${r?'Expression: "'+r+`"
         });
       }
     };
-    // Phase 2 is deliberately non-enforcing: the signed-in user is recorded and shown,
-    // but app identity is still the typed handle. The uid becomes the identity only
-    // once the claim flow (identities/{handle}) lands.
+    // The signed-in uid is the app identity; its profiles/{uid} handle is only a
+    // display name.
     onAuthStateChanged(auth, function (u) {
       window.__AUTH.resolved = true;
       window.__AUTH.user = u ? {

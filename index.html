@@ -604,7 +604,7 @@
   /* Shared app surfaces use the approved palette without rewriting saved preferences. */
   :root { --welcome-bg: #161615; --welcome-accent: #dfb4cf; --welcome-on-accent: #321c2c; }
   html[data-theme="light"] { --welcome-bg: #f5f4f0; --welcome-accent: #81506e; --welcome-on-accent: #ffffff; }
-  #login, #layerBase, #backofficeView, .policy-page, #nameModal,
+  #login, #layerBase, #backofficeView, .policy-page, #nameModal, #whatsNewModal, #whatsNewPage,
   html:has(#backofficeView.show) :is(.modal-overlay, #popDock, #ptr),
   html.hub-active :is(#challModal, #activityModal, #popDock, #ptr),
   html.settings-active :is(#sheet, #popDock, #ptr),
@@ -643,7 +643,7 @@
     --brand-rear: var(--accent-pressed); --brand-middle: var(--accent); --brand-front: var(--accent-hover);
     --logo-surface: var(--bg);
   }
-  html[data-theme="light"] :is(#login, #layerBase, #backofficeView, .policy-page, #nameModal),
+  html[data-theme="light"] :is(#login, #layerBase, #backofficeView, .policy-page, #nameModal, #whatsNewModal, #whatsNewPage),
   html[data-theme="light"]:has(#backofficeView.show) :is(.modal-overlay, #popDock, #ptr),
   html[data-theme="light"].hub-active :is(#challModal, #activityModal, #popDock, #ptr),
   html[data-theme="light"].settings-active :is(#sheet, #popDock, #ptr),
@@ -2749,6 +2749,75 @@
     border: 1px solid var(--border-2); border-radius: var(--r-pill); background: transparent;
     color: var(--text); font-family: inherit; font-size: var(--fs-sm); font-weight: var(--fw-bold); cursor: pointer; }
   .settings-change:hover { background: var(--card-2); }
+  /* Category privacy. Busy and offline states dim the switch rather than hide it,
+     so the current choice is always readable. */
+  .settings-choice.busy { opacity: .7; }
+  .settings-choice button:disabled { cursor: not-allowed; color: var(--muted-2); }
+  .settings-choice button.on:disabled { background: var(--border-2); color: var(--muted); }
+  .privacy-group > .settings-copy { margin-bottom: calc(-1 * var(--sp-md)); }
+  .privacy-chal { display: flex; align-items: flex-start; gap: var(--sp-md); }
+  .privacy-dot { flex: 0 0 auto; width: 12px; height: 12px; margin-top: var(--sp-xs); border-radius: var(--r-pill); }
+  .privacy-chal-text { min-width: 0; }
+  .privacy-chal .settings-label { overflow-wrap: anywhere; }
+  .privacy-section { margin-top: var(--sp-2xl); }
+  .privacy-section .privacy-row { margin-top: var(--sp-sm); }
+  .privacy-section .settings-label { font-size: var(--fs-md); }
+  .privacy-err { margin-top: var(--sp-md); }
+
+  /* What's new. The notes scroll; the actions never do. The dialog is capped to
+     the visible viewport and the footer hairline only appears when something
+     is actually scrolled under it. */
+  #whatsNewModal, #whatsNewPage { color: var(--text); }
+  .modal.wn { padding: 0; overflow: hidden; display: flex; flex-direction: column; text-align: left;
+    max-height: calc(100dvh - var(--sat, 0px) - var(--sab, 0px) - 2 * var(--sheet-pad)); }
+  .wn-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: var(--sp-xl) var(--sp-xl) var(--sp-3xl); }
+  .wn-body:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: var(--r-xl); }
+  .wn-foot { flex: 0 0 auto; padding: var(--sp-lg) var(--sp-xl) var(--sp-sm); border-top: 1px solid transparent; display: flex; flex-direction: column; }
+  .wn-foot.overflowing { border-top-color: var(--border); }
+  .wn-foot .mbtn { width: 100%; }
+  .wn .mbtn.primary { color: var(--on-accent); }
+  .wn .mbtn.primary:hover { background: var(--accent-hover); }
+  .wn .mbtn.primary:active { background: var(--accent-pressed); }
+  .wn-all { display: block; margin: var(--sp-sm) auto 0; min-height: 44px; padding: 0 var(--sp-xl); border: none; background: none;
+    color: var(--muted); font-family: inherit; font-size: var(--fs-sm); font-weight: var(--fw-bold); cursor: pointer; border-radius: var(--r-pill); }
+  .wn-all:hover { color: var(--text); }
+  .wn-hero { position: relative; overflow: hidden; background: var(--pa); color: var(--pa-ink);
+    border-radius: var(--r-xl); padding: var(--sp-4xl) var(--sp-3xl) var(--sp-3xl); min-height: 132px;
+    display: flex; flex-direction: column; justify-content: flex-end; gap: var(--sp-sm); }
+  .wn-wm { position: absolute; right: calc(-1 * var(--sp-md)); top: calc(-1 * var(--sp-xl)); font-size: 96px;
+    font-weight: var(--fw-black); letter-spacing: var(--ls-tighter); line-height: var(--lh-none);
+    font-variant-numeric: tabular-nums; opacity: .14; pointer-events: none; }
+  .wn-kicker { position: relative; font-size: var(--fs-2xs); font-weight: var(--fw-bold); text-transform: uppercase; letter-spacing: var(--ls-caps); }
+  .wn-title { position: relative; margin: 0; font-size: var(--fs-3xl); font-weight: var(--fw-black); letter-spacing: var(--ls-tight); line-height: var(--lh-tight); overflow-wrap: anywhere; }
+  .wn-list { list-style: none; margin: var(--sp-3xl) 0 0; padding: 0 var(--sp-sm); display: flex; flex-direction: column; gap: var(--sp-2xl); }
+  .wn-list li { display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: var(--sp-lg); align-items: start; }
+  .wn-list b { display: block; font-size: var(--fs-md); font-weight: var(--fw-bold); color: var(--text); line-height: var(--lh-snug); }
+  .wn-list li > span:last-child > span { display: block; margin-top: var(--sp-2xs); font-size: var(--fs-sm); color: var(--muted); line-height: var(--lh-normal); }
+  .wn-mark { width: 36px; height: 36px; border-radius: var(--r-pill); background: var(--pa); color: var(--pa-ink); display: inline-flex; align-items: center; justify-content: center; }
+  .wn-mark .ic { width: 18px; height: 18px; }
+  .wn-dots { display: inline-flex; }
+  .wn-dots i { width: 12px; height: 12px; border-radius: var(--r-pill); border: 2px solid var(--pa-ink); }
+  .wn-dots i + i { margin-left: calc(-1 * var(--sp-2xs)); background: var(--pa-ink); }
+  .wn-small { margin: var(--sp-xl) var(--sp-sm) 0; }
+  .wn-small ul { margin: 0; padding-left: var(--sp-2xl); color: var(--muted); font-size: var(--fs-sm); line-height: var(--lh-normal); }
+  .wn-small li + li { margin-top: var(--sp-xs); }
+  /* The page is the same overlay machinery at full bleed, so Back, Escape and
+     focus return behave exactly like every other layer. */
+  .modal-overlay.wn-page-overlay { padding: 0; background: var(--welcome-bg); backdrop-filter: none; }
+  .modal.wn-page { max-width: var(--frame-w); min-height: 100%; margin: 0 auto; border: none; border-radius: 0; box-shadow: none;
+    background: var(--welcome-bg); transform: none; text-align: left;
+    padding: calc(var(--sat) + var(--sp-xl)) calc(var(--sheet-pad) + var(--sar)) calc(var(--sab) + var(--sp-5xl)) calc(var(--sheet-pad) + var(--sal)); }
+  .wn-pagehead { display: flex; align-items: center; gap: var(--sp-lg); margin-bottom: var(--sp-3xl); }
+  .wn-pagehead h1 { margin: 0; font-size: var(--fs-2xl); font-weight: var(--fw-bold); letter-spacing: var(--ls-tight); }
+  .wn-entry + .wn-entry { margin-top: var(--sp-5xl); }
+  .wn-meta { font-size: var(--fs-2xs); font-weight: var(--fw-bold); text-transform: uppercase; letter-spacing: var(--ls-caps); color: var(--muted); margin-bottom: var(--sp-md); }
+  .wn-plain { margin: 0 0 var(--sp-md); font-size: var(--fs-xl); font-weight: var(--fw-bold); }
+  .wn-hero.wn-hero-sm { min-height: 96px; padding: var(--sp-3xl); }
+  .wn-hero-sm .wn-wm { font-size: 72px; }
+  .wn-page .wn-list { padding: 0; }
+  .wn-page .wn-small { margin-left: 0; margin-right: 0; }
+  .wn-end { margin: var(--sp-5xl) 0 var(--sp-3xl); color: var(--muted); font-size: var(--fs-sm); line-height: var(--lh-normal); }
+  :is(#whatsNewModal, #whatsNewPage) button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
   #nameModal { color: var(--text); }
   #nameModal input { min-height: 48px; border-color: var(--field-edge); caret-color: var(--accent); }
   #nameModal .mbtn.primary { color: var(--on-accent); }
@@ -2809,6 +2878,14 @@
   .mg-chev .ic, .lb-chev .ic { width: 15px; height: 15px; display: block; }
   /* These two carried a text glyph before, sized by font-size. */
   .mg-chev, .lb-chev { display: inline-flex; align-items: center; }
+  /* Hidden categories: the lock takes the chevron's slot, so the row keeps its
+     shape and simply has nothing to open. Your own lock sits by your name. */
+  .lb-person.lb-private .lb-head { cursor: default; }
+  .lb-private-lock, .lb-own-lock { color: var(--muted); display: inline-flex; align-items: center; justify-content: center; }
+  .lb-chev.lb-private-lock { width: 15px; }
+  .lb-chev.lb-private-lock .ic { width: 15px; height: 15px; }
+  .lb-own-lock { margin-left: var(--sp-sm); vertical-align: -1px; }
+  .lb-own-lock .ic { width: 13px; height: 13px; display: block; }
   .activity-home { margin: 0; }
   .activity-home > .slabel { margin: 0; }
   .activity-home > .activity-note, .activity-home > .activity-goal-error { padding-inline: var(--sp-3xl); }
@@ -3317,16 +3394,17 @@
               <div class="blank" x-html="$store.s.board.empty"></div>
             </template>
             <template x-for="p in $store.s.board.rows" :key="p.uid">
-              <div class="lb-person" :class="{ me: p.me, open: p.open }">
+              <div class="lb-person" :class="{ me: p.me, open: p.open, 'lb-private': p.private }">
                 <button type="button" class="lb-head" :disabled="!p.hasDetail"
                         @click="p.hasDetail && $store.s.act.togglePerson(p.uid)">
                   <span class="lb-left">
-                    <span class="lb-name"><span class="lb-rank" x-text="p.rank"></span><span x-text="p.name"></span></span>
+                    <span class="lb-name"><span class="lb-rank" x-text="p.rank"></span><span x-text="p.name"></span><template x-if="p.ownLock"><span class="lb-own-lock"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg><span class="sr-only">, your categories are hidden from others</span></span></template></span>
                     <span class="cat-track cat-line"><span class="cat-fill" :style="'width:' + p.pct + ';background:' + p.color"></span></span>
                   </span>
                   <span class="lb-right">
                     <span class="lb-total" x-text="p.mins"></span>
-                    <span class="lb-chev" :class="{ off: !p.hasDetail }"><svg class="ic" aria-hidden="true"><use href="#i-caret-right"/></svg></span>
+                    <template x-if="p.private"><span class="lb-chev lb-private-lock"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg><span class="sr-only">Categories hidden</span></span></template>
+                    <template x-if="!p.private"><span class="lb-chev" :class="{ off: !p.hasDetail }"><svg class="ic" aria-hidden="true"><use href="#i-caret-right"/></svg></span></template>
                   </span>
                 </button>
                 <div class="lb-body">
@@ -3471,7 +3549,37 @@
           </div>
         </div>
       </div>
+      <div class="settings-preferences privacy-group" x-show="$store.s.privacy.rows.length">
+        <div class="settings-copy">
+          <span class="settings-label" id="privacyGroupLabel">Category privacy</span>
+          <span class="settings-hint" id="privacyGroupHint" x-text="$store.s.privacy.hint">Hidden means only you see what you logged. Everyone still sees your minutes.</span>
+        </div>
+        <template x-for="(row, i) in $store.s.privacy.rows" :key="row.cid">
+          <div class="settings-row privacy-row">
+            <span class="settings-copy privacy-chal">
+              <i class="privacy-dot" :style="'background:' + row.pastel" aria-hidden="true"></i>
+              <span class="privacy-chal-text">
+                <span class="settings-label" :id="'privacyLbl' + i" x-text="row.name"></span>
+                <span class="settings-hint" :id="'privacyHint' + i" aria-live="polite"
+                      :class="{ 'settings-error': !!row.err }" x-show="row.busy || row.err" x-text="row.err || row.hint"></span>
+              </span>
+            </span>
+            <div class="settings-choice" :class="{ busy: row.busy }" role="group" :aria-labelledby="'privacyLbl' + i"
+                 :aria-describedby="'privacyGroupHint privacyHint' + i" :aria-busy="row.busy ? 'true' : 'false'">
+              <button type="button" :class="{ on: !row.hidden }" :aria-pressed="!row.hidden ? 'true' : 'false'"
+                      :disabled="row.disabled" @click="$store.s.act.setCategoryPrivacy(row.cid, false)">Shared</button>
+              <button type="button" :class="{ on: row.hidden }" :aria-pressed="row.hidden ? 'true' : 'false'"
+                      :disabled="row.disabled" @click="$store.s.act.setCategoryPrivacy(row.cid, true)">Hidden</button>
+            </div>
+          </div>
+        </template>
+      </div>
       <div class="settings-actions">
+        <button type="button" class="settings-admin" id="youWhatsNew" @click="$store.s.act.openWhatsNew('page')">
+          <span class="settings-copy"><span class="settings-label">What&rsquo;s new</span>
+          <span class="settings-hint" x-text="$store.s.whatsNewModel.hint"></span></span>
+          <svg class="ic" aria-hidden="true"><use href="#i-caret-right"/></svg>
+        </button>
         <button type="button" class="settings-admin" id="youBackoffice" x-show="$store.s.you.canAdmin">
           <span class="settings-copy"><span class="settings-label">Backoffice</span>
           <span class="settings-hint">Manage challenges and members</span></span>
@@ -3773,6 +3881,67 @@
       </div>
     </div>
   </div>
+  <!-- WHAT'S NEW. The popup appears once per notable update for people who were
+       already here; the page keeps every update. Both read whatsNewModel. -->
+  <div class="modal-overlay" id="whatsNewModal" :class="{ show: $store.s.whatsNew === 'popup' }"
+       x-effect="$store.s.signedIn && $store.s.rev > 0 && $store.s.act.maybeWhatsNew()"
+       @click.self="$store.s.act.closeWhatsNew()">
+    <div class="modal wn" role="dialog" aria-modal="true" aria-labelledby="wnTitle">
+      <div class="wn-body" tabindex="0" aria-label="Release notes" x-effect="$store.s.whatsNew; $store.s.act.syncWhatsNewEdge($el)"
+           @scroll.passive="$store.s.act.syncWhatsNewEdge($el)">
+        <div class="wn-hero" :style="'--pa:var(--pa-' + $store.s.whatsNewModel.latest.colour + ')'">
+          <span class="wn-wm" aria-hidden="true" x-text="$store.s.whatsNewModel.latest.version"></span>
+          <span class="wn-kicker" x-text="'What\u2019s new \u00b7 ' + $store.s.whatsNewModel.latest.version"></span>
+          <h2 class="wn-title" id="wnTitle" x-text="$store.s.whatsNewModel.latest.title"></h2>
+        </div>
+        <ul class="wn-list">
+          <template x-for="n in $store.s.whatsNewModel.latest.notes" :key="n.title">
+            <li><span class="wn-mark" :style="'--pa:var(--pa-' + n.colour + ')'" aria-hidden="true" x-html="n.mark"></span>
+              <span><b x-text="n.title"></b><span x-text="n.text"></span></span></li>
+          </template>
+        </ul>
+        <div class="wn-small" x-show="$store.s.whatsNewModel.latest.small.length">
+          <div class="mg-section-h">And some small stuff</div>
+          <ul><template x-for="s in $store.s.whatsNewModel.latest.small" :key="s"><li x-text="s"></li></template></ul>
+        </div>
+      </div>
+      <div class="wn-foot">
+        <button type="button" class="mbtn primary" id="wnNice" data-modal-focus @click="$store.s.act.closeWhatsNew()">Nice</button>
+        <button type="button" class="wn-all" id="wnAll" @click="$store.s.act.openWhatsNew('page')">See all updates</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-overlay wn-page-overlay" id="whatsNewPage" :class="{ show: $store.s.whatsNew === 'page' }">
+    <div class="modal wn-page" role="dialog" aria-modal="true" aria-labelledby="wnPageTitle">
+      <div class="wn-pagehead">
+        <button type="button" class="rh-back" id="wnBack" aria-label="Back" data-modal-focus @click="$store.s.act.closeWhatsNew()"><svg class="ic" aria-hidden="true"><use href="#i-caret-left"/></svg></button>
+        <h1 id="wnPageTitle">What&rsquo;s new</h1>
+      </div>
+      <template x-for="r in $store.s.whatsNewModel.releases" :key="r.version">
+        <section class="wn-entry">
+          <div class="wn-meta" x-text="r.version + ' \u00b7 ' + r.month"></div>
+          <template x-if="r.title">
+            <div class="wn-hero wn-hero-sm" :style="'--pa:var(--pa-' + r.colour + ')'">
+              <span class="wn-wm" aria-hidden="true" x-text="r.version"></span>
+              <h2 class="wn-title" x-text="r.title"></h2>
+            </div>
+          </template>
+          <template x-if="!r.title"><h2 class="wn-plain">Small stuff</h2></template>
+          <ul class="wn-list" x-show="r.notes.length">
+            <template x-for="n in r.notes" :key="n.title">
+              <li><span class="wn-mark" :style="'--pa:var(--pa-' + n.colour + ')'" aria-hidden="true" x-html="n.mark"></span>
+                <span><b x-text="n.title"></b><span x-text="n.text"></span></span></li>
+            </template>
+          </ul>
+          <div class="wn-small" x-show="r.small.length">
+            <div class="mg-section-h" x-show="r.title">And some small stuff</div>
+            <ul><template x-for="s in r.small" :key="s"><li x-text="s"></li></template></ul>
+          </div>
+        </section>
+      </template>
+      <p class="wn-end">That&rsquo;s where the story starts. Earlier updates were too boring to write down.</p>
+    </div>
+  </div>
   <!-- BACKOFFICE (global admins) -->
   <div class="backoffice" id="backofficeView">
     <div class="bo-topbar">
@@ -3923,6 +4092,27 @@
         <template x-if="$store.s.manage.nothingToDo">
           <div class="blank blank--sm" x-text="$store.s.manage.nothingNote"></div>
         </template>
+
+        <!-- Your own switch, separate from anything that administers others. -->
+        <template x-if="$store.s.manage.privacy">
+          <div class="privacy-section">
+            <div class="mg-section-h">Your privacy</div>
+            <div class="settings-row privacy-row">
+              <span class="settings-copy">
+                <span class="settings-label" id="managePrivacyLabel">Categories</span>
+                <span class="settings-hint" id="managePrivacyHint" aria-live="polite" x-text="$store.s.manage.privacy.hint"></span>
+              </span>
+              <div class="settings-choice" :class="{ busy: $store.s.manage.privacy.busy }" role="group"
+                   aria-labelledby="managePrivacyLabel" aria-describedby="managePrivacyHint" :aria-busy="$store.s.manage.privacy.busy ? 'true' : 'false'">
+                <button type="button" :class="{ on: !$store.s.manage.privacy.hidden }" :aria-pressed="!$store.s.manage.privacy.hidden ? 'true' : 'false'"
+                        :disabled="$store.s.manage.privacy.disabled" @click="$store.s.act.setCategoryPrivacy($store.s.manage.cid, false)">Shared</button>
+                <button type="button" :class="{ on: $store.s.manage.privacy.hidden }" :aria-pressed="$store.s.manage.privacy.hidden ? 'true' : 'false'"
+                        :disabled="$store.s.manage.privacy.disabled" @click="$store.s.act.setCategoryPrivacy($store.s.manage.cid, true)">Hidden</button>
+              </div>
+            </div>
+            <div class="msg msg--quiet privacy-err" role="alert" x-show="$store.s.manage.privacy.err" x-text="$store.s.manage.privacy.err"></div>
+          </div>
+        </template>
       </div>
       <div class="msg msg--quiet" id="manageErr" aria-live="polite"></div>
       <div class="modal-actions" x-show="$store.s.manageReady && $store.s.manage.isActive && $store.s.manage.canLeave">
@@ -3954,7 +4144,7 @@
   var SESSION_KEY = "minutes_session_v3";
   var ACTIVECID_KEY = "minutes_active_cid";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
-  var VERSION = "18.3";
+  var VERSION = "18.4";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -4410,7 +4600,7 @@
       var week = key(monday(day(today)));
       return history.filter(function (change) { return change.week < week; }).concat([{ week: week, goal: goal }]);
     }
-    // ccount is the signed-in uid; ownership never depends on the display name.
+    // `account` is the signed-in uid; ownership never depends on the display name.
     function summarize(entries, account, today, history, month) {
       var now = day(today);
       if (now === null || !validHistory(history)) throw new Error("Invalid activity calendar input.");
@@ -4521,6 +4711,9 @@
   state.claimRev = 0;         // identity/claim data ticks (see the Claims module)
   state.connectionOffline = offlineNow();
   state.connectionSettled = netSettled;
+  state.privacyOp = null;     // { cid, hidden, count } while a category privacy switch runs
+  state.privacyErr = null;    // { cid, text } after one fails
+  state.whatsNew = "";        // "" | "popup" | "page"
   // Ticks only when the greeting's time-of-day bucket actually changes, so a page
   // left open overnight still reads correctly without re-rendering every minute.
   state.hourRev = 0;
@@ -4703,7 +4896,7 @@
       ? "Showing your saved view. Updates will appear when connected."
       : "Connect to load your challenges.";
     if (Store && Store.firestoreBacked === true && hubDataReady()) {
-      return Object.keys(hubErrors).some(function (key) { return key !== "discovery" && !/^(members|rounds|entries|mine):/.test(key); })
+      return Object.keys(hubErrors).some(function (key) { return key !== "discovery" && !/^(members|rounds|entries|mine|private):/.test(key); })
         ? "Some challenge details couldn't be loaded. Reload to try again." : "";
     }
     if (Object.keys(hubErrors).length) return saved
@@ -5060,12 +5253,18 @@
     // minutes as 2 and 3, contradicting the winner card above.
     var rankOfMins = {};
     arr.forEach(function (r, i) { if (!rankOfMins.hasOwnProperty(r.mins)) rankOfMins[r.mins] = i + 1; });
+    // Hidden categories: someone else's row has nothing to open (the store never
+    // received their notes anyway); my own row still opens and carries a small lock.
+    var members = membersByCid[activeCid()] || {};
     out.rows = arr.map(function (r) {
-      var pe = byPerson[r.uid] || [], ptot = r.mins || 1;
+      var me = isMe(r.uid), hidden = !!(members[r.uid] && members[r.uid].hideCategories);
+      var closed = hidden && !me;
+      var pe = closed ? [] : (byPerson[r.uid] || []), ptot = r.mins || 1;
       return {
         uid: r.uid, name: r.name, rank: rankOfMins[r.mins], mins: r.mins + " min",
-        me: isMe(r.uid), pct: Math.round((r.mins / max) * 100) + "%",
+        me: me, pct: Math.round((r.mins / max) * 100) + "%",
         color: colorFor(r.uid), hasDetail: pe.length > 0,
+        private: closed, ownLock: hidden && me,
         open: !!lbOpen[r.uid] && pe.length > 0,
         tags: catGroups(pe).map(function (g) {
           var gp = Math.round(g.mins / ptot * 100);
@@ -5191,6 +5390,33 @@
     };
   });
 
+  // Category privacy is one switch per challenge, shown in Settings and in that
+  // challenge's Manage modal. Both read this one model so they cannot disagree.
+  // While a switch is running, it shows where it is heading.
+  function privacyModel(cid) {
+    var mine = myMember(cid), op = state.privacyOp, busy = !!op && op.cid === cid;
+    var hidden = busy ? op.hidden : !!(mine && mine.hideCategories);
+    var off = state.connectionOffline;
+    var err = state.privacyErr && state.privacyErr.cid === cid ? state.privacyErr.text : "";
+    var hint = busy
+      ? (op.count == null ? (op.hidden ? "Hiding your categories\u2026" : "Sharing your categories\u2026")
+        : (op.hidden ? "Hiding " : "Sharing ") + op.count + (op.count === 1 ? " entry\u2026" : " entries\u2026"))
+      : off ? "Needs a connection. Nothing has changed."
+        : hidden ? "Only you see what you logged. Not owners, not admins."
+          : "Everyone in this challenge sees what you logged.";
+    return { cid: cid, name: challName(cid), pastel: challPastel(cid), hidden: hidden, busy: busy,
+             disabled: busy || off || !!op, hint: hint, err: err };
+  }
+  view("privacy", function () {
+    this.rev; this.me; this.privacyOp; this.privacyErr; this.connectionOffline;
+    var rows = Object.keys(challMeta).filter(function (c) { return myStatus(c) === "approved"; })
+      .sort(function (a, b) { return challName(a).localeCompare(challName(b)); })
+      .map(privacyModel);
+    return { rows: rows, offline: state.connectionOffline,
+             hint: state.connectionOffline ? "Needs a connection to change. Nothing has changed."
+               : "Hidden means only you see what you logged. Everyone still sees your minutes." };
+  });
+
   view("participantEditor", function () {
     this.rev; this.viewMonth; this.me; this.activeCid;
     var key = monthKeyOf(state.viewMonth);
@@ -5298,10 +5524,11 @@
   });
 
   view("manage", function () {
-    this.rev; this.me; this.manageCid;
+    this.rev; this.me; this.manageCid; this.privacyOp; this.privacyErr; this.connectionOffline;
     var cid = state.manageCid || manageCid;
-    if (!cid)     return { cid: "", pastel: "", color: "", title: "Manage", canRename: false, canAdminister: false, pendingTitle: "Pending requests", pending: [], membersTitle: "Members", members: [], noPending: true, noMembers: true };
+    if (!cid)     return { cid: "", pastel: "", color: "", title: "Manage", canRename: false, canAdminister: false, pendingTitle: "Pending requests", pending: [], membersTitle: "Members", members: [], noPending: true, noMembers: true, privacy: null };
     var isAdm = meIsAdmin();
+    var mineHere = myMember(cid), privacy = mineHere && mineHere.status === "approved" ? privacyModel(cid) : null;
     var pend = pendingFor(cid);
     var mm = membersByCid[cid] || {};
     var ownerCount = ownersOf(cid).length;
@@ -5320,14 +5547,16 @@
       canEditRound: (isAdm || iOwn(cid)) && monthEditable(state.viewMonth),
       canLeave: !isAdm && !iOwn(cid) && roundJoinOpen(monthKeyOf(state.viewMonth))
                 && isParticipant(state.uid, monthKeyOf(state.viewMonth)),
-      // A member's whole menu is Leave. When that is unavailable the modal would
-      // be blank, so say why instead: the two reasons are that the round is
-      // locked, or that they are not in this round to begin with.
+      // A member's whole menu is Leave. When that is unavailable, say why: the
+      // two reasons are that the round is locked, or that they are not in this
+      // round to begin with. The privacy switch below does not answer that.
       nothingToDo: !(isAdm || iOwn(cid)) && !(cid === activeCid()
                    && roundJoinOpen(monthKeyOf(state.viewMonth))
                    && isParticipant(state.uid, monthKeyOf(state.viewMonth))),
+      privacy: privacy,
       nothingNote: !isParticipant(state.uid, monthKeyOf(state.viewMonth))
-                   ? "You're not in this round, so there's nothing to change here."
+                   ? (privacy ? "You're not in this round, so there's nothing to leave."
+                              : "You're not in this round, so there's nothing to change here.")
                    : "This round is locked, so you can't leave it now.",
       roundName: state.viewMonth.toLocaleString(undefined, { month: "long" }),
       pendingTitle: "Pending requests" + (pend.length ? " · " + pend.length : ""), noPending: !pend.length,
@@ -5363,6 +5592,32 @@
     celebrate: function (el) { launchConfetti(el, "full"); },
     joinTile: function () { toggleSelfParticipation(); },
     leaveRound: function () { toggleSelfParticipation(); },
+    // Live only, and one switch at a time: it rewrites every entry of yours in
+    // that challenge, so a second tap mid-way would only race the first.
+    setCategoryPrivacy: function (cid, hidden) {
+      var mine = myMember(cid);
+      hidden = !!hidden;
+      if (!mine || state.privacyOp || !!mine.hideCategories === hidden) return;
+      state.privacyErr = null;
+      state.privacyOp = { cid: cid, hidden: hidden, count: null };
+      Promise.resolve().then(function () {
+        return Store.setCategoryPrivacy(cid, hidden, function (count) {
+          if (state.privacyOp && state.privacyOp.cid === cid) state.privacyOp = { cid: cid, hidden: hidden, count: count };
+        });
+      }).then(function () {
+        state.privacyOp = null;
+        bump();
+      }, function (error) {
+        var text = error && error.partial
+          ? "Couldn\u2019t finish. Minutes will tidy up next time you\u2019re online."
+          : (error && /connection/i.test(error.message || "")) ? "Needs a connection. Nothing has changed."
+            : hidden ? "Couldn\u2019t hide your categories. Nothing changed. Try again."
+              : "Couldn\u2019t share your categories. Nothing changed. Try again.";
+        state.privacyOp = null;
+        state.privacyErr = { cid: cid, text: text };
+        bump();
+      });
+    },
     setRange: function (r) { state.lbTouched = true; state.lbRange = r; },
     togglePerson: function (id) { lbOpen[id] = !lbOpen[id]; state.lbOpenRev++; },
     toggleLegend: function (id) { state.hidden[id] = !state.hidden[id]; state.hiddenRev++; renderChart(); },
@@ -6056,6 +6311,7 @@
     state.activityGoalNotice = "";
     state.me = null;
     state.uid = null;
+    state.whatsNew = "";
     localStorage.removeItem(SESSION_KEY);
     clearRoute();                       // and does not inherit this one's challenge in the URL
     closeBackoffice();
@@ -9502,6 +9758,10 @@
     var catalogIds = {}, pendingPages = false, generation = 0, accountDirectory = null, adminPending = {};
     var notifyQueued = false, renderTimer = null, scopeTimer = null;
     var cardObserver = null, cardIds = new WeakMap(), visibleCards = {}, metadataKeys = {}, historyStarted = false, logTargetCids = {};
+    // Hidden categories: cid -> { entryId: note } from the caller's own private
+    // document. Only this account can read it; others see the entry's empty note.
+    var privateNotes = {}, privacyBusy = {}, privacyHealed = {};
+    var PRIVACY_CHUNK = 400, PRIVACY_HEAL_MS = 60000;
     state.discoverMore = false;
     state.discoverLoading = false;
     state.discoverError = "";
@@ -9631,6 +9891,7 @@
       cardIds = new WeakMap(); visibleCards = {}; metadataKeys = {}; historyStarted = false; logTargetCids = {};
       Object.keys(listeners).forEach(stop);
       buckets = {}; own = {}; profiles = {}; denied = {}; profile = null;
+      privateNotes = {}; privacyBusy = {}; privacyHealed = {};
       catalogIds = {}; pageCursor = null; accountDirectory = null; adminPending = {};
       membershipReady = false; catalogReady = false; pendingPages = false;
       state.discoverMore = false; state.discoverLoading = false; state.discoverError = "";
@@ -9716,8 +9977,9 @@
     function clearChallenge(cid) {
       Object.keys(listeners).forEach(function (key) {
         if (key === "members:" + cid || key === "rounds:" + cid ||
-            key === "mine:" + cid || key.indexOf("entries:" + cid + ":") === 0) stop(key);
+            key === "mine:" + cid || key === "private:" + cid || key.indexOf("entries:" + cid + ":") === 0) stop(key);
       });
+      delete privateNotes[cid];
       membersByCid[cid] = administrator() && adminPending[cid] ? Object.assign({}, adminPending[cid]) : {};
       if (own[cid] && !denied[cid]) membersByCid[cid][own[cid].uid] = own[cid];
       roundsByCid[cid] = {};
@@ -9763,6 +10025,13 @@
         return (a.indexOf("mine:") === 0 ? 0 : 1) - (b.indexOf("mine:") === 0 ? 0 : 1);
       }).forEach(function (key) {
         buckets[key].forEach(function (entry) { merged[entry.cid + "/" + entry.id] = entry; });
+      });
+      var me = signedUid();
+      Object.keys(merged).forEach(function (key) {
+        var entry = merged[key], notes = privateNotes[entry.cid];
+        if (entry.uid === me && notes && typeof notes[entry.id] === "string" && notes[entry.id] && !entry.note) {
+          merged[key] = Object.assign({}, entry, { note: notes[entry.id] });
+        }
       });
       entriesAll = Object.keys(merged).map(function (key) { return merged[key]; });
       state.entries = entriesAll.filter(function (entry) { return entry.cid === activeCid(); });
@@ -9858,6 +10127,19 @@
           });
         }
       });
+      Object.keys(allowed).forEach(function (cid) {
+        if (!own[cid] || own[cid].status !== "approved") return;
+        // Only hidden challenges and the open one: a listener per challenge
+        // would crowd the SDK queue for members of many challenges.
+        if (!hidesCategories(cid) && cid !== activeCid() && cid !== state.manageCid) return;
+        var key = "private:" + cid;
+        desired[key] = true;
+        watch(key, reference("challenges", cid, "privateNotes", signedUid()), function (snapshot) {
+          privateNotes[cid] = snapshot.exists() ? (snapshot.data().notes || {}) : null;
+          publishEntries();
+          healPrivacySoon(cid);
+        });
+      });
       // Bound initial history reads so cached reloads cannot flood the SDK's query queue.
       var historyInFlight = Object.keys(listeners).filter(function (key) {
         return key.indexOf("mine:") === 0 && !listeners[key].serverReady && !listeners[key].failed;
@@ -9870,10 +10152,11 @@
         if (navigator.onLine !== false && historyInFlight >= HISTORY_CONCURRENCY) return;
         historyInFlight++;
         watch(key, fb.query(collection("challenges", cid, "entries"), fb.where("uid", "==", signedUid())),
-          function (snapshot) { entrySnapshot(key, cid, snapshot); });
+          function (snapshot) { entrySnapshot(key, cid, snapshot); healPrivacySoon(cid); });
       });
       Object.keys(listeners).forEach(function (key) {
-        if (/^(members|rounds|mine|entries):/.test(key) && !desired[key]) {
+        if (/^(members|rounds|mine|entries|private):/.test(key) && !desired[key]) {
+          if (key.indexOf("private:") === 0) delete privateNotes[key.split(":")[1]];
           var cid = key.split(":")[1];
           stop(key);
           if (key.indexOf("members:") === 0) {
@@ -10004,6 +10287,10 @@
             // still name them; a declined request leaves nothing behind.
             if (!data && before) data = { handle: current.handle, role: "member", status: "left", ts: current.ts };
             var after = data && data.status === "approved" ? 1 : 0;
+            // Category privacy is the member's own choice; a managed rewrite keeps it.
+            if (data) data = Object.assign({}, data);
+            if (data) delete data.hideCategories;
+            if (data && current && current.hideCategories === true) data.hideCategories = true;
             if (data) transaction.set(memberRef, Object.assign({}, data, { uid: memberUid, cid: cid }));
             else if (current) transaction.delete(memberRef);
             if (after !== before) transaction.update(challengeRef, {
@@ -10012,6 +10299,80 @@
           });
         });
       });
+    }
+    // Category privacy. A hidden member's entries keep an empty public note and
+    // the real one sits in privateNotes/{uid}, written in the same batch so an
+    // offline entry still queues as one unit.
+    function hidesCategories(cid) { return !!own[cid] && own[cid].hideCategories === true; }
+    function privateRef(cid) { return reference("challenges", cid, "privateNotes", signedUid()); }
+    function privateNote(cid, id, note) {
+      var notes = {}; notes[id] = note ? note : fb.deleteField();
+      return { uid: signedUid(), notes: notes };
+    }
+    function ownsWrite(entry) { return !entry.uid || entry.uid === signedUid(); }
+    function writeEntry(cid, id, payload, done) {
+      var ref = reference("challenges", cid, "entries", id);
+      var keeps = privateNotes[cid] && typeof privateNotes[cid][id] === "string";
+      if (payload.uid !== signedUid() || (!hidesCategories(cid) && !keeps)) return settle(fb.setDoc(ref, payload), done);
+      var batch = fb.writeBatch(fb.db), note = payload.note;
+      batch.set(ref, Object.assign({}, payload, { note: hidesCategories(cid) ? "" : note }));
+      batch.set(privateRef(cid), privateNote(cid, id, hidesCategories(cid) ? note : ""), { merge: true });
+      return settle(batch.commit(), done);
+    }
+    function chunks(list, first) {
+      var out = [], at = 0, size = Math.max(1, first);
+      while (at < list.length || !out.length) { out.push(list.slice(at, at + size)); at += size; size = PRIVACY_CHUNK; }
+      return out;
+    }
+    // Moves every public note of the caller's entries into the private record
+    // (hide) or back out of it (share). The first batch also flips the switch,
+    // so it is all or nothing whenever the entries fit in one batch.
+    function movePrivacy(cid, hidden, rows, notes, first) {
+      var me = signedUid(), moves = [], committed = 0;
+      rows.forEach(function (row) {
+        if (hidden && row.note) moves.push({ id: row.id, note: row.note });
+        if (!hidden && !row.note && notes && notes[row.id]) moves.push({ id: row.id, note: notes[row.id] });
+      });
+      var groups = chunks(moves, PRIVACY_CHUNK - (first ? 2 : 1)), step = Promise.resolve();
+      groups.forEach(function (group, index) {
+        step = step.then(function () {
+          var batch = fb.writeBatch(fb.db);
+          if (index === 0 && first) first(batch);
+          if (hidden && group.length) {
+            var held = {};
+            group.forEach(function (move) { held[move.id] = move.note; });
+            batch.set(privateRef(cid), { uid: me, notes: held }, { merge: true });
+          }
+          group.forEach(function (move) {
+            batch.update(reference("challenges", cid, "entries", move.id), { note: hidden ? "" : move.note });
+          });
+          if (!hidden && index === groups.length - 1 && notes) batch.delete(privateRef(cid));
+          return batch.commit().then(function () { committed++; });
+        });
+      });
+      // After the first batch the switch has flipped, so a later failure is not
+      // "nothing changed"; the heal finishes it on a later visit.
+      return step.then(function () { return moves.length; }, function (error) {
+        if (committed && error && typeof error === "object") error.partial = true;
+        throw error;
+      });
+    }
+    // Heals a switch that was interrupted halfway, or an entry an older device
+    // queued with a public note, once this device has fresh server copies.
+    function healPrivacySoon(cid) {
+      var mine = listeners["mine:" + cid], held = listeners["private:" + cid];
+      if (!mine || !held || !mine.serverReady || !held.serverReady || mine.fromCache || held.fromCache) return;
+      if (privacyBusy[cid] || offlineNow() || !own[cid] || own[cid].status !== "approved" || guardWrite()) return;
+      if (Date.now() - (privacyHealed[cid] || 0) < PRIVACY_HEAL_MS) return;
+      var rows = buckets["mine:" + cid] || [], notes = privateNotes[cid], hidden = hidesCategories(cid);
+      if (rows.some(function (row) { return row._pending; })) return;
+      var stray = hidden ? rows.some(function (row) { return !!row.note; }) : !!notes;
+      if (!stray) return;
+      privacyHealed[cid] = Date.now();
+      privacyBusy[cid] = true;
+      movePrivacy(cid, hidden, rows, notes, null).catch(function (error) {
+        console.warn("Category privacy could not be reconciled:", error);
+      }).then(function () { delete privacyBusy[cid]; });
     }
     var api = {
       // Distinguishes this Firestore-backed store from the in-memory DemoStore.
@@ -10050,8 +10411,10 @@
       loginReady: personalReady,
       hubReady: personalReady,
       hubComplete: function () {
-        return catalogReady && membershipReady && !!profile && state.activityLoaded && !Object.keys(hubErrors).length &&
-          Object.keys(listeners).every(function (key) { return listeners[key].ready; });
+        // Hidden notes are the caller's own overlay; the hub never waits on them.
+        return catalogReady && membershipReady && !!profile && state.activityLoaded &&
+          !Object.keys(hubErrors).some(function (key) { return key.indexOf("private:") !== 0; }) &&
+          Object.keys(listeners).every(function (key) { return key.indexOf("private:") === 0 || listeners[key].ready; });
       },
       challengeReady: function (cid) {
         return !denied[cid] && ready("members:" + cid) && ready("rounds:" + cid);
@@ -10100,12 +10463,20 @@
         var blocked = guardWrite(); if (blocked) return blocked;
         if (!profile) return failure("Sign in before adding minutes.");
         var id = entry.id || uid(), cid = entry.cid || activeCid();
-        return settle(fb.setDoc(reference("challenges", cid, "entries", id), entryPayload(entry)), id);
+        return writeEntry(cid, id, entryPayload(entry), id);
       },
       updateEntry: function (id, fields, cid) {
         var blocked = guardWrite(); if (blocked) return blocked;
         var entry = findEntry(id, cid);
         if (!entry) return failure("The entry is not loaded. Reopen its round before editing.");
+        var keeps = privateNotes[entry.cid] && typeof privateNotes[entry.cid][id] === "string";
+        if ("note" in fields && entry.uid === signedUid() && (hidesCategories(entry.cid) || keeps)) {
+          var batch = fb.writeBatch(fb.db), hidden = hidesCategories(entry.cid);
+          batch.update(reference("challenges", entry.cid, "entries", id),
+            Object.assign({}, fields, { note: hidden ? "" : fields.note }));
+          batch.set(privateRef(entry.cid), privateNote(entry.cid, id, hidden ? fields.note : ""), { merge: true });
+          return settle(batch.commit());
+        }
         return settle(fb.updateDoc(reference("challenges", entry.cid, "entries", id), fields));
       },
       // Adding minutes to an existing entry is a server-side increment, so two
@@ -10120,6 +10491,12 @@
         var blocked = guardWrite(); if (blocked) return blocked;
         var entry = findEntry(id, cid);
         if (!entry) return failure("The entry is not loaded. Reopen its round before deleting.");
+        if (entry.uid === signedUid() && privateNotes[entry.cid] && typeof privateNotes[entry.cid][id] === "string") {
+          var batch = fb.writeBatch(fb.db);
+          batch.delete(reference("challenges", entry.cid, "entries", id));
+          batch.set(privateRef(entry.cid), privateNote(entry.cid, id, ""), { merge: true });
+          return settle(batch.commit());
+        }
         return settle(fb.deleteDoc(reference("challenges", entry.cid, "entries", id)));
       },
       // The add sheet can copy an entry into the user's other challenges, so it
@@ -10146,14 +10523,48 @@
       },
       putEntry: function (entry) {
         var blocked = guardWrite(); if (blocked) return blocked;
-        return settle(fb.setDoc(reference("challenges", entry.cid || activeCid(), "entries", entry.id), entryPayload(entry)));
+        return writeEntry(entry.cid || activeCid(), entry.id, entryPayload(entry));
       },
       requestJoin: function (cid) {
         var blocked = guardWrite(); if (blocked) return blocked;
         if (!profile) return failure("Sign in before requesting membership.");
-        return fb.setDoc(reference("challenges", cid, "members", profile.uid), {
-          uid: profile.uid, cid: cid, handle: profile.handle, role: "member", status: "pending", ts: Date.now()
-        });
+        var request = { uid: profile.uid, cid: cid, handle: profile.handle, role: "member", status: "pending", ts: Date.now() };
+        // A returning member's privacy choice stays theirs; the rules refuse dropping it.
+        if (own[cid] && own[cid].hideCategories === true) request.hideCategories = true;
+        return fb.setDoc(reference("challenges", cid, "members", profile.uid), request);
+      },
+      // Live only: every entry the caller ever logged here moves in one go, and
+      // a half-applied switch is healed by the next fresh load.
+      setCategoryPrivacy: function (cid, hidden, onCount) {
+        var blocked = guardWrite(); if (blocked) return blocked;
+        hidden = !!hidden;
+        if (offlineNow()) return failure("Needs a connection. Nothing has changed.");
+        if (!own[cid] || own[cid].status !== "approved") return failure("Join this challenge first.");
+        if (privacyBusy[cid]) return failure("Still switching. Give it a moment.");
+        var me = signedUid();
+        privacyBusy[cid] = true;
+        return Promise.all([
+          fb.getDocs(fb.query(collection("challenges", cid, "entries"), fb.where("uid", "==", me))),
+          fb.getDoc(privateRef(cid))
+        ]).then(function (results) {
+          var rows = results[0].docs.map(function (document) {
+            return { id: document.id, note: document.data().note || "" };
+          });
+          var notes = results[1].exists() ? (results[1].data().notes || {}) : null;
+          if (onCount) onCount(hidden ? rows.filter(function (row) { return row.note; }).length
+            : rows.filter(function (row) { return !row.note && notes && notes[row.id]; }).length);
+          return movePrivacy(cid, hidden, rows, notes, function (batch) {
+            batch.update(reference("challenges", cid, "members", me), { hideCategories: hidden });
+          });
+        }).then(function (moved) {
+          if (own[cid]) own[cid] = Object.assign({}, own[cid], { hideCategories: hidden });
+          if (membersByCid[cid] && membersByCid[cid][me]) {
+            membersByCid[cid][me] = Object.assign({}, membersByCid[cid][me], { hideCategories: hidden });
+          }
+          privacyHealed[cid] = Date.now();
+          renderSoon();
+          return moved;
+        }).finally(function () { delete privacyBusy[cid]; });
       },
       setMember: changeMember,
       removeMember: function (cid, memberUid) { return changeMember(cid, memberUid, null); },
@@ -10316,6 +10727,7 @@
     setAccountRole: notConnected,
     saveRound: notConnected,
     requestJoin: notConnected,
+    setCategoryPrivacy: notConnected,
     setMember: notConnected,
     removeMember: notConnected,
     createChallenge: notConnected,
@@ -10408,7 +10820,7 @@
         mk("Owner", "owner", "approved", 1),      // 2 owners -> last-owner guard not tripped
         mk("Admin", "member", "approved", 2),
         mk("User", "member", "approved", 3),
-        mk("Rookie", "member", "approved", 4),
+        Object.assign(mk("Rookie", "member", "approved", 4), { hideCategories: true }), // shows the leaderboard lock
         mk("Pending", "member", "pending", 5)     // shows approval flow + cog/tab badge
       ]);
       membersByCid["sidequest"] = memberMap("sidequest", [
@@ -10580,13 +10992,27 @@
         refreshCid();
         return Promise.resolve();
       },
+      // Same contract as Firestore: live only, the member's own switch.
+      setCategoryPrivacy: function (cid, hidden, onCount) {
+        var blocked = guardWrite(); if (blocked) return blocked;
+        if (offlineNow()) return reject("Needs a connection. Nothing has changed.");
+        var member = (membersByCid[cid] || {})[state.uid];
+        if (!member || member.status !== "approved") return reject("Join this challenge first.");
+        var count = entriesAll.filter(function (e) { return e.cid === cid && e.uid === state.uid && e.note; }).length;
+        if (onCount) onCount(count);
+        membersByCid[cid][state.uid] = Object.assign({}, member, { hideCategories: !!hidden });
+        refreshCid();
+        return Promise.resolve(count);
+      },
       setMember: function (cid, memberUid, data) {
         var blocked = guardWrite(); if (blocked) return blocked;
         var v = data || {};
         var handle = v.handle || demoHandleOf(memberUid);
         if (!memberUid || handle !== demoHandleOf(memberUid)) return reject("A member's name must match their account.");
         membersByCid[cid] = membersByCid[cid] || {};
+        var before = membersByCid[cid][memberUid];
         membersByCid[cid][memberUid] = { uid: memberUid, cid: cid, handle: handle, role: v.role || "member", status: v.status || "approved", ts: v.ts || 0 };
+        if (before && before.hideCategories === true) membersByCid[cid][memberUid].hideCategories = true;
         refreshCid();
         return Promise.resolve();
       },
@@ -11005,6 +11431,109 @@
 
   function renderYou() { bump(); syncAppearance(); }
 
+  // ---- What's new ----
+  // Newest first. Only releases with a title earn the popup; small-only ones
+  // wait quietly on the page. Marks are fixed markup, never user text.
+  var WN_SEEN_KEY = "minutes_whatsnew_seen";
+  function wnIcon(id) { return '<svg class="ic" aria-hidden="true"><use href="#i-' + id + '"/></svg>'; }
+  var WHATS_NEW = [{
+    version: "18.4", month: "October 2026", colour: "lilac", title: "New look, same you.",
+    notes: [
+      { colour: "lime", mark: wnIcon("lock"), title: "Your categories, your business.",
+        text: "Hide what you logged in any challenge. Everyone sees the minutes, not the \u201cnaps\u201d." },
+      { colour: "mint", mark: wnIcon("pencil"), title: "Call yourself whatever.",
+        text: "Change your name in Settings. Your minutes come along; nobody has to update their contacts." },
+      { colour: "pink", mark: wnIcon("plus"), title: "Log once, count everywhere.",
+        text: "Add minutes to several challenges in one go. One walk, three leaderboards, zero d\u00e9j\u00e0 vu." },
+      { colour: "coral", mark: '<span class="wn-dots"><i></i><i></i></span>', title: "Two Marias, two colours.",
+        text: "Colours now follow accounts, not names. Some of you changed colour. You\u2019ll get over it." }
+    ],
+    small: [
+      "Logging late at night no longer gets turned away because the server thinks it\u2019s still yesterday.",
+      "Two phones logging at once no longer eat each other\u2019s minutes.",
+      "Your best day is now your best day, not your longest single session.",
+      "Name taken? You\u2019ll hear it right away instead of waiting for an admin.",
+      "The goal menu stopped closing itself whenever the page scrolled a beat late.",
+      "Fixed a typo nobody noticed except us. It haunted us."
+    ]
+  }];
+  function wnNotable() {
+    for (var i = 0; i < WHATS_NEW.length; i++) if (WHATS_NEW[i].title) return WHATS_NEW[i].version;
+    return "";
+  }
+  function wnNewer(a, b) {
+    var x = String(a || "0").split("."), y = String(b || "0").split(".");
+    for (var i = 0; i < Math.max(x.length, y.length); i++) {
+      var d = (Number(x[i]) || 0) - (Number(y[i]) || 0);
+      if (d) return d > 0;
+    }
+    return false;
+  }
+  // Decided once, at load, before this session writes any of the keys that
+  // betray a returning device. A device that has never signed in starts
+  // caught up: the first thing a new person sees should be the app.
+  var wnPending = (function () {
+    var latest = wnNotable();
+    try {
+      var seen = localStorage.getItem(WN_SEEN_KEY);
+      if (seen !== null) return wnNewer(latest, seen);
+      var returning = localStorage.getItem(SESSION_KEY) !== null || localStorage.getItem(WELCOME_KEY) !== null;
+      for (var i = 0; !returning && i < localStorage.length; i++) {
+        var k = localStorage.key(i) || "";
+        returning = k.indexOf("minutes_app_version") === 0 || k.indexOf("minutes-hub-v2:") === 0;
+      }
+      if (!returning) localStorage.setItem(WN_SEEN_KEY, latest);
+      return returning;
+    } catch (e) { return false; }
+  })();
+  var wnTimer = null;
+  function wnMarkSeen() {
+    wnPending = false;
+    try { localStorage.setItem(WN_SEEN_KEY, wnNotable()); } catch (e) {}
+  }
+  view("whatsNewModel", function () {
+    var latest = WHATS_NEW[0];
+    return {
+      latest: latest, releases: WHATS_NEW,
+      hint: latest.version + " \u00b7 Hide your categories, change your name"
+    };
+  });
+  state.act.openWhatsNew = function (kind) {
+    wnMarkSeen();
+    if (wnTimer) { clearTimeout(wnTimer); wnTimer = null; }
+    state.whatsNew = kind === "popup" ? "popup" : "page";
+  };
+  state.act.closeWhatsNew = function () {
+    wnMarkSeen();
+    state.whatsNew = "";
+  };
+  // The popup waits for the first data so it lands on a settled screen, and
+  // never stacks on top of something the person is already doing.
+  state.act.maybeWhatsNew = function () {
+    if (!wnPending || wnTimer) return;
+    wnTimer = setTimeout(function tryShow() {
+      wnTimer = null;
+      if (!wnPending || !state.signedIn) return;
+      if (state.updateBlocked || document.querySelector(".modal-overlay.show, #backofficeView.show, #accountMenu.show, #logPop.show")) {
+        wnTimer = setTimeout(tryShow, 1500);
+        return;
+      }
+      state.act.openWhatsNew("popup");
+    }, 600);
+  };
+  // The footer hairline only earns its place when there is more to scroll to.
+  state.act.syncWhatsNewEdge = function (body) {
+    requestAnimationFrame(function () {
+      var foot = body && body.nextElementSibling;
+      if (!foot) return;
+      foot.classList.toggle("overflowing", body.scrollHeight - body.clientHeight - body.scrollTop > 1);
+    });
+  };
+  window.addEventListener("resize", function () {
+    var body = document.querySelector("#whatsNewModal .wn-body");
+    if (body && state.whatsNew === "popup") state.act.syncWhatsNewEdge(body);
+  });
+
   function initTheme() {
     applyTheme(currentTheme(), false);
     applyLayout(currentLayout(), false);
@@ -11039,6 +11568,8 @@
     // level-1 sheet flips `l1` on #app. Ordered top-most first, so Back peels one
     // layer at a time and the sheet returns you to the hub instead of exiting.
     var layers = [
+      ["whatsNewPage", "show", state.act.closeWhatsNew],
+      ["whatsNewModal", "show", state.act.closeWhatsNew],
       ["manageModal", "show", closeManageModal],
       ["editModal", "show", hideEdit],
       ["confirmModal", "show", hideConfirm],
@@ -11121,6 +11652,8 @@
     // past this list with backofficeView and the level-1 sheet, which are views
     // rather than dialogs; the overlay prefix is identical in both.
     var layers = [
+      ["whatsNewPage", state.act.closeWhatsNew],
+      ["whatsNewModal", state.act.closeWhatsNew],
       ["manageModal", closeManageModal],
       ["editModal", hideEdit],
       ["confirmModal", hideConfirm],
@@ -11134,7 +11667,7 @@
       ["accountMenu", closeAccountMenu],
       ["backofficeView", closeBackoffice]
     ];
-    var dialogs = ["manageModal", "editModal", "confirmModal", "activityModal", "challModal", "nameModal", "addModal"];
+    var dialogs = ["whatsNewPage", "whatsNewModal", "manageModal", "editModal", "confirmModal", "activityModal", "challModal", "nameModal", "addModal"];
     var openers = {};
 
     // A pointer activation can inherit :focus-visible from the dialog's last keyboard opener.
@@ -11626,7 +12159,7 @@ ${r?'Expression: "'+r+`"
   import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
            enableNetwork, disableNetwork,
            collection, collectionGroup, onSnapshot, setDoc, updateDoc, deleteDoc, doc, getDoc, getDocs,
-           query, where, orderBy, documentId, startAfter, limit, writeBatch, runTransaction, increment } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+           query, where, orderBy, documentId, startAfter, limit, writeBatch, runTransaction, increment, deleteField } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -11746,7 +12279,7 @@ ${r?'Expression: "'+r+`"
     }
     window.__FB = { db, durable, collection, onSnapshot, setDoc, updateDoc, deleteDoc, doc, getDoc,
                     enableNetwork, disableNetwork, collectionGroup, query, where, orderBy, documentId,
-                    startAfter, limit, getDocs, writeBatch, runTransaction, increment, serverTimestamp };
+                    startAfter, limit, getDocs, writeBatch, runTransaction, increment, serverTimestamp, deleteField };
   } catch (e) {
     console.error("Firebase init failed - falling back to local storage:", e);
   }

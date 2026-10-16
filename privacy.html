@@ -576,7 +576,7 @@
   /* Shared app surfaces use the approved palette without rewriting saved preferences. */
   :root { --welcome-bg: #161615; --welcome-accent: #dfb4cf; --welcome-on-accent: #321c2c; }
   html[data-theme="light"] { --welcome-bg: #f5f4f0; --welcome-accent: #81506e; --welcome-on-accent: #ffffff; }
-  #login, #layerBase, #backofficeView, .policy-page, #nameModal,
+  #login, #layerBase, #backofficeView, .policy-page, #nameModal, #whatsNewModal, #whatsNewPage,
   html:has(#backofficeView.show) :is(.modal-overlay, #popDock, #ptr),
   html.hub-active :is(#challModal, #activityModal, #popDock, #ptr),
   html.settings-active :is(#sheet, #popDock, #ptr),
@@ -615,7 +615,7 @@
     --brand-rear: var(--accent-pressed); --brand-middle: var(--accent); --brand-front: var(--accent-hover);
     --logo-surface: var(--bg);
   }
-  html[data-theme="light"] :is(#login, #layerBase, #backofficeView, .policy-page, #nameModal),
+  html[data-theme="light"] :is(#login, #layerBase, #backofficeView, .policy-page, #nameModal, #whatsNewModal, #whatsNewPage),
   html[data-theme="light"]:has(#backofficeView.show) :is(.modal-overlay, #popDock, #ptr),
   html[data-theme="light"].hub-active :is(#challModal, #activityModal, #popDock, #ptr),
   html[data-theme="light"].settings-active :is(#sheet, #popDock, #ptr),
@@ -688,7 +688,7 @@
   <nav aria-label="Minutes"><a class="policy-back" href="./">Back to Minutes</a></nav>
   <main>
     <h1>Privacy policy</h1>
-    <p class="policy-updated">Last updated <time datetime="2026-10-13">13 October 2026</time></p>
+    <p class="policy-updated">Last updated <time datetime="2026-10-16">16 October 2026</time></p>
     <p>Minutes is a personally run project for logging time and taking part in shared challenges. This notice explains what the app uses, where information goes and how to ask for help with your data.</p>
 
     <section aria-labelledby="contact">
@@ -718,6 +718,7 @@
       <h2 id="visibility">Shared activity, not a private journal</h2>
       <p>Participant names, challenge participation, logged minutes and notes are used in shared views. Administrators can access information needed to manage the app, accounts and approval requests.</p>
       <p><strong>A challenge's activity is visible to its approved members.</strong> Its member list, monthly participants, logged minutes and notes can be seen by everyone approved in that challenge and by the app's administrators. Challenge names, colours and member counts are listed in the app so people can find and ask to join them. Do not put confidential or sensitive health information in names or notes.</p>
+      <p><strong>You can hide your categories.</strong> In each challenge you can choose to hide what you logged. Your minutes and position stay visible to the challenge; your notes and activity labels are then stored so that only your own account can read them in the app, including from the challenge's owners and the app's administrators. The service operator can still reach the underlying database and its backups.</p>
       <p>Google sign-in verifies your account; it does not, by itself, make your activity history private.</p>
     </section>
 

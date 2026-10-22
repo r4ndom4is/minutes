@@ -1793,7 +1793,7 @@
   .modal-x:hover, .modal-x:active { background: var(--border-2); }
   .modal button { font-family: inherit; }
   .modal :is(button, input):focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
-  html[data-focus-input="pointer"] :is(#layerBase .activity-overview, .modal-overlay .modal-x):focus-visible { outline: none; }
+  html[data-focus-input="pointer"] :is(#layerBase .activity-home button, .modal-overlay .modal-x):focus-visible { outline: none; }
   .modal :is(input, .dp-trigger) { min-height: 48px; }
   .modal :is(.btn, .quick button) { border-radius: var(--r-pill); }
   .modal .btn { min-height: 48px; }
@@ -2889,10 +2889,46 @@
   .activity-home { margin: 0; }
   .activity-home > .slabel { margin: 0; }
   .activity-home > .activity-note, .activity-home > .activity-goal-error { padding-inline: var(--sp-3xl); }
+  .activity-home { position: relative; padding-bottom: var(--sp-xl); }
   .activity-overview { display: block; width: 100%; border: 0; padding-top: var(--sp-md); padding-bottom: 0;
-    background: none; box-shadow: none; color: var(--text); text-align: left;
-    font: inherit; cursor: pointer; }
-  .activity-overview:focus-visible { outline: 3px solid var(--accent); outline-offset: 5px; }
+    background: none; box-shadow: none; color: var(--text); text-align: left; font: inherit; }
+  .activity-home .cal-nav:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .activity-verdict { display: flex; align-items: center; min-height: calc(var(--fs-4xl) * var(--lh-tight)); margin-top: var(--sp-xs); }
+  /* One 22px line for every week; fitActivityVerdict steps it down on narrow phones before any ellipsis. */
+  .activity-verdict-text { display: block; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+    font-size: var(--fs-2xl); font-weight: var(--fw-black); letter-spacing: var(--ls-tight); line-height: var(--lh-tight); }
+  .activity-foot { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-md); min-height: 44px; }
+  .activity-foot .activity-calendar-link { flex: none; min-height: 44px; padding: 0; border: 0; background: none;
+    font-family: inherit; cursor: pointer; }
+  .activity-foot .activity-calendar-link:disabled { cursor: default; color: var(--muted); }
+  .activity-foot .activity-calendar-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: var(--r-xs); }
+  /* Goal met on the week on screen: the top of home turns Mulberry. The band is painted
+     behind the greeting and activity, and the scrolling wrap clips it at the top. */
+  .base-wrap:has(.activity-home.is-met) { isolation: isolate; overflow-x: hidden; }
+  .activity-home.is-met::before { content: ""; position: absolute; z-index: -2; top: -2000px; bottom: 0;
+    left: calc(-1 * var(--sheet-pad)); right: calc(-1 * var(--sheet-pad)); background: var(--accent); pointer-events: none; }
+  html[data-depth="pop"] .activity-home.is-met::before { border-bottom: 2px solid var(--ink); }
+  .activity-wm { position: absolute; z-index: -1; top: 48px; right: calc(-1 * (var(--sheet-pad) + var(--sp-md)));
+    font-size: 180px; font-weight: var(--fw-black); letter-spacing: var(--ls-numeral); line-height: var(--lh-none);
+    color: var(--on-accent); opacity: .14; pointer-events: none; user-select: none; }
+  .base-wrap:has(.activity-home.is-met) > header h1 { color: var(--on-accent); }
+  .base-wrap:has(.activity-home.is-met) > header .sub { color: color-mix(in srgb, var(--on-accent) 78%, transparent); }
+  /* Avatars use the person's own colour, which can be Mulberry too: a ring keeps the circle visible. */
+  .base-wrap:has(.activity-home.is-met) > header #headAvatar { box-shadow: 0 0 0 2px var(--on-accent); }
+  .base-wrap:has(.activity-home.is-met) > header .head-you:focus-visible { outline-color: var(--on-accent); }
+  .activity-home.is-met :is(.activity-overview, .activity-calendar-link, .activity-day.is-today) { color: var(--on-accent); }
+  .activity-home.is-met :is(.slabel, .activity-progress small, .activity-day, .activity-note, .activity-goal-error, .activity-weekly:not(.is-streak)) {
+    color: color-mix(in srgb, var(--on-accent) 78%, transparent); }
+  .activity-home.is-met .activity-bead { background: color-mix(in srgb, var(--on-accent) 12%, transparent); color: var(--on-accent); }
+  .activity-home.is-met .activity-day.is-active .activity-bead { background: var(--on-accent); color: var(--accent); }
+  .activity-home.is-met .activity-day.is-future .activity-bead { background: none; border-color: color-mix(in srgb, var(--on-accent) 35%, transparent);
+    color: color-mix(in srgb, var(--on-accent) 78%, transparent); }
+  .activity-home.is-met .activity-day.is-today .activity-bead { outline-color: var(--on-accent); }
+  .activity-home.is-met .activity-weekly.is-streak { background: color-mix(in srgb, var(--on-accent) 12%, transparent); color: var(--on-accent); }
+  .activity-home.is-met .cal-nav { background: color-mix(in srgb, var(--on-accent) 12%, transparent); color: var(--on-accent); }
+  .activity-home.is-met .cal-nav:hover:not(:disabled) { background: color-mix(in srgb, var(--on-accent) 24%, transparent); color: var(--on-accent); }
+  .activity-home.is-met .cal-nav:disabled { background: none; color: color-mix(in srgb, var(--on-accent) 45%, transparent); }
+  .activity-home.is-met :is(.cal-nav, .activity-calendar-link):focus-visible { outline-color: var(--on-accent); }
   .activity-heading { display: flex; align-items: center;
     justify-content: space-between; gap: var(--sp-md); }
   .activity-progress { display: block; font-size: var(--fs-3xl);
@@ -3077,6 +3113,7 @@
   <div class="layer-base" id="layerBase">
     <div class="wrap base-wrap" id="baseWrap">
     <header>
+      <span class="activity-wm" aria-hidden="true" x-show="$store.s.hubActivity.show && $store.s.hubActivity.met" x-text="$store.s.hubActivity.wm"></span>
       <div class="greet">
         <div class="greet-text">
           <h1><span x-text="$store.s.hello.word"></span>, <span id="meName"
@@ -3103,12 +3140,27 @@
 
 
     <section class="tab-panel active" id="tab-challenges" :aria-busy="$store.s.hubReady ? 'false' : 'true'">
-      <section class="activity-home" x-show="$store.s.hubActivity.show" aria-labelledby="activityHomeTitle">
+      <section class="activity-home" x-show="$store.s.hubActivity.show" aria-labelledby="activityHomeTitle" :class="{ 'is-met': $store.s.hubActivity.show && $store.s.hubActivity.met }">
         <h2 class="slabel" id="activityHomeTitle">Your activity</h2>
-        <button type="button" class="activity-overview" id="activityOpen" :aria-label="$store.s.hubActivity.buttonLabel" :disabled="!$store.s.activity.known" @click="$store.s.act.openActivity()">
+        <div class="activity-overview" role="group" :aria-label="$store.s.hubActivity.page === 'last' ? 'Last week' : 'This week'">
           <span class="activity-heading">
-            <span class="activity-progress"><span x-text="$store.s.hubActivity.progress"></span> <small>days this week</small></span>
-            <span class="activity-calendar-link">Calendar <svg class="ic" aria-hidden="true"><use href="#i-caret-right"/></svg></span>
+            <span class="activity-progress"><span x-text="$store.s.hubActivity.progress"></span> <small x-text="$store.s.hubActivity.label"></small></span>
+            <span class="calendar-month-nav">
+              <button type="button" class="cal-nav" id="activityWeekPrev" :disabled="!$store.s.activity.known"
+                      :aria-label="$store.s.hubActivity.page === 'last' ? 'Older weeks: open Calendar' : 'Previous week'"
+                      @click="$store.s.hubActivity.page === 'last' ? $store.s.act.openOlderActivity($el) : $store.s.act.activityWeek('last')">
+                <svg class="ic" aria-hidden="true" x-show="$store.s.hubActivity.page !== 'last'"><use href="#i-caret-left"/></svg>
+                <svg class="ic" aria-hidden="true" x-show="$store.s.hubActivity.page === 'last'"><use href="#i-calendar"/></svg>
+              </button>
+              <button type="button" class="cal-nav" id="activityWeekNext" aria-label="Next week"
+                      :disabled="!$store.s.activity.known || $store.s.hubActivity.page !== 'last'" @click="$store.s.act.activityWeek('this')">
+                <svg class="ic" aria-hidden="true"><use href="#i-caret-right"/></svg>
+              </button>
+            </span>
+          </span>
+          <span class="activity-verdict">
+            <span class="activity-verdict-text" id="activityVerdict" x-text="$store.s.hubActivity.verdict"
+                  x-effect="$store.s.hubActivity.verdict; $store.s.hubActivity.show; $nextTick(() => $store.s.act.fitActivityVerdict($el))"></span>
           </span>
           <span class="activity-week">
             <template x-for="day in $store.s.hubActivity.week" :key="day.date">
@@ -3121,8 +3173,13 @@
               </span>
             </template>
           </span>
-          <span class="activity-weekly" :class="{ 'is-streak': $store.s.hubActivity.weekly > 0 }" x-text="$store.s.hubActivity.weeklyLabel"></span>
-        </button>
+          <span class="activity-foot">
+            <span class="activity-weekly" x-show="$store.s.hubActivity.pill" :class="{ 'is-streak': $store.s.hubActivity.weekly > 0 }" x-text="$store.s.hubActivity.weeklyLabel"></span>
+            <span x-show="!$store.s.hubActivity.pill"></span>
+            <button type="button" class="activity-calendar-link" id="activityOpen" :aria-label="$store.s.hubActivity.buttonLabel"
+                    :disabled="!$store.s.activity.known" @click="$store.s.act.openActivity($el)">Calendar <svg class="ic" aria-hidden="true"><use href="#i-caret-right"/></svg></button>
+          </span>
+        </div>
         <p class="activity-note" role="status" x-show="$store.s.hubActivity.note" x-text="$store.s.hubActivity.note"></p>
         <p class="activity-goal-error" role="status" x-show="$store.s.activityGoalNotice" x-text="$store.s.activityGoalNotice"></p>
       </section>
@@ -4144,7 +4201,7 @@
   var SESSION_KEY = "minutes_session_v3";
   var ACTIVECID_KEY = "minutes_active_cid";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
-  var VERSION = "18.4";
+  var VERSION = "18.5";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
@@ -4628,8 +4685,14 @@
       });
       var start = monday(now), currentWeek = key(start), goal = goalAt(history, currentWeek);
       var activeDays = weeks[currentWeek] || 0, weekly = 0;
-      var cursor = activeDays >= goal ? start : start - 7;
-      while ((weeks[key(cursor)] || 0) >= goalAt(history, key(cursor))) { weekly++; cursor -= 7; }
+      function metAt(date) { return (weeks[key(date)] || 0) >= goalAt(history, key(date)); }
+      // The streak that last week extended (or failed to): consecutive met weeks before it.
+      var streakBefore = 0, cursor = start - 14;
+      while (metAt(cursor)) { streakBefore++; cursor -= 7; }
+      var lastWeek = key(start - 7), lastGoal = goalAt(history, lastWeek), lastActive = weeks[lastWeek] || 0;
+      var lastMet = lastActive >= lastGoal;
+      cursor = activeDays >= goal ? start : start - 7;
+      while (metAt(cursor)) { weekly++; cursor -= 7; }
       var daily = 0;
       cursor = days[today] ? now : now - 1;
       while (days[key(cursor)]) { daily++; cursor--; }
@@ -4643,8 +4706,8 @@
           entries: value ? value.entries : 0, challenges: value ? Object.keys(value.challenges).length : 0
         };
       }
-      var weekDays = [], calendar = [];
-      for (var i = 0; i < 7; i++) weekDays.push(cell(start + i));
+      var weekDays = [], lastWeekDays = [], calendar = [];
+      for (var i = 0; i < 7; i++) { weekDays.push(cell(start + i)); lastWeekDays.push(cell(start - 7 + i)); }
       var offset = monthStart - monday(monthStart);
       for (var before = offset; before > 0; before--) calendar.push(cell(monthStart - before));
       cursor = monthStart;
@@ -4654,6 +4717,8 @@
         today: today, week: currentWeek, weekEnd: key(start + 6), goal: goal,
         activeDays: activeDays, goalMet: activeDays >= goal, weekly: weekly, daily: daily,
         weekDays: weekDays, days: days, calendar: calendar, invalid: invalid,
+        lastWeek: lastWeek, lastWeekDays: lastWeekDays, lastGoal: lastGoal, lastActiveDays: lastActive, lastMet: lastMet,
+        streakBefore: streakBefore,
         earliestMonth: earliest.slice(0, 7), month: month,
         monthActiveDays: calendar.filter(function (item) { return item.active && !item.outsideMonth; }).length,
         hasEntries: Object.keys(days).length > 0
@@ -4807,7 +4872,18 @@
   function validHubSnapshot(value) {
     function text(v) { return typeof v === "string"; }
     function flag(v) { return typeof v === "boolean"; }
-    return value && value.version === 2 && !!state.uid && value.uid === state.uid && value.name === state.me &&
+    function validWeek(week) {
+      return Array.isArray(week) && week.length === 7 && week.every(function (day) {
+        return day && ["date", "weekday", "label"].every(function (key) { return text(day[key]); }) &&
+          Number.isInteger(day.number) &&
+          ["active", "today", "future"].every(function (key) { return flag(day[key]); });
+      });
+    }
+    function validPage(page) {
+      return page && ["progress", "label", "verdict", "wm"].every(function (key) { return text(page[key]); }) &&
+        flag(page.met) && flag(page.pill) && validWeek(page.week);
+    }
+    return value && value.version === 3 && !!state.uid && value.uid === state.uid && value.name === state.me &&
       value.month === monthKeyOf(new Date()) &&
       value.hello && text(value.hello.sub) &&
       Array.isArray(value.sections) && value.sections.length === 2 &&
@@ -4827,13 +4903,9 @@
       value.activity && flag(value.activity.show) &&
       (value.activity.weekly === undefined || value.activity.weekly === null ||
         Number.isInteger(value.activity.weekly) && value.activity.weekly >= 0) &&
-      ["progress", "weeklyLabel", "buttonLabel", "note"].every(function (key) { return text(value.activity[key]); }) &&
-      Array.isArray(value.activity.week) && value.activity.week.length === 7 &&
-      value.activity.week.every(function (day) {
-        return day && ["date", "weekday", "label"].every(function (key) { return text(day[key]); }) &&
-          Number.isInteger(day.number) &&
-          ["active", "today", "future"].every(function (key) { return flag(day[key]); });
-      });
+      ["weeklyLabel", "buttonLabel", "note", "pageKey"].every(function (key) { return text(value.activity[key]); }) &&
+      ["this", "last"].indexOf(value.activity.defaultPage) >= 0 &&
+      !!value.activity.pages && validPage(value.activity.pages["this"]) && validPage(value.activity.pages.last);
   }
 
   function readHubSnapshot() {
@@ -4867,11 +4939,12 @@
     if (hubComputed && hubComputed.signature === signature) return hubComputed.value;
     var activity = state.activity;
     var value = {
-      version: 2, uid: state.uid, name: state.me, month: monthKeyOf(new Date()),
+      version: 3, uid: state.uid, name: state.me, month: monthKeyOf(new Date()),
       hello: buildHello(), sections: buildChallengeSections(),
       activity: {
-        show: activity.show, progress: activity.progress, weekly: activity.weekly, weeklyLabel: activity.weeklyLabel,
-        buttonLabel: activity.buttonLabel, note: activity.note, week: activity.week
+        show: activity.show, weekly: activity.weekly, weeklyLabel: activity.weeklyLabel,
+        buttonLabel: activity.buttonLabel, note: activity.note,
+        defaultPage: activity.defaultPage, pageKey: activity.pageKey, pages: activity.pages
       }
     };
     hubComputed = { signature: signature, value: value };
@@ -4909,9 +4982,12 @@
     return navigator.onLine === false ? "Connect to load your challenges." : "Loading your challenges...";
   });
   view("hubActivity", function () {
-    var saved = hubDisplay();
-    return saved ? Object.assign({}, saved.activity, { note: this.activityLoaded ? this.activity.note : "" }) :
-      { show: false, week: [], progress: "", weekly: null, weeklyLabel: "", buttonLabel: "", note: "" };
+    var saved = hubDisplay(), chosen = this.activityPage, chosenKey = this.activityPageKey;
+    if (!saved) return { show: false, week: [], progress: "", label: "", verdict: "", met: false, wm: "", pill: false,
+      page: "this", weekly: null, weeklyLabel: "", buttonLabel: "", note: "" };
+    var activity = saved.activity;
+    var page = chosen && chosenKey === activity.pageKey && this.activityLoaded ? chosen : activity.defaultPage;
+    return Object.assign({}, activity, activity.pages[page], { page: page, note: this.activityLoaded ? this.activity.note : "" });
   });
   // ---- View models -----------------------------------------------------------
   // Templates read these. Each one calls the SAME pure logic the old imperative
@@ -9404,6 +9480,7 @@
     function save() {
       var targets = picked.filter(function (cid) { return !!canLogTo(cid, date); });
       var skipped = picked.filter(function (cid) { return targets.indexOf(cid) < 0; });
+      var streakBefore = activityStreakNow();
       var writes = [activeCid()].concat(targets).map(writeTo);
       var savedId = writes[0].id;
       rememberLogTargets();
@@ -9441,7 +9518,10 @@
         // Offline the save is real but local, and this pill is the thing the user is
         // actually looking at in that moment, so it carries the caveat rather than
         // relying on them noticing the banner behind the modal that just closed.
-        announceSaved("Added " + mins + " min" + (done.length > 1 ? " to " + done.length + " challenges" : "") + " · " +
+        // The save that completes the weekly goal says so instead of repeating the date.
+        var added = "Added " + mins + " min" + (done.length > 1 ? " to " + done.length + " challenges" : "");
+        var goalNote = offlineNow() ? "" : activityGoalMetNote(streakBefore);
+        announceSaved(goalNote ? added + ". " + goalNote : added + " · " +
           (offlineNow() ? "syncs when you're back" : niceDate(date)), undoFn, savedId);
         var missed = writes.filter(function (write, index) { return !saved[index]; })
           .map(function (write) { return write.cid; }).concat(skipped);
@@ -11437,6 +11517,20 @@
   var WN_SEEN_KEY = "minutes_whatsnew_seen";
   function wnIcon(id) { return '<svg class="ic" aria-hidden="true"><use href="#i-' + id + '"/></svg>'; }
   var WHATS_NEW = [{
+    version: "18.5", month: "October 2026", colour: "mint", title: "Your week, out loud.",
+    notes: [
+      { colour: "lilac", mark: wnIcon("trophy"), title: "Goal met? Home says so.",
+        text: "Reach your weekly goal and the top of home turns Mulberry, streak and all. Subtle, it is not." },
+      { colour: "lime", mark: wnIcon("caret-left"), title: "Last week, one tap back.",
+        text: "Early in the week, home opens on how last week went. The arrows switch weeks; older ones live in Calendar." },
+      { colour: "pink", mark: wnIcon("ok"), title: "The save that seals it.",
+        text: "Log the day that meets your goal and the confirmation counts the weeks for you." }
+    ],
+    small: [
+      "Calendar is its own button now, so tapping the week doesn\u2019t open it by accident.",
+      "Streaks follow the weekly goal saved on this device. New phone? Set your goal there too."
+    ]
+  }, {
     version: "18.4", month: "October 2026", colour: "lilac", title: "New look, same you.",
     notes: [
       { colour: "lime", mark: wnIcon("lock"), title: "Your categories, your business.",
@@ -11495,7 +11589,7 @@
     var latest = WHATS_NEW[0];
     return {
       latest: latest, releases: WHATS_NEW,
-      hint: latest.version + " \u00b7 Hide your categories, change your name"
+      hint: latest.version + " \u00b7 Weekly streaks on home"
     };
   });
   state.act.openWhatsNew = function (kind) {
@@ -11820,6 +11914,34 @@
         (cell.pending ? ", waiting to sync" : "") : "no minutes logged";
     return activityDateLabel(cell.date) + ", " + detail + (cell.today ? ", today" : "");
   }
+  // Streak copy spells out one to ten and uses numerals beyond; "3 of 4" stays a score.
+  var ACTIVITY_WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
+  function activityCount(n, capital) {
+    var word = n >= 0 && n <= 10 ? ACTIVITY_WORDS[n] : String(n);
+    return capital ? word.charAt(0).toUpperCase() + word.slice(1) : word;
+  }
+  function activityRun(n) { return n === 1 ? "The streak starts here." : activityCount(n, true) + " weeks in a row."; }
+  function activityVerdicts(result) {
+    var through = result.lastMet ? result.streakBefore + 1 : 0, now, last;
+    if (result.goalMet) now = activityRun(result.weekly);
+    else {
+      var rem = result.goal - result.activeDays;
+      now = activityCount(rem, true) + (result.activeDays ? " more" : "") + " day" + (rem === 1 ? "" : "s") +
+        (through ? " makes it " + activityCount(through + 1) + "." : result.streakBefore ? " starts it again." : " starts a streak.");
+    }
+    var a = result.lastActiveDays, g = result.lastGoal, score = a + " of " + g + ". ";
+    if (result.lastMet) last = activityRun(through);
+    else if (!a) last = "A quiet week.";
+    else if (a === g - 1) last = score + "So close.";
+    else if (result.streakBefore) last = score + "The streak rests at " + result.streakBefore + ".";
+    else last = score + "On to this week.";
+    return { now: now, last: last, through: through };
+  }
+  // Monday to Wednesday, before anything is logged, home opens on last week's result.
+  function activityDefaultPage(result) {
+    var weekday = ActivityModel.day(result.today) - ActivityModel.day(result.week);
+    return weekday < 3 && !result.activeDays && result.lastActiveDays ? "last" : "this";
+  }
   view("activity", function () {
     this.rev; this.me; this.uid; this.signedIn; this.activityDay; this.activityMonth; this.activitySelected;
     this.activityGoalRev; this.activityLoaded; this.activityFromCache; this.activityLoadError;
@@ -11834,10 +11956,31 @@
     if (Object.keys(result.days).some(function (date) { return result.days[date].pending; })) {
       note += (note ? " " : "") + "Includes entries waiting to sync.";
     }
+    var verdicts = activityVerdicts(result);
+    function weekCells(cells) {
+      return cells.map(function (cell) {
+        return Object.assign({}, cell, { weekday: activityDateLabel(cell.date, { weekday: "short" }), label: activityDayLabel(cell) });
+      });
+    }
     return {
       show: state.signedIn && (myChallCount() > 0 || result.hasEntries),
       known: known, note: note, goal: result.goal, activeDays: result.activeDays, goalMet: result.goalMet,
       progress: known ? result.activeDays + " / " + result.goal : "-- / " + result.goal,
+      pages: {
+        "this": {
+          progress: known ? result.activeDays + " / " + result.goal : "-- / " + result.goal, label: "days this week",
+          verdict: known ? verdicts.now : "", week: weekCells(result.weekDays),
+          met: known && result.goalMet, wm: known && result.goalMet ? String(result.weekly) : "", pill: true
+        },
+        last: {
+          progress: known ? result.lastActiveDays + " / " + result.lastGoal : "-- / " + result.lastGoal, label: "days last week",
+          verdict: known ? verdicts.last : "", week: weekCells(result.lastWeekDays),
+          met: known && result.lastMet, wm: known && result.lastMet ? String(verdicts.through) : "", pill: false
+        }
+      },
+      defaultPage: known ? activityDefaultPage(result) : "this",
+      // A chosen week lasts until the day, the account or this week's count changes.
+      pageKey: [state.uid, result.today, result.activeDays].join("|"),
       weekly: known ? result.weekly : null, daily: known ? result.daily : null,
       weeklyLabel: !known ? (state.activityLoadError ? "History unavailable" : "History loading") : result.weekly ? result.weekly + "-week streak" : "Build your weekly streak",
       dailyLabel: known && result.daily ? result.daily + " consecutive day" + (result.daily === 1 ? "" : "s") : "",
@@ -11845,9 +11988,7 @@
         (result.goal - result.activeDays) + " more active day" + (result.goal - result.activeDays === 1 ? "" : "s") + " to your goal",
       buttonLabel: "View your activity calendar. " + (known ? result.activeDays + " of " + result.goal + " active days this week. " : "") +
         (known && result.weekly ? result.weekly + "-week streak." : ""),
-      week: result.weekDays.map(function (cell) {
-        return Object.assign({}, cell, { weekday: activityDateLabel(cell.date, { weekday: "short" }), label: activityDayLabel(cell) });
-      }),
+      week: weekCells(result.weekDays),
       calendar: result.calendar.map(function (cell, index) {
         return Object.assign({}, cell, {
           label: activityDayLabel(cell),
@@ -11869,14 +12010,55 @@
       selectedPending: !!(selected && selected.pending)
     };
   });
-  function openActivity() {
+  function openActivity(opener, date) {
     state.activityDay = todayStr();
-    state.activityMonth = state.activityDay.slice(0, 7);
-    state.activitySelected = state.activityDay;
+    var target = typeof date === "string" && date <= state.activityDay ? date : state.activityDay;
+    state.activityMonth = target.slice(0, 7);
+    state.activitySelected = target;
     // Safari does not focus a button on tap; the shared dialog manager needs its opener.
-    document.getElementById("activityOpen").focus({ preventScroll: true });
+    (opener && opener.focus ? opener : document.getElementById("activityOpen")).focus({ preventScroll: true });
     document.getElementById("activityModal").classList.add("show");
   }
+  // Home pages between this week and last week; older weeks belong to Calendar.
+  state.activityPage = "";
+  state.activityPageKey = "";
+  function showActivityWeek(page) {
+    if (!state.activityLoaded) return;
+    state.activityPage = page;
+    state.activityPageKey = state.activity.pageKey;
+    if (page === "this") Alpine.nextTick(function () { document.getElementById("activityWeekPrev").focus({ preventScroll: true }); });
+  }
+  function openOlderActivity(opener) {
+    refreshActivityDay();
+    var result = activitySnapshot(), target = ActivityModel.key(ActivityModel.day(result.lastWeek) - 1);
+    if (target.slice(0, 7) < result.earliestMonth) target = result.lastWeek;
+    openActivity(opener, target.slice(0, 7) < result.earliestMonth ? state.activityDay : target);
+  }
+  function fitActivityVerdict(text) {
+    if (!text) return;
+    text.style.fontSize = "";
+    if (!text.clientWidth) return;
+    // The verdict stays on one line; narrow phones step it down before any ellipsis.
+    [20, 18, 17, 16].some(function (size) {
+      if (text.scrollWidth <= text.clientWidth) return true;
+      text.style.fontSize = size + "px";
+      return false;
+    });
+  }
+  function refitActivityVerdict() { fitActivityVerdict(document.getElementById("activityVerdict")); }
+  // Fresh rather than cached: a save compares the week before and after its own write.
+  function activityStreakNow() {
+    if (!state.activityLoaded || !state.uid) return null;
+    var day = todayStr(), result = ActivityModel.summarize(entriesAll, state.uid, day, activityGoals, day.slice(0, 7));
+    return { week: result.week, goalMet: result.goalMet, weekly: result.weekly };
+  }
+  function activityGoalMetNote(before) {
+    var after = before && !before.goalMet ? activityStreakNow() : null;
+    if (!after || !after.goalMet || after.week !== before.week) return "";
+    return after.weekly === 1 ? "Goal met. The streak starts here." : "Goal met: that\u2019s " + activityCount(after.weekly) + " weeks running.";
+  }
+  window.addEventListener("resize", refitActivityVerdict);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(refitActivityVerdict);
   function hideActivity() {
     closeActivityGoalMenu(false);
     state.activityGoalSaved = false;
@@ -11933,6 +12115,9 @@
     state.activityGoalSaved = true;
   }
   state.act.openActivity = openActivity;
+  state.act.activityWeek = showActivityWeek;
+  state.act.openOlderActivity = openOlderActivity;
+  state.act.fitActivityVerdict = fitActivityVerdict;
   state.act.closeActivity = hideActivity;
   state.act.activityMonth = changeActivityMonth;
   state.act.activitySelect = function (date) { state.activitySelected = date; };

@@ -1222,7 +1222,9 @@
   .lb-person.me .lb-name { font-weight: var(--fw-bold); }
   .lb-rank { color: var(--muted); font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; margin-right: var(--sp-sm); }
   .lb-right { display: flex; align-items: center; gap: var(--sp-md); flex: 0 0 auto; }
-  .mgroup-head .mg-total, .lb-total { font-weight: var(--fw-black); color: var(--total); font-size: var(--fs-lg); width: 66px; text-align: right; font-variant-numeric: tabular-nums; }
+  /* min-width keeps short totals in one tabular column; 4-5 digit totals grow
+     the column rather than wrapping "min" onto a second line (iPhone, 1196 min). */
+  .mgroup-head .mg-total, .lb-total { font-weight: var(--fw-black); color: var(--total); font-size: var(--fs-lg); min-width: 66px; white-space: nowrap; text-align: right; font-variant-numeric: tabular-nums; }
   .mg-chev, .lb-chev { transition: transform .18s ease; color: var(--muted); font-size: var(--fs-xl); line-height: var(--lh-none); }
   .lb-chev.off { opacity: .28; }
   .mgroup.open .mg-chev, .lb-person.open .lb-chev { transform: rotate(90deg); }
@@ -1238,7 +1240,7 @@
      weight than the names only because they are much smaller. */
   .lb-tagname { min-width: 0; overflow-wrap: anywhere; font-weight: var(--fw-md); font-size: var(--fs-sm); line-height: var(--lh-normal); }
   .lb-tagmeta { flex: 0 0 auto; font-size: var(--fs-2xs); color: var(--muted); font-weight: var(--fw-regular); margin-left: var(--sp-xs); font-variant-numeric: tabular-nums; }
-  .lb-tagmins { font-size: var(--fs-xs); color: var(--muted); font-weight: var(--fw-md); width: 50px; text-align: right; font-variant-numeric: tabular-nums; }
+  .lb-tagmins { font-size: var(--fs-xs); color: var(--muted); font-weight: var(--fw-md); min-width: 50px; white-space: nowrap; text-align: right; font-variant-numeric: tabular-nums; }
   /* Round total. This deliberately rebuilds a member row's right side, chevron
      included and merely made invisible, so the sum lands in the same 66px tabular
      column as every member total. Aligning it with a hardcoded offset instead would
@@ -4201,7 +4203,7 @@
   var SESSION_KEY = "minutes_session_v3";
   var ACTIVECID_KEY = "minutes_active_cid";
   var CHALL_CACHE_KEY = "minutes_chall_v1";
-  var VERSION = "18.5";
+  var VERSION = "18.6";
   var TAG_MAX = 32;
   // Local preview mode: when served from localhost, use an in-memory demo backend
   // (DemoStore) instead of Firebase, so the app runs and is fully clickable with no
